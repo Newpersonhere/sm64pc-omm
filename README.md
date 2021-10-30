@@ -66,8 +66,23 @@
 - To build *Super Mario 64 Moonshine*, you must extract the mod archive (`MOONSHINE_FINALUPDATE.rar`) next to the script into a directory named `moonshine`.
 - To build *Super Mario Star Road*, you must place the patch file (`star_road_release.patch`) next to the script and name it `star_road.patch`.
 
+### Q&A
+
+- **The builder is spitting out errors like `gcc: No such file or directory`. What does it mean?**
+
+You're missing dependencies. Go to this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Windows) (Windows) or this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Linux) (Linux) and make sure to follow the **Install dependencies** part.
+
+- **The game is built successfully, but the only thing I get when launching it is a black screen with the game over sound...**
+
+You probably built the game with a renderer not supported by your computer. Delete your build and try again with the flag `DIRECT_X` to change the SDL/OpenGL API by the DirectX one.
+
+- **This shit is bad!!! I don't understand anything!!! Can I use sm64pcBuilder2 instead???**
+
+Remember that this tool's only purpose is to build the Odyssey Mario's Moveset mod with some customization. It's not supposed to (and will never) be as complete as **sm64pcBuilder2**. But don't worry, you can download the `.patch` file in the section **Useful resources** below and add it as a custom patch in **sm64pcBuilder2**.
+
 ### Useful resources
 
+- [Odyssey Mario's Moveset v6.0.3 patch file](https://drive.google.com/file/d/1w3IlbW-gCBKdaFnvYs9eI-N6-s5m8okY/view?usp=sharing)
 - [Super Mario 64 Moonshine archive](https://www.mediafire.com/file/khy40tbd1rcve2p/MOONSHINE_FINALUPDATE.rar/file)
 - [Super Mario Star Road patch file](https://drive.google.com/file/d/1kXskWESOTUJDoeCGVV9JMUkn0tLd_GXO/view)
 - [Super Mario Star Road HD Texture pack](https://github.com/aspieweeb759/Star-Road-HD/releases/download/Star-Road-HD/Star.Road.HD.Release.zip)
