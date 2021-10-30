@@ -1,7 +1,7 @@
 .git/
 .github/
 .vscode/
-omm.*.patch/
+omm.*/
 moonshine/
 patches/
 res/

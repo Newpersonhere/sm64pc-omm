@@ -68,10 +68,32 @@ def rm_rf(dir):
         
 def get_omm_patch():
     for path in os.listdir("."):
-        if os.path.isdir(path) and "omm." in path and ".patch" in path:
+        if os.path.isdir(path) and "omm." in path:
             return path
     return ""
-        
+
+def create_omm_patch_file():
+    path = get_omm_patch()
+    if len(path) > 0:
+        os.system("git clone https://github.com/sm64pc/sm64ex.git -b nightly temp -q")
+        if os.path.isdir("temp"):
+            os.chdir("temp")
+            copy_tree("../" + path, ".")
+            if os.path.isfile("Makefile"):
+                file = open("Makefile", "r", newline="\n", encoding="utf-8", errors="ignore")
+                data = file.read()
+                file.close()
+                where = data.find("BIN_DIRS := bin bin/$(VERSION)")
+                if where != -1:
+                    data = data[:where] + "include omm.mk\n" + data[where:]
+                    file = open("Makefile", "w", newline="\n", encoding="utf-8", errors="ignore")
+                    file.write(data)
+                    file.close()
+                    os.system("git add .")
+                    os.system(f"git diff --diff-algorithm=minimal --unified=2 -p --staged --binary > ../{path}.patch")
+            os.chdir("..")
+            rm_rf("temp")
+            
 def rm_omm_patches():
     while rm_rf(get_omm_patch()):
         continue
@@ -181,12 +203,23 @@ if __name__ == "__main__":
                 print("Done.")
                 sys.exit(0)
 
-    # Delete OMM patches
-    if len(sys.argv) >= 2 and sys.argv[1].lower() == "clear":
-        print("--- Deleting OMM patches...")
-        rm_omm_patches()
-        print("Done.")
-        sys.exit(0)
+    # OMM patch commands
+    if len(sys.argv) >= 2:
+        command = sys.argv[1].lower()
+
+        # Create a git diff patch file
+        if command == "patch":
+            print("--- Creating OMM patch file...")
+            create_omm_patch_file()
+            print("Done.")
+            sys.exit(0)
+            
+        # Delete omm.* directories
+        if command == "clear":
+            print("--- Deleting OMM patches...")
+            rm_omm_patches()
+            print("Done.")
+            sys.exit(0)
 
     # Usage info
     if len(sys.argv) < 3:
@@ -247,7 +280,7 @@ if __name__ == "__main__":
                 OMM_VERSION = data[i0 + len("OMM_VERSION_NUMBER :="):i1].lstrip(' \t\r\n').rstrip(' \t\r\n')
             else:
                 raise_error("Cannot find OMM_VERSION_NUMBER.", False)
-        OMM_PATCH = "omm." + OMM_VERSION + ".patch"
+        OMM_PATCH = "omm." + OMM_VERSION
         os.remove("omm.version")
     else:
         print("Unable to retrieve current OMM version number.")
@@ -276,7 +309,7 @@ if __name__ == "__main__":
     print("--- Checking OMM patch (1/3)...")
     if not os.path.isdir(OMM_PATCH):
 
-        # Delete all omm.*.patch directories
+        # Delete all omm.* directories
         print("Removing old OMM patches...")
         rm_omm_patches()
 
@@ -303,11 +336,11 @@ if __name__ == "__main__":
             raise_error("Cannot clone the git repository: " + VERSIONS[version]["repo"], False)
     os.chdir(version)
 
-    # Check OMM patch: if a omm.*.patch.patched file exists but is not the latest version, reset the directory
+    # Check OMM patch: if a omm.*.patched file exists but is not the latest version, reset the directory
     print("--- Checking OMM patch (3/3)...")
     if not check_patched(OMM_PATCH):
         for path in os.listdir("enhancements"):
-            if os.path.isfile("enhancements/" + path) and "omm." in path and ".patch.patched" in path:
+            if os.path.isfile("enhancements/" + path) and "omm." in path and ".patched" in path:
                 print("Old version of OMM detected!")
                 print("Cleaning " + version + "...")
                 os.system("git reset -q --hard")
@@ -401,7 +434,7 @@ if __name__ == "__main__":
         shutil.copyfile("../baserom.us.z64", "baserom.us.z64")
         
     # Make
-    makeCmd = "make" + BUILD_SPEEDS[speed]["jobs"] + VERSIONS[version]["args"] + " NO_WARNINGS=1" + " VERSION=us"
+    makeCmd = "make" + BUILD_SPEEDS[speed]["jobs"] + VERSIONS[version]["args"] + " OMM_BUILDER=1" + " VERSION=us"
     
     # APIs
     makeCmd += " RENDER_API=D3D11 WINDOW_API=DXGI AUDIO_API=SDL2 CONTROLLER_API=SDL2" if args["DIRECT_X"] else " RENDER_API=GL WINDOW_API=SDL2 AUDIO_API=SDL2 CONTROLLER_API=SDL2"
