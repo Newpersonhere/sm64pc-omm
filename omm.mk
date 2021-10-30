@@ -18,9 +18,11 @@ VERSION_CFLAGS += -DOMM_VERSION="$(OMM_VERSION_NUMBER)"
 VERSION_CFLAGS += -DOMM_DEVELOPER="$(OMM_DEVELOPER)"
 DEFINES += OMM_VERSION="$(OMM_VERSION_NUMBER)"
 DEFINES += OMM_DEVELOPER="$(OMM_DEVELOPER)"
-ifeq ($(NO_WARNINGS),1)
+ifeq ($(OMM_BUILDER),1)
 CC := $(CROSS)gcc -w
 CXX := $(CROSS)g++ -w
+else
+OMM_PATCH := $(shell python3 omm_patcher.py -p)
 endif
 
 # Super Mario 64 Moonshine
@@ -30,7 +32,6 @@ ifeq      ($(or $(and $(wildcard actors/Bee/geo.inc.c),1),0),1)
 	OMM_VERSION_SUB := Super Mario 64 Moonshine
 
 # Super Mario Star Road
-# if the "zerolife" level detection fails, use this instead: "sequences/us/01_Seq_smsrdeluxe_custom.m64"
 else ifeq ($(or $(and $(wildcard levels/zerolife/script.c),1),0),1)
 	VERSION_CFLAGS += -DSMSR
 	DEFINES += SMSR=1
