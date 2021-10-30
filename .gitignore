@@ -1,0 +1,16 @@
+.git/
+.github/
+.vscode/
+omm.*.patch/
+moonshine/
+patches/
+res/
+smex/
+smms/
+xalo/
+sm74/
+smsr/
+*.patch
+*.z64
+*.version
+*.txt
