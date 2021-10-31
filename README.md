@@ -5,9 +5,7 @@
 
 ## Build the game with *OMM Builder*
 
-*OMM Builder* is a convenient Python script that makes the building process of the *Odyssey Mario's Moveset* mod simplier, while allowing some customization.
-If you have never built the PC port of *Super Mario 64* before, please take a look at this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Windows) or this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Linux) first.
-Make sure you have the following dependencies before starting: `MSYS2` (Windows only), `git`, `make`, `gcc`, `glew`, `SDL2` and `python3`.
+*OMM Builder* is a convenient Python script that makes the building process of the *Odyssey Mario's Moveset* mod simplier, while allowing some customization.<br>If you have never built the PC port of *Super Mario 64* before, please take a look at this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Windows) or this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Linux) first.<br>Make sure you have the following dependencies before starting: `MSYS2` (Windows only), `git`, `make`, `gcc`, `glew`, `SDL2` and `python3`.
 
 ```diff
 - IMPORTANT NOTICE:
@@ -82,10 +80,7 @@ The `[args...]` parameters can be any of the following:
 | `DIRECT_X` | Replace SDL/OpenGL APIs by DirectX APIs. |
 | `AUTO_RUN` | Start the game after building. |
 
-For instance, if you want to build and play *Star Road* with 60 FPS and External data, run the command:
-`python3 omm_builder.py smsr faster 60_FPS EXT_DATA AUTO_RUN`
-Additionally, the builder is case-insensitive, meaning you can also write the previous command as:
-`python3 omm_builder.py smsr faster 60fps extdata autorun`
+For instance, if you want to build and play *Star Road* with 60 FPS and External data, run the command:<br>`python3 omm_builder.py smsr faster 60_FPS EXT_DATA AUTO_RUN`<br>Additionally, the builder is case-insensitive, meaning you can also write the previous command as:<br>`python3 omm_builder.py smsr faster 60fps extdata autorun`
 
 ---
 
@@ -113,24 +108,19 @@ If you want more customization or simply build the game the usual way, you can d
 
 ### The builder is spitting out errors like `gcc: No such file or directory`. What does it mean?
 
-You're missing dependencies. You need the following ones to properly build the game: `MSYS2` (Windows only), `git`, `make`, `gcc`, `glew`, `SDL2` and `python3`.
-Go to this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Windows) (Windows) or this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Linux) (Linux) and make sure to follow the **Install dependencies** part.
+You're missing dependencies. You need the following ones to properly build the game: `MSYS2` (Windows only), `git`, `make`, `gcc`, `glew`, `SDL2` and `python3`.<br>Go to this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Windows) (Windows) or this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Linux) (Linux) and make sure to follow the **Install dependencies** part.
 
 ### The game is built successfully, but the only thing I get when launching it is a black screen with the game over sound...
 
-You probably built the game with a renderer not supported by your computer.
-Delete your build and try again with the flag `DIRECT_X` to change the SDL/OpenGL API by the DirectX one.
+You probably built the game with a renderer not supported by your computer.<br>Delete your build and try again with the flag `DIRECT_X` to change the SDL/OpenGL API by the DirectX one.
 
 ### Where did my executable go? Do I have to always use the `run` command to play the game?
 
-Once built, the game executable is located in the `build/us_pc` directory of the version you choose.
-You don't need to use the `run` command every time, you can simply double-click on `sm64.us.f3dex2e.exe` like any other executable to start the game.
-If you want to copy or move it, make sure to copy/move the entire `build/us_pc` directory, not only the executable file.
+Once built, the game executable is located in the `build/us_pc` directory of the version you choose.<br>You don't need to use the `run` command every time, you can simply double-click on `sm64.us.f3dex2e.exe` like any other executable to start the game.<br>If you want to copy or move it, make sure to copy/move the entire `build/us_pc` directory, not only the executable file.
 
 ### How do I update *OMM Builder*/*Odyssey Mario's Moveset*?
 
-If it detects a new version, the builder will ask you if you want to update it when you launch it.
-As for the *Odyssey Mario's Moveset* mod, the files are automatically updated when running a Build command.
+If it detects a new version, the builder will ask you if you want to update it when you launch it.<br>As for the *Odyssey Mario's Moveset* mod, the files are automatically updated when running a Build command.
 
 ---
 
