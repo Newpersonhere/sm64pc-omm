@@ -26,6 +26,8 @@
 
   - Move to the created directory and open it in Windows Explorer by executing the following command:<br>`cd sm64pc-omm; explorer .`
 
+  - If it's not already done, in Windows Explorer, click on the **View** tab, then check **File name extensions**. This option will allow you to rename files properly.
+
   - Place your copy of the **Super Mario 64 US ROM** inside it, next to the Python script `omm_builder.py`, and rename it `baserom.us.z64`.
 
 - **Linux**:
@@ -105,6 +107,10 @@ If you want more customization or simply build the game the usual way, you can d
 ---
 
 ## Q&A
+
+- **The builder says `ERROR: The file 'baserom.us.z64' is missing.`, but it is here!**
+
+Your file is actually named `baserom.us.z64.z64`. It happened because Windows hides file extensions by default, and adds its extension back after renaming a file.<br>To prevent this, in Windows Explorer, click on the **View** tab and check **File name extensions**. Then remove the extra `.z64` from your file name.
 
 - **The builder is spitting out errors like `gcc: No such file or directory`. What does it mean?**
 
