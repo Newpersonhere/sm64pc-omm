@@ -3,9 +3,11 @@
 
 -----
 
-## How to build the game with the OMM Builder
+## Build the game with *OMM Builder*
 
-*OMM Builder* is a very convenient Python script that makes the building process simplier, while allowing some customization.
+*OMM Builder* is a convenient Python script that makes the building process of the *Odyssey Mario's Moveset* mod simplier, while allowing some customization.
+If you have never built the PC port of *Super Mario 64* before, please take a look at this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Windows) or this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Linux) first.
+Make sure you have the following dependencies before starting: `MSYS2` (Windows only), `git`, `make`, `gcc`, `glew`, `SDL2` and `python3`.
 
 ```diff
 - IMPORTANT NOTICE:
@@ -14,73 +16,125 @@
 - likely to contain malicious code that can irremediably harm your computer or steal your personal data.
 ```
 
-### Requirements
+---
 
-- If you have never built the PC port of *Super Mario 64* before, please take a look at this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Windows) or this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Linux) first.
-- For Windows users, if you have used at least once **sm64pcBuilder2**, you can go to the next part, **"Setting-up the builder"**.
-
-### Setting-up the builder
+### Installing the builder:
 
 - **Windows**:
-  - First, open an MSYS2 terminal. To do so, open the Windows Start menu, type `mingw` and select `MSYS2 MinGW 64-bit` or `MSYS2 MinGW 32-bit` if your computer is 32-bit (you can see it by opening the Windows Settings -> System -> About).
-  - Install the builder by cloning the *master* branch with this command:<br>`git clone https://github.com/PeachyPeachSM64/sm64pc-omm.git -b master`<br>If the builder is already installed, skip this point.
-  - To move to the created directory and open it in Windows Explorer, execute the following command:<br>`cd sm64pc-omm; explorer .`
-  - Finally, if it's not already done, place your copy of the **Super Mario 64 US ROM** inside it, next to the Python script `omm_builder.py`, and rename it `baserom.us.z64`.
+
+  - Open an MSYS2 terminal. To do so, open the **Windows Start** menu, type `mingw` and select `MSYS2 MinGW 64-bit` or `MSYS2 MinGW 32-bit`, depending of your operating system and processor type. To see it, open the **Windows Settings**, go to **System**, and select **About**.
+
+  - The first time, install the builder by cloning the *master* branch with this command:<br>`git clone https://github.com/PeachyPeachSM64/sm64pc-omm.git -b master`
+
+  - Move to the created directory and open it in Windows Explorer by executing the following command:<br>`cd sm64pc-omm; explorer .`
+
+  - Place your copy of the **Super Mario 64 US ROM** inside it, next to the Python script `omm_builder.py`, and rename it `baserom.us.z64`.
 
 - **Linux**:
-  - First, open a terminal.
-  - Install the builder by cloning the *master* branch with this command:<br>`git clone https://github.com/PeachyPeachSM64/sm64pc-omm.git -b master`<br>If the builder is already installed, skip this point.
-  - To move to the created directory, execute the following command:<br>`cd sm64pc-omm`
-  - Finally, if it's not already done, place your copy of the **Super Mario 64 US ROM** inside it, next to the Python script `omm_builder.py`, and rename it `baserom.us.z64`.
-  
-### Building the game
 
-- Run the builder with no argument to view how to use it with the command: `python3 omm_builder.py`
-- Here is a summary of the available options:
-  - The first argument must be the *version* you want to build:
-    - `smex`: Super Mario 64 ex-nightly
-    - `smms`: Super Mario 64 Moonshine
-    - `xalo`: Super Mario 64 ex-alo
-    - `sm74`: Super Mario 74
-    - `smsr`: Super Mario Star Road
-    - `clear`: Don't build anything, delete omm patches
-  - The second argument must be the *build speed*:
-    - `slow`: Build the game by compiling files one by one
-    - `fast`: Enable multi-processing to build the game faster
-    - `faster`: Build the game even faster (not recommended for weak PCs)
-    - `fastest`: Use 100% of CPU to build the game as fast as possible
-    - `run`: Don't build anything, run the game if an executable is found
-    - `reset`: Don't build anything, reset the target directory without deleting it
-    - `clear`: Don't build anything, delete the target directory
-  - The following arguments must be any of these:
-    - `DEBUG`: Remove code optimization (development only!)
-    - `60_FPS`: Enable the 60 FPS interpolation
-    - `EXT_DATA`: Externalize resources (textures, musics and sounds)
-    - `DIRECT_X`: Replace SDL/OpenGL APIs by DirectX APIs
-    - `AUTO_RUN`: Start the game after building
-- For instance, if you want to build and play *Star Road* with 60 FPS and External data, run the command:<br>`python3 omm_builder.py smsr faster 60_FPS EXT_DATA AUTO_RUN`<br>Additionally, the builder is case-insensitive, meaning you can also write the previous command as:<br>`python3 omm_builder.py smsr faster 60fps extdata autorun`
+  - Open a terminal.
+
+  - The first time, install the builder by cloning the *master* branch with this command:<br>`git clone https://github.com/PeachyPeachSM64/sm64pc-omm.git -b master`
+
+  - Move to the created directory by executing the following command:<br>`cd sm64pc-omm`
+
+  - Place your copy of the **Super Mario 64 US ROM** inside it, next to the Python script `omm_builder.py`, and rename it `baserom.us.z64`.
+
+---
+
+### Building the game:
+
+*OMM Builder* is a command-line tool with four main commands:
+
+||||
+|:-|:-|:-|
+| Build | Compile the game with the version specified. | `python3 omm_builder.py [version] [build_speed] [args...]` |
+| Run | Run the game with the version specified. An executable of the specified version must be compiled first. | `python3 omm_builder.py [version] run` |
+| Reset | Reset the version directory without deleting it, but remove the compiled game. | `python3 omm_builder.py [version] reset` |
+| Delete | Delete the version directory, including all its content. | `python3 omm_builder.py [version] clear` |
+
+The `[version]` parameter must be one of the following:
+
+|||
+|:-|:-|
+| `smex` | Super Mario 64 ex-nightly |
+| `smms` | Super Mario 64 Moonshine |
+| `xalo` | Super Mario 64 ex-alo |
+| `sm74` | Super Mario 74 |
+| `smsr` | Super Mario Star Road |
+
+The `[build_speed]` parameter must be one of the following:
+
+|||
+|:-|:-|
+| `slow` | Build the game by compiling files one by one. |
+| `fast` | Enable multi-processing to build the game faster. |
+| `faster` | Build the game even faster (not recommended for weak PCs). |
+| `fastest` | Use 100% of CPU to build the game as fast as possible. |
+
+The `[args...]` parameters can be any of the following:
+
+|||
+|:-|:-|
+| `DEBUG` | Remove code optimization (mostly used for development). |
+| `60_FPS` | Enable the 60 FPS interpolation. |
+| `EXT_DATA` | Externalize resources (textures, musics and sounds). |
+| `DIRECT_X` | Replace SDL/OpenGL APIs by DirectX APIs. |
+| `AUTO_RUN` | Start the game after building. |
+
+For instance, if you want to build and play *Star Road* with 60 FPS and External data, run the command:
+`python3 omm_builder.py smsr faster 60_FPS EXT_DATA AUTO_RUN`
+Additionally, the builder is case-insensitive, meaning you can also write the previous command as:
+`python3 omm_builder.py smsr faster 60fps extdata autorun`
+
+---
+
+### Notes:
+
 - You can build the game with custom patches. To do so, place a copy of your `.patch` files inside a `patches` directory before running the command.
+
 - You can customize your game's musics and textures. To do so, place your packs `.zip` archives inside a `res` directory before running the command.
 
-**Important notes:**
 - To build *Super Mario 64 Moonshine*, you must extract the mod archive (`MOONSHINE_FINALUPDATE.rar`) next to the script into a directory named `moonshine`.
+
 - To build *Super Mario Star Road*, you must place the patch file (`star_road_release.patch`) next to the script and name it `star_road.patch`.
 
-### Q&A
+---
 
-- **The builder is spitting out errors like `gcc: No such file or directory`. What does it mean?**
+## Build the game with *sm64pcBuilder2*
 
-You're missing dependencies. Go to this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Windows) (Windows) or this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Linux) (Linux) and make sure to follow the **Install dependencies** part.
+Remember that this tool's only purpose is to build the *Odyssey Mario's Moveset* mod with the most common and useful features. It's not supposed (and will never) be as complete as **sm64pcBuilder2**.
 
-- **The game is built successfully, but the only thing I get when launching it is a black screen with the game over sound...**
+If you want more customization or simply build the game the usual way, you can download the patch file of the latest version of OMM available in the section **Useful resources** below and add it as a custom patch in **sm64pcBuilder2**.
 
-You probably built the game with a renderer not supported by your computer. Delete your build and try again with the flag `DIRECT_X` to change the SDL/OpenGL API by the DirectX one.
+---
 
-- **This shit is bad!!! I don't understand anything!!! Can I use sm64pcBuilder2 instead???**
+## Q&A
 
-Remember that this tool's only purpose is to build the Odyssey Mario's Moveset mod with some customization. It's not supposed to (and will never) be as complete as **sm64pcBuilder2**. But don't worry, you can download the `.patch` file in the section **Useful resources** below and add it as a custom patch in **sm64pcBuilder2**.
+### The builder is spitting out errors like `gcc: No such file or directory`. What does it mean?
 
-### Useful resources
+You're missing dependencies. You need the following ones to properly build the game: `MSYS2` (Windows only), `git`, `make`, `gcc`, `glew`, `SDL2` and `python3`.
+Go to this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Windows) (Windows) or this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Linux) (Linux) and make sure to follow the **Install dependencies** part.
+
+### The game is built successfully, but the only thing I get when launching it is a black screen with the game over sound...
+
+You probably built the game with a renderer not supported by your computer.
+Delete your build and try again with the flag `DIRECT_X` to change the SDL/OpenGL API by the DirectX one.
+
+### Where did my executable go? Do I have to always use the `run` command to play the game?
+
+Once built, the game executable is located in the `build/us_pc` directory of the version you choose.
+You don't need to use the `run` command every time, you can simply double-click on `sm64.us.f3dex2e.exe` like any other executable to start the game.
+If you want to copy or move it, make sure to copy/move the entire `build/us_pc` directory, not only the executable file.
+
+### How do I update *OMM Builder*/*Odyssey Mario's Moveset*?
+
+If it detects a new version, the builder will ask you if you want to update it when you launch it.
+As for the *Odyssey Mario's Moveset* mod, the files are automatically updated when running a Build command.
+
+---
+
+## Useful resources
 
 - [Odyssey Mario's Moveset v6.0.3 patch file](https://drive.google.com/file/d/1w3IlbW-gCBKdaFnvYs9eI-N6-s5m8okY/view?usp=sharing)
 - [Super Mario 64 Moonshine archive](https://www.mediafire.com/file/khy40tbd1rcve2p/MOONSHINE_FINALUPDATE.rar/file)
