@@ -106,19 +106,19 @@ If you want more customization or simply build the game the usual way, you can d
 
 ## Q&A
 
-### The builder is spitting out errors like `gcc: No such file or directory`. What does it mean?
+- **The builder is spitting out errors like `gcc: No such file or directory`. What does it mean?**
 
 You're missing dependencies. You need the following ones to properly build the game: `MSYS2` (Windows only), `git`, `make`, `gcc`, `glew`, `SDL2` and `python3`.<br>Go to this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Windows) (Windows) or this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Linux) (Linux) and make sure to follow the **Install dependencies** part.
 
-### The game is built successfully, but the only thing I get when launching it is a black screen with the game over sound...
+- **The game is built successfully, but the only thing I get when launching it is a black screen with the game over sound...**
 
 You probably built the game with a renderer not supported by your computer.<br>Delete your build and try again with the flag `DIRECT_X` to change the SDL/OpenGL API by the DirectX one.
 
-### Where did my executable go? Do I have to always use the `run` command to play the game?
+- **Where did my executable go? Do I have to always use the `run` command to play the game?**
 
 Once built, the game executable is located in the `build/us_pc` directory of the version you choose.<br>You don't need to use the `run` command every time, you can simply double-click on `sm64.us.f3dex2e.exe` like any other executable to start the game.<br>If you want to copy or move it, make sure to copy/move the entire `build/us_pc` directory, not only the executable file.
 
-### How do I update *OMM Builder*/*Odyssey Mario's Moveset*?
+- **How do I update *OMM Builder*/*Odyssey Mario's Moveset*?**
 
 If it detects a new version, the builder will ask you if you want to update it when you launch it.<br>As for the *Odyssey Mario's Moveset* mod, the files are automatically updated when running a Build command.
 
