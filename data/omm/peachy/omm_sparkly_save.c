@@ -275,18 +275,11 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update_save_data) {
         }
     }
 
-    // If Sparkly Stars mode is enabled...
+    // If Sparkly Stars mode is enabled, advance the timer
     if (omm_sparkly_is_enabled()) {
-
-        // Update timer
         s32 mode = omm_sparkly_get_current_mode();
         if (!omm_sparkly_is_grand_star_collected(mode)) {
             sOmmSparklySaveDataTimer[mode] = omm_min_s(sOmmSparklySaveDataTimer[mode] + 1, OMM_SPARKLY_SAVE_TIMER_MAX);
-        }
-
-        // Do a save every second
-        if ((gGlobalTimer % 30) == 0) {
-            gSaveFileModified = true;
         }
     }
 }

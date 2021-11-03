@@ -151,6 +151,7 @@ extern const GeoLayout omm_geo_star_16_transparent[];
 extern const GeoLayout omm_geo_star_17_transparent[];
 extern const GeoLayout omm_geo_star_18_transparent[];
 extern const GeoLayout omm_geo_star_19_transparent[];
+extern const GeoLayout omm_geo_number[];
 extern const GeoLayout omm_geo_fire_smoke_red[];
 extern const GeoLayout omm_geo_fire_smoke_blue[];
 extern const GeoLayout omm_geo_metal_sparkle[];

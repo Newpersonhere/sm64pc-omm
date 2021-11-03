@@ -238,6 +238,7 @@ void save_file_load_all() {
                         READ_TOGGLE_SC(gOmmExtrasColoredStars, token.args);
                         READ_TOGGLE_SC(gOmmExtrasVanishingHUD, token.args);
                         READ_TOGGLE_SC(gOmmExtrasRevealSecrets, token.args);
+                        READ_TOGGLE_SC(gOmmExtrasRedCoinsRadar, token.args);
                         READ_TOGGLE_SC(gOmmExtrasInvisibleMode, token.args);
                         READ_TOGGLE_SC(gOmmExtrasCrystalStarsReward, token.args);
                 
@@ -485,6 +486,7 @@ static void save_file_write() {
     WRITE_TOGGLE_SC(gOmmExtrasColoredStars);
     WRITE_TOGGLE_SC(gOmmExtrasVanishingHUD);
     WRITE_TOGGLE_SC(gOmmExtrasRevealSecrets);
+    WRITE_TOGGLE_SC(gOmmExtrasRedCoinsRadar);
     WRITE_TOGGLE_SC(gOmmExtrasInvisibleMode);
     WRITE_TOGGLE_SC(gOmmExtrasCrystalStarsReward);
     write("\n");

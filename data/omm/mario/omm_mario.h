@@ -109,7 +109,6 @@ void omm_mario_update_fall                      (struct MarioState *m);
 void omm_mario_update_caps                      (struct MarioState *m);
 void omm_mario_update_burn                      (struct MarioState *m);
 void omm_mario_update_action                    (struct MarioState *m);
-void omm_mario_update_anim_gfx                  (struct MarioState *m);
 void omm_mario_update_camera_mode               (struct MarioState *m);
 void omm_mario_update_castle_collisions         (struct MarioState *m);
 

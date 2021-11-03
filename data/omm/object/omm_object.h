@@ -154,6 +154,7 @@ const BehaviorScript **omm_obj_get_bowser_behaviors();
 struct Object *omm_spawn_damage_mario(struct Object *o, s32 interactType, s32 damage);
 struct Object *omm_spawn_star_celebration(struct Object *o, f32 radius, f32 height);
 struct Object *omm_spawn_life_up(struct Object *o);
+struct Object *omm_spawn_number(struct Object *o, s32 number);
 struct Object *omm_spawn_fire_smoke(struct Object *o, s32 type);
 struct Object *omm_spawn_wing_glow_and_trail(struct Object *o);
 struct Object *omm_spawn_metal_sparkle(struct Object *o);

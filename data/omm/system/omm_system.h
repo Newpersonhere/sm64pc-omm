@@ -156,6 +156,7 @@ s32 *omm_level_get_list();
 s32 omm_level_get_course(s32 level);
 const LevelScript *omm_level_get_script(s32 level);
 s32 omm_level_get_areas(s32 level);
+s32 omm_level_get_num_red_coins(s32 level, s32 area);
 u8 *omm_level_get_name(s32 level, bool decaps, bool num);
 u8 *omm_level_get_act_name(s32 level, s32 act, bool decaps, bool num);
 u64 omm_level_cmd_get(void *cmd, u64 offset);
@@ -249,6 +250,7 @@ DECLARE_TOGGLE_SC(gOmmExtrasCappyEyesOnMariosCap);
 DECLARE_TOGGLE_SC(gOmmExtrasColoredStars);
 DECLARE_TOGGLE_SC(gOmmExtrasVanishingHUD);
 DECLARE_TOGGLE_SC(gOmmExtrasRevealSecrets);
+DECLARE_TOGGLE_SC(gOmmExtrasRedCoinsRadar);
 DECLARE_TOGGLE_SC(gOmmExtrasInvisibleMode);
 DECLARE_TOGGLE_SC(gOmmExtrasCrystalStarsReward);
 #if OMM_CODE_DEBUG

@@ -391,12 +391,23 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
 
     // bhv_red_coin_loop
     // Remove the parenting between the red coins and the star if already collected
+    // Spawn the correct orange number and play the correct sound effect when collected
     if (func == bhv_red_coin_loop) {
         if (o->parentObj == NULL ||
             o->parentObj->activeFlags == ACTIVE_FLAG_DEACTIVATED || (
             o->parentObj->behavior != bhvHiddenRedCoinStar &&
             o->parentObj->behavior != bhvBowserCourseRedCoinStar)) {
             o->parentObj = NULL;
+        }
+        if (o->oInteractStatus & INT_STATUS_INTERACTED) {
+            if (o->parentObj) {
+                o->parentObj->oHiddenStarTriggerCounter++;
+                omm_spawn_number(o, 1 + omm_level_get_num_red_coins(gCurrLevelNum, gCurrAreaIndex) - obj_get_count_with_behavior(bhvRedCoin));
+                play_sound(SOUND_MENU_COLLECT_RED_COIN + (omm_max_s(0, o->parentObj->oHiddenStarTriggerCounter - 1) << 16), gGlobalSoundArgs);
+            }
+            coin_collected();
+            o->oInteractStatus = 0;
+            return true;
         }
         return false;
     }
@@ -506,6 +517,16 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
             } break;
         }
         return true;
+    }
+
+    // bhv_wooden_post_update
+    // Spawn 5 coins when fully pounded
+    if (func == bhv_wooden_post_update) {
+        if (!(o->oBehParams & WOODEN_POST_BP_NO_COINS_MASK) && o->oWoodenPostOffsetY <= -190.f) {
+            obj_spawn_loot_yellow_coins(o, 5, 20.f);
+            set_object_respawn_info_bits(o, 1);
+        }
+        return false;
     }
 
     // bhv_boo_loop

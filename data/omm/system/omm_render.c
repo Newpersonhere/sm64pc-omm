@@ -189,9 +189,12 @@ void omm_render_create_dl_ortho_matrix() {
 //
 
 // Commons
+#define OMM_INVSQRT2                                        0.70710678118
 #define OMM_HUD_DISPLAY_FLAG_POWER_UP                       HUD_DISPLAY_FLAG_STAR_COUNT
 #define OMM_HUD_DISPLAY_FLAG_VIBE_GAUGE                     HUD_DISPLAY_FLAG_CAMERA_AND_POWER
 #define OMM_HUD_DISPLAY_FLAG_O2_METER                       HUD_DISPLAY_FLAG_CAMERA_AND_POWER
+#define OMM_HUD_DISPLAY_FLAG_RED_COINS_RADAR                HUD_DISPLAY_FLAG_STAR_COUNT
+#define OMM_HUD_DISPLAY_FLAG_SPARKLY_STARS_CONDITIONS       HUD_DISPLAY_FLAG_STAR_COUNT
 #define OMM_RENDER_GLYPH_SIZE                               (12)
 #define OMM_RENDER_LEFT_X                                   GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(16)
 #define OMM_RENDER_RIGHT_X                                  GFX_DIMENSIONS_RECT_FROM_RIGHT_EDGE(16)
@@ -286,6 +289,17 @@ void omm_render_create_dl_ortho_matrix() {
 #define OMM_RENDER_CAMERA_OFFSET_X                          (OMM_RENDER_GLYPH_SIZE)
 #define OMM_RENDER_CAMERA_OFFSET_Y                          ((OMM_RENDER_GLYPH_SIZE * 3) / 4)
 #define OMM_RENDER_CAMERA_STEP_Y                            (OMM_RENDER_GLYPH_SIZE / 4)
+
+// Red coins radar
+#define OMM_RENDER_RADAR_X                                  (OMM_RENDER_LEFT_X + OMM_RENDER_RADAR_RADIUS + OMM_RENDER_RADAR_ARROW_SIZE / 2)
+#define OMM_RENDER_RADAR_Y                                  (19 + OMM_RENDER_RADAR_RADIUS)
+#define OMM_RENDER_RADAR_COIN_SIZE                          (OMM_RENDER_GLYPH_SIZE)
+#define OMM_RENDER_RADAR_ARROW_SIZE                         ((OMM_RENDER_GLYPH_SIZE * 7) / 8)
+#define OMM_RENDER_RADAR_RADIUS                             (((OMM_RENDER_RADAR_COIN_SIZE + OMM_RENDER_RADAR_ARROW_SIZE) * 7) / 10)
+
+// Red coins
+#define OMM_RENDER_RED_COINS_X                              (OMM_RENDER_RIGHT_X - (3 * OMM_RENDER_GLYPH_SIZE) - (4 * OMM_RENDER_NUMBER_OFFSET_X))
+#define OMM_RENDER_RED_COINS_Y                              (19)
 
 // Timer
 #define OMM_RENDER_TIMER_OFFSET_X                           (OMM_RENDER_NUMBER_OFFSET_X)
@@ -441,7 +455,7 @@ static OmmHudTimer sOmmHudCoinsTimer  = { 0, 1, +1, +2, -60, 30,  0, 20, 0x00, 0
 static OmmHudTimer sOmmHudVibeTimer   = { 0, 1, +1, +2, -45, 30,  0, 20, 0x00, 0xFF, 0, 0 };
 static OmmHudTimer sOmmHudHealthTimer = { 0, 1, +1, +2, -60, 30,  0, 20, 0x40, 0xFF, 0, 0 };
 static OmmHudTimer sOmmHudOxygenTimer = { 1, 0, -1, +1,   0, 30, 24, 30, 0x00, 0xFF, 0, 0 };
-static OmmHudTimer sOmmHudCameraTimer = { 0, 1, +1, +2, -45, 30,  0, 20, 0x00, 0xFF, 0, 0 };
+static OmmHudTimer sOmmHudCameraTimer = { 0, 0, +1, +2, -45, 30,  0, 20, 0x00, 0xFF, 0, 0 };
 
 static bool should_instant_fade_in(struct MarioState *m, OmmHudTimer *timer) {
     bool res = false; 
@@ -470,8 +484,13 @@ static u8 omm_render_hud_update_timer_and_get_alpha(struct MarioState *m, OmmHud
     if (gOmmExtrasVanishingHUD || timer->alwaysActive) {
         
         // Pause
-        if (timer->displayOnPause && (gMenuMode == 0 || gMenuMode == 1)) {
-            return 0xFF;
+        if (gMenuMode == 0 || gMenuMode == 1) {
+            if (timer->displayOnPause) {
+                return 0xFF;
+            }
+            if (!timer->alwaysActive) {
+                return 0x00;
+            }
         }
 
         // Instant fade-in, fade cooldown, fade-in or fade-out
@@ -547,7 +566,7 @@ static void omm_render_freeze() {
 
 static void omm_render_dark_mode() {
 #if OMM_CODE_SPARKLY
-    if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_HARD) && omm_sparkly_context_is_state_ok() && gCurrLevelNum == LEVEL_JRB) {
+    if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_HARD) && omm_sparkly_context_is_state_ok() && gCurrLevelNum == LEVEL_JRB && gCurrAreaIndex == 1) {
         OMM_RENDER_ENABLE_ALPHA;
         omm_render_create_dl_ortho_matrix();
         gSPDisplayList(gDisplayListHead++, sOmmDarkModeDisplayList);
@@ -1373,93 +1392,155 @@ static void omm_render_hud_values(struct MarioState *m) {
     }
 
 #if OMM_CODE_SPARKLY
-    // Remaining flames (Sparkly Stars - HMC Hard / Basement Lunatic)
-    if ((omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_HARD) && gCurrLevelNum == LEVEL_HMC) ||
-        (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_LUNATIC) && gCurrLevelNum == LEVEL_CASTLE && gCurrAreaIndex == 3)) {
-        if (omm_sparkly_context_is_state_ok()) {
-            s32 flames = omm_sparkly_context_get_remaining_flames();
-            if (flames > 0) {
-                s32 flameW = 20;
-                s32 flameX = OMM_RENDER_VALUE_GLYPH_X - (flameW - OMM_RENDER_GLYPH_SIZE) / 2;
-                s32 flameY = y - (flameW - OMM_RENDER_GLYPH_SIZE) / 2;
-                s32 flameT = (gGlobalTimer / 2) % 8;
+    if (gHudDisplay.flags & OMM_HUD_DISPLAY_FLAG_SPARKLY_STARS_CONDITIONS) {
 
-                // Render the animated flame
-                omm_render_texrect(
-                    flameX, flameY, flameW, flameW,
-                    G_IM_FMT_IA, G_IM_SIZ_16b, 32, 32, 
-                    0xFF, 0x00, 0x00, 0xFF,
-                    (const void *) (OMM_ARRAY_OF(const Gfx *) {
-                        flame_seg3_dl_0301B3B0,
-                        flame_seg3_dl_0301B3C8,
-                        flame_seg3_dl_0301B3E0,
-                        flame_seg3_dl_0301B3F8,
-                        flame_seg3_dl_0301B410,
-                        flame_seg3_dl_0301B428,
-                        flame_seg3_dl_0301B440,
-                        flame_seg3_dl_0301B458
-                    })[flameT][1].words.w1
-                );
+        // Remaining flames (Sparkly Stars - HMC Hard / Basement Lunatic)
+        if ((omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_HARD) && gCurrLevelNum == LEVEL_HMC) ||
+            (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_LUNATIC) && gCurrLevelNum == LEVEL_CASTLE && gCurrAreaIndex == 3)) {
+            if (omm_sparkly_context_is_state_ok()) {
+                s32 flames = omm_sparkly_context_get_remaining_flames();
+                if (flames > 0) {
+                    s32 flameW = 20;
+                    s32 flameX = OMM_RENDER_VALUE_GLYPH_X - (flameW - OMM_RENDER_GLYPH_SIZE) / 2;
+                    s32 flameY = y - (flameW - OMM_RENDER_GLYPH_SIZE) / 2;
+                    s32 flameT = (gGlobalTimer / 2) % 8;
 
-                // Render the number
-                omm_render_number_hud(flames, 3, OMM_RENDER_VALUE_NUMBER_X, y, 0xFF, true, false);
-                y -= OMM_RENDER_OFFSET_Y;
+                    // Render the animated flame
+                    omm_render_texrect(
+                        flameX, flameY, flameW, flameW,
+                        G_IM_FMT_IA, G_IM_SIZ_16b, 32, 32, 
+                        0xFF, 0x00, 0x00, 0xFF,
+                        (const void *) (OMM_ARRAY_OF(const Gfx *) {
+                            flame_seg3_dl_0301B3B0,
+                            flame_seg3_dl_0301B3C8,
+                            flame_seg3_dl_0301B3E0,
+                            flame_seg3_dl_0301B3F8,
+                            flame_seg3_dl_0301B410,
+                            flame_seg3_dl_0301B428,
+                            flame_seg3_dl_0301B440,
+                            flame_seg3_dl_0301B458
+                        })[flameT][1].words.w1
+                    );
+
+                    // Render the number
+                    omm_render_number_hud(flames, 3, OMM_RENDER_VALUE_NUMBER_X, y, 0xFF, true, false);
+                    y -= OMM_RENDER_OFFSET_Y;
+                }
             }
         }
-    }
 
-    // Remaining boxes (Sparkly Stars - TTC Normal)
-    if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_NORMAL) && gCurrLevelNum == LEVEL_TTC) {
-        if (omm_sparkly_context_is_state_ok()) {
-            s32 boxes = omm_sparkly_context_get_remaining_boxes();
-            if (boxes > 0) {
-                s32 boxW = OMM_RENDER_GLYPH_SIZE;
-                s32 boxX = OMM_RENDER_VALUE_GLYPH_X - (boxW - OMM_RENDER_GLYPH_SIZE) / 2;
-                s32 boxY = y - (boxW - OMM_RENDER_GLYPH_SIZE) / 2;
+        // Remaining boxes (Sparkly Stars - TTC Normal)
+        if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_NORMAL) && gCurrLevelNum == LEVEL_TTC) {
+            if (omm_sparkly_context_is_state_ok()) {
+                s32 boxes = omm_sparkly_context_get_remaining_boxes();
+                if (boxes > 0) {
+                    s32 boxW = OMM_RENDER_GLYPH_SIZE;
+                    s32 boxX = OMM_RENDER_VALUE_GLYPH_X - (boxW - OMM_RENDER_GLYPH_SIZE) / 2;
+                    s32 boxY = y - (boxW - OMM_RENDER_GLYPH_SIZE) / 2;
 
-                // Render the box icon
+                    // Render the box icon
+                    omm_render_texrect(
+                        boxX, boxY, boxW, boxW,
+                        G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 32, 
+                        0xFF, 0xFF, 0xFF, 0xFF,
+                        (const void *) exclamation_box_seg8_dl_08019438[1].words.w1
+                    );
+
+                    // Render the number
+                    omm_render_number_hud(boxes, 3, OMM_RENDER_VALUE_NUMBER_X, y, 0xFF, true, false);
+                    y -= OMM_RENDER_OFFSET_Y;
+                }
+            }
+        }
+
+        // Remaining 1-up mushrooms (Sparkly Stars - BITFS Normal / RR Hard)
+        s32 mushroomCount = 0;
+        if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_NORMAL) && gCurrLevelNum == LEVEL_BITFS) {
+            mushroomCount = OMM_SPARKLY_BITFS_1UP_MUSHROOM_COUNT;
+        } else if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_HARD) && gCurrLevelNum == LEVEL_RR) {
+            mushroomCount = OMM_SPARKLY_RR_1UP_MUSHROOM_COUNT;
+        }
+        if (mushroomCount > 0 && omm_sparkly_context_is_state_ok()) {
+            s32 mushrooms = mushroomCount - omm_sparkly_context_get_counter(OMM_SPARKLY_CONTEXT_COUNTER_1UP_MUSHROOMS);
+            if (mushrooms > 0) {
+                s32 mushroomW = OMM_RENDER_GLYPH_SIZE;
+                s32 mushroomX = OMM_RENDER_VALUE_GLYPH_X - (mushroomW - OMM_RENDER_GLYPH_SIZE) / 2;
+                s32 mushroomY = y - (mushroomW - OMM_RENDER_GLYPH_SIZE) / 2;
+
+                // Render the mushroom icon
                 omm_render_texrect(
-                    boxX, boxY, boxW, boxW,
-                    G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 32, 
+                    mushroomX, mushroomY, mushroomW, mushroomW,
+                    G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 64, 
                     0xFF, 0xFF, 0xFF, 0xFF,
-                    (const void *) exclamation_box_seg8_dl_08019438[1].words.w1
+                    (const void *) mushroom_1up_seg3_dl_0302A628[0].words.w1
                 );
 
                 // Render the number
-                omm_render_number_hud(boxes, 3, OMM_RENDER_VALUE_NUMBER_X, y, 0xFF, true, false);
+                omm_render_number_hud(mushrooms, 3, OMM_RENDER_VALUE_NUMBER_X, y, 0xFF, true, false);
                 y -= OMM_RENDER_OFFSET_Y;
             }
-        }
-    }
-
-    // Remaining 1-up mushrooms (Sparkly Stars - BITFS Normal / RR Hard)
-    s32 mushroomCount = 0;
-    if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_NORMAL) && gCurrLevelNum == LEVEL_BITFS) {
-        mushroomCount = OMM_SPARKLY_BITFS_1UP_MUSHROOM_COUNT;
-    } else if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_HARD) && gCurrLevelNum == LEVEL_RR) {
-        mushroomCount = OMM_SPARKLY_RR_1UP_MUSHROOM_COUNT;
-    }
-    if (mushroomCount > 0 && omm_sparkly_context_is_state_ok()) {
-        s32 mushrooms = mushroomCount - omm_sparkly_context_get_counter(OMM_SPARKLY_CONTEXT_COUNTER_1UP_MUSHROOMS);
-        if (mushrooms > 0) {
-            s32 mushroomW = OMM_RENDER_GLYPH_SIZE;
-            s32 mushroomX = OMM_RENDER_VALUE_GLYPH_X - (mushroomW - OMM_RENDER_GLYPH_SIZE) / 2;
-            s32 mushroomY = y - (mushroomW - OMM_RENDER_GLYPH_SIZE) / 2;
-
-            // Render the mushroom icon
-            omm_render_texrect(
-                mushroomX, mushroomY, mushroomW, mushroomW,
-                G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 64, 
-                0xFF, 0xFF, 0xFF, 0xFF,
-                (const void *) mushroom_1up_seg3_dl_0302A628[0].words.w1
-            );
-
-            // Render the number
-            omm_render_number_hud(mushrooms, 3, OMM_RENDER_VALUE_NUMBER_X, y, 0xFF, true, false);
-            y -= OMM_RENDER_OFFSET_Y;
         }
     }
 #endif
+}
+
+//
+// Red coins radar
+//
+
+static void omm_render_hud_red_coins_radar(struct MarioState *m) {
+    if (gOmmExtrasRedCoinsRadar && (gHudDisplay.flags & OMM_HUD_DISPLAY_FLAG_RED_COINS_RADAR)) {
+        struct Object *redCoin = obj_get_nearest_with_behavior(m->marioObj, bhvRedCoin);
+        if (redCoin) {
+            s16 angle = atan2s(redCoin->oPosZ - m->pos[2], redCoin->oPosX - m->pos[0]) - atan2s(m->pos[2] - gCamera->pos[2], m->pos[0] - gCamera->pos[0]);
+            static Vtx sRadarArrowVtx[4] = {
+                { { { 0, 0, 0 }, 0, { 0, 4096 }, { 0xFF, 0xFF, 0xFF, 0xFF } } },
+                { { { 0, 0, 0 }, 0, { 4096, 4096 }, { 0xFF, 0xFF, 0xFF, 0xFF } } },
+                { { { 0, 0, 0 }, 0, { 4096, 0 }, { 0xFF, 0xFF, 0xFF, 0xFF } } },
+                { { { 0, 0, 0 }, 0, { 0, 0 }, { 0xFF, 0xFF, 0xFF, 0xFF } } }
+            };
+            for (s32 i = 0; i != 4; ++i) {
+                s16 a = angle + ((i * 0x4000) - 0x6000);
+                sRadarArrowVtx[i].v.ob[0] = OMM_RENDER_RADAR_X + OMM_RENDER_RADAR_RADIUS * coss(angle + 0x4000) + OMM_RENDER_RADAR_ARROW_SIZE * OMM_INVSQRT2 * coss(a);
+                sRadarArrowVtx[i].v.ob[1] = OMM_RENDER_RADAR_Y + OMM_RENDER_RADAR_RADIUS * sins(angle + 0x4000) + OMM_RENDER_RADAR_ARROW_SIZE * OMM_INVSQRT2 * sins(a);
+            }
+
+            // Red coin icon
+            omm_render_create_dl_ortho_matrix();
+            omm_render_texrect(
+                OMM_RENDER_RADAR_X - OMM_RENDER_RADAR_COIN_SIZE / 2,
+                OMM_RENDER_RADAR_Y - OMM_RENDER_RADAR_COIN_SIZE / 2,
+                OMM_RENDER_RADAR_COIN_SIZE,
+                OMM_RENDER_RADAR_COIN_SIZE,
+                G_IM_FMT_IA, G_IM_SIZ_16b, 32, 32, 
+                0xFF, 0x00, 0x00, 0xFF,
+                (const void *) (OMM_ARRAY_OF(const Gfx *) {
+                    coin_seg3_dl_03007940,
+                    coin_seg3_dl_03007968,
+                    coin_seg3_dl_03007990,
+                    coin_seg3_dl_030079B8
+                })[(gGlobalTimer >> 1) & 3][1].words.w1
+            );
+            
+            // Red coin arrow
+            gDPSetTexturePersp(gDisplayListHead++, G_TP_NONE);
+            gDPSetRenderMode(gDisplayListHead++, G_RM_AA_XLU_SURF, G_RM_AA_XLU_SURF2);
+            gDPSetCombineLERP(gDisplayListHead++, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, ENVIRONMENT, 0);
+            gDPSetEnvColor(gDisplayListHead++, 0xFF, 0xFF, 0xFF, 0xFF);
+            gDPSetTextureFilter(gDisplayListHead++, G_TF_POINT);
+            gSPTexture(gDisplayListHead++, 0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON);
+            gDPPipeSync(gDisplayListHead++);
+            gDPLoadTextureBlock(gDisplayListHead++, OMM_TEXTURE_HUD_ARROW, G_IM_FMT_RGBA, G_IM_SIZ_16b, 128, 128, 0, G_TX_CLAMP, G_TX_CLAMP, 0, 0, 0, 0);
+            gSPVertex(gDisplayListHead++, sRadarArrowVtx, 4, 0);
+            gSP2Triangles(gDisplayListHead++, 0, 1, 2, 0, 0, 2, 3, 0);
+            gDPSetTexturePersp(gDisplayListHead++, G_TP_PERSP);
+            gDPSetRenderMode(gDisplayListHead++, G_RM_AA_ZB_OPA_SURF, G_RM_AA_ZB_OPA_SURF2);
+            gDPSetCombineLERP(gDisplayListHead++, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE);
+            gDPSetEnvColor(gDisplayListHead++, 0xFF, 0xFF, 0xFF, 0xFF);
+            gDPSetTextureFilter(gDisplayListHead++, G_TF_BILERP);
+            gSPTexture(gDisplayListHead++, 0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF);
+        }
+    }
 }
 
 //
@@ -1499,6 +1580,7 @@ void omm_render_hud() {
         omm_render_hud_values(m);
         omm_render_hud_camera(m);
         omm_render_hud_timer();
+        omm_render_hud_red_coins_radar(m);
     }
 }
 
@@ -1578,8 +1660,29 @@ static void omm_render_pause_course() {
     }
 
     // Red coins
-    render_pause_red_coins();
-
+    s32 numRedCoins = omm_level_get_num_red_coins(gCurrLevelNum, gCurrAreaIndex);
+    if (numRedCoins > 0) {
+        s32 redCoinsCollected = numRedCoins - obj_get_count_with_behavior(bhvRedCoin);
+        s32 x = OMM_RENDER_RED_COINS_X;
+        omm_render_texrect(
+            x, OMM_RENDER_RED_COINS_Y, OMM_RENDER_GLYPH_SIZE, OMM_RENDER_GLYPH_SIZE,
+            G_IM_FMT_IA, G_IM_SIZ_16b, 32, 32, 
+            0xFF, 0x00, 0x00, 0xFF,
+            (const void *) (OMM_ARRAY_OF(const Gfx *) {
+                coin_seg3_dl_03007940,
+                coin_seg3_dl_03007968,
+                coin_seg3_dl_03007990,
+                coin_seg3_dl_030079B8
+            })[(gGlobalTimer >> 1) & 3][1].words.w1
+        );
+        x += 2 * OMM_RENDER_NUMBER_OFFSET_X;
+        omm_render_number_hud(redCoinsCollected, 2, x, OMM_RENDER_RED_COINS_Y, sOmmDialogTextAlpha, true, false);
+        x += OMM_RENDER_NUMBER_OFFSET_X + OMM_RENDER_GLYPH_SIZE;
+        omm_render_glyph_hud(x, OMM_RENDER_RED_COINS_Y, 0xFF, 0xFF, 0xFF, sOmmDialogTextAlpha, OMM_TEXTURE_HUD_SLASH, false);
+        x += OMM_RENDER_GLYPH_SIZE;
+        omm_render_number_hud(numRedCoins, 2, x, OMM_RENDER_RED_COINS_Y, sOmmDialogTextAlpha, true, false);
+    }
+    
     // Collectibles
     omm_render_hud_collectibles();
 

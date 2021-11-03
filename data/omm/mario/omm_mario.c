@@ -807,17 +807,6 @@ void omm_mario_update_action(struct MarioState *m) {
     }
 }
 
-void omm_mario_update_anim_gfx(struct MarioState *m) {
-    switch (m->marioObj->header.gfx.mAnimInfo.animID) {
-        case MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN: {
-            m->marioObj->header.gfx.pos[1] += m->marioObj->oScaleY * (
-                (60.f * (m->action != ACT_JUMBO_STAR_CUTSCENE)) + 
-                (30.f * OMM_PLAYER_IS_PEACH)
-            );
-        } break;
-    }
-}
-
 void omm_mario_update_camera_mode(struct MarioState *m) {
     if (!BETTER_CAM_IS_ENABLED && m->area && m->area->camera) {
         
@@ -1076,7 +1065,6 @@ void bhv_mario_update() {
     m->numStars = save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1);
 
     // Update Mario object
-    omm_mario_update_anim_gfx(m);
     obj_set_pos(gMarioObject, m->pos[0], m->pos[1], m->pos[2]);
     obj_set_vel(gMarioObject, m->vel[0], m->vel[1], m->vel[2]);
     obj_set_angle(gMarioObject, gMarioObject->header.gfx.angle[0], gMarioObject->header.gfx.angle[1], gMarioObject->header.gfx.angle[2]);

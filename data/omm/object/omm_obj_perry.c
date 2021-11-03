@@ -2243,28 +2243,22 @@ const GeoLayout omm_geo_perry[] = {
 // Behavior
 //
 
-static Vec3f sOmmPeachArm;
-static Vec3f sOmmPeachWrist;
-static Vec3f sOmmPeachDelta;
-static Vec3s sOmmPeachAngle;
-static Vec3f sOmmPeachHand;
-
-static void omm_bhv_perry_update_peach_values(struct MarioState *m) {
-    vec3f_copy(sOmmPeachArm, omm_geo_get_marios_forearm_pos(false));
-    vec3f_copy(sOmmPeachWrist, omm_geo_get_marios_hand_pos(false));
-    vec3f_dif(sOmmPeachDelta, sOmmPeachWrist, sOmmPeachArm);
-    vec3s_set(sOmmPeachAngle, atan2s(sqrtf(omm_sqr_f(sOmmPeachDelta[0]) + omm_sqr_f(sOmmPeachDelta[2])), sOmmPeachDelta[1]) - 0x4000, atan2s(sOmmPeachDelta[2], sOmmPeachDelta[0]) + 0x8000, 0);
-    vec3f_copy(sOmmPeachHand, sOmmPeachDelta);
-    vec3f_mul(sOmmPeachHand, 8.f / vec3f_length(sOmmPeachDelta));
-    vec3f_mult(sOmmPeachHand, sOmmPeachHand, &m->marioObj->oScaleX);
-    vec3f_add(sOmmPeachHand, sOmmPeachWrist);
-}
-
 static void omm_bhv_perry_update() {
     struct MarioState *m = gMarioState;
     struct Object *o = gCurrentObject;
 
-    // Attack type
+    // Compute Peach's body values
+    Vec3f peachArm, peachWrist, peachHand, peachDelta; Vec3s peachAngle;
+    vec3f_copy(peachArm, omm_geo_get_marios_forearm_pos(false));
+    vec3f_copy(peachWrist, omm_geo_get_marios_hand_pos(false));
+    vec3f_dif(peachDelta, peachWrist, peachArm);
+    vec3s_set(peachAngle, atan2s(sqrtf(omm_sqr_f(peachDelta[0]) + omm_sqr_f(peachDelta[2])), peachDelta[1]) - 0x4000, atan2s(peachDelta[2], peachDelta[0]) + 0x8000, 0);
+    vec3f_copy(peachHand, peachDelta);
+    vec3f_mul(peachHand, 8.f / vec3f_length(peachDelta));
+    vec3f_mult(peachHand, peachHand, &m->marioObj->oScaleX);
+    vec3f_add(peachHand, peachWrist);
+
+    // Determine attack type
     u32 attackFlags = 0;
     switch (gOmmData->mario->peach.vibeType) {
         case OMM_PEACH_VIBE_TYPE_RAGE:  attackFlags = OBJ_INT_PRESET_PERRY_ATTACK_RAGE; break;
@@ -2273,71 +2267,50 @@ static void omm_bhv_perry_update() {
     }
 
     // Compute Perry's attributes based on Peach's current action
-    static struct { Vec3f coord; Vec3s angle; f32 scale; u32 flags; } p;
+    f32 perryScale = 0.f;
+    u32 perryFlags = 0;
     switch (m->action) {
 
         // Glide
         case ACT_OMM_PEACH_GLIDE: {
-            omm_bhv_perry_update_peach_values(m);
-            vec3f_copy(p.coord, sOmmPeachHand);
-            vec3s_set(p.angle, 0, m->faceAngle[1] + 0x4000, 0);
-            p.scale = omm_min_f(m->actionTimer / 6.f, 1.f);
-            p.flags = OBJ_INT_PRESET_PERRY_COLLECT | OBJ_INT_PERRY_OPEN;
+            vec3s_set(peachAngle, 0, m->faceAngle[1] + 0x4000, 0);
+            perryScale = omm_min_f(m->actionTimer / 6.f, 1.f);
+            perryFlags = OBJ_INT_PRESET_PERRY_COLLECT | OBJ_INT_PERRY_OPEN;
         } break;
 
         // Attack (ground)
         case ACT_OMM_PEACH_ATTACK_GROUND: {
-            omm_bhv_perry_update_peach_values(m);
-            vec3f_copy(p.coord, sOmmPeachHand);
-            vec3s_copy(p.angle, sOmmPeachAngle);
-            p.scale = omm_clamp_0_1_f((m->actionTimer - 2) / 4.f);
-            p.flags = attackFlags | (OBJ_INT_GRAB_OBJECTS * (m->actionArg < 4)) | (OBJ_INT_PERRY_TRAIL * (m->actionState == 2));
+            perryScale = omm_clamp_0_1_f((m->actionTimer - 2) / 4.f);
+            perryFlags = attackFlags | (OBJ_INT_GRAB_OBJECTS * (m->actionArg < 4)) | (OBJ_INT_PERRY_TRAIL * (m->actionState == 2));
         } break;
 
         // Attack (fast)
         case ACT_OMM_PEACH_ATTACK_FAST: {
-            omm_bhv_perry_update_peach_values(m);
-            vec3f_copy(p.coord, sOmmPeachHand);
-            vec3s_copy(p.angle, sOmmPeachAngle);
-            p.scale = omm_clamp_0_1_f((m->actionTimer - 2) / 4.f);
-            p.flags = attackFlags | OBJ_INT_PERRY_TRAIL;
+            perryScale = omm_clamp_0_1_f((m->actionTimer - 2) / 4.f);
+            perryFlags = attackFlags | OBJ_INT_PERRY_TRAIL;
         } break;
 
         // Attack (air)
         case ACT_OMM_PEACH_ATTACK_AIR: {
             if (m->flags & MARIO_KICKING) {
-                omm_bhv_perry_update_peach_values(m);
-                vec3f_copy(p.coord, sOmmPeachHand);
-                vec3s_copy(p.angle, sOmmPeachAngle);
-                p.scale = omm_clamp_0_1_f((m->actionTimer - 2) / 4.f);
-                p.flags = attackFlags | OBJ_INT_PERRY_TRAIL;
-            } else {
-                vec3f_set(p.coord, 0, 0, 0);
-                vec3s_set(p.angle, 0, 0, 0);
-                p.scale = 0;
-                p.flags = 0;
+                perryScale = omm_clamp_0_1_f((m->actionTimer - 2) / 4.f);
+                perryFlags = attackFlags | OBJ_INT_PERRY_TRAIL;
             }
-        } break;
-
-        // No Perry
-        default: {
-            p.scale = 0;
-            p.flags = 0;
         } break;
     }
 
     // Update Perry's position, angle, scale, opacity and more
-    obj_set_pos(o, p.coord[0], p.coord[1], p.coord[2]);
-    obj_set_angle(o, p.angle[0], p.angle[1], p.angle[2]);
-    obj_scale_xyz(o, p.scale * m->marioObj->oScaleX, p.scale * m->marioObj->oScaleY, p.scale * m->marioObj->oScaleZ);
+    obj_set_pos(o, peachHand[0], peachHand[1], peachHand[2]);
+    obj_set_angle(o, peachAngle[0], peachAngle[1], peachAngle[2]);
+    obj_scale_xyz(o, perryScale * m->marioObj->oScaleX, perryScale * m->marioObj->oScaleY, perryScale * m->marioObj->oScaleZ);
     obj_set_params(o, 0, 0, 0, 0, 0);
     obj_reset_hitbox(o, 0, 0, 0, 0, 0, 0);
-    o->oAction = ((p.flags & OBJ_INT_PERRY_OPEN) != 0);
-    o->oOpacity = (p.scale != 0.f) * ((m->marioBodyState->modelState & 0x100) ? (m->marioBodyState->modelState & 0xFF) : 0xFF) * !(m->marioObj->oNodeFlags & GRAPH_RENDER_INVISIBLE);
-    o->oPerryFlags = p.flags;
+    o->oAction = ((perryFlags & OBJ_INT_PERRY_OPEN) != 0);
+    o->oOpacity = (perryScale != 0.f) * ((m->marioBodyState->modelState & 0x100) ? (m->marioBodyState->modelState & 0xFF) : 0xFF) * !(m->marioObj->oNodeFlags & GRAPH_RENDER_INVISIBLE);
+    o->oPerryFlags = perryFlags;
 
     // Hitbox and interactions
-    if (p.scale > 0.f) {
+    if (perryScale > 0.f) {
 
         // Update Perry's hitbox
         Vec3f d = { 0, OMM_PEACH_PERRY_HITBOX, 0 };
@@ -2353,7 +2326,7 @@ static void omm_bhv_perry_update() {
         }
 
         // Reset values
-        obj_set_pos(o, p.coord[0], p.coord[1], p.coord[2]);
+        obj_set_pos(o, peachHand[0], peachHand[1], peachHand[2]);
         obj_set_params(o, 0, 0, 0, 0, false);
         obj_reset_hitbox(o, 0, 0, 0, 0, 0, 0);
     }

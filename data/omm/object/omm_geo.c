@@ -141,6 +141,15 @@ void omm_geo_fix_marios_anim_translation_y(struct Object *o, struct GraphNodeAni
                 s32 dta = (omm_invlerp_0_1_f(dty, 60.f, 150.f) * 0x8000) - 0x4000;
                 *translationY -= ((f32) node->translation[1]) * (1.f - ((sins(dta) + 1.f) / 2.f));
             }
+            
+            // Jumbo star cutscene animation offset
+            if (gMarioObject->header.gfx.mAnimInfo.animID == MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN) {
+                *translationY += (
+                    (240.f * (gMarioState->action != ACT_JUMBO_STAR_CUTSCENE)) + 
+                    (120.f * OMM_PLAYER_IS_PEACH)
+                );
+            }
+            
             sMarioRootNodeState++;
             sMarioRootFlag = true;
         }

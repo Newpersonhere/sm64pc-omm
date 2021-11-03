@@ -88,6 +88,7 @@ DEFINE_TOGGLE_SC(gOmmExtrasCappyEyesOnMariosCap, 1); // Enabled
 DEFINE_TOGGLE_SC(gOmmExtrasColoredStars, 1);         // Enabled
 DEFINE_TOGGLE_SC(gOmmExtrasVanishingHUD, 1);         // Enabled
 DEFINE_TOGGLE_SC(gOmmExtrasRevealSecrets, 0);        // Disabled
+DEFINE_TOGGLE_SC(gOmmExtrasRedCoinsRadar, 0);        // Disabled
 DEFINE_TOGGLE_SC(gOmmExtrasInvisibleMode, 0);        // Disabled
 DEFINE_TOGGLE_SC(gOmmExtrasCrystalStarsReward, 0);   // Disabled
 
@@ -426,12 +427,13 @@ void omm_opt_init() {
 #endif
                 omm_opt_make_toggle(OMM_TEXT_OPT_VANISHING_HUD, &gOmmExtrasVanishingHUD),
                 omm_opt_make_toggle(OMM_TEXT_OPT_REVEAL_SECRETS, &gOmmExtrasRevealSecrets),
+                omm_opt_make_toggle(OMM_TEXT_OPT_RED_COINS_RADAR, &gOmmExtrasRedCoinsRadar),
                 omm_opt_make_toggle(OMM_TEXT_OPT_INVISIBLE_MODE, &gOmmExtrasInvisibleMode),
                 omm_opt_make_toggle(OMM_TEXT_OPT_CRYSTAL_STARS_REWARD, &gOmmExtrasCrystalStarsReward),
 #if defined(SMMS)
-            ), 4 + omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD)),
-#else
             ), 5 + omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD)),
+#else
+            ), 6 + omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD)),
 #endif
             omm_opt_make_submenu(OMM_TEXT_OPT_SHORTCUTS_LABEL, OMM_TEXT_OPT_SHORTCUTS_TITLE, options(
                 omm_opt_make_bind(OMM_TEXT_OPT_CHARACTER_LABEL, gOmmCharacterShortcuts),
@@ -568,6 +570,7 @@ OMM_ROUTINE_GFX(omm_opt_update_shortcuts) {
             CHECK_SHORTCUTS_UPDATE_TOGGLE(gOmmExtrasColoredStars, OMM_TEXT_OPT_COLORED_STARS);
             CHECK_SHORTCUTS_UPDATE_TOGGLE(gOmmExtrasVanishingHUD, OMM_TEXT_OPT_VANISHING_HUD);
             CHECK_SHORTCUTS_UPDATE_TOGGLE(gOmmExtrasRevealSecrets, OMM_TEXT_OPT_REVEAL_SECRETS);
+            CHECK_SHORTCUTS_UPDATE_TOGGLE(gOmmExtrasRedCoinsRadar, OMM_TEXT_OPT_RED_COINS_RADAR);
             CHECK_SHORTCUTS_UPDATE_TOGGLE(gOmmExtrasInvisibleMode, OMM_TEXT_OPT_INVISIBLE_MODE);
             CHECK_SHORTCUTS_UPDATE_TOGGLE(gOmmExtrasCrystalStarsReward, OMM_TEXT_OPT_CRYSTAL_STARS_REWARD);
         }

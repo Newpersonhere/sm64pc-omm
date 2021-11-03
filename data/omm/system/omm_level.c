@@ -32,6 +32,7 @@ typedef struct {
     OmmWarpData warps[0x100];
     s32 warpCount;
     s32 areas;
+    s32 redCoins[8];
 } OmmLevelData;
 
 static OmmLevelData sOmmLevelData[LEVEL_COUNT] = { 0 };
@@ -74,39 +75,35 @@ static s32 omm_level_preprocess_master_script(u8 type, void *cmd) {
     static s32 sLevelNum = -1;
     
     if (!sScriptExecLevelTable) {
-
-        // JUMP_LINK
-        if (type == 0x06) {
-            sScriptExecLevelTable = true;
-            return OMM_LEVEL_SCRIPT_CONTINUE;
+        switch (type) {
+            case 0x06: { // JUMP_LINK
+                sScriptExecLevelTable = true;
+                return OMM_LEVEL_SCRIPT_CONTINUE;
+            } break;
         }
-
     } else {
+        switch (type) {
+            case 0x00: { // EXECUTE
+                const LevelScript *script = (const LevelScript *) omm_level_cmd_get(cmd, 0x0C);
+                if (sLevelNum >= 0 && sLevelNum < LEVEL_COUNT && !sOmmLevelData[sLevelNum].script) {
+                    sOmmLevelData[sLevelNum].script = script;
+                }
+                sLevelNum = -1;
+                return OMM_LEVEL_SCRIPT_RETURN;
+            } break;
 
-        // JUMP_IF
-        if (type == 0x0C) {
-            sLevelNum = (s32) omm_level_cmd_get(cmd, 0x04);
-            return OMM_LEVEL_SCRIPT_CONTINUE;
-        }
+            case 0x02: { // EXIT
+                return OMM_LEVEL_SCRIPT_STOP;
+            } break;
 
-        // EXECUTE
-        if (type == 0x00) {
-            const LevelScript *script = (const LevelScript *) omm_level_cmd_get(cmd, 0x0C);
-            if (sLevelNum >= 0 && sLevelNum < LEVEL_COUNT && !sOmmLevelData[sLevelNum].script) {
-                sOmmLevelData[sLevelNum].script = script;
-            }
-            sLevelNum = -1;
-            return OMM_LEVEL_SCRIPT_RETURN;
-        }
+            case 0x03: { // SLEEP
+                return OMM_LEVEL_SCRIPT_STOP;
+            } break;
 
-        // EXIT
-        if (type == 0x02) {
-            return OMM_LEVEL_SCRIPT_STOP;
-        }
-
-        // SLEEP
-        if (type == 0x03) {
-            return OMM_LEVEL_SCRIPT_STOP;
+            case 0x0C: { // JUMP_IF
+                sLevelNum = (s32) omm_level_cmd_get(cmd, 0x04);
+                return OMM_LEVEL_SCRIPT_CONTINUE;
+            } break;
         }
     }
     return OMM_LEVEL_SCRIPT_CONTINUE;
@@ -115,48 +112,53 @@ static s32 omm_level_preprocess_master_script(u8 type, void *cmd) {
 static s32 sCurrentLevelNum;
 static s32 omm_level_fill_warp_data(u8 type, void *cmd) {
     static u8 sCurrentAreaIndex = 0;
+    switch (type) {
+        case 0x03:   // SLEEP
+        case 0x04: { // SLEEP_BEFORE_EXIT
+            return OMM_LEVEL_SCRIPT_STOP;
+        } break;
 
-    // AREA
-    if (type == 0x1F) {
-        sCurrentAreaIndex = (u8) omm_level_cmd_get(cmd, 2);
-        sOmmLevelData[sCurrentLevelNum].areas |= (1 << sCurrentAreaIndex);
-    }
+        case 0x1F: { // AREA
+            sCurrentAreaIndex = (u8) omm_level_cmd_get(cmd, 2);
+            sOmmLevelData[sCurrentLevelNum].areas |= (1 << sCurrentAreaIndex);
+        } break;
 
-    // OBJECT
-    else if (type == 0x24) {
-        const BehaviorScript *bhv = (const BehaviorScript *) omm_level_cmd_get(cmd, 20);
-        for (s32 i = 0; i < 20; ++i) {
-            if (sWarpBhvSpawnTable[i] == bhv) {
-                OmmWarpData *warp = omm_level_get_warp_data(sCurrentLevelNum, sCurrentAreaIndex, ((((u32) omm_level_cmd_get(cmd, 16)) >> 16) & 0xFF));
-                if (warp->type == -1) {
-                    warp->type = i;
-                    warp->x = (s16) omm_level_cmd_get(cmd, 4);
-                    warp->y = (s16) omm_level_cmd_get(cmd, 6);
-                    warp->z = (s16) omm_level_cmd_get(cmd, 8);
-                    warp->yaw = (s16) ((((s32) ((s16) omm_level_cmd_get(cmd, 12))) * 0x8000) / 180);
+        case 0x24: { // OBJECT
+            const BehaviorScript *bhv = (const BehaviorScript *) omm_level_cmd_get(cmd, 20);
+            sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex] += (bhv == bhvRedCoin);
+            for (s32 i = 0; i != 20; ++i) {
+                if (sWarpBhvSpawnTable[i] == bhv) {
+                    OmmWarpData *warp = omm_level_get_warp_data(sCurrentLevelNum, sCurrentAreaIndex, ((((u32) omm_level_cmd_get(cmd, 16)) >> 16) & 0xFF));
+                    if (warp->type == -1) {
+                        warp->type = i;
+                        warp->x = (s16) omm_level_cmd_get(cmd, 4);
+                        warp->y = (s16) omm_level_cmd_get(cmd, 6);
+                        warp->z = (s16) omm_level_cmd_get(cmd, 8);
+                        warp->yaw = (s16) ((((s32) ((s16) omm_level_cmd_get(cmd, 12))) * 0x8000) / 180);
+                    }
+                    break;
                 }
-                break;
             }
-        }
-    }
+        } break;
 
-    // WARP_NODE
-    // PAINTING_WARP_NODE
-    else if (type == 0x26 || type == 0x27) {
-        OmmWarpData *warp = omm_level_get_warp_data(sCurrentLevelNum, sCurrentAreaIndex, (u8) omm_level_cmd_get(cmd, 2));
-        if (warp->destLevel == 0) {
-            warp->destLevel = (u8) omm_level_cmd_get(cmd, 3);
-            warp->destArea = (u8) omm_level_cmd_get(cmd, 4);
-            warp->destId = (u8) omm_level_cmd_get(cmd, 5);
-        }
-    }
+        case 0x26:   // WARP_NODE
+        case 0x27: { // PAINTING_WARP_NODE
+            OmmWarpData *warp = omm_level_get_warp_data(sCurrentLevelNum, sCurrentAreaIndex, (u8) omm_level_cmd_get(cmd, 2));
+            if (warp->destLevel == 0) {
+                warp->destLevel = (u8) omm_level_cmd_get(cmd, 3);
+                warp->destArea = (u8) omm_level_cmd_get(cmd, 4);
+                warp->destId = (u8) omm_level_cmd_get(cmd, 5);
+            }
+        } break;
 
-    // SLEEP
-    // SLEEP_BEFORE_EXIT
-    else if (type == 0x03 || type == 0x04) {
-        return OMM_LEVEL_SCRIPT_STOP;
+        case 0x39: { // MACRO_OBJECTS
+            MacroObject *data = (MacroObject *) omm_level_cmd_get(cmd, 4);
+            for (; *data != MACRO_OBJECT_END(); data += 5) {
+                s32 presetId = (s32) ((data[0] & 0x1FF) - 0x1F);
+                sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex] += (presetId == macro_red_coin);
+            }
+        } break;
     }
-
     return OMM_LEVEL_SCRIPT_CONTINUE;
 }
 
@@ -170,6 +172,7 @@ static void omm_level_init() {
         // Level warps
         for (sCurrentLevelNum = 0; sCurrentLevelNum != LEVEL_COUNT; ++sCurrentLevelNum) {
             if (sOmmLevelData[sCurrentLevelNum].script) {
+                OMM_MEMSET(sOmmLevelData[sCurrentLevelNum].redCoins, 0, sizeof(sOmmLevelData[sCurrentLevelNum].redCoins));
                 omm_level_parse_script(sOmmLevelData[sCurrentLevelNum].script, omm_level_fill_warp_data);
             }
         }
@@ -221,6 +224,11 @@ const LevelScript *omm_level_get_script(s32 level) {
 s32 omm_level_get_areas(s32 level) {
     omm_level_init();
     return sOmmLevelData[level].areas;
+}
+
+s32 omm_level_get_num_red_coins(s32 level, s32 area) {
+    omm_level_init();
+    return sOmmLevelData[level].redCoins[area];
 }
 
 u8 *omm_level_get_name(s32 level, bool decaps, bool num) {
