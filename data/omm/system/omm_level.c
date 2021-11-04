@@ -32,7 +32,7 @@ typedef struct {
     OmmWarpData warps[0x100];
     s32 warpCount;
     s32 areas;
-    s32 redCoins[8];
+    OmmArray redCoins[8];
 } OmmLevelData;
 
 static OmmLevelData sOmmLevelData[LEVEL_COUNT] = { 0 };
@@ -125,7 +125,15 @@ static s32 omm_level_fill_warp_data(u8 type, void *cmd) {
 
         case 0x24: { // OBJECT
             const BehaviorScript *bhv = (const BehaviorScript *) omm_level_cmd_get(cmd, 20);
-            sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex] += (bhv == bhvRedCoin);
+
+            // Red coin
+            if (bhv == bhvRedCoin) {
+                if (omm_array_find(sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex], cmd) == -1) {
+                    omm_array_add(sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex], cmd);
+                }
+            }
+
+            // Warps
             for (s32 i = 0; i != 20; ++i) {
                 if (sWarpBhvSpawnTable[i] == bhv) {
                     OmmWarpData *warp = omm_level_get_warp_data(sCurrentLevelNum, sCurrentAreaIndex, ((((u32) omm_level_cmd_get(cmd, 16)) >> 16) & 0xFF));
@@ -155,7 +163,13 @@ static s32 omm_level_fill_warp_data(u8 type, void *cmd) {
             MacroObject *data = (MacroObject *) omm_level_cmd_get(cmd, 4);
             for (; *data != MACRO_OBJECT_END(); data += 5) {
                 s32 presetId = (s32) ((data[0] & 0x1FF) - 0x1F);
-                sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex] += (presetId == macro_red_coin);
+
+                // Red coin
+                if (presetId == macro_red_coin) {
+                    if (omm_array_find(sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex], data) == -1) {
+                        omm_array_add(sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex], data);
+                    }
+                }
             }
         } break;
     }
@@ -172,7 +186,9 @@ static void omm_level_init() {
         // Level warps
         for (sCurrentLevelNum = 0; sCurrentLevelNum != LEVEL_COUNT; ++sCurrentLevelNum) {
             if (sOmmLevelData[sCurrentLevelNum].script) {
-                OMM_MEMSET(sOmmLevelData[sCurrentLevelNum].redCoins, 0, sizeof(sOmmLevelData[sCurrentLevelNum].redCoins));
+                for (s32 area = 0; area != 8; ++area) {
+                    sOmmLevelData[sCurrentLevelNum].redCoins[area] = omm_array_new(void *);
+                }
                 omm_level_parse_script(sOmmLevelData[sCurrentLevelNum].script, omm_level_fill_warp_data);
             }
         }
@@ -228,7 +244,7 @@ s32 omm_level_get_areas(s32 level) {
 
 s32 omm_level_get_num_red_coins(s32 level, s32 area) {
     omm_level_init();
-    return sOmmLevelData[level].redCoins[area];
+    return omm_array_count(sOmmLevelData[level].redCoins[area]);
 }
 
 u8 *omm_level_get_name(s32 level, bool decaps, bool num) {
