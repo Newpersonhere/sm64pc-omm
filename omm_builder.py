@@ -68,6 +68,21 @@ def get_omm_patch():
             return path
     return ""
 
+def get_omm_version(filepath):
+    version = {
+        "OMM_VERSION_NUMBER": "Unknown",
+        "OMM_VERSION_REVISION": "0",
+    }
+    if os.path.isfile(filepath):
+        with open(filepath, "r") as file:
+            data = file.read()
+            for k in version.keys():
+                i0 = data.find(k + " :=")
+                i1 = data.find("\n", i0)
+                if i0 != -1 and i1 != -1:
+                    version[k] = data[i0 + len(k + " :="):i1].lstrip(' \t\r\n').rstrip(' \t\r\n')
+    return version
+    
 def create_omm_patch_file():
     path = get_omm_patch()
     if len(path) > 0:
@@ -266,29 +281,28 @@ if __name__ == "__main__":
         sys.exit(0)
     
     # Retrieve OMM version number
+    versionLocal = get_omm_version(get_omm_patch() + "/omm.mk")
     os.system("wget --no-check-certificate --no-cache --no-cookies https://raw.githubusercontent.com/PeachyPeachSM64/sm64pc-omm/nightly/omm.mk -O omm.version -q || rm -f omm.version")
     if os.path.isfile("omm.version"):
-        with open("omm.version", "r") as file:
-            data = file.read()
-            i0 = data.find("OMM_VERSION_NUMBER :=")
-            i1 = data.find("\n", i0)
-            if i0 != -1 and i1 != -1:
-                OMM_VERSION = data[i0 + len("OMM_VERSION_NUMBER :="):i1].lstrip(' \t\r\n').rstrip(' \t\r\n')
-            else:
-                raise_error("Cannot find OMM_VERSION_NUMBER.", False)
-        OMM_PATCH = "omm." + OMM_VERSION
+        versionRemote = get_omm_version("omm.version")
+        if versionRemote["OMM_VERSION_NUMBER"] == "":
+            raise_error("Cannot retrieve remote OMM version number.", False)
+        OMM_VERSION_NUMBER = versionRemote["OMM_VERSION_NUMBER"]
+        OMM_VERSION_REVISION = versionRemote["OMM_VERSION_REVISION"]
+        OMM_PATCH = "omm." + OMM_VERSION_NUMBER
         os.remove("omm.version")
     else:
-        print("Unable to retrieve current OMM version number.")
+        print("Unable to retrieve remote OMM version number.")
         print("Using local OMM patch...")
-        OMM_VERSION = "Unknown (Local)"
+        OMM_VERSION_NUMBER = versionLocal["OMM_VERSION_NUMBER"]
+        OMM_VERSION_REVISION = versionLocal["OMM_VERSION_REVISION"]
         OMM_PATCH = get_omm_patch()
         if OMM_PATCH == "":
             raise_error("Cannot find any OMM patch.", False)
 
     # Print some info before starting
     print("")
-    print("Ver. number : {}".format(OMM_VERSION))
+    print("Ver. number : {} (revision {})".format(OMM_VERSION_NUMBER, OMM_VERSION_REVISION))
     print("Version     : {}".format(VERSIONS[version]["name"]))
     print("Repository  : {}".format(VERSIONS[version]["repo"]))
     print("Dependency  : {}".format(VERSIONS[version]["dependency"]))
@@ -303,7 +317,8 @@ if __name__ == "__main__":
         
     # Check OMM patch: Create it or update it to the latest version
     print("--- Checking OMM patch (1/3)...")
-    if not os.path.isdir(OMM_PATCH):
+    upToDate = (versionLocal["OMM_VERSION_NUMBER"] == OMM_VERSION_NUMBER) and (versionLocal["OMM_VERSION_REVISION"] == OMM_VERSION_REVISION)
+    if not upToDate or not os.path.isdir(OMM_PATCH):
 
         # Delete all omm.* directories
         print("Removing old OMM patches...")
@@ -334,7 +349,7 @@ if __name__ == "__main__":
 
     # Check OMM patch: if a omm.*.patched file exists but is not the latest version, reset the directory
     print("--- Checking OMM patch (3/3)...")
-    if not check_patched(OMM_PATCH):
+    if not upToDate or not check_patched(OMM_PATCH):
         for path in os.listdir("enhancements"):
             if os.path.isfile("enhancements/" + path) and "omm." in path and ".patched" in path:
                 print("Old version of OMM detected!")
