@@ -6,31 +6,32 @@
 #define BHV_TYPE_COIN               (1 << 1) // Coin
 #define BHV_TYPE_WATER_RING         (1 << 2) // Water ring
 #define BHV_TYPE_MUSHROOM_1UP       (1 << 3) // Mushroom 1up
-#define BHV_TYPE_STAR               (1 << 4) // Star or key
-#define BHV_TYPE_CAP                (1 << 5) // Cap object
-#define BHV_TYPE_SECRET             (1 << 6) // Secret
-#define BHV_TYPE_WEAK               (1 << 7) // Vulnerable to weak attacks
-#define BHV_TYPE_STRONG             (1 << 8) // Vulnerable to strong attacks (snowballs, beams)
-#define BHV_TYPE_DESTRUCTIBLE       (1 << 9) // Vulnerable to destructible attacks (explosions)
-#define BHV_TYPE_BREAKABLE          (1 << 10) // Fragile/Breakable
-#define BHV_TYPE_INVULNERABLE       (1 << 11) // Invulnerable enemies
-#define BHV_TYPE_GRABBABLE          (1 << 12) // Grabbable
-#define BHV_TYPE_KNOCKABLE_0        (1 << 13) // Knockback 0
-#define BHV_TYPE_KNOCKABLE_1        (1 << 14) // Knockback 1
-#define BHV_TYPE_GOOMBA             (1 << 15) // Goomba-like behavior
-#define BHV_TYPE_BULLY              (1 << 16) // Bully-type
-#define BHV_TYPE_FLAME              (1 << 17) // Flame-type objects
-#define BHV_TYPE_NO_CAPPY           (1 << 18) // Intangible to Cappy
-#define BHV_TYPE_KICKABLE_BOARD     (1 << 19) // Kickable board
-#define BHV_TYPE_WF_STAR_WALL       (1 << 20) // Whomp Fortress Star inside wall
-#define BHV_TYPE_EXCLAMATION_BOX    (1 << 21) // Yellow exclamation box
-#define BHV_TYPE_UNAGIS_TAIL        (1 << 22) // Unagi's tail
-#define BHV_TYPE_VIBE_SPARKLES_1    (1 << 23) // Drop 1 Vibe sparkle when defeated if attacked with Perry or a Vibe
-#define BHV_TYPE_VIBE_SPARKLES_2    (1 << 24) // Drop 2 Vibe sparkles when defeated if attacked with Perry or a Vibe
-#define BHV_TYPE_VIBE_SPARKLES_3    (1 << 25) // Drop 3 Vibe sparkles when defeated if attacked with Perry or a Vibe
-#define BHV_TYPE_VIBE_SPARKLES_4    (1 << 26) // Drop 4 Vibe sparkles when defeated if attacked with Perry or a Vibe
-#define BHV_TYPE_VIBE_SPARKLES_5    (1 << 27) // Drop 5 Vibe sparkles when defeated if attacked with Perry or a Vibe
-#define BHV_TYPE_COLLECTIBLE        (BHV_TYPE_COIN | BHV_TYPE_WATER_RING | BHV_TYPE_MUSHROOM_1UP | BHV_TYPE_STAR | BHV_TYPE_CAP | BHV_TYPE_SECRET)
+#define BHV_TYPE_STAR_OR_KEY        (1 << 4) // Interactible Star or key
+#define BHV_TYPE_STAR_MODEL         (1 << 5) // Star or key
+#define BHV_TYPE_CAP                (1 << 6) // Cap object
+#define BHV_TYPE_SECRET             (1 << 7) // Secret
+#define BHV_TYPE_WEAK               (1 << 8) // Vulnerable to weak attacks
+#define BHV_TYPE_STRONG             (1 << 9) // Vulnerable to strong attacks (snowballs, beams)
+#define BHV_TYPE_DESTRUCTIBLE       (1 << 10) // Vulnerable to destructible attacks (explosions)
+#define BHV_TYPE_BREAKABLE          (1 << 11) // Fragile/Breakable
+#define BHV_TYPE_INVULNERABLE       (1 << 12) // Invulnerable enemies
+#define BHV_TYPE_GRABBABLE          (1 << 13) // Grabbable
+#define BHV_TYPE_KNOCKABLE_0        (1 << 14) // Knockback 0
+#define BHV_TYPE_KNOCKABLE_1        (1 << 15) // Knockback 1
+#define BHV_TYPE_GOOMBA             (1 << 16) // Goomba-like behavior
+#define BHV_TYPE_BULLY              (1 << 17) // Bully-type
+#define BHV_TYPE_FLAME              (1 << 18) // Flame-type objects
+#define BHV_TYPE_NO_CAPPY           (1 << 19) // Intangible to Cappy
+#define BHV_TYPE_KICKABLE_BOARD     (1 << 20) // Kickable board
+#define BHV_TYPE_WF_STAR_WALL       (1 << 21) // Whomp Fortress Star inside wall
+#define BHV_TYPE_EXCLAMATION_BOX    (1 << 22) // Yellow exclamation box
+#define BHV_TYPE_UNAGIS_TAIL        (1 << 23) // Unagi's tail
+#define BHV_TYPE_VIBE_SPARKLES_1    (1 << 24) // Drop 1 Vibe sparkle when defeated if attacked with Perry or a Vibe
+#define BHV_TYPE_VIBE_SPARKLES_2    (1 << 25) // Drop 2 Vibe sparkles when defeated if attacked with Perry or a Vibe
+#define BHV_TYPE_VIBE_SPARKLES_3    (1 << 26) // Drop 3 Vibe sparkles when defeated if attacked with Perry or a Vibe
+#define BHV_TYPE_VIBE_SPARKLES_4    (1 << 27) // Drop 4 Vibe sparkles when defeated if attacked with Perry or a Vibe
+#define BHV_TYPE_VIBE_SPARKLES_5    (1 << 28) // Drop 5 Vibe sparkles when defeated if attacked with Perry or a Vibe
+#define BHV_TYPE_COLLECTIBLE        (BHV_TYPE_COIN | BHV_TYPE_WATER_RING | BHV_TYPE_MUSHROOM_1UP | BHV_TYPE_STAR_OR_KEY | BHV_TYPE_CAP | BHV_TYPE_SECRET)
 #define BHV_TYPE_KNOCKABLE          (BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_KNOCKABLE_1)
 #define BHV_TYPE_VIBE_SPARKLES      (BHV_TYPE_VIBE_SPARKLES_1 | BHV_TYPE_VIBE_SPARKLES_2 | BHV_TYPE_VIBE_SPARKLES_3 | BHV_TYPE_VIBE_SPARKLES_4 | BHV_TYPE_VIBE_SPARKLES_5)
 
@@ -50,7 +51,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhv1upSliding, BHV_TYPE_MUSHROOM_1UP },
     { bhv1upWalking, BHV_TYPE_MUSHROOM_1UP },
 
-    { bhvActSelector, BHV_TYPE_STAR },
+    { bhvActSelector, BHV_TYPE_STAR_MODEL },
     { bhvActSelectorStarType, 0 },
     { bhvActivatedBackAndForthPlatform, 0 },
     { bhvAirborneDeathWarp, 0 },
@@ -122,9 +123,9 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvBowserBomb, 0 },
     { bhvBowserBombExplosion, 0 },
     { bhvBowserBombSmoke, 0 },
-    { bhvBowserCourseRedCoinStar, BHV_TYPE_STAR },
+    { bhvBowserCourseRedCoinStar, 0 },
     { bhvBowserFlameSpawn, BHV_TYPE_FLAME },
-    { bhvBowserKey, BHV_TYPE_STAR },
+    { bhvBowserKey, BHV_TYPE_STAR_OR_KEY },
     { bhvBowserKeyCourseExit, 0 },
     { bhvBowserKeyUnlockDoor, 0 },
     { bhvBowserShockWave, 0 },
@@ -161,7 +162,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvCastleFlagWaving, 0 },
     { bhvCastleFloorTrap, 0 },
     { bhvCcmTouchedStarSpawn, 0 },
-    { bhvCelebrationStar, BHV_TYPE_STAR },
+    { bhvCelebrationStar, BHV_TYPE_STAR_MODEL },
     { bhvCelebrationStarSparkle, 0 },
     { bhvChainChomp, BHV_TYPE_INVULNERABLE },
     { bhvChainChompChainPart, 0 },
@@ -248,7 +249,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvGoldenCoinSparkles, 0 },
     { bhvGoomba, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_GOOMBA | BHV_TYPE_VIBE_SPARKLES_3 },
     { bhvGoombaTripletSpawner, 0 },
-    { bhvGrandStar, BHV_TYPE_STAR },
+    { bhvGrandStar, BHV_TYPE_STAR_OR_KEY | BHV_TYPE_STAR_MODEL },
     { bhvGrindel, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES_4 },
 
     { bhvHardAirKnockBackWarp, 0 },
@@ -265,9 +266,9 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvHiddenAt120Stars, 0 },
     { bhvHiddenBlueCoin, BHV_TYPE_COIN },
     { bhvHiddenObject, BHV_TYPE_BREAKABLE | BHV_TYPE_VIBE_SPARKLES_2 },
-    { bhvHiddenRedCoinStar, BHV_TYPE_STAR },
+    { bhvHiddenRedCoinStar, 0 },
     { bhvHiddenStaircaseStep, 0 },
-    { bhvHiddenStar, BHV_TYPE_STAR },
+    { bhvHiddenStar, 0 },
     { bhvHiddenStarTrigger, BHV_TYPE_SECRET },
     { bhvHmcElevatorPlatform, 0 },
     { bhvHomingAmp, 0 },
@@ -455,8 +456,8 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvSparkle, 0 },
     { bhvSparkleParticleSpawner, 0 },
     { bhvSparkleSpawn, 0 },
-    { bhvSpawnedStar, BHV_TYPE_STAR },
-    { bhvSpawnedStarNoLevelExit, BHV_TYPE_STAR },
+    { bhvSpawnedStar, BHV_TYPE_STAR_OR_KEY | BHV_TYPE_STAR_MODEL },
+    { bhvSpawnedStarNoLevelExit, BHV_TYPE_STAR_OR_KEY | BHV_TYPE_STAR_MODEL },
     { bhvSpinAirborneCircleWarp, 0 },
     { bhvSpinAirborneWarp, 0 },
     { bhvSpindel, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES_4 },
@@ -465,10 +466,10 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvSquarishPathMoving, 0 },
     { bhvSquishablePlatform, 0 },
     { bhvSslMovingPyramidWall, 0 },
-    { bhvStar, BHV_TYPE_STAR },
+    { bhvStar, BHV_TYPE_STAR_OR_KEY | BHV_TYPE_STAR_MODEL },
     { bhvStarDoor, 0 },
     { bhvStarKeyCollectionPuffSpawner, 0 },
-    { bhvStarSpawnCoordinates, BHV_TYPE_STAR },
+    { bhvStarSpawnCoordinates, BHV_TYPE_STAR_OR_KEY | BHV_TYPE_STAR_MODEL },
     { bhvStaticCheckeredPlatform, 0 },
     { bhvStaticObject, 0 },
     { bhvStrongWindParticle, 0 },
@@ -529,17 +530,17 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvUkiki, BHV_TYPE_GRABBABLE },
     { bhvUkikiCage, 0 },
     { bhvUkikiCageChild, 0 },
-    { bhvUkikiCageStar, BHV_TYPE_STAR },
+    { bhvUkikiCageStar, BHV_TYPE_STAR_OR_KEY | BHV_TYPE_STAR_MODEL },
     { bhvUnagi, 0 },
     { bhvUnagiSubobject, BHV_TYPE_UNAGIS_TAIL },
-    { bhvUnlockDoorStar, BHV_TYPE_STAR },
+    { bhvUnlockDoorStar, BHV_TYPE_STAR_MODEL },
     { bhvUnused05A8, 0 },
     { bhvUnused0DFC, 0 },
     { bhvUnused1820, 0 },
     { bhvUnused20E0, BHV_TYPE_GRABBABLE },
     { bhvUnused2A10, 0 },
     { bhvUnused2A54, 0 },
-    { bhvUnusedFakeStar, BHV_TYPE_STAR },
+    { bhvUnusedFakeStar, BHV_TYPE_STAR_MODEL },
     { bhvUnusedParticleSpawn, 0 },
     { bhvUnusedPoundablePlatform, 0 },
 
@@ -605,7 +606,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvCustomSMSRWoodenOctagonalPlatform, 0 },
     { bhvCustomSMSRShyGuy, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_GOOMBA | BHV_TYPE_VIBE_SPARKLES_3 },
     { bhvCustomSMSRBreakableWindow,  BHV_TYPE_BREAKABLE | BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES_4 },
-    { bhvCustomSMSRStarReplica, BHV_TYPE_STAR },
+    { bhvCustomSMSRStarReplica, BHV_TYPE_STAR_OR_KEY | BHV_TYPE_STAR_MODEL },
     { bhvCustomSMSRRedOctagonalPlatform, 0 },
     { bhvCustomSMSRRedSinkingPlatform, 0 },
     { bhvCustomSMSRRedWavePlatform, 0 },
@@ -635,7 +636,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvCustomSMSRTambourine, 0 },
     { bhvCustomSMSRSmallBee, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES_3 },
     { bhvCustomSMSRDrumStick, 0 },
-    { bhvCustomSMSRStarMoving, BHV_TYPE_STAR },
+    { bhvCustomSMSRStarMoving, BHV_TYPE_STAR_OR_KEY | BHV_TYPE_STAR_MODEL },
     { bhvCustomSMSRFallingDomino, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES_4 },
     { bhvCustomSMSRLavaLift, 0 },
     { bhvCustomSMSRRotatingLavaPlatform, 0 },
@@ -662,8 +663,8 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { omm_bhv_possessed_object, 0 },
     { omm_bhv_possessed_object_cap, BHV_TYPE_CAP },
     { omm_bhv_possessed_koopa_shell, 0 },
-    { omm_bhv_act_select_star, BHV_TYPE_STAR },
-    { omm_bhv_star_celebration, BHV_TYPE_STAR },
+    { omm_bhv_act_select_star, BHV_TYPE_STAR_MODEL },
+    { omm_bhv_star_celebration, BHV_TYPE_STAR_MODEL },
     { omm_bhv_life_up, 0 },
     { omm_bhv_fire_smoke, 0 },
     { omm_bhv_wing_glow_left_hand, 0 },
@@ -785,8 +786,12 @@ bool omm_obj_is_mushroom_1up(struct Object *o) {
     return (omm_obj_get_behavior_types(o) & BHV_TYPE_MUSHROOM_1UP) != 0 && !(o->oNodeFlags & GRAPH_RENDER_INVISIBLE);
 }
 
-bool omm_obj_is_star(struct Object *o) {
-    return (omm_obj_get_behavior_types(o) & BHV_TYPE_STAR) != 0;
+bool omm_obj_is_star_or_key(struct Object *o) {
+    return (omm_obj_get_behavior_types(o) & BHV_TYPE_STAR_OR_KEY) != 0;
+}
+
+bool omm_obj_is_star_model(struct Object *o) {
+    return (omm_obj_get_behavior_types(o) & BHV_TYPE_STAR_MODEL) != 0;
 }
 
 bool omm_obj_is_cap(struct Object *o) {
@@ -879,10 +884,16 @@ const BehaviorScript **omm_obj_get_coin_behaviors() {
     return (const BehaviorScript **) omm_array_data(sOmmCoinBehaviors);
 }
 
-const BehaviorScript **omm_obj_get_star_behaviors() {
-    static OmmArray sOmmStarBehaviors = NULL;
-    omm_obj_init_behaviors_array(&sOmmStarBehaviors, BHV_TYPE_STAR);
-    return (const BehaviorScript **) omm_array_data(sOmmStarBehaviors);
+const BehaviorScript **omm_obj_get_star_or_key_behaviors() {
+    static OmmArray sOmmStarOrKeyBehaviors = NULL;
+    omm_obj_init_behaviors_array(&sOmmStarOrKeyBehaviors, BHV_TYPE_STAR_OR_KEY);
+    return (const BehaviorScript **) omm_array_data(sOmmStarOrKeyBehaviors);
+}
+
+const BehaviorScript **omm_obj_get_star_model_behaviors() {
+    static OmmArray sOmmStarModelBehaviors = NULL;
+    omm_obj_init_behaviors_array(&sOmmStarModelBehaviors, BHV_TYPE_STAR_MODEL);
+    return (const BehaviorScript **) omm_array_data(sOmmStarModelBehaviors);
 }
 
 const BehaviorScript **omm_obj_get_cap_behaviors() {
@@ -1159,7 +1170,7 @@ CAPPY_ONLY_CODE(
 
             // Stars/Keys
             if (interactionFlags & OBJ_INT_COLLECT_STARS) {
-                if (omm_obj_is_star(target)) {
+                if (omm_obj_is_star_or_key(target)) {
                     omm_mario_interact_star_or_key(m, target);
                 }
             }

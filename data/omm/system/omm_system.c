@@ -146,7 +146,32 @@ void omm_update() {
 //
 
 static void omm_gfx_update_stars_models() {
+
+    // Stars number
+    if (gOmmExtrasShowStarNumber
+#if defined(SMSR)
+        && gCurrLevelNum != LEVEL_ENDING
+#endif
+    ) { for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_star_or_key_behaviors()) {
+            for_each_object_with_behavior(star, *bhv) {
+                if (!obj_is_dormant(star) && star->behavior != bhvBowserKey && star->behavior != bhvGrandStar) {
+                    bool numberSpawned = false;
+                    for_each_object_with_behavior(obj, omm_bhv_star_number) {
+                        if (obj->activeFlags && obj->parentObj == star) {
+                            numberSpawned = true;
+                            break;
+                        }
+                    }
+                    if (!numberSpawned) {
+                        omm_spawn_star_number(star);
+                    }
+                }
+            }
+        }
+    }
+
 #if !defined(SMMS)
+    // Colored Stars
     static struct GraphNode *sOmmStarGraphNodes[34] = { NULL };
     if (OMM_UNLIKELY(!sOmmStarGraphNodes[0])) {
         sOmmStarGraphNodes[0]  = omm_geo_get_graph_node(omm_geo_star_0_opaque, true);
@@ -186,21 +211,19 @@ static void omm_gfx_update_stars_models() {
     }
 
     s32 starColor = omm_clamp_s(gCurrCourseNum, 0, 16);
-    if (gCurrLevelNum != LEVEL_BOWSER_1 && gCurrLevelNum != LEVEL_BOWSER_2) {
-        for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_star_behaviors()) {
-            for_each_object_with_behavior(obj, *bhv) {
-                if (gOmmExtrasColoredStars) {
-                    if (obj_check_model(obj, MODEL_STAR) || (obj->behavior == bhvCelebrationStar)) {
-                        obj->oGraphNode = sOmmStarGraphNodes[starColor];
-                    } else if (obj_check_model(obj, MODEL_TRANSPARENT_STAR)) {
-                        obj->oGraphNode = sOmmStarGraphNodes[starColor + 17 * !omm_is_ending_cutscene()];
-                    }
-                } else {
-                    for (s32 i = 0; i != 34; ++i) {
-                        if (obj_has_graph_node(obj, sOmmStarGraphNodes[i])) {
-                            obj->oGraphNode = gLoadedGraphNodes[i < 17 ? MODEL_STAR : MODEL_TRANSPARENT_STAR];
-                            break;
-                        }
+    for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_star_model_behaviors()) {
+        for_each_object_with_behavior(obj, *bhv) {
+            if (gOmmExtrasColoredStars) {
+                if (obj_check_model(obj, MODEL_STAR) || (obj->behavior == bhvCelebrationStar && !obj_check_model(obj, MODEL_BOWSER_KEY))) {
+                    obj->oGraphNode = sOmmStarGraphNodes[starColor];
+                } else if (obj_check_model(obj, MODEL_TRANSPARENT_STAR)) {
+                    obj->oGraphNode = sOmmStarGraphNodes[starColor + 17 * !omm_is_ending_cutscene()];
+                }
+            } else {
+                for (s32 i = 0; i != 34; ++i) {
+                    if (obj_has_graph_node(obj, sOmmStarGraphNodes[i])) {
+                        obj->oGraphNode = gLoadedGraphNodes[i < 17 ? MODEL_STAR : MODEL_TRANSPARENT_STAR];
+                        break;
                     }
                 }
             }

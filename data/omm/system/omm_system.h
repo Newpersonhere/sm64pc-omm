@@ -251,6 +251,7 @@ DECLARE_TOGGLE_SC(gOmmExtrasColoredStars);
 DECLARE_TOGGLE_SC(gOmmExtrasVanishingHUD);
 DECLARE_TOGGLE_SC(gOmmExtrasRevealSecrets);
 DECLARE_TOGGLE_SC(gOmmExtrasRedCoinsRadar);
+DECLARE_TOGGLE_SC(gOmmExtrasShowStarNumber);
 DECLARE_TOGGLE_SC(gOmmExtrasInvisibleMode);
 DECLARE_TOGGLE_SC(gOmmExtrasCrystalStarsReward);
 #if OMM_CODE_DEBUG

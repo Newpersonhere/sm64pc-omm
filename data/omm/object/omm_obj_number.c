@@ -167,13 +167,73 @@ const GeoLayout omm_geo_number[] = {
     GEO_END(),
 };
 
+const GeoLayout omm_geo_star_number[] = {
+    GEO_NODE_START(),
+    GEO_OPEN_NODE(),
+        GEO_BILLBOARD(),
+        GEO_OPEN_NODE(),
+            GEO_SWITCH_CASE(11, omm_geo_number_switch_1digit),
+            GEO_OPEN_NODE(),
+                GEO_DISPLAY_LIST(LAYER_ALPHA, omm_number_1digit_0_gfx),
+                GEO_DISPLAY_LIST(LAYER_ALPHA, omm_number_1digit_1_gfx),
+                GEO_DISPLAY_LIST(LAYER_ALPHA, omm_number_1digit_2_gfx),
+                GEO_DISPLAY_LIST(LAYER_ALPHA, omm_number_1digit_3_gfx),
+                GEO_DISPLAY_LIST(LAYER_ALPHA, omm_number_1digit_4_gfx),
+                GEO_DISPLAY_LIST(LAYER_ALPHA, omm_number_1digit_5_gfx),
+                GEO_DISPLAY_LIST(LAYER_ALPHA, omm_number_1digit_6_gfx),
+                GEO_DISPLAY_LIST(LAYER_ALPHA, omm_number_1digit_7_gfx),
+                GEO_DISPLAY_LIST(LAYER_ALPHA, omm_number_1digit_8_gfx),
+                GEO_DISPLAY_LIST(LAYER_ALPHA, omm_number_1digit_9_gfx),
+                GEO_DISPLAY_LIST(LAYER_ALPHA, NULL),
+            GEO_CLOSE_NODE(),
+        GEO_CLOSE_NODE(),
+    GEO_CLOSE_NODE(),
+    GEO_END(),
+};
+
+//
+// Behavior
+//
+
+static void omm_bhv_star_number_loop() {
+    struct Object *o = gCurrentObject;
+    struct Object *p = o->parentObj;
+    if (!gOmmExtrasShowStarNumber || !p || !p->activeFlags || !omm_obj_is_star_or_key(p) || obj_is_dormant(p)) {
+        obj_mark_for_deletion(o);
+        return;
+    }
+
+    obj_set_pos(o, p->oPosX, p->oPosY + 150.f * o->oScaleY, p->oPosZ);
+    obj_set_angle(o, 0, 0, 0);
+    obj_set_scale(o, 1.f, 1.f, 1.f);
+    o->oNodeFlags = p->oNodeFlags;
+}
+
+const BehaviorScript omm_bhv_star_number[] = {
+    OBJ_TYPE_UNIMPORTANT,
+    0x11010001,
+    0x08000000,
+    0x0C000000, (uintptr_t) omm_bhv_star_number_loop,
+    0x09000000,
+};
+
 //
 // Spawner
 //
 
-struct Object *omm_spawn_number(struct Object *o, s32 number) {
-    struct Object *orangeNumber = spawn_object_relative(number, 0, 0, 0, o, MODEL_NONE, bhvOrangeNumber);
-    orangeNumber->oGraphNode = omm_geo_get_graph_node(omm_geo_number, true);
-    orangeNumber->oPosY += 25.f;
-    return orangeNumber;
+struct Object *omm_spawn_number(struct Object *o, s32 n) {
+    struct Object *number = spawn_object_relative(n, 0, 0, 0, o, MODEL_NONE, bhvOrangeNumber);
+    number->oGraphNode = omm_geo_get_graph_node(omm_geo_number, true);
+    number->oPosY += 25.f;
+    return number;
+}
+
+struct Object *omm_spawn_star_number(struct Object *o) {
+    struct Object *number = obj_spawn_from_geo(o, omm_geo_number, omm_bhv_star_number);
+    number->oBehParams2ndByte = 0;
+    u8 total = omm_stars_get_bits_total(gCurrLevelNum);
+    for (u8 i = 0; i <= (u8) ((o->oBehParams >> 24) & 0x07); ++i) {
+        number->oBehParams2ndByte += ((total >> i) & 1);
+    }
+    return number;
 }

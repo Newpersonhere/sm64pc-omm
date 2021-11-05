@@ -112,7 +112,8 @@ bool omm_obj_is_interactible(struct Object *o);
 bool omm_obj_is_coin(struct Object *o);
 bool omm_obj_is_water_ring(struct Object *o);
 bool omm_obj_is_mushroom_1up(struct Object *o);
-bool omm_obj_is_star(struct Object *o);
+bool omm_obj_is_star_or_key(struct Object *o);
+bool omm_obj_is_star_model(struct Object *o);
 bool omm_obj_is_cap(struct Object *o);
 bool omm_obj_is_secret(struct Object *o);
 bool omm_obj_is_weak(struct Object *o);
@@ -141,7 +142,8 @@ struct Object *omm_obj_process_interactions(struct Object *o, u32 interactionFla
 //
 
 const BehaviorScript **omm_obj_get_coin_behaviors();
-const BehaviorScript **omm_obj_get_star_behaviors();
+const BehaviorScript **omm_obj_get_star_or_key_behaviors();
+const BehaviorScript **omm_obj_get_star_model_behaviors();
 const BehaviorScript **omm_obj_get_cap_behaviors();
 const BehaviorScript **omm_obj_get_goomba_behaviors();
 const BehaviorScript **omm_obj_get_player_behaviors();
@@ -154,7 +156,8 @@ const BehaviorScript **omm_obj_get_bowser_behaviors();
 struct Object *omm_spawn_damage_mario(struct Object *o, s32 interactType, s32 damage);
 struct Object *omm_spawn_star_celebration(struct Object *o, f32 radius, f32 height);
 struct Object *omm_spawn_life_up(struct Object *o);
-struct Object *omm_spawn_number(struct Object *o, s32 number);
+struct Object *omm_spawn_number(struct Object *o, s32 n);
+struct Object *omm_spawn_star_number(struct Object *o);
 struct Object *omm_spawn_fire_smoke(struct Object *o, s32 type);
 struct Object *omm_spawn_wing_glow_and_trail(struct Object *o);
 struct Object *omm_spawn_metal_sparkle(struct Object *o);
