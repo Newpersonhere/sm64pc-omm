@@ -132,7 +132,7 @@ If it detects a new version, the builder will ask you if you want to update it w
 
 ## Useful resources
 
-- [Odyssey Mario's Moveset v6.0.3 patch file](https://drive.google.com/file/d/1w3IlbW-gCBKdaFnvYs9eI-N6-s5m8okY/view?usp=sharing)
+- [Odyssey Mario's Moveset v6.0.5 patch file](https://drive.google.com/file/d/1-Cet-ONCNp7qyKk4YIh2TSX3L28oSjbQ/view?usp=sharing)
 - [Super Mario 64 Moonshine archive](https://www.mediafire.com/file/khy40tbd1rcve2p/MOONSHINE_FINALUPDATE.rar/file)
 - [Super Mario Star Road patch file](https://drive.google.com/file/d/1kXskWESOTUJDoeCGVV9JMUkn0tLd_GXO/view)
 - [Super Mario Star Road HD Texture pack](https://github.com/aspieweeb759/Star-Road-HD/releases/download/Star-Road-HD/Star.Road.HD.Release.zip)
