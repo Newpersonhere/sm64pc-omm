@@ -680,22 +680,19 @@ this level was way too\n\
 big for the level importer\n\
 so I had to split it\n\
 into two parts.\n\
-That means I CAN'T place\n\
+Nah! Just kidding!\n\
+You're no longer playing\n\
+a Nintendo 64 rom-hack.\n\
+It's the pc port we're\n\
+talking about!\n\
+That means I CAN place\n\
 red coins in the whole\n\
-level. Sad, isn't it?\n\
+level. Great, isn't it?\n\
 I know that you would\n\
 enjoy collecting 30\n\
-red coins, right?\n\
-Well then, instead,\n\
-the red coins are all\n\
-beyond the cannon.\n\
-And since they are so\n\
-close together\n\
-I won't tell you how\n\
-many there are.\n\
-\n\
-(Well, honestly, I forgot\n\
-how many I placed.)"))
+red coins. So, after 9\n\
+years, it's finally\n\
+possible. Have fun!"))
 
 DEFINE_DIALOG(DIALOG_EE_064,1,5,30,200, _("You should already know\n\
 the concept of this\n\

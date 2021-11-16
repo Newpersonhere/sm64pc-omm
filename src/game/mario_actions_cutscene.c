@@ -1018,6 +1018,26 @@ s32 act_emerge_from_pipe(struct MarioState *m) {
         }
     }
 
+    // ZZ warp pipes
+    if (gCurrLevelNum == LEVEL_BITS && gCurrAreaIndex == 2) {
+        set_mario_animation(m, MARIO_ANIM_SINGLE_JUMP);
+        mario_set_forward_vel(m, 8.f);
+        m->pos[0] += m->vel[0];
+        m->pos[1] += m->vel[1];
+        m->pos[2] += m->vel[2];
+        m->vel[1] = max(m->vel[1] - 4.f, -75.f);
+        f32 floorHeight = find_floor_height(m->pos[0], m->pos[1], m->pos[2]);
+        if (floorHeight >= m->pos[1]) {
+            m->pos[1] = floorHeight;
+            set_mario_action(m, ACT_JUMP_LAND_STOP, 0);
+            mario_set_forward_vel(m, 0.f);
+            play_mario_landing_sound(m, SOUND_ACTION_TERRAIN_LANDING);
+        }
+        vec3f_copy(m->marioObj->header.gfx.pos, m->pos);
+        vec3s_set(m->marioObj->header.gfx.angle, 0, m->faceAngle[1], 0);
+        return FALSE;
+    }
+
     if (launch_mario_until_land(m, ACT_JUMP_LAND_STOP, MARIO_ANIM_SINGLE_JUMP, 8.0f)) {
         mario_set_forward_vel(m, 0.0f);
         play_mario_landing_sound(m, SOUND_ACTION_TERRAIN_LANDING);

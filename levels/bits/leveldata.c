@@ -63,4 +63,5 @@
 #include "levels/bits/areas/2/movtextNew.inc.c"
 #include "levels/bits/areas/2/model.inc.c"
 #include "levels/bits/areas/2/collision.inc.c"
+#include "levels/bits/areas/3/model.inc.c"
 #include "levels/bits/textureNew.inc.c"
