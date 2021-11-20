@@ -135,11 +135,28 @@ If it detects a new version, the builder will ask you if you want to update it w
 - [Odyssey Mario's Moveset v6.0.5 patch file](https://drive.google.com/file/d/1-Cet-ONCNp7qyKk4YIh2TSX3L28oSjbQ/view?usp=sharing)
 - [Super Mario 64 Moonshine archive](https://www.mediafire.com/file/khy40tbd1rcve2p/MOONSHINE_FINALUPDATE.rar/file)
 - [Super Mario Star Road patch file](https://drive.google.com/file/d/1kXskWESOTUJDoeCGVV9JMUkn0tLd_GXO/view)
-- [Super Mario Star Road HD Texture pack](https://github.com/aspieweeb759/Star-Road-HD/releases/download/Star-Road-HD/Star.Road.HD.Release.zip)
+- [Super Mario Star Road HD Texture pack](https://github.com/aspieweeb759/Star-Road-HD)
 - [Texture packs](https://sm64pc.info/downloads/texture_pack/)
 - [Music packs](https://sm64pc.info/downloads/sound_pack/)
 
 -----
+
+## Version 6.0.6
+
+### Changes and fixes:
+- The `Red Coins Radar` and red coins counter are disabled if the red coins star is already collected.
+- Goombas are now less likely to fall off ledges.
+- Cappy:
+  - Force Cappy to return to Mario during a spin throw or a flying throw if no target is found when attempting to do a homing throw.
+  - The homing throw range has been increased for the flying throw, but it uses Mario's position as origin instead of Cappy's.
+- Vibes:
+  - Reduced the cooldown between two successive activations.
+  - The player can now switch between Vibes without having to deactivate the current one first.
+- `Odyssey Moveset` only:
+  - Fixed glitchy ledge grabs (the ones that make Mario bonk).
+  - Leaving a ledge by pressing **(Z)** still results in a soft bonk, but Mario regains control shortly after.
+  - You can fire Bob-omb buddies' cannons with **(B)**.
+  - Thwomp's collision changed to a cube (like Grindels), as it should be.
 
 ## Version 6.0.5
 
