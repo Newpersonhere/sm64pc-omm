@@ -1489,7 +1489,7 @@ static void omm_render_hud_values(struct MarioState *m) {
 //
 
 static void omm_render_hud_red_coins_radar(struct MarioState *m) {
-    if (gOmmExtrasRedCoinsRadar && (gHudDisplay.flags & OMM_HUD_DISPLAY_FLAG_RED_COINS_RADAR)) {
+    if (gOmmExtrasRedCoinsRadar && (gHudDisplay.flags & OMM_HUD_DISPLAY_FLAG_RED_COINS_RADAR) && obj_get_first_with_behavior(bhvHiddenRedCoinStar)) {
         struct Object *redCoin = obj_get_nearest_with_behavior(m->marioObj, bhvRedCoin);
         if (redCoin) {
             s16 angle = atan2s(redCoin->oPosZ - m->pos[2], redCoin->oPosX - m->pos[0]) - atan2s(m->pos[2] - gCamera->pos[2], m->pos[0] - gCamera->pos[0]);
@@ -1661,7 +1661,7 @@ static void omm_render_pause_course() {
 
     // Red coins
     s32 numRedCoins = omm_level_get_num_red_coins(gCurrLevelNum, gCurrAreaIndex);
-    if (numRedCoins > 0) {
+    if (numRedCoins > 0 && obj_get_first_with_behavior(bhvHiddenRedCoinStar)) {
         s32 redCoinsCollected = numRedCoins - obj_get_count_with_behavior(bhvRedCoin);
         s32 x = OMM_RENDER_RED_COINS_X;
         omm_render_texrect(

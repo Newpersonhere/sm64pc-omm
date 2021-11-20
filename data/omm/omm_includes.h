@@ -178,7 +178,7 @@ extern u32 interact_warp(struct MarioState *m, UNUSED u32 interactType, struct O
 extern f32 get_buoyancy(struct MarioState *m);
 extern bool cur_obj_update_behavior_func(void (*func)(void));
 extern void apply_slope_accel(struct MarioState *m);
-extern void bhv_coin_fix_step(struct Object *o, s32 update);
+extern void obj_safe_step(struct Object *o, s32 update);
 extern void bhv_chain_chomp_update_chain_parts(struct Object *o, bool isFreed);
 extern void change_and_flash_dialog_text_color_lines(s8 colorMode, s8 lineNum);
 extern void check_ledge_climb_down(struct MarioState *m);

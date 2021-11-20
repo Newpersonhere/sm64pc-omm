@@ -385,8 +385,33 @@ static bool omm_mario_check_ledge_grab(struct MarioState *m, struct Surface *wal
     ledgePos[0] = nextPos[0] - wall->normal.x * 60.f;
     ledgePos[2] = nextPos[2] - wall->normal.z * 60.f;
     ledgePos[1] = find_floor(ledgePos[0], nextPos[1] + (sLedgeGrabFix ? 80 : 160), ledgePos[2], &ledgeFloor);
-    if (ledgeFloor == NULL || ledgePos[1] - nextPos[1] <= 100.f) {
+    if (ledgeFloor == NULL || ledgePos[1] - nextPos[1] <= 80.f) {
         return false;
+    }
+
+    // Make sure to not climb the ledge if it results in a soft bonk the next frame
+    if (OMM_MOVESET_ODYSSEY) {
+
+        // Floor is too steep (> 25 deg)
+        if (ledgeFloor->normal.y < coss(0x11C7)) {
+            return false;
+        }
+
+        // Z pressed or bounced
+        if (m->input & (INPUT_Z_PRESSED | INPUT_STOMP)) {
+            return false;
+        }
+
+        // Stick held in the opposite direction
+        if ((m->input & INPUT_NONZERO_ANALOG) && omm_abs_s((s16) (m->intendedYaw - m->faceAngle[1])) > 0x4000) {
+            return false;
+        }
+
+        // Wall above the ledge
+        struct WallCollisionData col = { ledgePos[0], ledgePos[1], ledgePos[2], 60.f, 60.f };
+        if (find_wall_collisions(&col)) {
+            return false;
+        }
     }
 
     // Ledge-grab

@@ -37,17 +37,6 @@
 #define COS_F000 SIN_3000
 
 //
-// Flags
-//
-
-bool gOmmDebugHitbox    = false;
-bool gOmmDebugHurtbox   = false;
-bool gOmmDebugWallbox   = false;
-bool gOmmDebugMario     = false;
-bool gOmmDebugCappy     = false;
-bool gOmmDebugProfiler  = false;
-
-//
 // Gfx data
 //
 

@@ -6,6 +6,13 @@
 // Actions
 //
 
+static s32 omm_act_in_cannon(struct MarioState *m) {
+    if (OMM_MOVESET_ODYSSEY && m->actionState == 2 && (m->controller->buttonPressed & B_BUTTON)) {
+        m->input |= INPUT_A_PRESSED;
+    }
+    return OMM_MARIO_ACTION_RESULT_CONTINUE;
+}
+
 static s32 omm_act_holding_pole(struct MarioState *m) {
     if (OMM_MOVESET_ODYSSEY) {
         if (m->controller->buttonPressed & Z_TRIG) {
@@ -179,6 +186,7 @@ s32 omm_mario_execute_automatic_action(struct MarioState *m) {
 
     // Actions
     switch (m->action) {
+        case ACT_IN_CANNON:             return omm_act_in_cannon(m);
         case ACT_HOLDING_POLE:          return omm_act_holding_pole(m);
         case ACT_CLIMBING_POLE:         return omm_act_climbing_pole(m);
 

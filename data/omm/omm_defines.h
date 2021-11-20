@@ -119,11 +119,13 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 #define OMM_CHEAT_PEACH_ENDLESS_VIBE_GAUGE              (gOmmCheatPeachEndlessVibeGauge == 1)
 #define OMM_CHEAT_GOD_MODE                              (Cheats.EnableCheats && GodModeCheat)
 #define OMM_CHEAT_MOON_JUMP                             (Cheats.EnableCheats && Cheats.MoonJump)
+#define OMM_CHEATS_ENABLED                              (OMM_CHEAT_UNLIMITED_CAPPY_BOUNCES || OMM_CHEAT_CAPPY_STAYS_FOREVER || OMM_CHEAT_HOMING_ATTACK_GLOBAL_RANGE || OMM_CHEAT_MARIO_TELEPORTS_TO_CAPPY || OMM_CHEAT_PEACH_ENDLESS_VIBE_GAUGE)
 
 //
 // Texts
 //
 
+OMM_TEXT_(BLANK,                                        "")
 OMM_TEXT_(SELECT_CHARACTER,                             "SELECT CHARACTER")
 OMM_TEXT_(MARIO,                                        "Mario")
 OMM_TEXT_(LUIGI,                                        "Luigi")
@@ -296,6 +298,13 @@ OMM_TEXT_(OPT_DEBUG_WALLBOX,                            "Display Wallboxes")
 OMM_TEXT_(OPT_DEBUG_MARIO,                              "Display Mario Values")
 OMM_TEXT_(OPT_DEBUG_CAPPY,                              "Display Cappy Values")
 OMM_TEXT_(OPT_DEBUG_PROFILER,                           "Display Execution Time")
+#if OMM_CODE_DEV_DEBUG
+OMM_TEXT_(OPT_DEBUG_GAME_SPEED,                         "Game Speed Modifier")
+OMM_TEXT_(OPT_DEBUG_GAME_SPEED_30_FPS,                  "30 FPS")
+OMM_TEXT_(OPT_DEBUG_GAME_SPEED_15_FPS,                  "15 FPS")
+OMM_TEXT_(OPT_DEBUG_GAME_SPEED_10_FPS,                  "10 FPS")
+OMM_TEXT_(OPT_DEBUG_GAME_SPEED_5_FPS,                   "5 FPS")
+#endif
 #endif
 
 //

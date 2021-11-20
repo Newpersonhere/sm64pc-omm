@@ -198,68 +198,54 @@ static void omm_peach_vibe_update_gauge(struct MarioState *m) {
 
 static s32 omm_peach_vibe_handle_inputs() {
     if (gOmmData->mario->peach.vibeTimer > OMM_PEACH_VIBE_COOLDOWN) {
-        if (gOmmData->mario->peach.vibeType == OMM_PEACH_VIBE_TYPE_NONE) {
-            if (gOmmData->mario->peach.vibeGauge < OMM_PEACH_VIBE_GAUGE_LIMIT) {
-                if (gPlayer1Controller->buttonPressed & Y_BUTTON) {
-                    switch (gPlayer1Controller->buttonDown & (U_JPAD | D_JPAD | L_JPAD | R_JPAD)) {
-                        case U_JPAD: return OMM_PEACH_VIBE_TYPE_JOY;
-                        case D_JPAD: return OMM_PEACH_VIBE_TYPE_CALM;
-                        case L_JPAD: return OMM_PEACH_VIBE_TYPE_GLOOM;
-                        case R_JPAD: return OMM_PEACH_VIBE_TYPE_RAGE;
-                    }
-                }
+        if (gPlayer1Controller->buttonPressed & Y_BUTTON) {
+            switch (gPlayer1Controller->buttonDown & (U_JPAD | D_JPAD | L_JPAD | R_JPAD)) {
+                case U_JPAD: return (gOmmData->mario->peach.vibeGauge < OMM_PEACH_VIBE_GAUGE_LIMIT) * OMM_PEACH_VIBE_TYPE_JOY;
+                case D_JPAD: return (gOmmData->mario->peach.vibeGauge < OMM_PEACH_VIBE_GAUGE_LIMIT) * OMM_PEACH_VIBE_TYPE_CALM;
+                case L_JPAD: return (gOmmData->mario->peach.vibeGauge < OMM_PEACH_VIBE_GAUGE_LIMIT) * OMM_PEACH_VIBE_TYPE_GLOOM;
+                case R_JPAD: return (gOmmData->mario->peach.vibeGauge < OMM_PEACH_VIBE_GAUGE_LIMIT) * OMM_PEACH_VIBE_TYPE_RAGE;
+                default:     return -1;
             }
-        } else if (gPlayer1Controller->buttonPressed & Y_BUTTON) {
-            return -1;
         }
     }
     return 0;
 }
 
 static void omm_peach_vibe_toggle(struct MarioState *m, s32 vibeAction) {
-    switch (gOmmData->mario->peach.vibeType) {
 
-        // Activation + end cap power-up
-        case OMM_PEACH_VIBE_TYPE_NONE: {
-            if (vibeAction > 0 && omm_peach_vibe_check_type(m, vibeAction)) {
-                gOmmData->mario->peach.vibeType = vibeAction;
-                gOmmData->mario->peach.vibeTimer = 0;
-                omm_sound_play(OMM_SOUND_EFFECT_PEACH_VIBE, gGlobalSoundArgs);
-                switch (vibeAction) {
-                    case OMM_PEACH_VIBE_TYPE_JOY: {
-                        omm_sound_play(OMM_SOUND_PEACH_VIBE_JOY, m->marioObj->oCameraToObject);
-                        omm_mario_set_action(m, ACT_OMM_PEACH_VIBE_JOY_MOVE, 0, 0);
-                        gOmmData->mario->spin.yaw = m->faceAngle[1];
-                    } break;
+    // Activation or switch + end cap power-up
+    if (vibeAction > 0 && gOmmData->mario->peach.vibeType != vibeAction && omm_peach_vibe_check_type(m, vibeAction)) {
+        gOmmData->mario->peach.vibeType = vibeAction;
+        gOmmData->mario->peach.vibeTimer = 0;
+        omm_sound_play(OMM_SOUND_EFFECT_PEACH_VIBE, gGlobalSoundArgs);
+        switch (vibeAction) {
+            case OMM_PEACH_VIBE_TYPE_JOY: {
+                omm_sound_play(OMM_SOUND_PEACH_VIBE_JOY, m->marioObj->oCameraToObject);
+                omm_mario_set_action(m, ACT_OMM_PEACH_VIBE_JOY_MOVE, 0, 0);
+                gOmmData->mario->spin.yaw = m->faceAngle[1];
+            } break;
 
-                    case OMM_PEACH_VIBE_TYPE_RAGE: {
-                        omm_sound_play(OMM_SOUND_PEACH_VIBE_RAGE, m->marioObj->oCameraToObject);
-                    } break;
+            case OMM_PEACH_VIBE_TYPE_RAGE: {
+                omm_sound_play(OMM_SOUND_PEACH_VIBE_RAGE, m->marioObj->oCameraToObject);
+            } break;
 
-                    case OMM_PEACH_VIBE_TYPE_GLOOM: {
-                        omm_sound_play(OMM_SOUND_PEACH_VIBE_GLOOM, m->marioObj->oCameraToObject);
-                    } break;
+            case OMM_PEACH_VIBE_TYPE_GLOOM: {
+                omm_sound_play(OMM_SOUND_PEACH_VIBE_GLOOM, m->marioObj->oCameraToObject);
+            } break;
 
-                    case OMM_PEACH_VIBE_TYPE_CALM: {
-                        omm_sound_play(OMM_SOUND_PEACH_VIBE_CALM, m->marioObj->oCameraToObject);
-                    } break;
-                }
-                if (m->flags & (MARIO_METAL_CAP | MARIO_WING_CAP | MARIO_VANISH_CAP)) {
-                    m->capTimer = 1;
-                }
-            }
-        } break;
+            case OMM_PEACH_VIBE_TYPE_CALM: {
+                omm_sound_play(OMM_SOUND_PEACH_VIBE_CALM, m->marioObj->oCameraToObject);
+            } break;
+        }
+        if (m->flags & (MARIO_METAL_CAP | MARIO_WING_CAP | MARIO_VANISH_CAP)) {
+            m->capTimer = 1;
+        }
+    }
 
-        // Deactivation
-        case OMM_PEACH_VIBE_TYPE_JOY:
-        case OMM_PEACH_VIBE_TYPE_RAGE:
-        case OMM_PEACH_VIBE_TYPE_GLOOM:
-        case OMM_PEACH_VIBE_TYPE_CALM: {
-            if (vibeAction < 0) {
-                gOmmData->mario->peach.vibeType = OMM_PEACH_VIBE_TYPE_NONE;
-                gOmmData->mario->peach.vibeTimer = 0;
-            }
-        } break;
+    // Deactivation
+    else if (vibeAction < 0 && gOmmData->mario->peach.vibeType != OMM_PEACH_VIBE_TYPE_NONE) {
+        gOmmData->mario->peach.vibeType = OMM_PEACH_VIBE_TYPE_NONE;
+        gOmmData->mario->peach.vibeTimer = 0;
     }
 }
 

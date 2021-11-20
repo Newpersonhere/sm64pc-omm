@@ -180,8 +180,8 @@ static LONG omm_crash_handler(EXCEPTION_POINTERS *ExceptionInfo) {
     // Exception report
     omm_crash_handler_set_text(8, 28, 0xFF, 0x80, 0x00, "%s", "Exception report:");
     if (ExceptionInfo) {
-        if (!OMM_MEMCMP(&Cheats, OMM_MEMNEW(Cheats, 1), sizeof(Cheats))) {
-            omm_crash_handler_set_text(8, 36, 0xFF, 0x80, 0x00, "%s", "No code conflict detected, but Cheats were enabled when the exception occurred.");
+        if (OMM_CHEATS_ENABLED || !OMM_MEMCMP(&Cheats, OMM_MEMNEW(Cheats, 1), sizeof(Cheats))) {
+            omm_crash_handler_set_text(8, 36, 0xFF, 0x80, 0x00, "%s", "No code conflict detected, but some Cheats were enabled when the exception occurred.");
         } else {
             omm_crash_handler_set_text(8, 36, 0xFF, 0x80, 0x00, "%s", "No code conflict detected. Please report this crash with a consistent way to reproduce it.");
         }

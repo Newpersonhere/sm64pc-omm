@@ -255,12 +255,16 @@ DECLARE_TOGGLE_SC(gOmmExtrasShowStarNumber);
 DECLARE_TOGGLE_SC(gOmmExtrasInvisibleMode);
 DECLARE_TOGGLE_SC(gOmmExtrasCrystalStarsReward);
 #if OMM_CODE_DEBUG
-DECLARE_TOGGLE(gOmmDebugHitbox);
-DECLARE_TOGGLE(gOmmDebugHurtbox);
-DECLARE_TOGGLE(gOmmDebugWallbox);
-DECLARE_TOGGLE(gOmmDebugMario);
-DECLARE_TOGGLE(gOmmDebugCappy);
-DECLARE_TOGGLE(gOmmDebugProfiler);
+DECLARE_TOGGLE_SC(gOmmDebugHitbox);
+DECLARE_TOGGLE_SC(gOmmDebugHurtbox);
+DECLARE_TOGGLE_SC(gOmmDebugWallbox);
+DECLARE_TOGGLE_SC(gOmmDebugMario);
+DECLARE_TOGGLE_SC(gOmmDebugCappy);
+DECLARE_TOGGLE_SC(gOmmDebugProfiler);
+#if OMM_CODE_DEV_DEBUG
+DECLARE_TOGGLE_SC(gOmmDebugGameSpeedEnabler);
+DECLARE_CHOICE_SC(gOmmDebugGameSpeedModifier);
+#endif
 #endif
 
 void omm_opt_return_to_main_menu(UNUSED void *opt, s32 arg);

@@ -49,7 +49,6 @@ s32 cappy_koopa_shell_update(struct Object *o) {
 
     // Properties
     POBJ_SET_ABOVE_WATER;
-    POBJ_SET_IMMUNE_TO_FIRE;
     POBJ_SET_IMMUNE_TO_LAVA;
     POBJ_SET_IMMUNE_TO_SAND;
     POBJ_SET_ABLE_TO_MOVE_ON_WATER;

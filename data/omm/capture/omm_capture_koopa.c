@@ -119,7 +119,6 @@ s32 cappy_koopa_update(struct Object *o) {
     // Properties
     bool shellSlide = (gOmmData->object->state.actionState == CAPPY_KOOPA_STATE_SHELLED_SLIDING);
     POBJ_SET_ABOVE_WATER;
-    POBJ_SET_IMMUNE_TO_FIRE * shellSlide;
     POBJ_SET_IMMUNE_TO_LAVA * shellSlide;
     POBJ_SET_IMMUNE_TO_SAND * shellSlide;
     POBJ_SET_ABLE_TO_MOVE_ON_WATER * shellSlide;

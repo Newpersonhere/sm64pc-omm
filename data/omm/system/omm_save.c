@@ -242,6 +242,18 @@ void save_file_load_all() {
                         READ_TOGGLE_SC(gOmmExtrasShowStarNumber, token.args);
                         READ_TOGGLE_SC(gOmmExtrasInvisibleMode, token.args);
                         READ_TOGGLE_SC(gOmmExtrasCrystalStarsReward, token.args);
+#if OMM_CODE_DEBUG
+                        READ_TOGGLE_SC(gOmmDebugHitbox, token.args);
+                        READ_TOGGLE_SC(gOmmDebugHurtbox, token.args);
+                        READ_TOGGLE_SC(gOmmDebugWallbox, token.args);
+                        READ_TOGGLE_SC(gOmmDebugMario, token.args);
+                        READ_TOGGLE_SC(gOmmDebugCappy, token.args);
+                        READ_TOGGLE_SC(gOmmDebugProfiler, token.args);
+#if OMM_CODE_DEV_DEBUG
+                        READ_TOGGLE_SC(gOmmDebugGameSpeedEnabler, token.args);
+                        READ_TOGGLE_SC(gOmmDebugGameSpeedModifier, token.args);
+#endif
+#endif
                 
                         // Sparkly Stars data
                         if (omm_sparkly_read_save(OMM_ARRAY_OF(const char*) { token.args[0], token.args[1] })) {
@@ -491,6 +503,18 @@ static void save_file_write() {
     WRITE_TOGGLE_SC(gOmmExtrasShowStarNumber);
     WRITE_TOGGLE_SC(gOmmExtrasInvisibleMode);
     WRITE_TOGGLE_SC(gOmmExtrasCrystalStarsReward);
+#if OMM_CODE_DEBUG
+    WRITE_TOGGLE_SC(gOmmDebugHitbox);
+    WRITE_TOGGLE_SC(gOmmDebugHurtbox);
+    WRITE_TOGGLE_SC(gOmmDebugWallbox);
+    WRITE_TOGGLE_SC(gOmmDebugMario);
+    WRITE_TOGGLE_SC(gOmmDebugCappy);
+    WRITE_TOGGLE_SC(gOmmDebugProfiler);
+#if OMM_CODE_DEV_DEBUG
+    WRITE_TOGGLE_SC(gOmmDebugGameSpeedEnabler);
+    WRITE_TOGGLE_SC(gOmmDebugGameSpeedModifier);
+#endif
+#endif
     write("\n");
 
     // Create a back-up

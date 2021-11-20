@@ -280,6 +280,12 @@ extern const BehaviorScript omm_bhv_menu_character_select_button[];
 extern const BehaviorScript omm_bhv_problem[];
 
 //
+// Collisions
+//
+
+extern const Collision omm_thwomp_collision[];
+
+//
 // Level scripts
 //
 

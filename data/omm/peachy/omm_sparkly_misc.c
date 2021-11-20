@@ -24,11 +24,7 @@ bool omm_sparkly_check_cheats(struct MarioState *m) {
     }
 
     // OMM cheats
-    if (OMM_CHEAT_CAPPY_STAYS_FOREVER ||
-        OMM_CHEAT_UNLIMITED_CAPPY_BOUNCES ||
-        OMM_CHEAT_MARIO_TELEPORTS_TO_CAPPY ||
-        OMM_CHEAT_HOMING_ATTACK_GLOBAL_RANGE ||
-        OMM_CHEAT_PEACH_ENDLESS_VIBE_GAUGE) {
+    if (OMM_CHEATS_ENABLED) {
         return true;
     }
 

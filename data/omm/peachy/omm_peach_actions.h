@@ -67,7 +67,7 @@
 #define OMM_PEACH_VIBE_GAUGE_CALM_HP_DEC            (30) // 10 seconds (300 frames), recovers 1 HP every 2 seconds (60 frames)
 #define OMM_PEACH_VIBE_GAUGE_CALM_FREEZE_DEC        (10) // 30 seconds (900 frames), prevents the effect of frozen water
 
-#define OMM_PEACH_VIBE_COOLDOWN                     (30)
+#define OMM_PEACH_VIBE_COOLDOWN                     (15)
 #define OMM_PEACH_VIBE_MUSIC_FREQ_MOD_JOY           (1.50f)
 #define OMM_PEACH_VIBE_MUSIC_FREQ_MOD_RAGE          (0.40f)
 #define OMM_PEACH_VIBE_MUSIC_FREQ_MOD_GLOOM         (0.75f)

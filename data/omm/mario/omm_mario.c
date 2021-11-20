@@ -935,7 +935,11 @@ void bhv_mario_update() {
 
     // Infinite health cheat
     if (OMM_CHEAT_GOD_MODE) {
-        m->health = 0x880;
+        if (gIsHardMode) {
+            m->health = OMM_HEALTH_HARD_MODE;
+        } else {
+            m->health = 0x880;
+        }
     }
 
     // Reset state

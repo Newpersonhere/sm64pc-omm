@@ -47,7 +47,7 @@ static const struct {
     { gOmmControlsStickUp,      0x0011, K_NONE, K_NONE }, //  [W] / [Z]  |   (L-U)   |   (L-U)   |
     { gOmmControlsStickDown,    0x001F, K_NONE, K_NONE }, //     [S]     |   (L-D)   |   (L-D)   |
     { gOmmControlsStickLeft,    0x001E, K_NONE, K_NONE }, //  [A] / [Q]  |   (L-L)   |   (L-L)   |
-    { gOmmControlsStickRight,   0x0020, K_NONE, K_NONE }, //  [D] / [D]  |   (L-R)   |   (L-R)   |
+    { gOmmControlsStickRight,   0x0020, K_NONE, K_NONE }, //     [D]     |   (L-R)   |   (L-R)   |
 };
 
 // Somehow works with GCC, but not MSVC
@@ -92,6 +92,73 @@ DEFINE_TOGGLE_SC(gOmmExtrasRedCoinsRadar, 0);        // Disabled
 DEFINE_TOGGLE_SC(gOmmExtrasShowStarNumber, 0);       // Disabled
 DEFINE_TOGGLE_SC(gOmmExtrasInvisibleMode, 0);        // Disabled
 DEFINE_TOGGLE_SC(gOmmExtrasCrystalStarsReward, 0);   // Disabled
+#if OMM_CODE_DEBUG
+DEFINE_TOGGLE_SC(gOmmDebugHitbox, 0);                // Disabled
+DEFINE_TOGGLE_SC(gOmmDebugHurtbox, 0);               // Disabled
+DEFINE_TOGGLE_SC(gOmmDebugWallbox, 0);               // Disabled
+DEFINE_TOGGLE_SC(gOmmDebugMario, 0);                 // Disabled
+DEFINE_TOGGLE_SC(gOmmDebugCappy, 0);                 // Disabled
+DEFINE_TOGGLE_SC(gOmmDebugProfiler, 0);              // Disabled
+#if OMM_CODE_DEV_DEBUG
+DEFINE_TOGGLE_SC(gOmmDebugGameSpeedEnabler, 0);      // Disabled
+DEFINE_CHOICE_SC(gOmmDebugGameSpeedModifier, 0);     // Disabled
+#endif
+#endif
+
+//
+// Shortcuts
+//
+
+typedef struct {
+    s32 type;
+    u32 *binds;
+    const char *label;
+    union {
+        struct {
+            bool *option;
+        } toggle;
+        struct {
+            u32 *option;
+            s32 numChoices;
+            const char *choices[8];
+        } choice;
+    };
+} OmmOptShortcut;
+
+#define DEFINE_SHORTCUT_TOGGLE(opt, lbl)            { .type = OPT_TOGGLE, .binds = opt##Shortcuts, .label = lbl, .toggle.option = &opt }
+#define DEFINE_SHORTCUT_CHOICE(opt, lbl, nch, ...)  { .type = OPT_CHOICE, .binds = opt##Shortcuts, .label = lbl, .choice.option = &opt, .choice.numChoices = nch, .choice.choices = { __VA_ARGS__ } }
+
+static const OmmOptShortcut sOmmOptShortcuts[] = {
+DEFINE_SHORTCUT_CHOICE(gOmmCharacter, OMM_TEXT_OPT_CHARACTER_LABEL, 2, OMM_TEXT_MARIO, OMM_TEXT_PEACH),
+DEFINE_SHORTCUT_CHOICE(gOmmMovesetType, OMM_TEXT_OPT_MOVESET_LABEL, 3, OMM_TEXT_OPT_MOVESET_CLASSIC, OMM_TEXT_OPT_MOVESET_ODYSSEY_3H, OMM_TEXT_OPT_MOVESET_ODYSSEY_6H),
+DEFINE_SHORTCUT_CHOICE(gOmmCapType, OMM_TEXT_OPT_CAP_LABEL, 3, OMM_TEXT_OPT_CAP_CLASSIC, OMM_TEXT_OPT_CAP_NO_CAPTURE, OMM_TEXT_OPT_CAP_CAPTURE),
+DEFINE_SHORTCUT_CHOICE(gOmmStarsMode, OMM_TEXT_OPT_STARS_LABEL, 2, OMM_TEXT_OPT_STARS_CLASSIC, OMM_TEXT_OPT_STARS_NON_STOP),
+DEFINE_SHORTCUT_CHOICE(gOmmPowerUpsType, OMM_TEXT_OPT_POWER_UPS_LABEL, 2, OMM_TEXT_OPT_POWER_UPS_CLASSIC, OMM_TEXT_OPT_POWER_UPS_IMPROVED),
+DEFINE_SHORTCUT_CHOICE(gOmmCameraMode, OMM_TEXT_OPT_CAMERA_LABEL, 3, OMM_TEXT_OPT_CAMERA_CLASSIC, OMM_TEXT_OPT_CAMERA_8_DIR, OMM_TEXT_OPT_CAMERA_16_DIR),
+#if OMM_CODE_SPARKLY
+DEFINE_SHORTCUT_CHOICE(gOmmSparklyStarsMode, OMM_TEXT_OPT_SPARKLY_STARS_LABEL, 4, OMM_TEXT_OPT_SPARKLY_STARS_MODE_0, OMM_TEXT_OPT_SPARKLY_STARS_MODE_1, OMM_TEXT_OPT_SPARKLY_STARS_MODE_2, OMM_TEXT_OPT_SPARKLY_STARS_MODE_3),
+#endif
+DEFINE_SHORTCUT_TOGGLE(gOmmExtrasCappyEyesOnMariosCap, OMM_TEXT_OPT_CAPPY_EYES_ON_MARIOS_CAP),
+DEFINE_SHORTCUT_TOGGLE(gOmmExtrasColoredStars, OMM_TEXT_OPT_COLORED_STARS),
+DEFINE_SHORTCUT_TOGGLE(gOmmExtrasVanishingHUD, OMM_TEXT_OPT_VANISHING_HUD),
+DEFINE_SHORTCUT_TOGGLE(gOmmExtrasRevealSecrets, OMM_TEXT_OPT_REVEAL_SECRETS),
+DEFINE_SHORTCUT_TOGGLE(gOmmExtrasRedCoinsRadar, OMM_TEXT_OPT_RED_COINS_RADAR),
+DEFINE_SHORTCUT_TOGGLE(gOmmExtrasShowStarNumber, OMM_TEXT_OPT_SHOW_STAR_NUMBER),
+DEFINE_SHORTCUT_TOGGLE(gOmmExtrasInvisibleMode, OMM_TEXT_OPT_INVISIBLE_MODE),
+#if OMM_CODE_DEBUG
+DEFINE_SHORTCUT_TOGGLE(gOmmDebugHitbox, OMM_TEXT_OPT_DEBUG_HITBOX),
+DEFINE_SHORTCUT_TOGGLE(gOmmDebugHurtbox, OMM_TEXT_OPT_DEBUG_HURTBOX),
+DEFINE_SHORTCUT_TOGGLE(gOmmDebugWallbox, OMM_TEXT_OPT_DEBUG_WALLBOX),
+DEFINE_SHORTCUT_TOGGLE(gOmmDebugMario, OMM_TEXT_OPT_DEBUG_MARIO),
+DEFINE_SHORTCUT_TOGGLE(gOmmDebugCappy, OMM_TEXT_OPT_DEBUG_CAPPY),
+DEFINE_SHORTCUT_TOGGLE(gOmmDebugProfiler, OMM_TEXT_OPT_DEBUG_PROFILER),
+#if OMM_CODE_DEV_DEBUG
+DEFINE_SHORTCUT_TOGGLE(gOmmDebugGameSpeedEnabler, OMM_TEXT_OPT_DEBUG_GAME_SPEED),
+DEFINE_SHORTCUT_CHOICE(gOmmDebugGameSpeedModifier, OMM_TEXT_OPT_DEBUG_GAME_SPEED, 4, OMM_TEXT_OPT_DEBUG_GAME_SPEED_30_FPS, OMM_TEXT_OPT_DEBUG_GAME_SPEED_15_FPS, OMM_TEXT_OPT_DEBUG_GAME_SPEED_10_FPS, OMM_TEXT_OPT_DEBUG_GAME_SPEED_5_FPS),
+#endif
+#endif
+DEFINE_SHORTCUT_TOGGLE(gOmmExtrasCrystalStarsReward, OMM_TEXT_OPT_CRYSTAL_STARS_REWARD), // Must be last
+};
 
 //
 // Option wrappers
@@ -155,6 +222,21 @@ static struct Option omm_opt_make_submenu(const char *label, const char *title, 
     opt.nextMenu->numOpts = numOptions;
     for (s32 i = 0; i != numOptions; ++i) {
         opt.nextMenu->opts[i] = options[i];
+    }
+    return opt;
+}
+
+static struct Option omm_opt_make_shortcuts_submenu(const char *label, const char *title) {
+    s32 numShortcuts = OMM_ARRAY_SIZE(sOmmOptShortcuts) - !omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD);
+    struct Option opt = { 0 };
+    opt.type = OPT_SUBMENU;
+    opt.label = omm_text_convert(label, true);
+    opt.nextMenu = OMM_MEMNEW(struct SubMenu, 1);
+    opt.nextMenu->label = omm_text_convert(title, true);
+    opt.nextMenu->opts = OMM_MEMNEW(struct Option, numShortcuts);
+    opt.nextMenu->numOpts = numShortcuts;
+    for (s32 i = 0; i != numShortcuts; ++i) {
+        opt.nextMenu->opts[i] = omm_opt_make_bind(sOmmOptShortcuts[i].label, sOmmOptShortcuts[i].binds);
     }
     return opt;
 }
@@ -396,6 +478,9 @@ OMM_AT_STARTUP static
 #endif
 void omm_opt_init() {
     save_file_load_all();
+#if OMM_CODE_DEBUG && OMM_CODE_DEV_DEBUG
+    gOmmDebugGameSpeedEnabler = false;
+#endif
 
     // OMM menu
     struct Option optOmmMenu =
@@ -437,23 +522,7 @@ void omm_opt_init() {
 #else
             ), 7 + omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD)),
 #endif
-            omm_opt_make_submenu(OMM_TEXT_OPT_SHORTCUTS_LABEL, OMM_TEXT_OPT_SHORTCUTS_TITLE, options(
-                omm_opt_make_bind(OMM_TEXT_OPT_CHARACTER_LABEL, gOmmCharacterShortcuts),
-                omm_opt_make_bind(OMM_TEXT_OPT_MOVESET_LABEL, gOmmMovesetTypeShortcuts),
-                omm_opt_make_bind(OMM_TEXT_OPT_CAP_LABEL, gOmmCapTypeShortcuts),
-                omm_opt_make_bind(OMM_TEXT_OPT_STARS_LABEL, gOmmStarsModeShortcuts),
-                omm_opt_make_bind(OMM_TEXT_OPT_POWER_UPS_LABEL, gOmmPowerUpsTypeShortcuts),
-                omm_opt_make_bind(OMM_TEXT_OPT_CAMERA_LABEL, gOmmCameraModeShortcuts),
-#if OMM_CODE_SPARKLY
-                omm_opt_make_bind(OMM_TEXT_OPT_SPARKLY_STARS_LABEL, gOmmSparklyStarsModeShortcuts),
-#endif
-                omm_opt_make_bind(OMM_TEXT_OPT_CAPPY_EYES_ON_MARIOS_CAP, gOmmExtrasCappyEyesOnMariosCapShortcuts),
-                omm_opt_make_bind(OMM_TEXT_OPT_COLORED_STARS, gOmmExtrasColoredStarsShortcuts),
-                omm_opt_make_bind(OMM_TEXT_OPT_VANISHING_HUD, gOmmExtrasVanishingHUDShortcuts),
-                omm_opt_make_bind(OMM_TEXT_OPT_REVEAL_SECRETS, gOmmExtrasRevealSecretsShortcuts),
-                omm_opt_make_bind(OMM_TEXT_OPT_INVISIBLE_MODE, gOmmExtrasInvisibleModeShortcuts),
-                omm_opt_make_bind(OMM_TEXT_OPT_CRYSTAL_STARS_REWARD, gOmmExtrasCrystalStarsRewardShortcuts),
-            ), 11 + OMM_CODE_SPARKLY + omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD)),
+            omm_opt_make_shortcuts_submenu(OMM_TEXT_OPT_SHORTCUTS_LABEL, OMM_TEXT_OPT_SHORTCUTS_TITLE),
 #if OMM_CODE_DEBUG
             omm_opt_make_submenu(OMM_TEXT_OPT_DEBUG_LABEL, OMM_TEXT_OPT_DEBUG_TITLE, options(
                 omm_opt_make_toggle(OMM_TEXT_OPT_DEBUG_HITBOX, &gOmmDebugHitbox),
@@ -462,7 +531,16 @@ void omm_opt_init() {
                 omm_opt_make_toggle(OMM_TEXT_OPT_DEBUG_MARIO, &gOmmDebugMario),
                 omm_opt_make_toggle(OMM_TEXT_OPT_DEBUG_CAPPY, &gOmmDebugCappy),
                 omm_opt_make_toggle(OMM_TEXT_OPT_DEBUG_PROFILER, &gOmmDebugProfiler),
-            ), 6),
+#if OMM_CODE_DEV_DEBUG
+                omm_opt_make_toggle(OMM_TEXT_OPT_DEBUG_GAME_SPEED, &gOmmDebugGameSpeedEnabler),
+                omm_opt_make_choice(OMM_TEXT_BLANK, &gOmmDebugGameSpeedModifier, choices(
+                    OMM_TEXT_OPT_DEBUG_GAME_SPEED_30_FPS,
+                    OMM_TEXT_OPT_DEBUG_GAME_SPEED_15_FPS,
+                    OMM_TEXT_OPT_DEBUG_GAME_SPEED_10_FPS,
+                    OMM_TEXT_OPT_DEBUG_GAME_SPEED_5_FPS),
+                4),
+#endif
+            ), 6 + 2 * OMM_CODE_DEV_DEBUG),
 #endif
         ), 9 + OMM_CODE_SPARKLY + OMM_CODE_DEBUG);
     OMM_MEMCPY(gOmmOptMenu, optOmmMenu.label, omm_text_length(optOmmMenu.label) + 1);
@@ -525,70 +603,61 @@ void omm_opt_init() {
 // Options shortcuts
 //
 
-#define CHECK_SHORTCUTS_UPDATE_TOGGLE(option, name) \
-static const char *option##Strings[] = { name, OMM_TEXT_OPT_DISABLED, OMM_TEXT_OPT_ENABLED }; \
-s32 option##Count = OMM_ARRAY_SIZE(option##Strings) - 1; \
-for (s32 i = 0; i != MAX_BINDS; ++i) { \
-    if (keyPressed == option##Shortcuts[i]) { \
-        option = (option + 1) % option##Count; \
-        sStrings = option##Strings; \
-        sOption = 0 + (((uintptr_t) &option) << 1); \
-        return; \
-    } \
-}
-
-#define CHECK_SHORTCUTS_UPDATE_CHOICE(option, name, ...) \
-static const char *option##Strings[] = { name, __VA_ARGS__ }; \
-s32 option##Count = OMM_ARRAY_SIZE(option##Strings) - 1; \
-for (s32 i = 0; i != MAX_BINDS; ++i) { \
-    if (keyPressed == option##Shortcuts[i]) { \
-        option = (option + 1) % option##Count; \
-        sStrings = option##Strings; \
-        sOption = 1 + (((uintptr_t) &option) << 1); \
-        return; \
-    } \
-}
-
 OMM_ROUTINE_GFX(omm_opt_update_shortcuts) {
-    static const char **sStrings = NULL;
+    static const char *sToggleStrings[] = { OMM_TEXT_OPT_DISABLED, OMM_TEXT_OPT_ENABLED };
+    static const char *sOptionLabel = NULL;
+    static const char **sOptionStrings = NULL;
     static uintptr_t sOption = 0;
     static u8 *sDisplayStrings[4] = { NULL, NULL, NULL, NULL };
     static s32 sDisplayTimer = 0;
 
     // Check shortcuts and change the corresponding option if pressed
     if (!omm_is_main_menu() && !omm_is_game_paused() && gMarioObject) {
+        bool changed = false;
         u32 keyPressed = controller_get_raw_key();
         if (keyPressed != VK_INVALID) {
-            CHECK_SHORTCUTS_UPDATE_CHOICE(gOmmCharacter, OMM_TEXT_OPT_CHARACTER_LABEL, OMM_TEXT_MARIO, OMM_TEXT_PEACH);
-            CHECK_SHORTCUTS_UPDATE_CHOICE(gOmmMovesetType, OMM_TEXT_OPT_MOVESET_LABEL, OMM_TEXT_OPT_MOVESET_CLASSIC, OMM_TEXT_OPT_MOVESET_ODYSSEY_3H, OMM_TEXT_OPT_MOVESET_ODYSSEY_6H);
-            CHECK_SHORTCUTS_UPDATE_CHOICE(gOmmCapType, OMM_TEXT_OPT_CAP_LABEL, OMM_TEXT_OPT_CAP_CLASSIC, OMM_TEXT_OPT_CAP_NO_CAPTURE, OMM_TEXT_OPT_CAP_CAPTURE);
-            CHECK_SHORTCUTS_UPDATE_CHOICE(gOmmStarsMode, OMM_TEXT_OPT_STARS_LABEL, OMM_TEXT_OPT_STARS_CLASSIC, OMM_TEXT_OPT_STARS_NON_STOP);
-            CHECK_SHORTCUTS_UPDATE_CHOICE(gOmmPowerUpsType, OMM_TEXT_OPT_POWER_UPS_LABEL, OMM_TEXT_OPT_POWER_UPS_CLASSIC, OMM_TEXT_OPT_POWER_UPS_IMPROVED);
-            CHECK_SHORTCUTS_UPDATE_CHOICE(gOmmCameraMode, OMM_TEXT_OPT_CAMERA_LABEL, OMM_TEXT_OPT_CAMERA_CLASSIC, OMM_TEXT_OPT_CAMERA_8_DIR, OMM_TEXT_OPT_CAMERA_16_DIR);
-#if OMM_CODE_SPARKLY
-            CHECK_SHORTCUTS_UPDATE_CHOICE(gOmmSparklyStarsMode, OMM_TEXT_OPT_SPARKLY_STARS_LABEL, OMM_TEXT_OPT_SPARKLY_STARS_MODE_0, OMM_TEXT_OPT_SPARKLY_STARS_MODE_1, OMM_TEXT_OPT_SPARKLY_STARS_MODE_2, OMM_TEXT_OPT_SPARKLY_STARS_MODE_3);
-#endif
-            CHECK_SHORTCUTS_UPDATE_TOGGLE(gOmmExtrasCappyEyesOnMariosCap, OMM_TEXT_OPT_CAPPY_EYES_ON_MARIOS_CAP);
-            CHECK_SHORTCUTS_UPDATE_TOGGLE(gOmmExtrasColoredStars, OMM_TEXT_OPT_COLORED_STARS);
-            CHECK_SHORTCUTS_UPDATE_TOGGLE(gOmmExtrasVanishingHUD, OMM_TEXT_OPT_VANISHING_HUD);
-            CHECK_SHORTCUTS_UPDATE_TOGGLE(gOmmExtrasRevealSecrets, OMM_TEXT_OPT_REVEAL_SECRETS);
-            CHECK_SHORTCUTS_UPDATE_TOGGLE(gOmmExtrasRedCoinsRadar, OMM_TEXT_OPT_RED_COINS_RADAR);
-            CHECK_SHORTCUTS_UPDATE_TOGGLE(gOmmExtrasShowStarNumber, OMM_TEXT_OPT_SHOW_STAR_NUMBER);
-            CHECK_SHORTCUTS_UPDATE_TOGGLE(gOmmExtrasInvisibleMode, OMM_TEXT_OPT_INVISIBLE_MODE);
-            CHECK_SHORTCUTS_UPDATE_TOGGLE(gOmmExtrasCrystalStarsReward, OMM_TEXT_OPT_CRYSTAL_STARS_REWARD);
+            for (s32 i = 0; i != OMM_ARRAY_SIZE(sOmmOptShortcuts); ++i) {
+                const OmmOptShortcut *sc = &sOmmOptShortcuts[i];
+                for (s32 j = 0; j != MAX_BINDS; ++j) {
+                    if (keyPressed == sc->binds[j]) {
+                        switch (sc->type) {
+                            case OPT_TOGGLE: {
+                                *sc->toggle.option = !(*sc->toggle.option);
+                                sOptionLabel = sc->label;
+                                sOptionStrings = (const char **) sToggleStrings;
+                                sOption = 0 + (((uintptr_t) sc->toggle.option) << 1);
+                            } break;
+
+                            case OPT_CHOICE: {
+                                *sc->choice.option = (*sc->choice.option + 1) % sc->choice.numChoices;
+                                sOptionLabel = sc->label;
+                                sOptionStrings = (const char **) sc->choice.choices;
+                                sOption = 1 + (((uintptr_t) sc->choice.option) << 1);
+                            } break;
+                        }
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Must return now if the values changed, to let them update properly before displaying the message box
+        if (changed) {
+            return;
         }
     }
 
     // Create the strings to display and reset the timer
-    if (sStrings && sOption) {
+    if (sOption && sOptionLabel && sOptionStrings) {
         gSaveFileModified = true;
         play_sound(SOUND_MENU_MARIO_CASTLE_WARP2, gGlobalSoundArgs);
         bool isChoice = (sOption & 1);
         u32 opt = (isChoice ? *((u32 *) (sOption >> 1)) : (u32) *((bool *) (sOption >> 1)));
         OMM_STRING(str0, 0x80, "%dOption ", 0);
-        OMM_STRING(str1, 0x80, "%d%s", 1, sStrings[0]);
+        OMM_STRING(str1, 0x80, "%d%s", 1, sOptionLabel);
         OMM_STRING(str2, 0x80, "%d set to ", 0);
-        OMM_STRING(str3, 0x80, "%d%s", (isChoice ? 1 : (opt ? 2 : 3)), sStrings[opt + 1]);
+        OMM_STRING(str3, 0x80, "%d%s", (isChoice ? 1 : (opt ? 2 : 3)), sOptionStrings[opt]);
         OMM_MEMDEL(sDisplayStrings[0]);
         OMM_MEMDEL(sDisplayStrings[1]);
         OMM_MEMDEL(sDisplayStrings[2]);
@@ -598,7 +667,8 @@ OMM_ROUTINE_GFX(omm_opt_update_shortcuts) {
         sDisplayStrings[2] = omm_text_convert(str2, true);
         sDisplayStrings[3] = omm_text_convert(str3, true);
         sDisplayTimer = 60;
-        sStrings = NULL;
+        sOptionLabel = NULL;
+        sOptionStrings = NULL;
         sOption = 0;
     }
 

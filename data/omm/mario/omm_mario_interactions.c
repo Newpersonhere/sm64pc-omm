@@ -195,7 +195,7 @@ static bool omm_mario_interact_strong_wind(struct MarioState *m, UNUSED struct O
     return omm_mario_has_metal_cap(m);
 }
 
-static bool omm_mario_interact_flame(struct MarioState *m, UNUSED struct Object *o) {
+static bool omm_mario_interact_flame(UNUSED struct MarioState *m, struct Object *o) {
     if (omm_peach_vibe_is_gloom() && omm_obj_is_flame(o)) {
         obj_spawn_white_puff(o, SOUND_GENERAL_FLAME_OUT);
         obj_mark_for_deletion(o);

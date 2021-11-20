@@ -62,6 +62,13 @@
 #define OMM_CODE_DEBUG          DEF(0, 0, 0, 0, 0, 0)
 #endif
 
+// OMM_DEV_DEBUG | Enables advanced debug stuff
+#if defined(OMM_DEBUG) && defined(DEBUG) && defined(WAPI_SDL2) && !defined(HIGH_FPS_PC)
+#define OMM_CODE_DEV_DEBUG      DEF(OMM_DEBUG, OMM_DEBUG, OMM_DEBUG, OMM_DEBUG, OMM_DEBUG, OMM_DEBUG)
+#else
+#define OMM_CODE_DEV_DEBUG      DEF(0, 0, 0, 0, 0, 0)
+#endif
+
 // EXTERNAL_DATA | If not set, enables STBI implementation in file omm_gfx.c
 #if defined(EXTERNAL_DATA)
 #define OMM_STBI_IMPL           DEF(0, 0, 0, 0, 0, 0)
@@ -129,6 +136,7 @@
 #define init_scene_rendering            DEF(init_render_image, init_render_image, init_render_image, init_rcp, init_rcp, init_rcp)
 #define spawnInfoModel                  DEF(unk18, unk18, unk18, model, model, model)
 #define gIsHardMode                     DEF(gOmmHardMode, gOmmHardMode, gOmmHardMode, gOmmHardMode, gOmmHardMode, gStarRoadHardMode)
+#define INPUT_STOMP                     DEF(INPUT_UNKNOWN_10, INPUT_UNKNOWN_10, INPUT_UNKNOWN_10, INPUT_STOMPED, INPUT_STOMPED, INPUT_STOMPED)
 
 // OMM
 #define OMM_LEVEL_ENTRY_WARP(level)     DEF(0x0A, 0x0A, 0x0A, 0x0A, 0x0A, (level == LEVEL_JRB ? 0x01 : 0x0A))

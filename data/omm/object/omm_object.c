@@ -154,14 +154,13 @@ void obj_unload_all_with_behavior(const BehaviorScript *behavior) {
 // Specific object behaviors
 //
 
-// Prevents the coin from falling from a ledge if the floor below is too low
-// Fixes this annoying shit for enemies that spurt coins and exclamation boxes
-void bhv_coin_fix_step(struct Object *o, s32 update) {
+// Prevent the object from falling off a ledge if the floor below is too low
+void obj_safe_step(struct Object *o, s32 update) {
     o->oFloorHeight = find_floor(o->oPosX, o->oPosY, o->oPosZ, &o->oFloor);
     if (update) {
-        if (o->oFloorHeight - o->oHomeY < -100.f) {
-            o->oPosX = o->oHomeX;
-            o->oPosZ = o->oHomeZ;
+        if (o->oFloorHeight - o->oParentRelativePosY < -100.f) {
+            o->oPosX = o->oParentRelativePosX;
+            o->oPosZ = o->oParentRelativePosZ;
             o->oFloorHeight = find_floor(o->oPosX, o->oPosY, o->oPosZ, &o->oFloor);
             if (o->oPosY < o->oFloorHeight) {
                 o->oPosY = o->oFloorHeight;
@@ -175,12 +174,12 @@ void bhv_coin_fix_step(struct Object *o, s32 update) {
             }
         }
     } else {
-        o->oHomeX = o->oPosX;
-        o->oHomeY = o->oFloorHeight;
-        o->oHomeZ = o->oPosZ;
+        o->oParentRelativePosX = o->oPosX;
+        o->oParentRelativePosY = o->oFloorHeight;
+        o->oParentRelativePosZ = o->oPosZ;
     }
     if (o->oVelY <= 0.f) {
-        cur_obj_become_tangible();
+        o->oIntangibleTimer = 0;
     }
 }
 
@@ -887,6 +886,23 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
             case OMM_PLAYER_LUIGI: charSelButton->oGraphNode = omm_geo_get_graph_node(omm_geo_menu_button_luigi, true); break;
             case OMM_PLAYER_WARIO: charSelButton->oGraphNode = omm_geo_get_graph_node(omm_geo_menu_button_wario, true); break;
             default:               charSelButton->oGraphNode = omm_geo_get_graph_node(omm_geo_menu_button_mario, true); break;
+        }
+    }
+
+// -------------------------------------------------------------------------------------------------------------------------------
+// Other stuff
+// -------------------------------------------------------------------------------------------------------------------------------
+
+    // Thwomp collision
+    // Fix the weird Thwomp collision
+    if (OMM_MOVESET_ODYSSEY) {
+        if (o->collisionData == thwomp_seg5_collision_0500B7D0 ||
+            o->collisionData == thwomp_seg5_collision_0500B92C) {
+            o->collisionData = (void *) omm_thwomp_collision;
+        }
+    } else {
+        if (o->collisionData == omm_thwomp_collision) {
+            o->collisionData = (void *) thwomp_seg5_collision_0500B7D0;
         }
     }
 

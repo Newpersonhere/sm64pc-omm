@@ -346,3 +346,83 @@ void load_object_collision_model() {
     o->oDistanceToMario = dist_between_objects(o, gMarioObject);
     o->oNodeFlags |= GRAPH_RENDER_ACTIVE;
 }
+
+#if defined(SMSR)
+#include "levels/totwc/areas/1/custom.model.inc.h"
+
+//
+// Windy Wing Cap Well
+// Break the metal grid next to the red coin in water after spawning the red coins star
+//
+
+static Vtx *sTOTWCMetalGridVertexBuffers[] = {
+    VB_totwc_1_0xe02c780 + 12,
+    VB_totwc_1_0xe02c870 + 12,
+    VB_totwc_1_0xe02c960 + 12,
+    VB_totwc_1_0xe02ca50 + 12,
+    VB_totwc_1_0xe02cb40 + 12,
+    VB_totwc_1_0xe02cc30 + 12,
+    VB_totwc_1_0xe02cd20 + 12,
+    VB_totwc_1_0xe02ce10 + 12,
+    VB_totwc_1_0xe02cf00 + 12,
+    VB_totwc_1_0xe02cff0 + 12,
+    VB_totwc_1_0xe02d0e0 + 12,
+    VB_totwc_1_0xe02d1d0 + 12,
+    VB_totwc_1_0xe02d2c0 + 12,
+    VB_totwc_1_0xe02d3b0 + 12,
+    VB_totwc_1_0xe02d4a0 + 12,
+    VB_totwc_1_0xe02d590 + 12,
+};
+
+OMM_ROUTINE_LEVEL_ENTRY(smsr_totwc_reset_vertex_buffers) {
+    if (gCurrLevelNum == LEVEL_TOTWC) {
+        static Vtx *sTOTWCMetalGridVertexBuffers0[OMM_ARRAY_SIZE(sTOTWCMetalGridVertexBuffers)] = { NULL };
+        for (s32 i = 0; i != OMM_ARRAY_SIZE(sTOTWCMetalGridVertexBuffers); ++i) {
+            if (!sTOTWCMetalGridVertexBuffers0[i]) {
+                sTOTWCMetalGridVertexBuffers0[i] = OMM_MEMNEW(Vtx, 3);
+                OMM_MEMCPY(sTOTWCMetalGridVertexBuffers0[i], sTOTWCMetalGridVertexBuffers[i], sizeof(Vtx) * 3);
+            } else {
+                OMM_MEMCPY(sTOTWCMetalGridVertexBuffers[i], sTOTWCMetalGridVertexBuffers0[i], sizeof(Vtx) * 3);
+            }
+        }
+    }
+}
+
+OMM_ROUTINE_UPDATE(smsr_totwc_update_surfaces_and_gfx) {
+    if (sOmmSurfaces && gMarioObject &&
+        gCurrLevelNum == LEVEL_TOTWC &&
+        sTOTWCMetalGridVertexBuffers[0]->n.ob[0] &&
+        !(gTimeStopState & TIME_STOP_ENABLED) &&
+        !obj_get_first_with_behavior(bhvRedCoin) &&
+        !obj_get_first_with_behavior(bhvHiddenRedCoinStar)) {
+
+        // Remove the metal grid collisions
+        for (s32 i = 0; i != omm_array_count(sOmmSurfaces); ++i) {
+            struct Surface *s = omm_array_get(sOmmSurfaces, struct Surface *, i);
+            if ((s->type == 0 && s->object == NULL) &&
+                (s->vertex1[0] == 629 || s->vertex1[0] == 669) &&
+                (s->vertex2[0] == 629 || s->vertex2[0] == 669) &&
+                (s->vertex3[0] == 629 || s->vertex3[0] == 669) &&
+                (s->vertex1[2] >= -3700 && s->vertex1[2] <= -3000) &&
+                (s->vertex2[2] >= -3700 && s->vertex2[2] <= -3000) &&
+                (s->vertex3[2] >= -3700 && s->vertex3[2] <= -3000)) {
+                OMM_MEMSET(s, 0, sizeof(*s));
+            }
+        }
+        
+        // Remove the metal grid graphics
+        for (s32 i = 0; i != OMM_ARRAY_SIZE(sTOTWCMetalGridVertexBuffers); ++i) {
+            OMM_MEMSET(sTOTWCMetalGridVertexBuffers[i], 0, sizeof(Vtx) * 3);
+        }
+
+        // Spawn a 'wall explosion' gfx and sound effect
+        struct Object *dummy = spawn_object(gMarioObject, MODEL_NONE, bhvStaticObject);
+        obj_set_pos(dummy, 649, -2100, -3320);
+        set_camera_shake_from_point(SHAKE_POS_SMALL, dummy->oPosX, dummy->oPosY, dummy->oPosZ);
+        obj_spawn_white_puff(dummy, SOUND_GENERAL_WALL_EXPLOSION | 0xFF00);
+        obj_spawn_triangle_break_particles(dummy, OBJ_SPAWN_TRI_BREAK_PRESET_TRIANGLES_20);
+        obj_mark_for_deletion(dummy);
+    }
+}
+
+#endif

@@ -54,7 +54,6 @@ s32 cappy_bullet_bill_update(struct Object *o) {
     // Properties
     POBJ_SET_ABOVE_WATER;
     POBJ_SET_INVULNERABLE;
-    POBJ_SET_IMMUNE_TO_FIRE;
     POBJ_SET_IMMUNE_TO_LAVA;
     POBJ_SET_IMMUNE_TO_SAND;
     POBJ_SET_IMMUNE_TO_WIND;

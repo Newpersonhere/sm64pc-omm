@@ -340,6 +340,14 @@ static s32 omm_act_soft_bonk(struct MarioState *m) {
         return OMM_MARIO_ACTION_RESULT_CONTINUE;
     }
 
+    // Soft bonks from ledge grabs are shorter
+    if (m->prevAction == ACT_LEDGE_GRAB ||
+        m->prevAction == ACT_LEDGE_CLIMB_SLOW_1 ||
+        m->prevAction == ACT_LEDGE_CLIMB_SLOW_2 ||
+        m->prevAction == ACT_LEDGE_CLIMB_DOWN ||
+        m->prevAction == ACT_LEDGE_CLIMB_FAST) {
+        m->actionTimer = omm_max_s(m->actionTimer, 15);
+    }
     action_init(m->forwardVel, 0.f, 0, 0);
     omm_play_knockback_sound(m);
     omm_common_air_knockback_step(m, ACT_FREEFALL_LAND, MARIO_ANIM_GENERAL_FALL, false);
@@ -709,7 +717,7 @@ static void omm_set_default_camera(struct MarioState *m) {
     }
 }
 
-#define OMM_WING_FLYING_VEL_MAX 60.f
+#define OMM_WING_FLYING_VEL_MAX 56.f
 static void omm_update_flying(struct MarioState *m) {
 
     // Angles

@@ -248,22 +248,30 @@ static void omm_cappy_call_back(struct Object *cappy, struct MarioState *m, s32 
 
             // D-Pad
             if (!(udlrx & X_BUTTON)) {
-                cappy->oCappyLifeTimer = CAPPY_LIFETIME - CAPPY_HOMING_ATTACK_DURATION - 1;
+                s32 cappyHomingAttackDuration = CAPPY_HOMING_ATTACK_DURATION;
+                cappy->oCappyLifeTimer = CAPPY_LIFETIME - cappyHomingAttackDuration - 1;
                 cappy->oCappyHomingAttack = true;
 
                 // Targets the nearest interactable object
-                struct Object *target = omm_cappy_find_target(cappy, m, CAPPY_HOMING_ATTACK_VEL * CAPPY_HOMING_ATTACK_DURATION);
+                struct Object *target = omm_cappy_find_target(CAPPY_HOMING_ATTACK_ORIGIN, m, CAPPY_HOMING_ATTACK_VEL * cappyHomingAttackDuration);
                 if (target) {
                     f32 dx = target->oPosX - cappy->oPosX;
                     f32 dy = target->oPosY - cappy->oPosY;
                     f32 dz = target->oPosZ - cappy->oPosZ;
-                    f32 d  = sqrtf(omm_sqr_f(dx) + omm_sqr_f(dy) + omm_sqr_f(dz));
-                    if (d == 0) { // Failsafe
-                        omm_cappy_return_to_mario(cappy);
+                    f32 dv = sqrtf(omm_sqr_f(dx) + omm_sqr_f(dy) + omm_sqr_f(dz));
+                    if (dv != 0) {
+                        f32 dm = CAPPY_HOMING_ATTACK_VEL * cappyHomingAttackDuration;
+                        if (dm >= dv) {
+                            cappy->oVelX = CAPPY_HOMING_ATTACK_VEL * (dx / dv);
+                            cappy->oVelY = CAPPY_HOMING_ATTACK_VEL * (dy / dv);
+                            cappy->oVelZ = CAPPY_HOMING_ATTACK_VEL * (dz / dv);
+                        } else {
+                            cappy->oVelX = (dx / cappyHomingAttackDuration);
+                            cappy->oVelY = (dy / cappyHomingAttackDuration);
+                            cappy->oVelZ = (dz / cappyHomingAttackDuration);
+                        }
                     } else {
-                        cappy->oVelX = CAPPY_HOMING_ATTACK_VEL * (dx / d);
-                        cappy->oVelY = CAPPY_HOMING_ATTACK_VEL * (dy / d);
-                        cappy->oVelZ = CAPPY_HOMING_ATTACK_VEL * (dz / d);
+                        omm_cappy_return_to_mario(cappy);
                     }
                 }
                 
@@ -309,79 +317,8 @@ static void omm_cappy_call_back(struct Object *cappy, struct MarioState *m, s32 
                         } break;
 
                         case OMM_CAPPY_BHV_SPIN_GROUND:
-                        case OMM_CAPPY_BHV_SPIN_AIR: {
-                            switch (udlrx) {
-                                case U_JPAD: {
-                                    cappy->oVelX = 0.f;
-                                    cappy->oVelY = CAPPY_HOMING_ATTACK_VEL;
-                                    cappy->oVelZ = 0.f;
-                                } break;
-
-                                case D_JPAD: {
-                                    cappy->oVelX = 0.f;
-                                    cappy->oVelY = -CAPPY_HOMING_ATTACK_VEL;
-                                    cappy->oVelZ = 0.f;
-                                } break;
-
-                                case L_JPAD:
-                                case R_JPAD: {
-                                    f32 dx = cappy->oPosX - m->pos[0];
-                                    f32 dz = cappy->oPosZ - m->pos[2];
-                                    f32 dv = sqrtf(omm_sqr_f(dx) + omm_sqr_f(dz));
-                                    if (dv != 0) { dx /= dv; dz /= dv; }
-                                    cappy->oVelX = CAPPY_HOMING_ATTACK_VEL * dx;
-                                    cappy->oVelY = 0.f;
-                                    cappy->oVelZ = CAPPY_HOMING_ATTACK_VEL * dz;
-                                } break;
-
-                                default: { // if two or more D-pads buttons are pressed simultaneously and no target was found, cancel the homing attack
-                                    omm_cappy_return_to_mario(cappy);
-                                } break;
-                            }
-                        } break;
-
-                        case OMM_CAPPY_BHV_FLYING: {
-                            switch (udlrx) {
-                                case U_JPAD: {
-                                    f32 dx = m->vel[0];
-                                    f32 dy = m->vel[1];
-                                    f32 dz = m->vel[2];
-                                    f32 dv = sqrtf(omm_sqr_f(dx) + omm_sqr_f(dy) + omm_sqr_f(dz));
-                                    if (dv != 0) { dx /= dv; dy /= dv; dz /= dv; }
-                                    cappy->oVelX = CAPPY_HOMING_ATTACK_VEL * dx;
-                                    cappy->oVelY = CAPPY_HOMING_ATTACK_VEL * dy;
-                                    cappy->oVelZ = CAPPY_HOMING_ATTACK_VEL * dz;
-                                } break;
-
-                                case D_JPAD: {
-                                    f32 dx = m->vel[0];
-                                    f32 dy = m->vel[1];
-                                    f32 dz = m->vel[2];
-                                    f32 dv = sqrtf(omm_sqr_f(dx) + omm_sqr_f(dy) + omm_sqr_f(dz));
-                                    if (dv != 0) { dx /= dv; dy /= dv; dz /= dv; }
-                                    cappy->oVelX = -CAPPY_HOMING_ATTACK_VEL * dx;
-                                    cappy->oVelY = -CAPPY_HOMING_ATTACK_VEL * dy;
-                                    cappy->oVelZ = -CAPPY_HOMING_ATTACK_VEL * dz;
-                                } break;
-
-                                case L_JPAD:
-                                case R_JPAD: {
-                                    f32 dx = cappy->oPosX - m->pos[0];
-                                    f32 dy = cappy->oPosY - m->pos[1];
-                                    f32 dz = cappy->oPosZ - m->pos[2];
-                                    f32 dv = sqrtf(omm_sqr_f(dx) + omm_sqr_f(dy) + omm_sqr_f(dz));
-                                    if (dv != 0) { dx /= dv; dy /= dv; dz /= dv; }
-                                    cappy->oVelX = CAPPY_HOMING_ATTACK_VEL * dx;
-                                    cappy->oVelY = CAPPY_HOMING_ATTACK_VEL * dy;
-                                    cappy->oVelZ = CAPPY_HOMING_ATTACK_VEL * dz;
-                                } break;
-
-                                default: { // if two or more D-pads buttons are pressed simultaneously and no target was found, cancel the homing attack
-                                    omm_cappy_return_to_mario(cappy);
-                                } break;
-                            }
-                        } break;
-
+                        case OMM_CAPPY_BHV_SPIN_AIR:
+                        case OMM_CAPPY_BHV_FLYING:
                         default: {
                             omm_cappy_return_to_mario(cappy);
                         } break;
