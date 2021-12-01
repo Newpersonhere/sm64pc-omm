@@ -62,6 +62,7 @@ The `[version]` parameter must be one of the following:
 | `xalo` | Super Mario 64 ex-alo |
 | `sm74` | Super Mario 74 |
 | `smsr` | Super Mario Star Road |
+| `r96a` | Render96 ex-alpha |
 
 The `[build_speed]` parameter must be one of the following:
 
@@ -86,15 +87,33 @@ For instance, if you want to build and play *Star Road* with 60 FPS and External
 
 ---
 
-### Notes:
+### Requirements
 
-- You can build the game with custom patches. To do so, place a copy of your `.patch` files inside a `patches` directory before running the command.
-
-- You can customize your game's musics and textures. To do so, place your packs `.zip` archives inside a `res` directory before running the command.
-
-- To build *Super Mario 64 Moonshine*, you must extract the mod archive (`MOONSHINE_FINALUPDATE.rar`) next to the script into a directory named `moonshine`.
-
+- To build *Super Mario 64 Moonshine*, you must extract the mod archive (`MOONSHINE_FINALUPDATE.rar`) into a directory named `moonshine`.
 - To build *Super Mario Star Road*, you must place the patch file (`star_road_release.patch`) next to the script and name it `star_road.patch`.
+
+### Custom patches
+
+- To build the game with custom patches, place a copy of your `.patch` files inside a `patches` directory before running the command.
+- Remember that not all patches or combination of patches are supported.
+
+### Texture and sound packs
+
+- Customize your game's textures and sounds by placing your packs `.zip` archives inside a `res` directory before running the command.
+- Texture packs must be `.zip` archives with a `gfx` directory inside them.
+- Sound packs must be `.zip` archives with a `sound` directory inside them.
+
+### Model packs (DynOS and *Render96* only)
+
+- To be able to swap actors models in-game, copy your model packs directories inside a `dynos/packs` directory before running the command.
+- Model packs must be either directories of `.bin` files or filled with actors sub-directories, each sub-directory containing at least one `model.inc.c` and one `geo.inc.c` file as well as textures `.png` files.
+
+### Musics, jingles and sounds (*Render96* only)
+
+- Make your game more unique with custom musics, jingles and sounds! Put your audio data inside a `dynos/audio` directory before running the command.
+- *Render96* audio packs must be directories of sub-directories and `.txt` files, with each `.txt` file corresponding to one sub-directory.
+- The sub-directories must be: `jingles`, `levels`, `sfx_mario`, `sfx_mario_peach`, `sfx_luigi`, `sfx_luigi_peach`, `sfx_wario`, `sfx_wario_peach`.
+- The associated `.txt` files are: `jingle.txt`, `music.txt`, `sfx_mario.txt`, `sfx_mario_peach.txt`, `sfx_luigi.txt`, `sfx_luigi_peach.txt`, `sfx_wario.txt`, `sfx_wario_peach.txt`.
 
 ---
 
@@ -136,10 +155,56 @@ If it detects a new version, the builder will ask you if you want to update it w
 - [Super Mario 64 Moonshine archive](https://www.mediafire.com/file/khy40tbd1rcve2p/MOONSHINE_FINALUPDATE.rar/file)
 - [Super Mario Star Road patch file](https://drive.google.com/file/d/1kXskWESOTUJDoeCGVV9JMUkn0tLd_GXO/view)
 - [Super Mario Star Road HD Texture pack](https://github.com/aspieweeb759/Star-Road-HD)
+- [Custom patches](https://sm64pc.info/downloads/patches/)
+- [Model packs](https://sm64pc.info/downloads/model_pack/)
 - [Texture packs](https://sm64pc.info/downloads/texture_pack/)
-- [Music packs](https://sm64pc.info/downloads/sound_pack/)
+- [Sound packs](https://sm64pc.info/downloads/sound_pack/)
 
 -----
+
+## Version 6.1.0
+
+### Bug fixes:
+- The star number is now hidden during the ending cutscene.
+- Fixed an hitbox scaling bug on Perry.
+- Fixed vanilla Bowser's shockwave interaction.
+
+### Render96 compatibility (again):
+- Besides Mario and Peach, the player can also select Luigi and Wario on the file select screen.<br>Remember that even if Luigi/Wario is selected, the player can play as him only if he has been unlocked in the chosen save file. Otherwise, the game will select Mario when entering Castle grounds.
+- There are two additional ways to change the selected character in-game:
+  - Through the `Odyssey Mario's Moveset` menu, option `Character`.
+  - Go to the Fourth floor and enter a pipe: red pipe for Mario, green for Luigi and yellow for Wario.<br>To select Peach, enter your character's pipe (red if you play as Mario, green if Luigi or yellow if Wario).
+- Each character has different properties and moves:
+  - **Mario**: the most balanced character.
+  - **Peach**: same properties as Mario, plus extra moves from *Super Princess Peach*. See [Version 6.0.0](https://github.com/PeachyPeachSM64/sm64pc-omm/tree/master#peach).
+  - **Luigi**: runs faster and jumps higher, but slides on ground and moves slower in the air.
+  - **Wario**: runs slower and jumps lower, but has some powerful moves from *Wario World* and gains speed faster in the air.
+- Interactions with custom objects:
+  - Cappy can collect Luigi keys, Wario coins and the *secret power-up* in WDW.
+  - Gloom Peach can kill enemy Blarggs.
+  - Rage Peach can knockback Motos.
+- Cheater:<br>Most of Cheater's cheats work with OMM, but there are exceptions:
+  - Cheats that have no effect when `Odyssey Moveset` is enabled:
+    - `Super responsive controls`
+    - `Auto wall-kicks`
+  - Cheats that are completely disabled with OMM:
+    - `Infinite lives`
+    - `Play as`
+    
+### Changes:
+- Better ceiling hanging:
+  - Mario can hang on a ceiling with a jump, a double jump or a wall-jump.
+  - The player no longer has to hold the **(A)** button, but has to press **(A)**, **(B)** or **(Z)** to leave the ceiling.
+  - Mario moves faster, up to half his ground top speed.
+- Captures are affected by the characters modifiers, but inverted:
+  - This has no effect on Mario or Peach captures, but...
+  - Luigi captures run slower and jump lower, but move faster in the air.
+  - Wario captures run faster and jump higher, but move slower in the air.
+- The following captures can now open doors:
+  - Goomba
+  - Koopa
+  - Bob-omb
+  - Spindrift
 
 ## Version 6.0.6
 

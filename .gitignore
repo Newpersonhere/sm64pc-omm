@@ -4,13 +4,16 @@
 omm.*/
 moonshine/
 patches/
+dynos/
 res/
 smex/
 smms/
 xalo/
 sm74/
 smsr/
+r96a/
 *.patch
 *.z64
 *.version
 *.txt
+*.zip

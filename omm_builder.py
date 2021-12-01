@@ -23,6 +23,7 @@ def usage_info():
     print("  xalo  | Super Mario 64 ex-alo")
     print("  sm74  | Super Mario 74")
     print("  smsr  | Super Mario Star Road")
+    print("  r96a  | Render96 ex-alpha")
     print("")
     print("[build_speed] must be one of the following:")
     print("  slow     | Build the game by compiling files one by one.")
@@ -37,11 +38,29 @@ def usage_info():
     print("  DIRECT_X  | Replace SDL/OpenGL APIs by DirectX APIs.")
     print("  AUTO_RUN  | Start the game after building.")
     print("")
-    print("Notes:")
-    print("- You can build the game with custom patches. To do so, place a copy of your '.patch' files inside a 'patches' directory before running the command.")
-    print("- You can customize your game's musics and textures. To do so, place your packs '.zip' archives inside a 'res' directory before running the command.")
-    print("- To build Super Mario 64 Moonshine, you must extract the mod archive ('MOONSHINE_FINALUPDATE.rar') next to the script into a directory named 'moonshine'.")
+    print("Requirements:")
+    print("- To build Super Mario 64 Moonshine, you must extract the mod archive ('MOONSHINE_FINALUPDATE.rar') into a directory named 'moonshine'.")
     print("- To build Super Mario Star Road, you must place the patch file ('star_road_release.patch') next to the script and name it 'star_road.patch'.")
+    print("")
+    print("Custom patches:")
+    print("- To build the game with custom patches, place a copy of your '.patch' files inside a 'patches' directory before running the command.")
+    print("- Not all patches or combination of patches are supported.")
+    print("")
+    print("Texture and sound packs:")
+    print("- Customize your game's textures and sounds by placing your packs '.zip' archives inside a 'res' directory before running the command.")
+    print("- Texture packs must be '.zip' archives with a 'gfx' directory inside them.")
+    print("- Sound packs must be '.zip' archives with a 'sound' directory inside them.")
+    print("")
+    print("Model packs (DynOS and Render96 only):")
+    print("- To be able to swap actors models in-game, copy your model packs directories inside a 'dynos/packs' directory before running the command.")
+    print("- Model packs must be either directories of '.bin' files or filled with actors sub-directories, each sub-directory containing at least one 'model.inc.c' and one 'geo.inc.c' file as well as textures '.png' files.")
+    print("")
+    print("Musics, jingles and sounds (Render96 only):")
+    print("- Make your game more unique with custom musics, jingles and sounds! Put your audio data inside a 'dynos/audio' directory before running the command.")
+    print("- Render96 audio packs must be directories of sub-directories and '.txt' files, with each '.txt' file corresponding to one sub-directory.")
+    print("- The sub-directories must be: 'jingles', 'levels', 'sfx_mario', 'sfx_mario_peach', 'sfx_luigi', 'sfx_luigi_peach', 'sfx_wario', 'sfx_wario_peach'.")
+    print("- The associated '.txt' files are: 'jingle.txt', 'music.txt', 'sfx_mario.txt', 'sfx_mario_peach.txt', 'sfx_luigi.txt', 'sfx_luigi_peach.txt', 'sfx_wario.txt', 'sfx_wario_peach.txt'.")
+    print("")
     sys.exit(0)
 
 def raise_error(error, usageInfo):
@@ -177,6 +196,7 @@ if __name__ == "__main__":
         "xalo": { "name": "Super Mario 64 ex-alo",     "repo": "https://github.com/AloXado320/sm64ex-alo.git -b master",    "dependency": "",                "args": "" },
         "sm74": { "name": "Super Mario 74",            "repo": "https://github.com/PeachyPeachSM64/sm64pc-omm.git -b sm74", "dependency": "",                "args": "" },
         "smsr": { "name": "Super Mario Star Road",     "repo": "https://github.com/AloXado320/sm64ex-alo.git -b master",    "dependency": "star_road.patch", "args": "" },
+        "r96a": { "name": "Render96 ex-alpha",         "repo": "https://github.com/Render96/Render96ex.git -b alpha",       "dependency": "",                "args": "" },
     }
     BUILD_SPEEDS = {
         "slow"   : { "name": "Slow",    "jobs": "" },
@@ -505,6 +525,18 @@ if __name__ == "__main__":
     if args["EXT_DATA"] and os.path.isdir("../res") and os.path.isdir("build/us_pc/res"):
         print("--- Installing external resources...")
         copy_tree("../res", "build/us_pc/res")
+
+    # Copy DynOS model packs
+    if os.path.isdir("../dynos/packs") and os.path.isdir("build/us_pc/dynos"):
+        print("--- Installing DynOS model packs...")
+        os.makedirs("build/us_pc/dynos/packs", exist_ok=True)
+        copy_tree("../dynos/packs", "build/us_pc/dynos/packs")
+
+    # Copy Render96 custom audio data
+    if version in ["r96a"] and os.path.isdir("../dynos/audio") and os.path.isdir("build/us_pc/dynos"):
+        print("--- Installing Render96 audio data...")
+        os.makedirs("build/us_pc/dynos/audio", exist_ok=True)
+        copy_tree("../dynos/audio", "build/us_pc/dynos/audio")
         
     # Run the game if AUTO_RUN is set
     if args["AUTO_RUN"]:
