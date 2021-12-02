@@ -186,6 +186,7 @@ OBJECT_WITH_ACTS(217,-1764,6667,-1012,45,268,45,0x0, bhvPushableMetalBox,31),
 RETURN()
 };
 const LevelScript local_warps_bitfs_2_[] = {
+WARP_NODE(10,19,2,10,0),
 WARP_NODE(13,9,2,14,0),
 WARP_NODE(14,9,2,13,0),
 WARP_NODE(240,31,2,1,0),
