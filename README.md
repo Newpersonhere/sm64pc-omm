@@ -77,9 +77,10 @@ The `[args...]` parameters can be any of the following:
 
 |||
 |:-|:-|
-| `DEBUG` | Remove code optimization (mostly used for development). |
 | `60_FPS` | Enable the 60 FPS interpolation. |
-| `EXT_DATA` | Externalize resources (textures, musics and sounds). |
+| `DYNOS` | Download and install the latest version of DynOS. |
+| `PATCHES` | Apply patches from the 'custom/patches' directory. |
+| `EXT_DATA` | Install texture and sound packs from the 'custom/res' directory. |
 | `DIRECT_X` | Replace SDL/OpenGL APIs by DirectX APIs. |
 | `AUTO_RUN` | Start the game after building. |
 
@@ -94,23 +95,23 @@ For instance, if you want to build and play *Star Road* with 60 FPS and External
 
 ### Custom patches
 
-- To build the game with custom patches, place a copy of your `.patch` files inside a `patches` directory before running the command.
+- To build the game with custom patches, place a copy of your `.patch` files inside the `custom/patches` directory and run the command with the `PATCHES` option.
 - Remember that not all patches or combination of patches are supported.
 
 ### Texture and sound packs
 
-- Customize your game's textures and sounds by placing your packs `.zip` archives inside a `res` directory before running the command.
+- Customize your game's textures and sounds by placing your packs `.zip` archives inside the `custom/res` directory and run the command with the `EXT_DATA` option.
 - Texture packs must be `.zip` archives with a `gfx` directory inside them.
 - Sound packs must be `.zip` archives with a `sound` directory inside them.
 
 ### Model packs (DynOS and *Render96* only)
 
-- To be able to swap actors models in-game, copy your model packs directories inside a `dynos/packs` directory before running the command.
+- To be able to swap actors models in-game, copy your model packs directories inside the `custom/dynos/packs` directory and run the command with the `DYNOS` option.
 - Model packs must be either directories of `.bin` files or filled with actors sub-directories, each sub-directory containing at least one `model.inc.c` and one `geo.inc.c` file as well as textures `.png` files.
 
 ### Musics, jingles and sounds (*Render96* only)
 
-- Make your game more unique with custom musics, jingles and sounds! Put your audio data inside a `dynos/audio` directory before running the command.
+- Make your game more unique with custom musics, jingles and sounds! Put your audio data inside a `custom/dynos/audio` directory before running the command.
 - *Render96* audio packs must be directories of sub-directories and `.txt` files, with each `.txt` file corresponding to one sub-directory.
 - The sub-directories must be: `jingles`, `levels`, `sfx_mario`, `sfx_mario_peach`, `sfx_luigi`, `sfx_luigi_peach`, `sfx_wario`, `sfx_wario_peach`.
 - The associated `.txt` files are: `jingle.txt`, `music.txt`, `sfx_mario.txt`, `sfx_mario_peach.txt`, `sfx_luigi.txt`, `sfx_luigi_peach.txt`, `sfx_wario.txt`, `sfx_wario_peach.txt`.
@@ -164,6 +165,15 @@ If it detects a new version, the builder will ask you if you want to update it w
 
 ## Version 6.1.0
 
+### OMM Builder:
+- Added *Render96 ex-alpha* repository.
+- Added compatibility checks:
+  - *Render96 ex-alpha* cannot be built with a version of OMM below 6.1.0.
+  - *Super Mario 64 ex-alo*, *Super Mario 74* and *Super Mario Star Road* cannot be built with DynOS.
+- Added the `DYNOS` option. When selected, download and install the latest version of DynOS with the selected repository, and copy the contents of the `custom/dynos/packs` directory to the executable directory.
+- Added the `PATCHES` option. This option must be explicitly set to tell the builder to apply custom patches from the `custom/patches` directory before compiling.
+- Modified the `EXT_DATA` option. This option must be explicitly set to tell the builder to compile with the flag `EXTERNAL_DATA=1`, and copy the contents of the `custom/res` directory to the executable directory.
+
 ### Bug fixes:
 - The star number is now hidden during the ending cutscene.
 - Fixed an hitbox scaling bug on Perry.
@@ -177,7 +187,7 @@ If it detects a new version, the builder will ask you if you want to update it w
 - Each character has different properties and moves:
   - **Mario**: the most balanced character.
   - **Peach**: same properties as Mario, plus extra moves from *Super Princess Peach*. See [Version 6.0.0](https://github.com/PeachyPeachSM64/sm64pc-omm/tree/master#peach).
-  - **Luigi**: runs faster and jumps higher, but slides on ground and moves slower in the air.
+  - **Luigi**: runs faster, jumps higher and twirl after a back-flip, but slides on ground and moves slower in the air.
   - **Wario**: runs slower and jumps lower, but has some powerful moves from *Wario World* and gains speed faster in the air.
 - Interactions with custom objects:
   - Cappy can collect Luigi keys, Wario coins and the *secret power-up* in WDW.
@@ -190,8 +200,15 @@ If it detects a new version, the builder will ask you if you want to update it w
   - Cheats that are completely disabled with OMM:
     - `Infinite lives`
     - `Play as`
-    
-### Changes:
+
+### OMM with DynOS:
+- Peach, Perry and Tiara models can now be converted into DynOS models, but they need a version of OMM >= 6.1.0 to work properly.
+  - Peach's `model.inc.c` and `geo.inc.c` are in the `data/omm/peachy/peach` directory.
+  - Perry's `model.inc.c` and `geo.inc.c` are in the `data/omm/peachy/perry` directory.
+  - Tiara's `model.inc.c` and `geo.inc.c` are in the `data/omm/peachy/tiara` directory.
+  - All textures are stored in the `omm/gfx/peach` directory.
+
+### Other changes:
 - Better ceiling hanging:
   - Mario can hang on a ceiling with a jump, a double jump or a wall-jump.
   - The player no longer has to hold the **(A)** button, but has to press **(A)**, **(B)** or **(Z)** to leave the ceiling.

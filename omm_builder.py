@@ -4,7 +4,7 @@ import stat
 import shutil
 import filecmp
 from distutils.dir_util import copy_tree
-                
+
 def usage_info():
     print("")
     print("================ OMM Builder Python script ================")
@@ -32,9 +32,10 @@ def usage_info():
     print("  fastest  | Use 100% of CPU to build the game as fast as possible.")
     print("")
     print("[args...] can be any of the following:")
-    print("  DEBUG     | Remove code optimization (mostly used for development).")
     print("  60_FPS    | Enable the 60 FPS interpolation.")
-    print("  EXT_DATA  | Externalize resources (textures, musics and sounds).")
+    print("  DYNOS     | Download and install the latest version of DynOS.")
+    print("  PATCHES   | Apply patches from the 'custom/patches' directory.")
+    print("  EXT_DATA  | Install texture and sound packs from the 'custom/res' directory.")
     print("  DIRECT_X  | Replace SDL/OpenGL APIs by DirectX APIs.")
     print("  AUTO_RUN  | Start the game after building.")
     print("")
@@ -43,20 +44,20 @@ def usage_info():
     print("- To build Super Mario Star Road, you must place the patch file ('star_road_release.patch') next to the script and name it 'star_road.patch'.")
     print("")
     print("Custom patches:")
-    print("- To build the game with custom patches, place a copy of your '.patch' files inside a 'patches' directory before running the command.")
+    print("- To build the game with custom patches, place a copy of your '.patch' files inside the 'custom/patches' directory and run the command with the 'PATCHES' option.")
     print("- Not all patches or combination of patches are supported.")
     print("")
     print("Texture and sound packs:")
-    print("- Customize your game's textures and sounds by placing your packs '.zip' archives inside a 'res' directory before running the command.")
+    print("- Customize your game's textures and sounds by placing your packs '.zip' archives inside the 'custom/res' directory and run the command with the 'EXT_DATA' option.")
     print("- Texture packs must be '.zip' archives with a 'gfx' directory inside them.")
     print("- Sound packs must be '.zip' archives with a 'sound' directory inside them.")
     print("")
     print("Model packs (DynOS and Render96 only):")
-    print("- To be able to swap actors models in-game, copy your model packs directories inside a 'dynos/packs' directory before running the command.")
+    print("- To be able to swap actors models in-game, copy your model packs directories inside the 'custom/dynos/packs' directory and run the command with the 'DYNOS' option.")
     print("- Model packs must be either directories of '.bin' files or filled with actors sub-directories, each sub-directory containing at least one 'model.inc.c' and one 'geo.inc.c' file as well as textures '.png' files.")
     print("")
     print("Musics, jingles and sounds (Render96 only):")
-    print("- Make your game more unique with custom musics, jingles and sounds! Put your audio data inside a 'dynos/audio' directory before running the command.")
+    print("- Make your game more unique with custom musics, jingles and sounds! Put your audio data inside a 'custom/dynos/audio' directory before running the command.")
     print("- Render96 audio packs must be directories of sub-directories and '.txt' files, with each '.txt' file corresponding to one sub-directory.")
     print("- The sub-directories must be: 'jingles', 'levels', 'sfx_mario', 'sfx_mario_peach', 'sfx_luigi', 'sfx_luigi_peach', 'sfx_wario', 'sfx_wario_peach'.")
     print("- The associated '.txt' files are: 'jingle.txt', 'music.txt', 'sfx_mario.txt', 'sfx_mario_peach.txt', 'sfx_luigi.txt', 'sfx_luigi_peach.txt', 'sfx_wario.txt', 'sfx_wario_peach.txt'.")
@@ -80,7 +81,13 @@ def rm_rf(dir):
         shutil.rmtree(dir, onerror=onerror)
         return True
     return False
-        
+
+def vn2i(vn):
+    i = 0
+    for s in vn.split('.'):
+        i = i * 100 + int(s)
+    return i
+
 def get_omm_patch():
     for path in os.listdir("."):
         if os.path.isdir(path) and "omm." in path:
@@ -101,7 +108,7 @@ def get_omm_version(filepath):
                 if i0 != -1 and i1 != -1:
                     version[k] = data[i0 + len(k + " :="):i1].lstrip(' \t\r\n').rstrip(' \t\r\n')
     return version
-    
+
 def create_omm_patch_file():
     path = get_omm_patch()
     if len(path) > 0:
@@ -123,7 +130,7 @@ def create_omm_patch_file():
                     os.system(f"git diff --diff-algorithm=minimal --unified=2 -p --staged --binary > ../{path}.patch")
             os.chdir("..")
             rm_rf("temp")
-            
+
 def rm_omm_patches():
     while rm_rf(get_omm_patch()):
         continue
@@ -137,7 +144,7 @@ def rm_files(root, condition):
 
 def check_patched(name):
     return os.path.isfile("enhancements/" + name + ".patched")
-    
+
 def set_patched(name):
     with open("enhancements/" + name + ".patched", 'w') as f: f.write("")
 
@@ -145,7 +152,7 @@ def apply_patch(filepath):
     if not os.path.isfile(filepath):
         raise_error(f"The patch file '{filepath}' is missing.", False)
     os.system(f"git apply --reject --whitespace=nowarn {filepath}")
-    
+
 def fix_typo(filepath, strFrom, strTo):
     if os.path.isfile(filepath):
         file = open(filepath, "r", newline="\n", encoding="utf-8", errors="ignore")
@@ -166,7 +173,7 @@ def fix_typo(filepath, strFrom, strTo):
             file = open(filepath, "w", newline="\n", encoding="utf-8", errors="ignore")
             file.write(data)
             file.close()
-        
+
 def get_exe_list(dir):
     return [
         { "filepath": f"{dir}/build/us_pc/sm64.us.f3dex2e.exe", "command": f"start {dir}/build/us_pc/sm64.us.f3dex2e.exe" }, # Windows
@@ -178,7 +185,7 @@ def check_executable(dir):
         if os.path.isfile(exe["filepath"]):
             return True
     return False
-    
+
 def start_game(dir):
     for exe in get_exe_list(dir):
         if os.path.isfile(exe["filepath"]):
@@ -191,12 +198,12 @@ if __name__ == "__main__":
 
     # Constants
     VERSIONS = {
-        "smex": { "name": "Super Mario 64 ex-nightly", "repo": "https://github.com/sm64pc/sm64ex.git -b nightly",           "dependency": "",                "args": "" },
-        "smms": { "name": "Super Mario 64 Moonshine",  "repo": "https://github.com/sm64pc/sm64ex.git -b nightly",           "dependency": "moonshine",       "args": " EXTERNAL_DATA=1" },
-        "xalo": { "name": "Super Mario 64 ex-alo",     "repo": "https://github.com/AloXado320/sm64ex-alo.git -b master",    "dependency": "",                "args": "" },
-        "sm74": { "name": "Super Mario 74",            "repo": "https://github.com/PeachyPeachSM64/sm64pc-omm.git -b sm74", "dependency": "",                "args": "" },
-        "smsr": { "name": "Super Mario Star Road",     "repo": "https://github.com/AloXado320/sm64ex-alo.git -b master",    "dependency": "star_road.patch", "args": "" },
-        "r96a": { "name": "Render96 ex-alpha",         "repo": "https://github.com/Render96/Render96ex.git -b alpha",       "dependency": "",                "args": "" },
+        "smex": { "name": "Super Mario 64 ex-nightly", "repo": "https://github.com/sm64pc/sm64ex.git -b nightly",           "dependency": "",                "args": [] },
+        "smms": { "name": "Super Mario 64 Moonshine",  "repo": "https://github.com/sm64pc/sm64ex.git -b nightly",           "dependency": "moonshine",       "args": ["EXT_DATA"] },
+        "xalo": { "name": "Super Mario 64 ex-alo",     "repo": "https://github.com/AloXado320/sm64ex-alo.git -b master",    "dependency": "",                "args": [] },
+        "sm74": { "name": "Super Mario 74",            "repo": "https://github.com/PeachyPeachSM64/sm64pc-omm.git -b sm74", "dependency": "",                "args": [] },
+        "smsr": { "name": "Super Mario Star Road",     "repo": "https://github.com/AloXado320/sm64ex-alo.git -b master",    "dependency": "star_road.patch", "args": [] },
+        "r96a": { "name": "Render96 ex-alpha",         "repo": "https://github.com/Render96/Render96ex.git -b alpha",       "dependency": "",                "args": ["DYNOS"] },
     }
     BUILD_SPEEDS = {
         "slow"   : { "name": "Slow",    "jobs": "" },
@@ -210,9 +217,20 @@ if __name__ == "__main__":
     ARGUMENTS = {
         "DEBUG"   : ["debug"],
         "60_FPS"  : ["60_fps", "60fps"],
+        "DYNOS"   : ["dynos"],
+        "PATCHES" : ["patches"],
         "EXT_DATA": ["ext_data", "extdata", "external_data", "externaldata"],
         "DIRECT_X": ["direct_x", "directx", "dx"],
         "AUTO_RUN": ["auto_run", "autorun"],
+    }
+    DIRECTORIES = {
+        "repos"      : "repos",
+        "root"       : "../../",
+        "dependency" : "../../",
+        "patches"    : "../../custom/patches",
+        "resources"  : "../../custom/res",
+        "dynos_packs": "../../custom/dynos/packs",
+        "dynos_audio": "../../custom/dynos/audio",
     }
 
     # Check builder
@@ -244,7 +262,7 @@ if __name__ == "__main__":
             create_omm_patch_file()
             print("Done.")
             sys.exit(0)
-            
+
         # Delete omm.* directories
         if command == "clear":
             print("--- Deleting OMM patches...")
@@ -255,12 +273,13 @@ if __name__ == "__main__":
     # Usage info
     if len(sys.argv) < 3:
         usage_info()
-        
+
     # Version
     version = sys.argv[1].lower()
     if not version in VERSIONS.keys():
         raise_error(f"'{version}' is not a valid OMM version.", True)
-        
+    versionDir = DIRECTORIES["repos"] + "/" + version
+
     # Build speed
     speed = sys.argv[2].lower()
     if not speed in BUILD_SPEEDS.keys():
@@ -270,36 +289,34 @@ if __name__ == "__main__":
     args = {}
     for k, v in ARGUMENTS.items():
         args[k] = any([(arg.lower() in v) for arg in sys.argv])
-
-    # Auto-enable External Data if the res directory is not empty
-    if os.path.isdir("res") and len(os.listdir("res")) != 0:
-        args["EXT_DATA"] = True
+    for arg in VERSIONS[version]["args"]:
+        args[arg] = True
 
     # Run the game
     if speed == "run":
         print("--- Starting game...")
-        start_game(version)
+        start_game(versionDir)
         sys.exit(0)
-    
+
     # Reset target directory
     if speed == "reset":
         print("--- Cleaning target repository...")
-        if os.path.isdir(version):
-            os.chdir(version)
+        if os.path.isdir(versionDir):
+            os.chdir(versionDir)
             os.system("git reset -q --hard")
             os.system("git clean -f -d -x -q")
             os.system("git checkout . -q")
             os.system("git pull -q")
         print("Done.")
         sys.exit(0)
-        
+
     # Delete target directory
     if speed == "clear":
         print("--- Deleting target repository...")
-        rm_rf(version)
+        rm_rf(versionDir)
         print("Done.")
         sys.exit(0)
-    
+
     # Retrieve OMM version number
     versionLocal = get_omm_version(get_omm_patch() + "/omm.mk")
     os.system("wget --no-check-certificate --no-cache --no-cookies https://raw.githubusercontent.com/PeachyPeachSM64/sm64pc-omm/nightly/omm.mk -O omm.version -q || rm -f omm.version")
@@ -329,12 +346,19 @@ if __name__ == "__main__":
     print("Build speed : {}".format(BUILD_SPEEDS[speed]["name"]))
     print("Arguments   : {}".format(" ".join([k for k, v in args.items() if v])))
     print("")
-    
+
+    # Check compatibility
+    print("--- Checking compatibility...")
+    if version in ["r96a"] and vn2i(OMM_VERSION_NUMBER) < vn2i("6.1.0"):
+        raise_error("Render96 ex-alpha (r96a) can be built only with OMM v6.1.0 and later.", False)
+    if version in ["xalo", "sm74", "smsr"] and args["DYNOS"]:
+        raise_error("{} cannot be built with DynOS.".format(VERSIONS[version]["name"]), False)
+
     # Check baserom
     print("--- Checking baserom...")
     if not os.path.isfile("baserom.us.z64"):
         raise_error("The file 'baserom.us.z64' is missing.", False)
-        
+
     # Check OMM patch: Create it or update it to the latest version
     print("--- Checking OMM patch (1/3)...")
     upToDate = (versionLocal["OMM_VERSION_NUMBER"] == OMM_VERSION_NUMBER) and (versionLocal["OMM_VERSION_REVISION"] == OMM_VERSION_REVISION)
@@ -350,7 +374,7 @@ if __name__ == "__main__":
         os.system("git clone " + ommRepository + " " + OMM_PATCH)
         if not os.path.isdir(OMM_PATCH):
             raise_error("Cannot clone the git repository: " + ommRepository, False)
-        
+
     # Check OMM patch: Delete the .git, .github and .vscode directories and keep only the files that contain "omm/", "omm_" or "omm."
     print("--- Checking OMM patch (2/3)...")
     rm_rf(OMM_PATCH + "/.git")
@@ -361,11 +385,12 @@ if __name__ == "__main__":
 
     # Clone the target repository
     print("--- Cloning target repository...")
-    if not os.path.isdir(version):
-        os.system("git clone {} {}".format(VERSIONS[version]["repo"], version))
-        if not os.path.isdir(version):
+    if not os.path.isdir(versionDir):
+        os.chdir()
+        os.system("git clone {} {}".format(VERSIONS[version]["repo"], versionDir))
+        if not os.path.isdir(versionDir):
             raise_error("Cannot clone the git repository: " + VERSIONS[version]["repo"], False)
-    os.chdir(version)
+    os.chdir(versionDir)
 
     # Check OMM patch: if a omm.*.patched file exists but is not the latest version, reset the directory
     print("--- Checking OMM patch (3/3)...")
@@ -379,22 +404,22 @@ if __name__ == "__main__":
                 os.system("git checkout . -q")
                 os.system("git pull -q")
                 break
-    
+
     # Apply the mod patchfile or copy its contents
     dependency = VERSIONS[version]["dependency"]
     if len(dependency) != 0 and not check_patched(dependency):
         if ".patch" in dependency:
             print("--- Applying dependency patch...")
-            if not os.path.isfile("../" + dependency):
+            if not os.path.isfile(DIRECTORIES["dependency"] + dependency):
                 raise_error(f"The patch file '{dependency}' is missing.", False)
-            apply_patch("../" + dependency)
+            apply_patch(DIRECTORIES["dependency"] + dependency)
         else:
             print("--- Copying dependency contents...")
-            if not os.path.isdir("../" + dependency):
+            if not os.path.isdir(DIRECTORIES["dependency"] + dependency):
                 raise_error(f"The directory '{dependency}' is missing.", False)
-            copy_tree("../" + dependency, ".")
+            copy_tree(DIRECTORIES["dependency"] + dependency, ".")
         set_patched(dependency)
-        
+
     # Delete shitty files
     print("--- Eliminating bad files...")
     is_bad_file = lambda filepath : ".png.png" in filepath
@@ -403,14 +428,14 @@ if __name__ == "__main__":
             filepath = path + "/" + filename
             if os.path.isfile(filepath) and is_bad_file(filepath):
                 os.remove(filepath)
-                
+
     # Fix typos in xalo and smsr
     print("--- Fixing typos...")
     if version in ["xalo", "smsr"]:
         fix_typo("src/game/mario_actions_submerged.c", "m->faceAngle[0] = floorPitch", "m->faceAngle[0] = (floorPitch);")
         fix_typo("src/game/mario_actions_airborne.c", "&& (Cheats.EnableCheats && !Cheats.WalkOn.Lava)", "&& (!Cheats.EnableCheats || !Cheats.WalkOn.Lava)")
         fix_typo("src/engine/math_util.c", "guMtxF2L(temp, dest);", "guMtxF2L(src, dest);")
-        
+
     # Apply the 60 FPS patch
     if args["60_FPS"]:
         if version in ["smex", "smms"]:
@@ -418,27 +443,38 @@ if __name__ == "__main__":
             if not check_patched("60fps_ex.patch"):
                 apply_patch("enhancements/60fps_ex.patch")
                 set_patched("60fps_ex.patch")
-            
+
+    # Download and apply the DynOS patch
+    if args["DYNOS"] and not version in ["r96a"]:
+        print("--- Applying DynOS patch...")
+        if not check_patched("dynos.patch"):
+            os.system("wget --no-check-certificate --no-cache --no-cookies https://sm64pc.info/downloads/patches/DynOS.1.1.patch -O dynos.patch -q || rm -f dynos.patch")
+            if os.path.isfile("dynos.patch"):
+                apply_patch("dynos.patch")
+                set_patched("dynos.patch")
+                os.remove("dynos.patch")
+
     # Apply the patches from the patches directory
-    print("--- Applying patches...")
-    is_patch_file = lambda filepath : ".patch" in filepath
-    if os.path.isdir("../patches"):
-        for path, _, files in os.walk("../patches"):
-            for filename in files:
-                if not check_patched(filename):
-                    filepath = path + "/" + filename
-                    if os.path.isfile(filepath) and is_patch_file(filepath):
-                        apply_patch(filepath)
-                        shutil.copyfile(filepath, "enhancements/" + filename)
-                        set_patched(filename)
-                    
+    if args["PATCHES"]:
+        print("--- Applying patches...")
+        is_patch_file = lambda filepath : ".patch" in filepath
+        if os.path.isdir(DIRECTORIES["patches"]):
+            for path, _, files in os.walk(DIRECTORIES["patches"]):
+                for filename in files:
+                    if not check_patched(filename):
+                        filepath = path + "/" + filename
+                        if os.path.isfile(filepath) and is_patch_file(filepath):
+                            apply_patch(filepath)
+                            shutil.copyfile(filepath, "enhancements/" + filename)
+                            set_patched(filename)
+
     # Copy OMM contents, apply the Makefile patch and run the patcher
     print("--- Applying OMM patch...")
     if not check_patched(OMM_PATCH):
-    
+
         # Copy patch contents
-        copy_tree("../" + OMM_PATCH, ".")
-        
+        copy_tree(DIRECTORIES["root"] + OMM_PATCH, ".")
+
         # Patch Makefile
         if not os.path.isfile("Makefile"):
             raise_error("Missing Makefile.", False)
@@ -454,41 +490,42 @@ if __name__ == "__main__":
             file = open("Makefile", "w", newline="\n", encoding="utf-8", errors="ignore")
             file.write(data)
             file.close()
-            
+
         # Run patcher
         os.system("python3 omm_patcher.py -p")
         set_patched(OMM_PATCH)
-        
+
     # Copy the baserom and build the game
     print("--- Building game...")
     if not os.path.isfile("baserom.us.z64"):
-        shutil.copyfile("../baserom.us.z64", "baserom.us.z64")
-        
+        shutil.copyfile(DIRECTORIES["root"] + "baserom.us.z64", "baserom.us.z64")
+
     # Make
-    makeCmd = "make" + BUILD_SPEEDS[speed]["jobs"] + VERSIONS[version]["args"] + " OMM_BUILDER=1" + " VERSION=us"
-    
+    makeCmd = "make" + BUILD_SPEEDS[speed]["jobs"] + " OMM_BUILDER=1" + " VERSION=us"
+
     # APIs
-    makeCmd += " RENDER_API=D3D11 WINDOW_API=DXGI AUDIO_API=SDL2 CONTROLLER_API=SDL2" if args["DIRECT_X"] else " RENDER_API=GL WINDOW_API=SDL2 AUDIO_API=SDL2 CONTROLLER_API=SDL2"
-    
+    makeCmd += " RENDER_API=D3D11 WINDOW_API=DXGI AUDIO_API=SDL2 CONTROLLER_API=SDL2" if args["DIRECT_X"] \
+          else " RENDER_API=GL WINDOW_API=SDL2 AUDIO_API=SDL2 CONTROLLER_API=SDL2"
+
     # 60 FPS
     makeCmd += " HIGH_FPS_PC=1" if args["60_FPS"] else ""
-    
+
     # Debug
     makeCmd += " DEBUG=1" if args["DEBUG"] else ""
-    
+
     # External data
     makeCmd += " EXTERNAL_DATA=1" if args["EXT_DATA"] else ""
-    
+
     # OMM flags
     for arg in sys.argv:
         if "OMM_" in arg and ("=0" in arg or "=1" in arg):
             makeCmd += " " + arg
-    
+
     # Let's-a-go
     print(makeCmd)
     makeNumTries = 5
     for tries in range(makeNumTries):
-        os.system(makeCmd + " 2>&1 | tee ../logs.txt")
+        os.system(makeCmd + " 2>&1 | tee {}logs.txt".format(DIRECTORIES["root"]))
 
         # If the executable is built, everything went right
         if check_executable("."):
@@ -496,11 +533,11 @@ if __name__ == "__main__":
 
         # It's becoming self-aware...
         print("Compilation failed. Trying to understand the cause...")
-        if not os.path.isfile("../logs.txt"):
+        if not os.path.isfile(DIRECTORIES["root"] + "logs.txt"):
             raise_error("Cannot read logs: Missing file 'logs.txt'.", False)
 
         # Jk, it's just reading logs
-        file = open("../logs.txt", "r", newline="\n", encoding="utf-8", errors="ignore")
+        file = open(DIRECTORIES["root"] + "logs.txt", "r", newline="\n", encoding="utf-8", errors="ignore")
         data = file.readlines()
         file.close()
         retry = False
@@ -512,7 +549,7 @@ if __name__ == "__main__":
                 print("Running make again... Remaining tries: " + str(makeNumTries - 1 - tries))
                 retry = True
                 break
-            
+
         # Do make again?
         if not retry:
             break
@@ -522,29 +559,28 @@ if __name__ == "__main__":
         raise_error("Something went wrong. Aborting building process...", False)
 
     # Copy external resources to the build res folder
-    if args["EXT_DATA"] and os.path.isdir("../res") and os.path.isdir("build/us_pc/res"):
+    if args["EXT_DATA"] and os.path.isdir(DIRECTORIES["resources"]) and os.path.isdir("build/us_pc/res"):
         print("--- Installing external resources...")
-        copy_tree("../res", "build/us_pc/res")
+        copy_tree(DIRECTORIES["resources"], "build/us_pc/res")
 
     # Copy DynOS model packs
-    if os.path.isdir("../dynos/packs") and os.path.isdir("build/us_pc/dynos"):
+    if args["DYNOS"] and os.path.isdir(DIRECTORIES["dynos_packs"]) and os.path.isdir("build/us_pc/dynos"):
         print("--- Installing DynOS model packs...")
         os.makedirs("build/us_pc/dynos/packs", exist_ok=True)
-        copy_tree("../dynos/packs", "build/us_pc/dynos/packs")
+        copy_tree(DIRECTORIES["dynos_packs"], "build/us_pc/dynos/packs")
 
     # Copy Render96 custom audio data
-    if version in ["r96a"] and os.path.isdir("../dynos/audio") and os.path.isdir("build/us_pc/dynos"):
+    if version in ["r96a"] and os.path.isdir(DIRECTORIES["dynos_audio"]) and os.path.isdir("build/us_pc/dynos"):
         print("--- Installing Render96 audio data...")
         os.makedirs("build/us_pc/dynos/audio", exist_ok=True)
-        copy_tree("../dynos/audio", "build/us_pc/dynos/audio")
-        
+        copy_tree(DIRECTORIES["dynos_audio"], "build/us_pc/dynos/audio")
+
     # Run the game if AUTO_RUN is set
     if args["AUTO_RUN"]:
         print("--- Starting game...")
         start_game(".")
     else:
         print("Done.")
-        
+
     # The script ends here
     sys.exit(0)
-    
