@@ -41,7 +41,6 @@ def usage_info():
     print("")
     print("Requirements:")
     print("- To build Super Mario 64 Moonshine, you must extract the mod archive ('MOONSHINE_FINALUPDATE.rar') into a directory named 'moonshine'.")
-    print("- To build Super Mario Star Road, you must place the patch file ('star_road_release.patch') next to the script and name it 'star_road.patch'.")
     print("")
     print("Custom patches:")
     print("- To build the game with custom patches, place a copy of your '.patch' files inside the 'custom/patches' directory and run the command with the 'PATCHES' option.")
@@ -198,12 +197,12 @@ if __name__ == "__main__":
 
     # Constants
     VERSIONS = {
-        "smex": { "name": "Super Mario 64 ex-nightly", "repo": "https://github.com/sm64pc/sm64ex.git -b nightly",           "dependency": "",                "args": [] },
-        "smms": { "name": "Super Mario 64 Moonshine",  "repo": "https://github.com/sm64pc/sm64ex.git -b nightly",           "dependency": "moonshine",       "args": ["EXT_DATA"] },
-        "xalo": { "name": "Super Mario 64 ex-alo",     "repo": "https://github.com/AloXado320/sm64ex-alo.git -b master",    "dependency": "",                "args": [] },
-        "sm74": { "name": "Super Mario 74",            "repo": "https://github.com/PeachyPeachSM64/sm64pc-omm.git -b sm74", "dependency": "",                "args": [] },
-        "smsr": { "name": "Super Mario Star Road",     "repo": "https://github.com/AloXado320/sm64ex-alo.git -b master",    "dependency": "star_road.patch", "args": [] },
-        "r96a": { "name": "Render96 ex-alpha",         "repo": "https://github.com/Render96/Render96ex.git -b alpha",       "dependency": "",                "args": ["DYNOS"] },
+        "smex": { "name": "Super Mario 64 ex-nightly", "repo": "https://github.com/sm64pc/sm64ex.git -b nightly",           "dependency": "",          "args": [] },
+        "smms": { "name": "Super Mario 64 Moonshine",  "repo": "https://github.com/sm64pc/sm64ex.git -b nightly",           "dependency": "moonshine", "args": ["EXT_DATA"] },
+        "xalo": { "name": "Super Mario 64 ex-alo",     "repo": "https://github.com/AloXado320/sm64ex-alo.git -b master",    "dependency": "",          "args": [] },
+        "sm74": { "name": "Super Mario 74",            "repo": "https://github.com/PeachyPeachSM64/sm64pc-omm.git -b sm74", "dependency": "",          "args": [] },
+        "smsr": { "name": "Super Mario Star Road",     "repo": "https://github.com/PeachyPeachSM64/sm64pc-omm.git -b smsr", "dependency": "",          "args": [] },
+        "r96a": { "name": "Render96 ex-alpha",         "repo": "https://github.com/Render96/Render96ex.git -b alpha",       "dependency": "",          "args": ["DYNOS"] },
     }
     BUILD_SPEEDS = {
         "slow"   : { "name": "Slow",    "jobs": "" },
@@ -430,10 +429,6 @@ if __name__ == "__main__":
 
     # Fix typos in xalo and smsr
     print("--- Fixing typos...")
-    if version in ["xalo", "smsr"]:
-        fix_typo("src/game/mario_actions_submerged.c", "m->faceAngle[0] = floorPitch", "m->faceAngle[0] = (floorPitch);")
-        fix_typo("src/game/mario_actions_airborne.c", "&& (Cheats.EnableCheats && !Cheats.WalkOn.Lava)", "&& (!Cheats.EnableCheats || !Cheats.WalkOn.Lava)")
-        fix_typo("src/engine/math_util.c", "guMtxF2L(temp, dest);", "guMtxF2L(src, dest);")
 
     # Apply the 60 FPS patch
     if args["60_FPS"]:

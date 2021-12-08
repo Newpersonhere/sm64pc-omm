@@ -91,7 +91,6 @@ For instance, if you want to build and play *Star Road* with 60 FPS and External
 ### Requirements
 
 - To build *Super Mario 64 Moonshine*, you must extract the mod archive (`MOONSHINE_FINALUPDATE.rar`) into a directory named `moonshine`.
-- To build *Super Mario Star Road*, you must place the patch file (`star_road_release.patch`) next to the script and name it `star_road.patch`.
 
 ### Custom patches
 
@@ -178,7 +177,6 @@ To install it and make it work, follow these steps:
 
 - [Odyssey Mario's Moveset v6.0.5 patch file](https://drive.google.com/file/d/1-Cet-ONCNp7qyKk4YIh2TSX3L28oSjbQ/view?usp=sharing)
 - [Super Mario 64 Moonshine archive](https://www.mediafire.com/file/khy40tbd1rcve2p/MOONSHINE_FINALUPDATE.rar/file)
-- [Super Mario Star Road patch file](https://drive.google.com/file/d/1kXskWESOTUJDoeCGVV9JMUkn0tLd_GXO/view)
 - [Super Mario Star Road HD Texture pack](https://github.com/aspieweeb759/Star-Road-HD)
 - [Custom patches](https://sm64pc.info/downloads/patches/)
 - [Model packs](https://sm64pc.info/downloads/model_pack/)
@@ -190,6 +188,7 @@ To install it and make it work, follow these steps:
 ## Version 6.1.0
 
 ### OMM Builder:
+- The `star_road.patch` file is no longer needed to build *Super Mario Star Road*.
 - Added *Render96 ex-alpha* repository.
 - Added compatibility checks:
   - *Render96 ex-alpha* cannot be built with a version of OMM below 6.1.0.
