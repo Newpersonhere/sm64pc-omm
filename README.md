@@ -150,6 +150,36 @@ If it detects a new version, the builder will ask you if you want to update it w
 
 ---
 
+## Speedrunning
+
+For speedrunners, OMM comes with a LiveSplit auto-splitter script file.<br>
+It works with every game that can be built with OMM.
+
+- **What's an auto-splitter?**
+
+It's a script, a small program, that runs through LiveSplit and does the splits automatically, so the player doesn't need to press a key or a button to trigger each one.<br>
+What it does in *Super Mario 64* is fairly simple:
+- Starts the timer when the player selects a file,
+- Splits each time a specific amount of stars is collected,
+- Stops when the Grand Star is collected at the end of a run, or when the last split is triggered,
+- Resets when the game returns to the main menu.
+
+- **How to use it?**
+
+To install it and make it work, follow these steps:
+- Your OMM version must be 6.1.0 or later.
+- Open LiveSplit, and load your splits. Make sure they follow this format:
+  - For star splits, you must indicate the amount of stars needed in brackets or parentheses like this: "\[20\]" or "(20)".
+  - If a split has "Bowser" in its name but no star amount, it will be interpreted as a Bowser key split or a Grand Star split.
+  - If the final split has no star amount, it is interpreted as a Grand Star split (i.e. after defeating the last Bowser).
+- Right click, select `Save Splits As...` and save them as a `splits.lss` file inside the `omm` directory next to the `sm64.us.f3dex2e.exe` executable.
+- Right click again, and select `Edit Layout...`.
+- Add a `Scriptable Auto Splitter`, double-click on it, and select `Browse...`.
+- Navigate to the repository of the game, and select the file `omm.asl`.
+- Press `OK` twice, then start the game. The timer should start as soon as an **empty** save file is selected.
+
+---
+
 ## Useful resources
 
 - [Odyssey Mario's Moveset v6.0.5 patch file](https://drive.google.com/file/d/1-Cet-ONCNp7qyKk4YIh2TSX3L28oSjbQ/view?usp=sharing)
@@ -207,6 +237,11 @@ If it detects a new version, the builder will ask you if you want to update it w
   - Perry's `model.inc.c` and `geo.inc.c` are in the `data/omm/peachy/perry` directory.
   - Tiara's `model.inc.c` and `geo.inc.c` are in the `data/omm/peachy/tiara` directory.
   - All textures are stored in the `omm/gfx/peach` directory.
+
+### LiveSplit auto-splitter:
+- The player no longer needs to enter his splits manually in a text file.
+- To make the game read splits, save them from LiveSplit as a `splits.lss` file inside the `omm` directory next to the `sm64.us.f3dex2e.exe` executable.
+- See [Speedrunning](https://github.com/PeachyPeachSM64/sm64pc-omm/tree/master#speedrunning) for more details.
 
 ### Other changes:
 - Better ceiling hanging:
