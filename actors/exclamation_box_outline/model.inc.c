@@ -200,7 +200,7 @@ static const Lights1 exclamation_box_outline_seg8_lights_08025A68 = gdSPDefLight
 
 // 0x08025A80
 ALIGNED8 static const Texture exclamation_box_outline_seg8_texture_08025A80[] = {
-#include "actors/exclamation_box_outline/exclamation_point.rgba16.inc.c"
+#include "actors/exclamation_box_outline/exclamation_box_outline_seg8_dl_08025F08_0x8025a80_custom.rgba16.inc.c"
 };
 
 // 0x08025E80

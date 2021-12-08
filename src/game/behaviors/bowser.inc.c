@@ -59,17 +59,19 @@ void (*sBowserTailAnchorActions[])(void) = {
  * Bowser's tail main loop
  */
 void bhv_bowser_tail_anchor_loop(void) {
-    // Call its actions
-    cur_obj_call_action_function(sBowserTailAnchorActions);
-    // Position the tail
-    o->oParentRelativePosX = 90.0f;
+    if (gCurrLevelNum == LEVEL_BOWSER_3) { // STAR ROAD added this check
+        // Call its actions
+        cur_obj_call_action_function(sBowserTailAnchorActions);
+        // Position the tail
+        o->oParentRelativePosX = 90.0f;
 
-    // Make it intangible while Bowser is dead
-    if (o->parentObj->oAction == BOWSER_ACT_DEAD) {
-        o->parentObj->oIntangibleTimer = -1;
+        // Make it intangible while Bowser is dead
+        if (o->parentObj->oAction == BOWSER_ACT_DEAD) {
+            o->parentObj->oIntangibleTimer = -1;
+        }
+
+        o->oInteractStatus = 0;
     }
-
-    o->oInteractStatus = 0;
 }
 
 // Bowser's Flame
@@ -230,15 +232,17 @@ s32 bowser_set_anim_look_down_stop_walk(void) {
  * CamAct changes value on the cutscene itself (cutscene_bowser_arena)
  */
 void bowser_init_camera_actions(void) {
-    if (o->oBowserCamAct == BOWSER_CAM_ACT_IDLE) {
-        o->oAction = BOWSER_ACT_WAIT;
-    } else if (o->oBowserCamAct == BOWSER_CAM_ACT_WALK) {
-        o->oAction = BOWSER_ACT_INTRO_WALK;
-    // Start with a big jump in BitFS to do a platform tilt
-    } else if (o->oBehParams2ndByte == BOWSER_BP_BITFS) {
-        o->oAction = BOWSER_ACT_BIG_JUMP;
-    } else {
-        o->oAction = BOWSER_ACT_DEFAULT;
+    if (gCurrLevelNum == LEVEL_BOWSER_3) { // custom check
+        if (o->oBowserCamAct == BOWSER_CAM_ACT_IDLE) {
+            o->oAction = BOWSER_ACT_WAIT;
+        } else if (o->oBowserCamAct == BOWSER_CAM_ACT_WALK) {
+            o->oAction = BOWSER_ACT_INTRO_WALK;
+        // Start with a big jump in BitFS to do a platform tilt
+        } else if (o->oBehParams2ndByte == BOWSER_BP_BITFS) {
+            o->oAction = BOWSER_ACT_BIG_JUMP;
+        } else {
+            o->oAction = BOWSER_ACT_DEFAULT;
+        }
     }
 }
 
@@ -1512,6 +1516,10 @@ s32 bowser_check_fallen_off_stage(void) {
     return FALSE;
 }
 
+#ifdef PLATFORM_DISPLACEMENT_2
+struct PlatformDisplacementInfo sBowserDisplacementInfo;
+#endif
+
 /**
  * Set Bowser's actions
  */
@@ -1590,9 +1598,16 @@ void bowser_free_update(void) {
     UNUSED f32 floorHeight;
 
     // Platform displacement check (for BitFS)
+#ifdef PLATFORM_DISPLACEMENT_2
+    if ((platform = o->platform) != NULL) {
+        apply_platform_displacement(&sBowserDisplacementInfo, &o->oPosX, (s16 *) &o->oFaceAngleYaw, platform);
+    }
+#else
     if ((platform = o->platform) != NULL) {
         apply_platform_displacement(FALSE, platform);
     }
+#endif
+
     // Reset grabbed status
     o->oBowserGrabbedStatus = BOWSER_GRAB_STATUS_NONE;
     // Update positions and actions (default action)
@@ -1780,6 +1795,10 @@ void bhv_bowser_init(void) {
     // Set health and rainbow light depending of the level
     o->oBowserRainbowLight = sBowserRainbowLight[level];
     o->oHealth = sBowserHealth[level];
+    // custom check (hack so n64 doesn't crash)
+    if (gCurrLevelNum != LEVEL_BOWSER_3) {
+        o->oAnimations = NULL;
+    }
     // Start camera event, this event is not defined so maybe
     // the "start arena" cutscene was originally called this way
     cur_obj_start_cam_event(o, CAM_EVENT_BOWSER_INIT);

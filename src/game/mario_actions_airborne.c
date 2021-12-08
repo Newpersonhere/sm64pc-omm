@@ -98,7 +98,7 @@ s32 check_fall_damage(struct MarioState *m, u32 hardFallAction) {
 	}
 #endif
 
-    if (m->action != ACT_TWIRLING && m->floor->type != SURFACE_BURNING) {
+    if (m->action != ACT_TWIRLING && m->floor->type != SURFACE_BURNING && FALL_DAMAGE) {
         if (m->vel[1] < -55.0f) {
             if (fallHeight > 3000.0f) {
                 m->hurtCounter += (m->flags & MARIO_CAP_ON_HEAD) ? 16 : 24;
@@ -2152,8 +2152,10 @@ s32 mario_execute_airborne_action(struct MarioState *m) {
     if (check_common_airborne_cancels(m)) {
         return TRUE;
     }
-
-    play_far_fall_sound(m);
+    
+    if (FALL_DAMAGE) {
+        play_far_fall_sound(m);
+    }
 
     /* clang-format off */
     switch (m->action) {

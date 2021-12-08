@@ -430,14 +430,19 @@ s16 object_step(void) {
     f32 objVelX = o->oForwardVel * sins(o->oMoveAngleYaw);
     f32 objVelZ = o->oForwardVel * coss(o->oMoveAngleYaw);
 
+#ifdef CENTERED_COLLISION
+    f32 midY = (objY + (o->hitboxHeight / 2.0f));
     s16 collisionFlags = 0;
-
     // Find any wall collisions, receive the push, and set the flag.
-    if (obj_find_wall(objX + objVelX, objY, objZ + objVelZ, objVelX, objVelZ) == 0) {
-        collisionFlags += OBJ_COL_FLAG_HIT_WALL;
-    }
+    if (!obj_find_wall(objX, midY, objZ, objVelX, objVelZ)) collisionFlags |= OBJ_COL_FLAG_HIT_WALL;
+    floorY = find_floor(objX, midY, objZ, &sObjFloor);
+#else
+    s16 collisionFlags = 0;
+    // Find any wall collisions, receive the push, and set the flag.
+    if (!obj_find_wall(objX, objY, objZ, objVelX, objVelZ)) collisionFlags |= OBJ_COL_FLAG_HIT_WALL;
+    floorY = find_floor(objX, objY, objZ, &sObjFloor);
+#endif
 
-    floorY = find_floor(objX + objVelX, objY, objZ + objVelZ, &sObjFloor);
     if (turn_obj_away_from_steep_floor(sObjFloor, floorY, objVelX, objVelZ) == 1) {
         waterY = find_water_level(objX + objVelX, objZ + objVelZ);
         if (waterY > objY) {

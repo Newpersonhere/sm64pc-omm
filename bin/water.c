@@ -5,7 +5,7 @@
 
 // 0x09000000
 ALIGNED8 const Texture water_09000000[] = {
-#include "textures/water/jrb_textures.00000.rgba16.inc.c"
+#include "textures/water/jrb_textures.00000_custom.rgba16.inc.c"
 };
 
 // 0x09000800
@@ -70,7 +70,7 @@ ALIGNED8 const Texture water_0900A000[] = {
 
 // 0x0900A800
 ALIGNED8 const Texture water_0900A800[] = {
-#include "textures/water/jrb_textures.0A800.rgba16.inc.c"
+#include "textures/water/jrb_textures.0A800_custom.rgba16.inc.c"
 };
 
 // 0x0900B800

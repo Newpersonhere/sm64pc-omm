@@ -136,7 +136,11 @@ void check_ledge_climb_down(struct MarioState *m) {
         wallCols.offsetY = -10.0f;
 
         if (find_wall_collisions(&wallCols) != 0) {
+#ifdef CENTERED_COLLISION
+            floorHeight = find_floor(wallCols.x, (wallCols.y + m->midY), wallCols.z, &floor);
+#else
             floorHeight = find_floor(wallCols.x, wallCols.y, wallCols.z, &floor);
+#endif
             if (floor != NULL && (wallCols.y - floorHeight > 160.0f)) {
                 wall = wallCols.walls[wallCols.numWalls - 1];
                 wallAngle = atan2s(wall->normal.z, wall->normal.x);

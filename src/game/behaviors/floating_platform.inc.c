@@ -3,14 +3,18 @@
 f32 floating_platform_find_home_y(void) {
     struct Surface *sp24;
     f32 sp20 = find_water_level(o->oPosX, o->oPosZ);
-    f32 sp1C = find_floor(o->oPosX, o->oPosY, o->oPosZ, &sp24);
+#ifdef CENTERED_COLLISION
+    f32 floorHeight = find_floor(o->oPosX, (o->oPosY + OBJ_STEP_HEIGHT), o->oPosZ, &sp24);
+#else
+    f32 floorHeight = find_floor(o->oPosX, o->oPosY, o->oPosZ, &sp24);
+#endif
 
-    if (sp20 > sp1C + o->oFloatingPlatformUnkFC) {
+    if (sp20 > floorHeight + o->oFloatingPlatformUnkFC) {
         o->oFloatingPlatformUnkF4 = 0;
         return sp20 + o->oFloatingPlatformUnkFC;
     } else {
         o->oFloatingPlatformUnkF4 = 1;
-        return sp1C + o->oFloatingPlatformUnkFC;
+        return floorHeight + o->oFloatingPlatformUnkFC;
     }
 }
 

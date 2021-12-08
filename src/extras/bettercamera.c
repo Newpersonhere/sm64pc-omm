@@ -951,6 +951,11 @@ s32 ray_surface_intersect(Vec3f orig, Vec3f dir, f32 dir_length, struct Surface 
     if (surface->type == SURFACE_HANGABLE && gMarioState->action & ACT_FLAG_HANGING)
         return FALSE;
 
+#ifdef NEW_WATER_SURFACES
+    if (surface->flags & SURFACE_NEW_WATER || surface->flags & SURFACE_NEW_WATER_BOTTOM)
+        return FALSE;
+#endif
+
     // Get surface normal and some other stuff
     norm[0] = 0;
     norm[1] = surface->normal.y;
@@ -1061,6 +1066,12 @@ void find_surface_on_ray_cell(s16 cellX, s16 cellZ, Vec3f orig, Vec3f normalized
             find_surface_on_ray_list(gStaticSurfacePartition[cellZ][cellX][SPATIAL_PARTITION_WALLS].next, orig, normalized_dir, dir_length, hit_surface, hit_pos, max_length);
             find_surface_on_ray_list(gDynamicSurfacePartition[cellZ][cellX][SPATIAL_PARTITION_WALLS].next, orig, normalized_dir, dir_length, hit_surface, hit_pos, max_length);
         }
+#ifdef NEW_WATER_SURFACES
+        if (flags & RAYCAST_FIND_WATER) {
+            find_surface_on_ray_list(gStaticSurfacePartition [cellZ][cellX][SPATIAL_PARTITION_WATER].next, orig, normalized_dir, dir_length, hit_surface, hit_pos, max_length);
+            find_surface_on_ray_list(gDynamicSurfacePartition[cellZ][cellX][SPATIAL_PARTITION_WATER].next, orig, normalized_dir, dir_length, hit_surface, hit_pos, max_length);
+        }
+#endif
 	}
 }
 
@@ -1334,8 +1345,8 @@ void puppycam_projection_behaviours(void)
 static void puppycam_vanilla_actions(void)
 {
     //Adds support for wing mario tower
-    if (gMarioState->floor && gMarioState->floor->type == SURFACE_LOOK_UP_WARP
-        && save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1) >= 10) {
+    if (gMarioState->floor && gMarioState->floor->type == SURFACE_LOOK_UP_WARP // warp for STAR ROAD hidden place
+        && save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1) >= 120) {
         if (gPuppyCam.pitch > 0x6000 && gMarioState->forwardVel == 0
             && (gMarioState->action & ACT_GROUP_MASK) != ACT_GROUP_CUTSCENE) {
             level_trigger_warp(gMarioState, WARP_OP_UNKNOWN_01);
@@ -1599,6 +1610,9 @@ static void puppycan_opacity(void) {
 //Handles collision detection using ray casting.
 static void puppycam_collision(void)
 {
+#ifdef BETTER_WALL_COLLISION
+    struct WallCollisionData wall0, wall1;
+#endif
     struct Surface *surf[2];
     Vec3f camdir[2];
     Vec3f hitpos[2];
@@ -1628,8 +1642,13 @@ static void puppycam_collision(void)
 
     find_surface_on_ray(target[0], camdir[0], &surf[0], hitpos[0], RAYCAST_FIND_FLOOR | RAYCAST_FIND_CEIL | RAYCAST_FIND_WALL);
     find_surface_on_ray(target[1], camdir[1], &surf[1], hitpos[1], RAYCAST_FIND_FLOOR | RAYCAST_FIND_CEIL | RAYCAST_FIND_WALL);
+#ifdef BETTER_WALL_COLLISION
+    resolve_and_return_wall_collisions(hitpos[0], 0.0f, 25.0f, &wall0);
+    resolve_and_return_wall_collisions(hitpos[1], 0.0f, 25.0f, &wall1);
+#else
     resolve_and_return_wall_collisions(hitpos[0], 0.0f, 25.0f);
     resolve_and_return_wall_collisions(hitpos[1], 0.0f, 25.0f);
+#endif
     dist[0] = ((target[0][0] - hitpos[0][0]) * (target[0][0] - hitpos[0][0]) + (target[0][1] - hitpos[0][1]) * (target[0][1] - hitpos[0][1]) + (target[0][2] - hitpos[0][2]) * (target[0][2] - hitpos[0][2]));
     dist[1] = ((target[1][0] - hitpos[1][0]) * (target[1][0] - hitpos[1][0]) + (target[1][1] - hitpos[1][1]) * (target[1][1] - hitpos[1][1]) + (target[1][2] - hitpos[1][2]) * (target[1][2] - hitpos[1][2]));
 

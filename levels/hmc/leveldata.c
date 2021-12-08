@@ -59,3 +59,11 @@
 #include "levels/hmc/arrow_platform_button/collision.inc.c"
 #include "levels/hmc/areas/1/trajectory.inc.c"
 #include "levels/hmc/areas/1/movtext.inc.c"
+
+#include "levels/hmc/areas/1/grill_door/custom.model.inc.c"
+#include "levels/hmc/areas/1/grill_door/custom.collision.inc.c"
+
+#include "levels/hmc/rolling_rock/custom.model.inc.c"
+#include "levels/hmc/rolling_rock/custom.collision.inc.c"
+#include "levels/hmc/rolling_rock_fragment_1/custom.model.inc.c"
+#include "levels/hmc/rolling_rock_fragment_1/custom.collision.inc.c"

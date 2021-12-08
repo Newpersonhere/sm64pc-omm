@@ -649,8 +649,10 @@ void obj_set_gfx_pos_from_pos(struct Object *obj) {
 }
 
 void obj_init_animation(struct Object *obj, s32 animIndex) {
-    struct Animation **anims = o->oAnimations;
-    geo_obj_init_animation(&obj->header.gfx, &anims[animIndex]);
+    if (o->oAnimations != NULL) {
+        struct Animation **anims = o->oAnimations;
+        geo_obj_init_animation(&obj->header.gfx, &anims[animIndex]);
+    }
 }
 
 /**
@@ -726,28 +728,36 @@ void cur_obj_scale(f32 scale) {
 }
 
 void cur_obj_init_animation(s32 animIndex) {
-    struct Animation **anims = o->oAnimations;
-    geo_obj_init_animation(&o->header.gfx, &anims[animIndex]);
+    if (o->oAnimations != NULL) {
+        struct Animation **anims = o->oAnimations;
+        geo_obj_init_animation(&o->header.gfx, &anims[animIndex]);
+    }
 }
 
 void cur_obj_init_animation_with_sound(s32 animIndex) {
-    struct Animation **anims = o->oAnimations;
-    geo_obj_init_animation(&o->header.gfx, &anims[animIndex]);
-    o->oSoundStateID = animIndex;
+    if (o->oAnimations != NULL) {
+        struct Animation **anims = o->oAnimations;
+        geo_obj_init_animation(&o->header.gfx, &anims[animIndex]);
+        o->oSoundStateID = animIndex;
+    }
 }
 
 void cur_obj_init_animation_with_accel_and_sound(s32 animIndex, f32 accel) {
-    struct Animation **anims = o->oAnimations;
-    s32 animAccel = (s32)(accel * 65536.0f);
-    geo_obj_init_animation_accel(&o->header.gfx, &anims[animIndex], animAccel);
-    o->oSoundStateID = animIndex;
+    if (o->oAnimations != NULL) {
+        struct Animation **anims = o->oAnimations;
+        s32 animAccel = (s32)(accel * 65536.0f);
+        geo_obj_init_animation_accel(&o->header.gfx, &anims[animIndex], animAccel);
+        o->oSoundStateID = animIndex;
+    }
 }
 
 void obj_init_animation_with_sound(struct Object *obj, const struct Animation * const* animations, s32 animIndex) {
-    struct Animation **anims = (struct Animation **) animations;
-    obj->oAnimations = (struct Animation **) animations;
-    geo_obj_init_animation(&obj->header.gfx, &anims[animIndex]);
-    obj->oSoundStateID = animIndex;
+    if (animations != NULL) {
+        struct Animation **anims = (struct Animation **)animations;
+        obj->oAnimations = (struct Animation **)animations;
+        geo_obj_init_animation(&obj->header.gfx, &anims[animIndex]);
+        obj->oSoundStateID = animIndex;
+    }
 }
 
 void cur_obj_enable_rendering_and_become_tangible(struct Object *obj) {
@@ -1173,12 +1183,20 @@ void obj_become_tangible(struct Object *obj) {
 
 void cur_obj_update_floor_height(void) {
     struct Surface *floor;
+#ifdef CENTERED_COLLISION
+    o->oFloorHeight = find_floor(o->oPosX, o->oPosY + OBJ_STEP_HEIGHT, o->oPosZ, &floor);
+#else
     o->oFloorHeight = find_floor(o->oPosX, o->oPosY, o->oPosZ, &floor);
+#endif
 }
 
 struct Surface *cur_obj_update_floor_height_and_get_floor(void) {
     struct Surface *floor;
+#ifdef CENTERED_COLLISION
+    o->oFloorHeight = find_floor(o->oPosX, o->oPosY + OBJ_STEP_HEIGHT, o->oPosZ, &floor);
+#else
     o->oFloorHeight = find_floor(o->oPosX, o->oPosY, o->oPosZ, &floor);
+#endif
     return floor;
 }
 
@@ -1214,7 +1232,11 @@ static s32 cur_obj_move_xz(f32 steepSlopeNormalY, s32 careAboutEdgesAndSteepSlop
     f32 intendedX = o->oPosX + o->oVelX;
     f32 intendedZ = o->oPosZ + o->oVelZ;
 
-    f32 intendedFloorHeight = find_floor(intendedX, o->oPosY, intendedZ, &intendedFloor);
+#ifdef CENTERED_COLLISION
+    f32 intendedFloorHeight = find_floor(intendedX, o->oPosY + OBJ_STEP_HEIGHT, intendedZ, &intendedFloor); // find_room_floor?
+#else
+    f32 intendedFloorHeight = find_floor(intendedX, o->oPosY, intendedZ, &intendedFloor); // find_room_floor?
+#endif
     f32 deltaFloorHeight = intendedFloorHeight - o->oFloorHeight;
 
     o->oMoveFlags &= ~OBJ_MOVE_HIT_EDGE;
@@ -1609,11 +1631,14 @@ static void obj_spawn_loot_coins(struct Object *obj, s32 numCoins, f32 sp30,
                                     const BehaviorScript *coinBehavior,
                                     s16 posJitter, s16 model) {
     s32 i;
-    f32 spawnHeight;
     struct Surface *floor;
     struct Object *coin;
 
-    spawnHeight = find_floor(obj->oPosX, obj->oPosY, obj->oPosZ, &floor);
+#ifdef CENTERED_COLLISION
+    f32 spawnHeight = find_floor(obj->oPosX, obj->oPosY + OBJ_STEP_HEIGHT, obj->oPosZ, &floor);
+#else
+    f32 spawnHeight = find_floor(obj->oPosX, obj->oPosY, obj->oPosZ, &floor);
+#endif
     if (obj->oPosY - spawnHeight > 100.0f) {
         spawnHeight = obj->oPosY;
     }
@@ -1691,7 +1716,11 @@ static s32 cur_obj_detect_steep_floor(s16 steepAngleDegrees) {
     if (o->oForwardVel != 0.0f) {
         intendedX = o->oPosX + o->oVelX;
         intendedZ = o->oPosZ + o->oVelZ;
+#ifdef CENTERED_COLLISION
+        intendedFloorHeight = find_floor(intendedX, o->oPosY + OBJ_STEP_HEIGHT, intendedZ, &intendedFloor);
+#else
         intendedFloorHeight = find_floor(intendedX, o->oPosY, intendedZ, &intendedFloor);
+#endif
         deltaFloorHeight = intendedFloorHeight - o->oFloorHeight;
 
         if (intendedFloorHeight < FLOOR_LOWER_LIMIT_MISC) {
@@ -1842,24 +1871,15 @@ void cur_obj_move_standard(s16 steepSlopeAngleDegrees) {
     }
 }
 
-static s32 cur_obj_within_12k_bounds(void) {
-    if (o->oPosX < -12000.0f || 12000.0f < o->oPosX) {
-        return FALSE;
-    }
-
-    if (o->oPosY < -12000.0f || 12000.0f < o->oPosY) {
-        return FALSE;
-    }
-
-    if (o->oPosZ < -12000.0f || 12000.0f < o->oPosZ) {
-        return FALSE;
-    }
-
+static u32 cur_obj_within_bounds(f32 bounds) {
+    if ((o->oPosX < -bounds) || (bounds < o->oPosX)) return FALSE;
+    if ((o->oPosY < -bounds) || (bounds < o->oPosY)) return FALSE;
+    if ((o->oPosZ < -bounds) || (bounds < o->oPosZ)) return FALSE;
     return TRUE;
 }
 
 void cur_obj_move_using_vel_and_gravity(void) {
-    if (cur_obj_within_12k_bounds()) {
+    if (cur_obj_within_bounds(LEVEL_BOUNDARY_MAX + 4096.0f)) {
         o->oPosX += o->oVelX;
         o->oPosZ += o->oVelZ;
         o->oVelY += o->oGravity; //! No terminal velocity
@@ -2405,24 +2425,11 @@ UNUSED static void stub_obj_helpers_5(void) {
 
 void bhv_init_room(void) {
     struct Surface *floor;
-    f32 floorHeight;
+    UNUSED f32 floorHeight;
 
     if (is_item_in_array(gCurrLevelNum, sLevelsWithRooms)) {
-        floorHeight = find_floor(o->oPosX, o->oPosY, o->oPosZ, &floor);
-
-        if (floor != NULL) {
-            if (floor->room != 0) {
-                o->oRoom = floor->room;
-            } else {
-                // Floor probably belongs to a platform object. Try looking
-                // underneath it
-                find_floor(o->oPosX, floorHeight - 100.0f, o->oPosZ, &floor);
-                if (floor != NULL) {
-                    //! Technically possible that the room could still be 0 here
-                    o->oRoom = floor->room;
-                }
-            }
-        }
+        floorHeight = find_room_floor(o->oPosX, o->oPosY, o->oPosZ, &floor);
+        if (floor != NULL) o->oRoom = floor->room;
     } else {
         o->oRoom = -1;
     }

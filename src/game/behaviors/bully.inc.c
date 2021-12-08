@@ -214,9 +214,19 @@ void bully_act_level_death(void) {
             spawn_mist_particles();
 
             if (o->oBullySubtype == BULLY_STYPE_CHILL) {
+                #ifdef RM2C
+                spawn_default_star(ChillBullyStarPos);
+                #else
                 spawn_default_star(130.0f, 1600.0f, -4335.0f);
+                #endif
             } else {
+                #ifdef RM2C
+                // spawn_default_star(BigBullyStarPos);
+                // STAR ROAD uses this big bully as a Bowser Boss
+                spawn_object(gMarioObject, MODEL_BOWSER_KEY, bhvBowserKey);
+                #else
                 spawn_default_star(0, 950.0f, -6800.0f);
+                #endif
                 spawn_object_abs_with_rot(o, 0, MODEL_NONE, bhvLllTumblingBridge,
                                           0, 154, -5631, 0, 0, 0);
             }

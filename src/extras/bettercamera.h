@@ -37,6 +37,7 @@
 #define RAYCAST_FIND_FLOOR  (1 << 0) // 0x0001
 #define RAYCAST_FIND_WALL   (1 << 1) // 0x0002
 #define RAYCAST_FIND_CEIL   (1 << 2) // 0x0004
+#define RAYCAST_FIND_WATER  (1 << 3) // 0x0008
 #define RAYCAST_FIND_ALL    (0xFFFFFFFF)
 
 enum gPuppyCamInputType

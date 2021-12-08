@@ -128,6 +128,7 @@ extern const Collision exclamation_box_outline_seg8_collision_08025F78[];
 
 // flyguy
 extern const GeoLayout flyguy_geo[];
+extern const GeoLayout custom_shyguy_geo[];
 extern const Gfx flyguy_seg8_dl_08010840[];
 extern const Gfx flyguy_seg8_dl_08010968[];
 extern const Gfx flyguy_seg8_dl_08010A90[];

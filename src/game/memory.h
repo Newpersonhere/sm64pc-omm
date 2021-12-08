@@ -14,7 +14,7 @@
 #else
 
 #ifdef TARGET_N64
-#define GFX_POOL_SIZE 6400
+#define GFX_POOL_SIZE 10000
 #else
 #define GFX_POOL_SIZE (512 * 1024)
 #endif

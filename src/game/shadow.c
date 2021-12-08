@@ -14,9 +14,10 @@
 #include "sm64.h"
 
 // Avoid Z-fighting
-#define find_floor_height_and_data 0.4 + find_floor_height_and_data
-#define find_water_level -1.4 + find_water_level
-
+#define find_floor_shadow            1.4 + find_floor
+#define find_floor_height            1.4 + find_floor_height
+#define find_water_level            -1.4 + find_water_level
+#define find_water_level_and_floor  -1.4 + find_water_level_and_floor
 /**
  * @file shadow.c
  * This file implements a self-contained subsystem used to draw shadows.
@@ -73,6 +74,8 @@ struct Shadow {
  */
 #define SHADOW_SHAPE_SQUARE 20
 
+#define SHADOW_SHAPE_SPIKE 30
+
 /**
  * Constant to indicate a shadow consists of 9 vertices.
  */
@@ -106,6 +109,7 @@ shadowRectangle rectangles[2] = {
 
 // See shadow.h for documentation.
 s8 gShadowAboveWaterOrLava;
+s8 gShadowAboveCustomWater;
 s8 gMarioOnIceOrCarpet;
 s8 sMarioOnFlyingCarpet;
 s16 sSurfaceTypeBelowShadow;
@@ -181,8 +185,8 @@ u8 dim_shadow_with_distance(u8 solidity, f32 distFromFloor) {
  * Return the water level below a shadow, or 0 if the water level is below
  * -10,000.
  */
-f32 get_water_level_below_shadow(struct Shadow *s) {
-    f32 waterLevel = find_water_level(s->parentX, s->parentZ);
+f32 get_water_level_below_shadow(struct Shadow *s, struct Surface **waterFloor) {
+    f32 waterLevel = find_water_level_and_floor(s->parentX, s->parentZ, waterFloor);
     if (waterLevel < FLOOR_LOWER_LIMIT_SHADOW) {
         return 0;
     } else if (s->parentY >= waterLevel && s->floorHeight <= waterLevel) {
@@ -207,39 +211,55 @@ f32 get_water_level_below_shadow(struct Shadow *s) {
 s8 init_shadow(struct Shadow *s, f32 xPos, f32 yPos, f32 zPos, s16 shadowScale, u8 overwriteSolidity) {
     f32 waterLevel;
     f32 floorSteepness;
-    struct FloorGeometry *floorGeometry;
+    struct Surface *floor;
+    struct Surface *waterFloor = NULL;
 
     s->parentX = xPos;
     s->parentY = yPos;
     s->parentZ = zPos;
 
-    s->floorHeight = find_floor_height_and_data(s->parentX, s->parentY, s->parentZ, &floorGeometry);
+    gFindFloorIncludeSurfaceIntangible = TRUE;
 
-    if (gEnvironmentRegions != NULL) {
-        waterLevel = get_water_level_below_shadow(s);
-    }
+#ifdef CENTERED_COLLISION
+    s->floorHeight             = find_floor_shadow(s->parentX, (s->parentY + 80.0f), s->parentZ, &floor);
+#else
+    s->floorHeight             = find_floor_shadow(s->parentX, s->parentY, s->parentZ, &floor);
+#endif
+
+    waterLevel = get_water_level_below_shadow(s, &waterFloor);
 
     if (gShadowAboveWaterOrLava) {
         //! @bug Use of potentially undefined variable `waterLevel`
         //  UB Fixed in the function above
         s->floorHeight = waterLevel;
 
-        // Assume that the water is flat.
-        s->floorNormalX = 0;
-        s->floorNormalY = 1.0;
-        s->floorNormalZ = 0;
-        s->floorOriginOffset = -waterLevel;
+        if (waterFloor != NULL) {
+            s->floorNormalX = waterFloor->normal.x;
+            s->floorNormalY = waterFloor->normal.y;
+            s->floorNormalZ = waterFloor->normal.z;
+            s->floorOriginOffset = waterFloor->originOffset;
+            gShadowAboveWaterOrLava = FALSE;
+            gShadowAboveCustomWater = TRUE;
+            s->solidity = 200;
+        } else {
+            gShadowAboveCustomWater = FALSE;
+            // Assume that the water is flat.
+            s->floorNormalX = 0;
+            s->floorNormalY = 1.0;
+            s->floorNormalZ = 0;
+            s->floorOriginOffset = -waterLevel;
+        }
     } else {
         // Don't draw a shadow if the floor is lower than expected possible,
         // or if the y-normal is negative (an unexpected result).
-        if (s->floorHeight < FLOOR_LOWER_LIMIT_SHADOW || floorGeometry->normalY <= 0.0) {
+        if (s->floorHeight < FLOOR_LOWER_LIMIT_SHADOW || floor->normal.y <= 0.0) {
             return 1;
         }
 
-        s->floorNormalX = floorGeometry->normalX;
-        s->floorNormalY = floorGeometry->normalY;
-        s->floorNormalZ = floorGeometry->normalZ;
-        s->floorOriginOffset = floorGeometry->originOffset;
+        s->floorNormalX = floor->normal.x;
+        s->floorNormalY = floor->normal.y;
+        s->floorNormalZ = floor->normal.z;
+        s->floorOriginOffset = floor->originOffset;
     }
 
     if (overwriteSolidity) {
@@ -370,7 +390,6 @@ void calculate_vertex_xyz(s8 index, struct Shadow s, f32 *xPosVtx, f32 *yPosVtx,
     f32 halfTiltedScale;
     s8 xCoordUnit;
     s8 zCoordUnit;
-    struct FloorGeometry *dummy;
 
     // This makes xCoordUnit and yCoordUnit each one of -1, 0, or 1.
     get_vertex_coords(index, shadowVertexType, &xCoordUnit, &zCoordUnit);
@@ -393,7 +412,11 @@ void calculate_vertex_xyz(s8 index, struct Shadow s, f32 *xPosVtx, f32 *yPosVtx,
                 // Clamp this vertex's y-position to that of the floor directly
                 // below it, which may differ from the floor below the center
                 // vertex.
-                *yPosVtx = find_floor_height_and_data(*xPosVtx, s.parentY, *zPosVtx, &dummy);
+                #ifdef CENTERED_COLLISION
+                *yPosVtx = find_floor_height(*xPosVtx, (s.parentY + 80.0f), *zPosVtx);
+                #else
+                *yPosVtx = find_floor_height(*xPosVtx, s.parentY, *zPosVtx);
+                #endif
                 break;
             case SHADOW_WITH_4_VERTS:
                 // Do not clamp. Instead, extrapolate the y-position of this
@@ -413,7 +436,7 @@ void calculate_vertex_xyz(s8 index, struct Shadow s, f32 *xPosVtx, f32 *yPosVtx,
  * perpendicular, meaning the ground is locally flat. It returns nonzero
  * in most cases where `vtxY` is on a different floor triangle from the
  * center vertex, as in the case with SHADOW_WITH_9_VERTS, which sets
- * the y-value from `find_floor_height_and_data`. (See the bottom of
+ * the y-value from `find_floor`. (See the bottom of
  * `calculate_vertex_xyz`.)
  */
 s16 floor_local_tilt(struct Shadow s, f32 vtxX, f32 vtxY, f32 vtxZ) {
@@ -445,9 +468,8 @@ void make_shadow_vertex(Vtx *vertices, s8 index, struct Shadow s, s8 shadowVerte
      * GameShark code in this video: https://youtu.be/MSIh4rtNGF0. The code in
      * the video makes `extrapolate_vertex_y_position` return the same value as
      * the last-called function that returns a float; in this case, that's
-     * `find_floor_height_and_data`, which this if-statement was designed to
-     * overwrite in the first place. Thus, this if-statement is disabled by that
-     * code.
+     * `find_floor`, which this if-statement was designed to overwrite in the
+     * first place. Thus, this if-statement is disabled by that code.
      *
      * The last condition here means the y-position calculated previously
      * was probably on a different floor triangle from the center vertex.
@@ -475,7 +497,11 @@ void add_shadow_to_display_list(Gfx *displayListHead, Vtx *verts, s8 shadowVerte
             gSPDisplayList(displayListHead++, dl_shadow_circle);
             break;
         case SHADOW_SHAPE_SQUARE:
-            gSPDisplayList(displayListHead++, dl_shadow_square) break;
+            gSPDisplayList(displayListHead++, dl_shadow_square);
+            break;
+        case SHADOW_SHAPE_SPIKE:
+            gSPDisplayList(displayListHead++, dl_shadow_spike);
+            break;
     }
     switch (shadowVertexType) {
         case SHADOW_WITH_9_VERTS:
@@ -700,6 +726,33 @@ Gfx *create_shadow_circle_4_verts(f32 xPos, f32 yPos, f32 zPos, s16 shadowScale,
 }
 
 /**
+ * Create a spike shadow composed of 4 vertices.
+ */
+Gfx *create_shadow_spike(f32 xPos, f32 yPos, f32 zPos, s16 shadowScale, u8 solidity) {
+    Vtx *verts;
+    Gfx *displayList;
+    struct Shadow shadow;
+    s32 i;
+
+    if (init_shadow(&shadow, xPos, yPos, zPos, shadowScale, solidity) != 0) {
+        return NULL;
+    }
+
+    verts = alloc_display_list(4 * sizeof(Vtx));
+    displayList = alloc_display_list(5 * sizeof(Gfx));
+
+    if (verts == NULL || displayList == NULL) {
+        return 0;
+    }
+
+    for (i = 0; i < 4; i++) {
+        make_shadow_vertex(verts, i, shadow, SHADOW_WITH_4_VERTS);
+    }
+    add_shadow_to_display_list(displayList, verts, SHADOW_WITH_4_VERTS, SHADOW_SHAPE_SPIKE);
+    return displayList;
+}
+
+/**
  * Create a circular shadow composed of 4 vertices and assume that the ground
  * underneath it is totally flat.
  */
@@ -707,9 +760,12 @@ Gfx *create_shadow_circle_assuming_flat_ground(f32 xPos, f32 yPos, f32 zPos, s16
                                                u8 solidity) {
     Vtx *verts;
     Gfx *displayList;
-    struct FloorGeometry *dummy; // only for calling find_floor_height_and_data
     f32 distBelowFloor;
-    f32 floorHeight = find_floor_height_and_data(xPos, yPos, zPos, &dummy);
+#ifdef CENTERED_COLLISION
+    f32 floorHeight = find_floor_height(xPos, (yPos + 80.0f), zPos);
+#else
+    f32 floorHeight = find_floor_height(xPos, yPos, zPos);
+#endif
     f32 radius = shadowScale / 2;
 
     if (floorHeight < FLOOR_LOWER_LIMIT_SHADOW) {
@@ -767,9 +823,12 @@ Gfx *create_shadow_rectangle(f32 halfWidth, f32 halfLength, f32 relY, u8 solidit
  * value is 200. Return 0 if a shadow should be drawn, 1 if not.
  */
 s32 get_shadow_height_solidity(f32 xPos, f32 yPos, f32 zPos, f32 *shadowHeight, u8 *solidity) {
-    struct FloorGeometry *dummy;
     f32 waterLevel;
-    *shadowHeight = find_floor_height_and_data(xPos, yPos, zPos, &dummy);
+#ifdef CENTERED_COLLISION
+    *shadowHeight = find_floor_height(xPos, (yPos + 80.0f), zPos);
+#else
+    *shadowHeight = find_floor_height(xPos, yPos, zPos);
+#endif
 
     if (*shadowHeight < FLOOR_LOWER_LIMIT_SHADOW) {
         return 1;
@@ -859,9 +918,14 @@ Gfx *create_shadow_below_xyz(f32 xPos, f32 yPos, f32 zPos, s16 shadowScale, u8 s
                              s8 shadowType) {
     Gfx *displayList = NULL;
     struct Surface *pfloor;
+#ifdef CENTERED_COLLISION
+    find_floor(xPos, (yPos + 80.0f), zPos, &pfloor);
+#else
     find_floor(xPos, yPos, zPos, &pfloor);
+#endif
 
     gShadowAboveWaterOrLava = FALSE;
+    gShadowAboveCustomWater = FALSE;
     gMarioOnIceOrCarpet = 0;
     sMarioOnFlyingCarpet = 0;
     if (pfloor != NULL) {
@@ -877,9 +941,8 @@ Gfx *create_shadow_below_xyz(f32 xPos, f32 yPos, f32 zPos, s16 shadowScale, u8 s
         case SHADOW_CIRCLE_4_VERTS:
             displayList = create_shadow_circle_4_verts(xPos, yPos, zPos, shadowScale, shadowSolidity);
             break;
-        case SHADOW_CIRCLE_4_VERTS_FLAT_UNUSED: // unused shadow type
-            displayList = create_shadow_circle_assuming_flat_ground(xPos, yPos, zPos, shadowScale,
-                                                                    shadowSolidity);
+        case SHADOW_SPIKE:
+            displayList = create_shadow_spike(xPos, yPos, zPos, shadowScale, shadowSolidity);
             break;
         case SHADOW_SQUARE_PERMANENT:
             displayList =

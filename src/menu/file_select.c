@@ -2987,6 +2987,30 @@ void file_select_fit_screen(void) {
 extern s16 gSkipGameIntro;
 #endif
 
+extern s16 gStarRoadHardMode;
+
+static void print_hard_mode_strings(void) {
+    s16 i;
+    unsigned char textHardModeToggle[] = { TEXT_HARD_MODE_TOGGLE };
+    unsigned char textHardModeStatus[] = { TEXT_HARD_MODE_STATUS };
+    unsigned char textHardModeOn[] = { TEXT_HARD_MODE_ENABLED };
+    unsigned char textHardModeOff[] = { TEXT_HARD_MODE_DISABLED };
+    
+    for (i = 0; i < 8; i++) {
+        if (gStarRoadHardMode) {
+            textHardModeStatus[18 + i] = textHardModeOn[i];
+        } else {
+            textHardModeStatus[18 + i] = textHardModeOff[i];
+        }
+    }
+
+    gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
+    gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, sTextBaseAlpha);
+    print_generic_string(GFX_DIMENSIONS_FROM_LEFT_EDGE(20), 24, textHardModeToggle);
+    print_generic_string(GFX_DIMENSIONS_FROM_LEFT_EDGE(20), 8, textHardModeStatus);
+    gSPDisplayList(gDisplayListHead++, dl_ia_text_end);
+}
+
 /**
  * Prints file select strings depending on the menu selected.
  * Also checks if all saves exists and defines text and main menu timers.
@@ -3003,6 +3027,7 @@ static void print_file_select_strings(void) {
 #else
             print_main_menu_strings();
 #endif
+            print_hard_mode_strings();
             break;
         case MENU_BUTTON_SCORE:
             print_score_menu_strings();
@@ -3056,6 +3081,11 @@ static void print_file_select_strings(void) {
         gSkipGameIntro = TRUE;
     }
 #endif
+  
+    if (gPlayer1Controller->buttonPressed & L_TRIG) {
+        play_sound(SOUND_MENU_MARIO_CASTLE_WARP, gGlobalSoundSource);
+        gStarRoadHardMode ^= 1;
+    }
 }
 
 /**

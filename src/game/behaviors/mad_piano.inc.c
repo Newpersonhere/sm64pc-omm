@@ -59,7 +59,15 @@ static void mad_piano_act_attack(void) {
     cur_obj_move_standard(78);
 }
 
+#include "game/sound_init.h"
+
 void bhv_mad_piano_update(void) {
+    // STAR ROAD custom code, plays the SMG2 Starship Mario theme
+    if (save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1) >= 130) {
+        set_background_music(0, 0x2F, 0);
+    }
+
+    /*
     if (!(o->activeFlags & ACTIVE_FLAG_IN_DIFFERENT_ROOM)) {
         o->oFaceAngleYaw = o->oMoveAngleYaw - 0x4000;
 
@@ -72,4 +80,5 @@ void bhv_mad_piano_update(void) {
                 break;
         }
     }
+    */
 }

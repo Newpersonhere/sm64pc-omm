@@ -92,21 +92,21 @@ void bhv_door_init(void) {
 
     x = o->oPosX;
     z = o->oPosZ;
-    find_floor(x, o->oPosY, z, &floor);
+    find_room_floor(x, o->oPosY, z, &floor);
     if (floor != NULL) {
         o->oDoorUnkF8 = floor->room;
     }
 
     x = o->oPosX + sins(o->oMoveAngleYaw) * 200.0f;
     z = o->oPosZ + coss(o->oMoveAngleYaw) * 200.0f;
-    find_floor(x, o->oPosY, z, &floor);
+    find_room_floor(x, o->oPosY, z, &floor);
     if (floor != NULL) {
         o->oDoorUnkFC = floor->room;
     }
 
     x = o->oPosX + sins(o->oMoveAngleYaw) * -200.0f;
     z = o->oPosZ + coss(o->oMoveAngleYaw) * -200.0f;
-    find_floor(x, o->oPosY, z, &floor);
+    find_room_floor(x, o->oPosY, z, &floor);
     if (floor != NULL) {
         o->oDoorUnk100 = floor->room;
     }

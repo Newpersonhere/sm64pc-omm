@@ -71,6 +71,11 @@ extern s16 sTransitionTimer;
 extern void (*sTransitionUpdate)(s16 *);
 extern u8 unused2[4];
 
+#ifdef TARGET_N64
+// Frameskip
+extern s8 doneSkipped;
+#endif
+
 struct WarpDest {
     u8 type;
     u8 levelNum;
@@ -101,6 +106,7 @@ struct HudDisplay {
 
 extern struct HudDisplay gHudDisplay;
 extern s8 gNeverEnteredCastle;
+extern s16 gStarRoadHardMode;
 
 enum HUDDisplayFlag {
     HUD_DISPLAY_FLAG_LIVES = 0x0001,

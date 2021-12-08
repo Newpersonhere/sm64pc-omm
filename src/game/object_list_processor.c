@@ -148,6 +148,12 @@ struct MemoryPool *gObjectMemoryPool;
 
 s16 gCheckingSurfaceCollisionsForCamera;
 s16 gFindFloorIncludeSurfaceIntangible;
+#ifdef FIND_FLOOR_EXCLUDE_DYNAMIC_CHECK
+s16 gFindFloorExcludeDynamic;
+#endif
+#ifdef UNDERWATER_STEEP_FLOORS_AS_WALLS
+s16 gIncludeSteepFloorsInWallCollisionCheck;
+#endif
 s16 *gEnvironmentRegions;
 s32 gEnvironmentLevels[20];
 s8 gDoorAdjacentRooms[60][2];
@@ -618,6 +624,7 @@ void unload_deactivated_objects(void) {
 /**
  * Unused profiling function.
  */
+ /**
 UNUSED static u16 unused_get_elapsed_time(u64 *cycleCounts, s32 index) {
     u16 time;
     f64 cycles;
@@ -634,6 +641,7 @@ UNUSED static u16 unused_get_elapsed_time(u64 *cycleCounts, s32 index) {
 
     return time;
 }
+ */
 
 /**
  * Update all objects. This includes script execution, object collision detection,
@@ -649,6 +657,9 @@ void update_objects(UNUSED s32 unused) {
     gNumRoomedObjectsInMarioRoom = 0;
     gNumRoomedObjectsNotInMarioRoom = 0;
     gCheckingSurfaceCollisionsForCamera = FALSE;
+#ifdef UNDERWATER_STEEP_FLOORS_AS_WALLS
+    gIncludeSteepFloorsInWallCollisionCheck = FALSE;
+#endif
 
     reset_debug_objectinfo();
     stub_debug_5();

@@ -16,6 +16,9 @@
 #include "behavior_data.h"
 #include "level_table.h"
 #include "rumble_init.h"
+#ifdef UNDERWATER_STEEP_FLOORS_AS_WALLS
+#include "object_list_processor.h"
+#endif
 
 #define MIN_SWIM_STRENGTH 160
 #define MIN_SWIM_SPEED 16.0f
@@ -67,54 +70,112 @@ static f32 get_buoyancy(struct MarioState *m) {
     return buoyancy;
 }
 
+#if WATER_NUM_STEPS > 1
+static u32 perform_water_quarter_step(struct MarioState *m, Vec3f nextPos) {
+#ifdef BETTER_WALL_COLLISION
+    struct WallCollisionData wallData;
+#else
+    struct Surface *wall;
+#endif
+    struct Surface *ceil;
+    struct Surface *floor;
+    f32 ceilHeight;
+    f32 floorHeight;
+    f32 ceilAmt;
+    // f32 floorAmt;
+#ifdef BETTER_WALL_COLLISION
+    m->wall = NULL;
+#ifdef UNDERWATER_STEEP_FLOORS_AS_WALLS
+    gIncludeSteepFloorsInWallCollisionCheck = TRUE;
+#endif
+    resolve_and_return_wall_collisions(nextPos, 10.0f, 110.0f, &wallData);
+#else
+    wall        = resolve_and_return_wall_collisions(nextPos, 10.0f, 110.0f);
+#endif
+#ifdef CENTERED_COLLISION
+    floorHeight = find_floor(nextPos[0], (nextPos[1] + m->midY), nextPos[2], &floor);
+    ceilHeight  = find_ceil( nextPos[0], (nextPos[1] + m->midY), nextPos[2], &ceil);
+#else
+    floorHeight = find_floor(nextPos[0], nextPos[1], nextPos[2], &floor);
+    ceilHeight  = vec3f_find_ceil(nextPos, nextPos[1], &ceil);
+#endif
+    if (floor == NULL) return WATER_STEP_CANCELLED;
+    if ((ceil != NULL) && (((nextPos[1] + 160.0f) >= ceilHeight) || ((ceilHeight - floorHeight) < 160.0f))) {
+        ceilAmt = ((nextPos[1] + 160.0f) - ceilHeight);
+        nextPos[0] += (ceil->normal.x * ceilAmt);
+        nextPos[2] += (ceil->normal.z * ceilAmt);
+        nextPos[1] = (ceilHeight - 160.0f);
+        vec3f_copy(m->pos, nextPos);
+        m->floor       = floor;
+        m->floorHeight = floorHeight;
+        if (wallData.numWalls > 0) m->wall = wallData.walls[0]; //! only returns the first wall
+        return WATER_STEP_HIT_CEILING;
+    }
+    if (nextPos[1] <= floorHeight) {
+        nextPos[1]  = floorHeight;
+        vec3f_copy(m->pos, nextPos);
+        m->floor       = floor;
+        m->floorHeight = floorHeight;
+        if (wallData.numWalls > 0) m->wall = wallData.walls[0]; //! only returns the first wall
+        return WATER_STEP_HIT_FLOOR;
+    }
+    vec3f_copy(m->pos, nextPos);
+    m->floor       = floor;
+    m->floorHeight = floorHeight;
+    m->ceil        = ceil;
+    if (wallData.numWalls > 0) {
+        m->wall = wallData.walls[0]; //! only returns the first wall
+        return WATER_STEP_HIT_WALL;
+    } else {
+        return WATER_STEP_NONE;
+    }
+}
+#else
 static u32 perform_water_full_step(struct MarioState *m, Vec3f nextPos) {
+#ifdef BETTER_WALL_COLLISION
+    struct WallCollisionData wallData;
+#endif
     struct Surface *wall;
     struct Surface *ceil;
     struct Surface *floor;
     f32 ceilHeight;
     f32 floorHeight;
-
-    wall = resolve_and_return_wall_collisions(nextPos, 10.0f, 110.0f);
+#ifdef BETTER_WALL_COLLISION
+    resolve_and_return_wall_collisions(nextPos, 10.0f, 110.0f, &wallData);
+    wall = wallData.walls[0];
+#else
+    wall        = resolve_and_return_wall_collisions(nextPos, 10.0f, 110.0f);
+#endif
+#ifdef CENTERED_COLLISION
+    floorHeight = find_floor(nextPos[0], (nextPos[1] + m->midY), nextPos[2], &floor);
+    ceilHeight  = find_ceil( nextPos[0], (nextPos[1] + m->midY), nextPos[2], &ceil);
+#else
     floorHeight = find_floor(nextPos[0], nextPos[1], nextPos[2], &floor);
-    ceilHeight = vec3f_find_ceil(nextPos, floorHeight, &ceil);
-
-    if (floor == NULL) {
-        return WATER_STEP_CANCELLED;
-    }
-
+    ceilHeight  = vec3f_find_ceil(nextPos, nextPos[1], &ceil);
+#endif
+    if (floor == NULL) return WATER_STEP_CANCELLED;
     if (nextPos[1] >= floorHeight) {
-        if (ceilHeight - nextPos[1] >= 160.0f) {
+        if ((ceilHeight - nextPos[1]) >= 160.0f) {
             vec3f_copy(m->pos, nextPos);
-            m->floor = floor;
+            m->floor       = floor;
             m->floorHeight = floorHeight;
-
-            if (wall != NULL) {
-                return WATER_STEP_HIT_WALL;
-            } else {
-                return WATER_STEP_NONE;
-            }
+            return ((wall != NULL) ? WATER_STEP_HIT_WALL : WATER_STEP_NONE);
         }
-
-        if (ceilHeight - floorHeight < 160.0f) {
-            return WATER_STEP_CANCELLED;
-        }
-
+        if ((ceilHeight - floorHeight) < 160.0f) return WATER_STEP_CANCELLED;
         //! Water ceiling downwarp
-        vec3f_set(m->pos, nextPos[0], ceilHeight - 160.0f, nextPos[2]);
-        m->floor = floor;
+        vec3f_set(m->pos, nextPos[0], (ceilHeight - 160.0f), nextPos[2]);
+        m->floor       = floor;
         m->floorHeight = floorHeight;
         return WATER_STEP_HIT_CEILING;
     } else {
-        if (ceilHeight - floorHeight < 160.0f) {
-            return WATER_STEP_CANCELLED;
-        }
-
+        if ((ceilHeight - floorHeight) < 160.0f) return WATER_STEP_CANCELLED;
         vec3f_set(m->pos, nextPos[0], floorHeight, nextPos[2]);
-        m->floor = floor;
+        m->floor       = floor;
         m->floorHeight = floorHeight;
         return WATER_STEP_HIT_FLOOR;
     }
 }
+#endif
 
 static void apply_water_current(struct MarioState *m, Vec3f step) {
     s32 i;
@@ -165,32 +226,42 @@ static void apply_water_current(struct MarioState *m, Vec3f step) {
 }
 
 static u32 perform_water_step(struct MarioState *m) {
-    UNUSED u8 filler[4];
-    u32 stepResult;
+    u32 stepResult = WATER_STEP_NONE;
     Vec3f nextPos;
     Vec3f step;
     struct Object *marioObj = m->marioObj;
-
     vec3f_copy(step, m->vel);
-
-    if (m->action & ACT_FLAG_SWIMMING) {
-        apply_water_current(m, step);
+    if (m->action & ACT_FLAG_SWIMMING) apply_water_current(m, step);
+#if WATER_NUM_STEPS > 1
+ #ifdef VARIABLE_STEPS
+    const f32 speed = (m->moveSpeed / 8.0f);
+    const f32 numSteps = MAX(WATER_NUM_STEPS, speed);
+ #else
+    const f32 numSteps = WATER_NUM_STEPS;
+ #endif
+    u32 i;
+    for (i = 0; i < numSteps; i++) {
+        nextPos[0] = (m->pos[0] + (step[0] / numSteps));
+        nextPos[1] = (m->pos[1] + (step[1] / numSteps));
+        nextPos[2] = (m->pos[2] + (step[2] / numSteps));
+        // If Mario is at the surface, keep him there?
+        if (nextPos[1] > (m->waterLevel - 80)) {
+            nextPos[1] = (m->waterLevel - 80);
+            m->vel[1]  = 0.0f;
+        }
+        stepResult = perform_water_quarter_step(m, nextPos);
+        if (stepResult == WATER_STEP_CANCELLED) break;
     }
-
-    nextPos[0] = m->pos[0] + step[0];
-    nextPos[1] = m->pos[1] + step[1];
-    nextPos[2] = m->pos[2] + step[2];
-
-    if (nextPos[1] > m->waterLevel - 80) {
-        nextPos[1] = m->waterLevel - 80;
-        m->vel[1] = 0.0f;
+#else
+    vec3f_sum(nextPos, m->pos, step);
+    if (nextPos[1] > (m->waterLevel - 80)) {
+        nextPos[1] = (m->waterLevel - 80);
+        m->vel[1]  = 0.0f;
     }
-
     stepResult = perform_water_full_step(m, nextPos);
-
+#endif
     vec3f_copy(marioObj->header.gfx.pos, m->pos);
-    vec3s_set(marioObj->header.gfx.angle, -m->faceAngle[0], m->faceAngle[1], m->faceAngle[2]);
-
+    vec3s_set( marioObj->header.gfx.angle, -m->faceAngle[0], m->faceAngle[1], m->faceAngle[2]);
     return stepResult;
 }
 
@@ -1511,7 +1582,13 @@ static s32 act_hold_metal_water_fall_land(struct MarioState *m) {
 static s32 check_common_submerged_cancels(struct MarioState *m) {
     if (m->pos[1] > m->waterLevel - 80) {
         if (m->waterLevel - 80 > m->floorHeight) {
-            m->pos[1] = m->waterLevel - 80;
+            // m->pos[1] = m->waterLevel - 80; //! BUG: Downwarp swimming out of waterfalls
+            if (m->pos[1] - (m->waterLevel - 80) < 50) {
+                m->pos[1] = m->waterLevel - 80; // lock mario to top if the falloff isn't big enough
+            } else {
+                // m->pos[1] = m->waterLevel - 80; //! BUG: Downwarp swimming out of waterfalls
+                return transition_submerged_to_airborne(m);
+            }
         } else {
             //! If you press B to throw the shell, there is a ~5 frame window
             // where your held object is the shell, but you are not in the

@@ -1,8 +1,9 @@
 // 0x0E000978
+extern const Gfx DL_jrb_geo_000978_0x70091c8[];
 const GeoLayout jrb_geo_000978[] = {
     GEO_CULLING_RADIUS(5000),
     GEO_OPEN_NODE(),
-        GEO_DISPLAY_LIST(LAYER_OPAQUE, jrb_seg7_dl_07008FD8),
+        GEO_DISPLAY_LIST(1, DL_jrb_geo_000978_0x70091c8),
     GEO_CLOSE_NODE(),
     GEO_END(),
 };

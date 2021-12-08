@@ -20,11 +20,7 @@
 .word  0x74757C24               /* Checksum 2 */
 .word  0x00000000               /* Unknown */
 .word  0x00000000               /* Unknown */
-#ifdef VERSION_SH
-.ascii "SUPERMARIO64        "   /* Internal ROM name */
-#else
-.ascii "SUPER MARIO 64      "   /* Internal ROM name */
-#endif
+.ascii "SM64 Star Road      "   /* Internal ROM name */
 .word  0x00000000               /* Unknown */
 .word  0x0000004E               /* Cartridge */
 .ascii "SM"                     /* Cartridge ID */

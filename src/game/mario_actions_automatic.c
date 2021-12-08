@@ -89,7 +89,11 @@ s32 set_pole_position(struct MarioState *m, f32 offsetY) {
     collided = f32_find_wall_collision(&m->pos[0], &m->pos[1], &m->pos[2], 60.0f, 50.0f);
     collided |= f32_find_wall_collision(&m->pos[0], &m->pos[1], &m->pos[2], 30.0f, 24.0f);
 
+#ifdef CENTERED_COLLISION
+    ceilHeight = find_ceil(m->pos[0], (m->pos[1] + m->midY), m->pos[2], &ceil);
+#else
     ceilHeight = vec3f_find_ceil(m->pos, m->pos[1], &ceil);
+#endif
     if (m->pos[1] > ceilHeight - 160.0f) {
         m->pos[1] = ceilHeight - 160.0f;
         marioObj->oMarioPolePos = m->pos[1] - m->usedObj->oPosY;
@@ -312,16 +316,29 @@ s32 act_top_of_pole(struct MarioState *m) {
 }
 
 s32 perform_hanging_step(struct MarioState *m, Vec3f nextPos) {
-    UNUSED u8 filler[4];
+#ifdef BETTER_WALL_COLLISION
+    struct WallCollisionData wallData;
+#endif
     struct Surface *ceil;
     struct Surface *floor;
     f32 ceilHeight;
     f32 floorHeight;
     f32 ceilOffset;
 
-    m->wall = resolve_and_return_wall_collisions(nextPos, 50.0f, 50.0f);
-    floorHeight = find_floor(nextPos[0], nextPos[1], nextPos[2], &floor);
-    ceilHeight = vec3f_find_ceil(nextPos, floorHeight, &ceil);
+#ifdef BETTER_WALL_COLLISION
+    resolve_and_return_wall_collisions(nextPos, 50.0f, 50.0f, &wallData);
+    m->wall     = wallData.walls[0];
+#else
+    m->wall     = resolve_and_return_wall_collisions(nextPos, 50.0f, 50.0f);
+#endif
+
+#ifdef CENTERED_COLLISION
+    floorHeight = find_floor(  nextPos[0], (nextPos[1] + m->midY), nextPos[2], &floor);
+    ceilHeight  = find_ceil(nextPos[0], (nextPos[1] + m->midY), nextPos[2], &ceil);
+#else
+    floorHeight = find_floor(  nextPos[0], nextPos[1], nextPos[2], &floor);
+    ceilHeight  = vec3f_find_ceil(nextPos, nextPos[1], &ceil);
+#endif
 
     if (floor == NULL) {
         return HANG_HIT_CEIL_OR_OOB;
@@ -642,6 +659,10 @@ s32 act_ledge_grab(struct MarioState *m) {
     if (m->actionTimer < 10) {
         m->actionTimer++;
     }
+
+#ifdef FIX_LEDGE_GRABS
+    if ((m->wall != NULL) && ((m->wall->normal.y > MIN_FLOOR_NORMAL_Y) || (m->wall->normal.y < MAX_CEIL_NORMAL_Y))) return let_go_of_ledge(m);
+#endif
 
     if (m->floor->normal.y < 0.9063078f) {
         return let_go_of_ledge(m);

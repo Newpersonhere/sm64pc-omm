@@ -111,7 +111,7 @@ s32 act_idle(struct MarioState *m) {
         return set_mario_action(m, ACT_COUGHING, 0);
     }
 
-    if (!(m->actionArg & 1) && m->health < 0x300) {
+    if (!(m->actionArg & 1) && m->health < 0x300 && !gStarRoadHardMode) {
         return set_mario_action(m, ACT_PANTING, 0);
     }
 
@@ -500,6 +500,12 @@ s32 act_standing_against_wall(struct MarioState *m) {
     if (m->input & INPUT_B_PRESSED) {
         return set_mario_action(m, ACT_PUNCHING, 0);
     }
+
+#ifdef BETTER_WALL_COLLISION
+    if (m->wall == NULL) {
+        return set_mario_action(m, ACT_IDLE, 0);
+    }
+#endif
 
     set_mario_animation(m, MARIO_ANIM_STAND_AGAINST_WALL);
     stationary_ground_step(m);
@@ -1066,8 +1072,8 @@ s32 act_first_person(struct MarioState *m) {
         return set_mario_action(m, ACT_IDLE, 0);
     }
 
-    if (m->floor->type == SURFACE_LOOK_UP_WARP
-        && save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1) >= 10) {
+    if (m->floor->type == SURFACE_LOOK_UP_WARP // warp for STAR ROAD hidden place
+        && save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1) >= 120) {
         s16 sp1A = m->statusForCamera->headRotation[0];
         s16 sp18 = ((m->statusForCamera->headRotation[1] * 4) / 3) + m->faceAngle[1];
         if (sp1A == -0x1800 && (sp18 < -0x6FFF || sp18 >= 0x7000)) {

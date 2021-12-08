@@ -3,6 +3,10 @@
 
 #include "types.h"
 
+#ifdef RM2C
+extern const BehaviorScript editor_Scroll_Texture[];
+extern const BehaviorScript RM_Scroll_Texture[];
+#endif
 extern const BehaviorScript bhvStarDoor[];
 extern const BehaviorScript bhvMrI[];
 extern const BehaviorScript bhvMrIBody[];
@@ -542,6 +546,60 @@ extern const BehaviorScript bhvEndBirds1[];
 extern const BehaviorScript bhvEndBirds2[];
 extern const BehaviorScript bhvIntroScene[];
 extern const BehaviorScript bhvUnusedFakeStar[];
+
+// STAR ROAD BEHAVIORS
+extern const BehaviorScript bhvCustomSMSRBreakableRock[];
+extern const BehaviorScript bhvCustomSMSRWoodenOctagonalPlatform[];
+extern const BehaviorScript bhvCustomSMSRShyGuy[];
+extern const BehaviorScript bhvCustomSMSRBreakableWindow[];
+extern const BehaviorScript bhvCustomSMSRStarReplica[];
+extern const BehaviorScript bhvCustomSMSRRedOctagonalPlatform[];
+extern const BehaviorScript bhvCustomSMSRRedSinkingPlatform[];
+extern const BehaviorScript bhvCustomSMSRRedWavePlatform[];
+extern const BehaviorScript bhvCustomSMSRPushableTomb[];
+extern const BehaviorScript bhvCustomSMSRLampPath[];
+extern const BehaviorScript bhvCustomSMSRRotatingDonutPlatform[];
+extern const BehaviorScript bhvCustomSMSRWindTurbine[];
+extern const BehaviorScript bhvCustomSMSRLightsOnSwitch[];
+extern const BehaviorScript bhvCustomSMSRRotatingWoodenGear[];
+extern const BehaviorScript bhvCustomSMSRPeachMessage[];
+extern const BehaviorScript bhvCustomSMSRYoshiMessage[];
+extern const BehaviorScript bhvCustomSMSRStaticMessage[];
+extern const BehaviorScript bhvCustomSMSRStoneCubePlatform[];
+extern const BehaviorScript bhvCustomSMSR30StarDoorWall[];
+extern const BehaviorScript bhvCustomSMSRSpecialBreakeableBox[];
+extern const BehaviorScript bhvCustomSMSRRecoveryBubbleWater[];
+extern const BehaviorScript bhvCustomSMSRBreakableFloor[];
+extern const BehaviorScript bhvCustomSMSRBoatOnTrack[];
+extern const BehaviorScript bhvCustomSMSRAngrySun[];
+extern const BehaviorScript bhvCustomSMSRYoshiCoin[];
+extern const BehaviorScript bhvCustomSMSRPiranhaPlantWild[];
+extern const BehaviorScript bhvCustomSMSRMovingMushroom[];
+extern const BehaviorScript bhvCustomSMSRMipsMessage[];
+extern const BehaviorScript bhvCustomSMSRBigLeaves[];
+extern const BehaviorScript bhvCustomSMSRLilyPad[];
+extern const BehaviorScript bhvCustomSMSRInvisibleCannon[];
+extern const BehaviorScript bhvCustomSMSRTambourine[];
+extern const BehaviorScript bhvCustomSMSRSmallBee[];
+extern const BehaviorScript bhvCustomSMSRDrumStick[];
+extern const BehaviorScript bhvCustomSMSRStarMoving[];
+extern const BehaviorScript bhvCustomSMSRFallingDomino[];
+extern const BehaviorScript bhvCustomSMSRLavaLift[];
+extern const BehaviorScript bhvCustomSMSRRotatingLavaPlatform[];
+extern const BehaviorScript bhvCustomSMSRSmallSwingPlatform[];
+extern const BehaviorScript bhvCustomSMSRSinkingDonut[];
+extern const BehaviorScript bhvCustomSMSRFloatingThwomp[];
+extern const BehaviorScript bhvCustomSMSRTiltingPyramid[];
+extern const BehaviorScript bhvCustomSMSRPlatformLift[];
+extern const BehaviorScript bhvCustomSMSRRisingLava[];
+extern const BehaviorScript bhvCustomSMSRRisingTallPlatform[];
+extern const BehaviorScript bhvCustomSMSRSinkingPlatform[];
+extern const BehaviorScript bhvCustomSMSRToxicWastePlatform[];
+extern const BehaviorScript bhvCustomSMSRAttractedSpaceBox[];
+extern const BehaviorScript bhvCustomSMSRSpaceBox[];
+extern const BehaviorScript bhvCustomSMSRSpaceOctagonPlatform[];
+extern const BehaviorScript bhvCustomSMSRSpaceRedPlatform[];
+extern const BehaviorScript bhvCustomSMSRBulletMine[];
 
 #ifdef PORT_MOP_OBJS
 #include "src/extras/mop/include_behaviors.h"

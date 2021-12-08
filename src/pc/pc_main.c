@@ -357,7 +357,7 @@ void main_func(void) {
     #endif
 
     char window_title[96] =
-    "Super Mario 64 EX (" RAPI_NAME ")"
+    "Super Mario Star Road (sm64ex-alo) (" RAPI_NAME ")"
     ;
 
     gfx_init(wm_api, rendering_api, window_title);

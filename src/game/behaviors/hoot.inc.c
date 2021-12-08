@@ -11,30 +11,29 @@ void bhv_hoot_init(void) {
     cur_obj_become_intangible();
 }
 
-f32 hoot_find_next_floor(struct FloorGeometry **floorGeo, f32 arg1) {
+f32 hoot_find_next_floor(f32 arg1) {
     f32 sp24 = arg1 * sins(o->oMoveAngleYaw) + o->oPosX;
     UNUSED f32 sp20 = o->oPosY;
     f32 sp1c = arg1 * coss(o->oMoveAngleYaw) + o->oPosZ;
-    f32 floorY = find_floor_height_and_data(sp24, 10000.0f, sp1c, floorGeo);
+    f32 floorY = find_floor_height(sp24, CELL_HEIGHT_LIMIT, sp1c);
 
     return floorY;
 }
 
 void hoot_floor_bounce(void) {
-    struct FloorGeometry *floorGeo;
     f32 floorY;
 
-    floorY = hoot_find_next_floor(&floorGeo, 375.0f);
+    floorY = hoot_find_next_floor(375.0f);
     if (floorY + 75.0f > o->oPosY) {
         o->oMoveAnglePitch -= 3640.8888;
     }
 
-    floorY = hoot_find_next_floor(&floorGeo, 200.0f);
+    floorY = hoot_find_next_floor(200.0f);
     if (floorY + 125.0f > o->oPosY) {
         o->oMoveAnglePitch -= 7281.7776;
     }
 
-    floorY = hoot_find_next_floor(&floorGeo, 0);
+    floorY = hoot_find_next_floor(0.0f);
     if (floorY + 125.0f > o->oPosY) {
         o->oPosY = floorY + 125.0f;
     }
@@ -45,7 +44,7 @@ void hoot_floor_bounce(void) {
 }
 
 void hoot_free_step(s16 fastOscY, s32 speed) {
-    struct FloorGeometry *floorGeo;
+    struct Surface *floor;
     s16 yaw = o->oMoveAngleYaw;
     s16 pitch = o->oMoveAnglePitch;
     s16 animFrame = o->header.gfx.animInfo.animFrame;
@@ -66,8 +65,12 @@ void hoot_free_step(s16 fastOscY, s32 speed) {
     }
     o->oPosZ += o->oVelZ;
 
-    find_floor_height_and_data(o->oPosX, o->oPosY, o->oPosZ, &floorGeo);
-    if (floorGeo == NULL) {
+#ifdef CENTERED_COLLISION
+    find_floor(o->oPosX, (o->oPosY + OBJ_STEP_HEIGHT), o->oPosZ, &floor);
+#else
+    find_floor(o->oPosX, o->oPosY, o->oPosZ, &floor);
+#endif
+    if (floor == NULL) {
         o->oPosX = xPrev;
         o->oPosZ = zPrev;
     }
@@ -119,7 +122,7 @@ void hoot_carry_step(s32 speed, UNUSED f32 xPrev, UNUSED f32 zPrev) {
 }
 
 void hoot_surface_collision(f32 xPrev, UNUSED f32 yPrev, f32 zPrev) {
-    struct FloorGeometry *floorGeo;
+    struct Surface *floor;
     struct WallCollisionData hitbox;
     f32 floorY;
 
@@ -136,8 +139,13 @@ void hoot_surface_collision(f32 xPrev, UNUSED f32 yPrev, f32 zPrev) {
         gMarioObject->oInteractStatus |= INT_STATUS_MARIO_UNK7;
     }
 
-    floorY = find_floor_height_and_data(o->oPosX, o->oPosY, o->oPosZ, &floorGeo);
-    if (floorGeo == NULL) {
+#ifdef CENTERED_COLLISION
+    floorY = find_floor(o->oPosX, (o->oPosY + OBJ_STEP_HEIGHT), o->oPosZ, &floor);
+#else
+    floorY = find_floor(o->oPosX, o->oPosY, o->oPosZ, &floor);
+#endif
+
+    if (floor == NULL) {
         o->oPosX = xPrev;
         o->oPosZ = zPrev;
         return;

@@ -12,14 +12,9 @@ struct ObjectHitbox sExclamationBoxHitbox = {
     /* hurtboxHeight:     */ 30,
 };
 
-struct Struct802C0DF0 {
-    u8 unk0;
-    u8 unk1;
-    u8 unk2;
-    u8 model;
-    const BehaviorScript *behavior;
-};
-
+#ifdef RM2C
+extern struct Struct802C0DF0 sExclamationBoxContents[];//#include "Item_Box.inc.c"
+#else
 struct Struct802C0DF0 sExclamationBoxContents[] = {
     { 0, 0, 0, MODEL_MARIOS_WING_CAP, bhvWingCap },
     { 1, 0, 0, MODEL_MARIOS_METAL_CAP, bhvMetalCap },
@@ -38,6 +33,7 @@ struct Struct802C0DF0 sExclamationBoxContents[] = {
     { 14, 0, 5, MODEL_STAR, bhvSpawnedStar },
     { 99, 0, 0, 0, NULL }
 };
+#endif
 
 void bhv_rotating_exclamation_box_loop(void) {
     if (o->parentObj->oAction != 1) {

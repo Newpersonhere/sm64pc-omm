@@ -534,6 +534,21 @@ u32 mario_get_terrain_sound_addend(struct MarioState *m) {
 /**
  * Collides with walls and returns the most recent wall.
  */
+#ifdef BETTER_WALL_COLLISION
+void resolve_and_return_wall_collisions(Vec3f pos, f32 offset, f32 radius, struct WallCollisionData *collisionData) {
+    collisionData->x = pos[0];
+    collisionData->y = pos[1];
+    collisionData->z = pos[2];
+    collisionData->radius = radius;
+    collisionData->offsetY = offset;
+
+	find_wall_collisions(collisionData);
+
+    pos[0] = collisionData->x;
+    pos[1] = collisionData->y;
+    pos[2] = collisionData->z;
+}
+#else
 struct Surface *resolve_and_return_wall_collisions(Vec3f pos, f32 offset, f32 radius) {
     struct WallCollisionData collisionData;
     struct Surface *wall = NULL;
@@ -556,15 +571,18 @@ struct Surface *resolve_and_return_wall_collisions(Vec3f pos, f32 offset, f32 ra
     // there are no wall collisions.
     return wall;
 }
+#endif
 
+#ifndef CENTERED_COLLISION
 /**
  * Finds the ceiling from a vec3f horizontally and a height (with 80 vertical buffer).
  */
 f32 vec3f_find_ceil(Vec3f pos, f32 height, struct Surface **ceil) {
     UNUSED u8 filler[4];
 
-    return find_ceil(pos[0], height + 80.0f, pos[2], ceil);
+    return find_ceil(pos[0], height + 3.0f, pos[2], ceil);
 }
+#endif
 
 /**
  * Determines if Mario is facing "downhill."
@@ -1210,6 +1228,24 @@ s32 transition_submerged_to_walking(struct MarioState *m) {
 }
 
 /**
+ * Transitions Mario from a submerged action to an airborne action.
+ * You may want to change these actions to fit your hack
+ */
+s32 transition_submerged_to_airborne(struct MarioState *m) {
+    set_camera_mode(m->area->camera, m->area->camera->defMode, 1);
+
+    vec3s_set(m->angleVel, 0, 0, 0);
+
+    if (m->heldObj == NULL) {
+        if (m->input & INPUT_A_DOWN) return set_mario_action(m, ACT_DIVE, 0);
+        else return set_mario_action(m, ACT_FREEFALL, 0);
+    } else {
+        if (m->input & INPUT_A_DOWN) return set_mario_action(m, ACT_HOLD_JUMP, 0);
+        else return set_mario_action(m, ACT_HOLD_FREEFALL, 0);
+    }
+}
+
+/**
  * This is the transition function typically for entering a submerged action for a
  * non-submerged action. This also applies the water surface camera preset.
  */
@@ -1217,7 +1253,8 @@ s32 set_water_plunge_action(struct MarioState *m) {
     m->forwardVel = m->forwardVel / 4.0f;
     m->vel[1] = m->vel[1] / 2.0f;
 
-    m->pos[1] = m->waterLevel - 100;
+    // !BUG: Causes waterbox upwarp
+    //m->pos[1] = m->waterLevel - 100;
 
     m->faceAngle[2] = 0;
 
@@ -1363,9 +1400,13 @@ void update_mario_geometry_inputs(struct MarioState *m) {
     f32 ceilToFloorDist;
 
     f32_find_wall_collision(&m->pos[0], &m->pos[1], &m->pos[2], 60.0f, 50.0f);
-    f32_find_wall_collision(&m->pos[0], &m->pos[1], &m->pos[2], 30.0f, 24.0f);
+    f32_find_wall_collision(&m->pos[0], &m->pos[1], &m->pos[2], 30.0f, 25.0f);
 
-    m->floorHeight = find_floor(m->pos[0], m->pos[1], m->pos[2], &m->floor);
+#ifdef CENTERED_COLLISION
+    m->floorHeight = find_floor(m->pos[0], (m->pos[1] + m->midY),  m->pos[2], &m->floor);
+#else
+    m->floorHeight = find_floor(m->pos[0],  m->pos[1],  m->pos[2], &m->floor);
+#endif
 
     // If Mario is OOB, move his position to his graphical position (which was not updated)
     // and check for the floor there.
@@ -1373,10 +1414,19 @@ void update_mario_geometry_inputs(struct MarioState *m) {
     // since the graphical position was not Mario's previous location.
     if (m->floor == NULL) {
         vec3f_copy(m->pos, m->marioObj->header.gfx.pos);
+#ifdef CENTERED_COLLISION
+        m->floorHeight = find_floor(m->pos[0], (m->pos[1] + m->midY), m->pos[2], &m->floor);
+#else
         m->floorHeight = find_floor(m->pos[0], m->pos[1], m->pos[2], &m->floor);
+#endif
     }
 
-    m->ceilHeight = vec3f_find_ceil(&m->pos[0], m->floorHeight, &m->ceil);
+#ifdef CENTERED_COLLISION
+    m->ceilHeight = find_ceil(m->pos[0], (m->pos[1] + m->midY), m->pos[2], &m->ceil);
+#else
+    m->ceilHeight = vec3f_find_ceil(m->pos, m->pos[1], &m->ceil);
+#endif
+
     gasLevel = find_poison_gas_level(m->pos[0], m->pos[2]);
     m->waterLevel = find_water_level(m->pos[0], m->pos[2]);
 
@@ -1422,6 +1472,12 @@ void update_mario_inputs(struct MarioState *m) {
     m->input = 0;
     m->collidedObjInteractTypes = m->marioObj->collidedObjInteractTypes;
     m->flags &= 0xFFFFFF;
+
+#ifdef TARGET_N64
+    if (doneSkipped >= 0) {
+        m->controller->buttonPressed = 0;
+    }
+#endif
 
     update_mario_button_inputs(m);
     update_mario_joystick_inputs(m);
@@ -1525,7 +1581,7 @@ void update_mario_health(struct MarioState *m) {
         // When already healing or hurting Mario, Mario's HP is not changed any more here.
         if (((u32) m->healCounter | (u32) m->hurtCounter) == 0) {
             if ((m->input & INPUT_IN_POISON_GAS) && !(m->action & ACT_FLAG_INTANGIBLE)) {
-                if (!(m->flags & MARIO_METAL_CAP) && !gDebugLevelSelect) {
+                if (!(m->flags & MARIO_METAL_CAP) && !gDebugLevelSelect && !gStarRoadHardMode) {
                     m->health -= 4;
                 }
             } else {
@@ -1535,9 +1591,9 @@ void update_mario_health(struct MarioState *m) {
                     // When Mario is near the water surface, recover health (unless in snow),
                     // when in snow terrains lose 3 health.
                     // If using the debug level select, do not lose any HP to water.
-                    if ((m->pos[1] >= (m->waterLevel - 140)) && !terrainIsSnow) {
+                    if ((m->pos[1] >= (m->waterLevel - 140)) && !terrainIsSnow && !gStarRoadHardMode) {
                         m->health += 0x1A;
-                    } else if (!gDebugLevelSelect) {
+                    } else if (!gDebugLevelSelect && !gStarRoadHardMode) {
                         m->health -= (terrainIsSnow ? 3 : 1);
                     }
                 }
@@ -1553,8 +1609,14 @@ void update_mario_health(struct MarioState *m) {
             m->hurtCounter--;
         }
 
-        if (m->health > 0x880) {
-            m->health = 0x880;
+        if (gStarRoadHardMode) {
+            if (m->health > 0x180) {
+                m->health = 0x180;
+            }
+        } else {
+            if (m->health > 0x880) {
+                m->health = 0x880;
+            }
         }
         if (m->health < 0x100) {
             m->health = 0xFF;
@@ -1562,7 +1624,7 @@ void update_mario_health(struct MarioState *m) {
 
         // Play a noise to alert the player when Mario is close to drowning.
 
-        if (((m->action & ACT_GROUP_MASK) == ACT_GROUP_SUBMERGED) && (m->health < 0x300)
+        if (((m->action & ACT_GROUP_MASK) == ACT_GROUP_SUBMERGED) && (m->health < 0x300) && !gStarRoadHardMode
 #if QOL_FIX_DROWING_SOUND_METAL
         && !(m->flags & (MARIO_METAL_CAP))
 #endif
@@ -1728,6 +1790,10 @@ void mario_update_hitbox_and_cap_model(struct MarioState *m) {
     } else {
         m->marioObj->hitboxHeight = 160.0f;
     }
+
+#ifdef CENTERED_COLLISION
+    m->midY = ((m->action == ACT_SQUISHED) ? 0.0f : (m->marioObj->hitboxHeight / 2.0f));
+#endif
 
     if ((m->flags & MARIO_TELEPORTING) && (m->fadeWarpOpacity != 0xFF)) {
         bodyState->modelState &= ~0xFF;
@@ -1919,8 +1985,11 @@ void init_mario(void) {
     vec3s_set(gMarioState->angleVel, 0, 0, 0);
     vec3s_to_vec3f(gMarioState->pos, gMarioSpawnInfo->startPos);
     vec3f_set(gMarioState->vel, 0, 0, 0);
-    gMarioState->floorHeight =
-        find_floor(gMarioState->pos[0], gMarioState->pos[1], gMarioState->pos[2], &gMarioState->floor);
+#ifdef CENTERED_COLLISION
+    gMarioState->floorHeight = find_floor(gMarioState->pos[0], (gMarioState->pos[1] + gMarioState->midY), gMarioState->pos[2], &gMarioState->floor);
+#else
+    gMarioState->floorHeight = find_floor(gMarioState->pos[0], gMarioState->pos[1], gMarioState->pos[2], &gMarioState->floor);
+#endif
 
     if (gMarioState->pos[1] < gMarioState->floorHeight) {
         gMarioState->pos[1] = gMarioState->floorHeight;
@@ -1978,8 +2047,13 @@ void init_mario_from_save_file(void) {
         save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1);
     gMarioState->numKeys = 0;
 
-    gMarioState->numLives = 4;
-    gMarioState->health = 0x880;
+    gMarioState->numLives = MARIO_START_LIVES;
+
+    if (gStarRoadHardMode) {
+        gMarioState->health = 0x180;
+    } else {
+        gMarioState->health = 0x880;
+    }
 
     gMarioState->prevNumStarsForDialog = gMarioState->numStars;
     gMarioState->unkB0 = 0xBD;

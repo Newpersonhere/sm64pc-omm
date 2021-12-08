@@ -44,6 +44,11 @@
 #define TEXT_PJ64_2 _("If you are using PJ64 2.X, go to:\nOptions > Settings > Config: > Memory Size, select 8 MB")
 #endif
 
+#define TEXT_HARD_MODE_TOGGLE   _("Press L to toggle Hard Mode")
+#define TEXT_HARD_MODE_STATUS   _("Hard Mode Status:         ")
+#define TEXT_HARD_MODE_ENABLED  _("Enabled ")
+#define TEXT_HARD_MODE_DISABLED _("Disabled")
+
 #if defined(VERSION_JP) || defined(VERSION_SH)
 
 /**

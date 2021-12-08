@@ -6,12 +6,12 @@ static const Lights1 ssl_seg7_lights_0700BF90 = gdSPDefLights1(
 
 // 0x0700BFA8 - 0x0700C7A8
 ALIGNED8 static const Texture ssl_seg7_texture_0700BFA8[] = {
-#include "levels/ssl/8.rgba16.inc.c"
+#include "levels/ssl/8_custom.rgba16.inc.c"
 };
 
 // 0x0700C7A8 - 0x0700D7A8
 ALIGNED8 static const Texture ssl_seg7_texture_0700C7A8[] = {
-#include "levels/ssl/9.rgba16.inc.c"
+#include "levels/ssl/9_custom.rgba16.inc.c"
 };
 
 // 0x0700D7A8 - 0x0700E7A8
@@ -21,7 +21,7 @@ ALIGNED8 static const Texture ssl_seg7_texture_0700D7A8[] = {
 
 // 0x0700E7A8 - 0x0700F7A8
 ALIGNED8 static const Texture ssl_seg7_texture_0700E7A8[] = {
-#include "levels/ssl/11.rgba16.inc.c"
+#include "levels/ssl/11_custom.rgba16.inc.c"
 };
 
 // 0x0700F7A8 - 0x0700F898

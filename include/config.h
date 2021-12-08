@@ -11,6 +11,9 @@
 // Qol Defines
 #include "qol_defines.h"
 
+// Ext bounds
+#include "src/engine/extended_bounds.h"
+
 // Bug Fixes
 // --| Post-JP Version Nintendo Bug Fixes
 /// Fixes bug where obtaining over 999 coins sets the number of lives to 999 (or -25)

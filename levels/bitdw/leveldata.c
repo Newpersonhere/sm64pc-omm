@@ -25,7 +25,8 @@
 #include "levels/bitdw/areas/1/quartz_crystal/model.inc.c"
 #include "levels/bitdw/areas/1/staircase_slope_and_platform/model.inc.c"
 #include "levels/bitdw/areas/1/track_for_pyramid_platforms/model.inc.c"
-#include "levels/bitdw/areas/1/narrow_path_platform/model.inc.c"
+//#include "levels/bitdw/areas/1/narrow_path_platform/model.inc.c"
+#include "levels/bitdw/areas/1/narrow_path_platform/custom.model.inc.c"
 #include "levels/bitdw/sliding_platform/model.inc.c"
 #include "levels/bitdw/seesaw_platform/model.inc.c"
 #include "levels/bitdw/square_platform/model.inc.c"
@@ -48,3 +49,5 @@
 #include "levels/bitdw/collapsing_stairs_3/collision.inc.c"
 #include "levels/bitdw/collapsing_stairs_4/collision.inc.c"
 #include "levels/bitdw/collapsing_stairs_5/collision.inc.c"
+
+#include "levels/bitdw/areas/1/narrow_path_platform/custom.collision.inc.c"

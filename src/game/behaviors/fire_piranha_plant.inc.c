@@ -69,7 +69,13 @@ static void fire_piranha_plant_act_hide(void) {
 
             if ((u16)(o->oBehParams >> 16) != 0 && o->oHealth == 0) {
                 if (++sNumKilledFirePiranhaPlants == 5) {
-                    spawn_default_star(-6300.0f, -1850.0f, -6300.0f);
+					//#ifdef RM2C
+                    //spawn_default_star(BigPiranhasStarPos);
+					//#else
+                    //spawn_default_star(-6300.0f, -1850.0f, -6300.0f);
+					//#endif
+                    // STAR ROAD uses these piranhas as a Bowser Boss
+                    spawn_object(o, MODEL_BOWSER_KEY, bhvBowserKey);
                 }
 
                 obj_die_if_health_non_positive();

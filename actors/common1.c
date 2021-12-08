@@ -28,6 +28,7 @@ UNUSED static const u64 binid_4 = 4;
 #include "door/model.inc.c"
 #include "door/anims/data.inc.c"
 #include "door/anims/table.inc.c"
+#include "door/custom.collision.inc.c"
 UNUSED static const u64 binid_5 = 5;
 
 #include "bowser_key/model.inc.c"

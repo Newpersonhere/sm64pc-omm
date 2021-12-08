@@ -25,7 +25,7 @@ ALIGNED8 const Texture fire_09001800[] = {
 
 // 0x09002000
 ALIGNED8 const Texture fire_09002000[] = {
-#include "textures/fire/lll_textures.02000.rgba16.inc.c"
+#include "textures/fire/lll_textures.02000_custom.rgba16.inc.c"
 };
 
 // 0x09002800
@@ -80,7 +80,7 @@ ALIGNED8 const Texture fire_09007000[] = {
 
 // 0x09007800
 ALIGNED8 const Texture fire_09007800[] = {
-#include "textures/fire/lll_textures.07800.rgba16.inc.c"
+#include "textures/fire/lll_textures.07800_custom.rgba16.inc.c"
 };
 
 // 0x09008000
@@ -115,7 +115,7 @@ ALIGNED8 const Texture fire_0900A800[] = {
 
 // 0x0900B000
 ALIGNED8 const Texture fire_0900B000[] = {
-#include "textures/fire/lll_textures.0B000.rgba16.inc.c"
+#include "textures/fire/lll_textures.0B000_custom.rgba16.inc.c"
 };
 
 // 0x0900B800

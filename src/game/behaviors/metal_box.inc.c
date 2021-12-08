@@ -14,11 +14,14 @@ struct ObjectHitbox sMetalBoxHitbox = {
 
 s32 check_if_moving_over_floor(f32 a0, f32 a1) {
     struct Surface *sp24;
-    f32 sp20 = o->oPosX + sins(o->oMoveAngleYaw) * a1;
-    f32 floorHeight;
-    f32 sp18 = o->oPosZ + coss(o->oMoveAngleYaw) * a1;
+    f32 xPos = o->oPosX + sins(o->oMoveAngleYaw) * a1;
+    f32 zPos = o->oPosZ + coss(o->oMoveAngleYaw) * a1;
 
-    floorHeight = find_floor(sp20, o->oPosY, sp18, &sp24);
+#ifdef CENTERED_COLLISION
+    f32 floorHeight = find_floor(xPos, (o->oPosY + (o->hitboxHeight / 2)), zPos, &sp24);
+#else
+    f32 floorHeight = find_floor(xPos, o->oPosY, zPos, &sp24);
+#endif
 
     if (absf(floorHeight - o->oPosY) < a0) {
         return TRUE;

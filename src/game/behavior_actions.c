@@ -76,6 +76,9 @@ static s16 sBooHitRotations[] = {
 #include "behaviors/breakable_wall.inc.c"
 #include "behaviors/kickable_board.inc.c"
 #include "behaviors/tower_door.inc.c"
+#ifdef RM2C
+#include "behaviors/texscroll.inc.c"
+#endif
 #include "behaviors/rotating_platform.inc.c"
 #include "behaviors/koopa_shell_underwater.inc.c"
 #include "behaviors/warp.inc.c"

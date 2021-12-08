@@ -1,5 +1,8 @@
 void bhv_blargg_mop(void) {
     f32 speed = 10.f;
+#ifdef BETTER_WALL_COLLISION
+    struct WallCollisionData wall;
+#endif
     cur_obj_scale(2.0f);
 
     switch (o->oAction) {
@@ -43,5 +46,9 @@ void bhv_blargg_mop(void) {
             break;
     }
     cur_obj_move_xz_using_fvel_and_yaw();
+#ifdef BETTER_WALL_COLLISION
+    resolve_and_return_wall_collisions(&o->oPosX, 10.0f, 150.0f, &wall);
+#else
     resolve_and_return_wall_collisions(&o->oPosX, 10.0f, 150.0f);
+#endif
 }

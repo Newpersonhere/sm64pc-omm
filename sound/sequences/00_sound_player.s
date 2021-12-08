@@ -7399,8 +7399,8 @@ chan_setlayer 1, .layer_2E3D
 chan_setlayer 2, .layer_2E34
 chan_setval 70
 chan_call .delay
-chan_setbank 10
-chan_setinstr 8
+chan_setbank 8
+chan_setinstr 0x1A
 chan_end
 
 .layer_2E28:

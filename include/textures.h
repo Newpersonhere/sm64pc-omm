@@ -240,6 +240,10 @@ extern const u8 spooky_0900A800[];
 extern const u8 spooky_0900B000[];
 extern const u8 spooky_0900B800[];
 
+extern const u8 spooky_09002400_custom[];
+extern const u8 spooky_09004000_custom[];
+extern const u8 spooky_09005600_custom[];
+
 // water
 extern const u8 water_09000000[];
 extern const u8 water_09000800[];

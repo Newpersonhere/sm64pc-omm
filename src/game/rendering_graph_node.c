@@ -2,6 +2,7 @@
 
 #include "area.h"
 #include "engine/math_util.h"
+#include "engine/surface_collision.h"
 #include "game_init.h"
 #include "gfx_dimensions.h"
 #include "main.h"
@@ -42,6 +43,12 @@ Mtx *gMatStackFixed[32];
 #ifdef HIGH_FPS_PC
 Mat4 gMatStackInterpolated[32];
 Mtx *gMatStackInterpolatedFixed[32];
+#endif
+
+#ifdef AUTOMATIC_WORLD_SCALE
+f32 gWorldScale = WORLD_SCALE;
+#else
+f32 gWorldScale = 1.0f;
 #endif
 
 /**
@@ -331,13 +338,25 @@ static void geo_process_perspective(struct GraphNodePerspective *node) {
         f32 aspect = (f32) gCurGraphNodeRoot->width / (f32) gCurGraphNodeRoot->height;
 #endif
 
-        guPerspective(mtx, &perspNorm, node->fov, aspect, node->near, node->far, 1.0f);
+#ifdef AUTOMATIC_WORLD_SCALE
+        s32 nearNode = (node->far / 300);
+
+        if (gCamera) {
+            gWorldScale = MAX(((gCamera->pos[0] * gCamera->pos[0]) + (gCamera->pos[1] * gCamera->pos[1]) + (gCamera->pos[2] * gCamera->pos[2]))/ (0x2000 * 0x2000), 1.0f);
+        } else {
+            gWorldScale = 1.0f;
+        }
+#else
+        s32 nearNode = (node->near);
+#endif
+
+        guPerspective(mtx, &perspNorm, node->fov, aspect, (nearNode / gWorldScale), (node->far / gWorldScale), 1.0f);
 
 #ifdef HIGH_FPS_PC
         if (gGlobalTimer == node->prevTimestamp + 1 && gGlobalTimer != gLakituState.skipCameraInterpolationTimestamp) {
 
             fovInterpolated = (node->prevFov + node->fov) / 2.0f;
-            guPerspective(mtxInterpolated, &perspNorm, fovInterpolated, aspect, node->near, node->far, 1.0f);
+            guPerspective(mtxInterpolated, &perspNorm, fovInterpolated, aspect, (nearNode / gWorldScale), (node->far / gWorldScale), 1.0f);
             gSPPerspNormalize(gDisplayListHead++, perspNorm);
 
             sPerspectivePos = gDisplayListHead;
@@ -368,22 +387,13 @@ static void geo_process_perspective(struct GraphNodePerspective *node) {
  * range of this node.
  */
 static void geo_process_level_of_detail(struct GraphNodeLevelOfDetail *node) {
-#ifdef GBI_FLOATS
-    Mtx *mtx = gMatStackFixed[gMatStackIndex];
-    s16 distanceFromCam = (s32) -mtx->m[3][2]; // z-component of the translation column
-#else
-    // The fixed point Mtx type is defined as 16 longs, but it's actually 16
-    // shorts for the integer parts followed by 16 shorts for the fraction parts
-    Mtx *mtx = gMatStackFixed[gMatStackIndex];
-    s16 distanceFromCam = -GET_HIGH_S16_OF_32(mtx->m[1][3]); // z-component of the translation column
-#endif
-
+	f32 distanceFromCam = -gMatStack[gMatStackIndex][3][2];
 #ifndef TARGET_N64
     // We assume modern hardware is powerful enough to draw the most detailed variant
     distanceFromCam = 0;
 #endif
 
-    if (node->minDistance <= distanceFromCam && distanceFromCam < node->maxDistance) {
+    if ((f32)node->minDistance <= distanceFromCam && distanceFromCam < (f32)node->maxDistance) {
         if (node->node.children != 0) {
             geo_process_node_and_siblings(node->node.children);
         }
@@ -445,6 +455,17 @@ static void interpolate_angles(Vec3s res, Vec3s a, Vec3s b) {
 }
 #endif
 
+static void make_roll_matrix(Mtx *mtx, s16 angle) {
+    Mat4 temp;
+
+    mtxf_identity(temp);
+    temp[0][0] = coss(angle);
+    temp[0][1] = sins(angle);
+    temp[1][0] = -temp[0][1];
+    temp[1][1] = temp[0][0];
+    guMtxF2L(temp, mtx);
+}
+
 /**
  * Process a camera node.
  */
@@ -461,7 +482,8 @@ static void geo_process_camera(struct GraphNodeCamera *node) {
     if (node->fnNode.func != NULL) {
         node->fnNode.func(GEO_CONTEXT_RENDER, &node->fnNode.node, gMatStack[gMatStackIndex]);
     }
-    mtxf_rotate_xy(rollMtx, node->rollScreen);
+
+    make_roll_matrix(rollMtx, node->rollScreen);
 
     gSPMatrix(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(rollMtx), G_MTX_PROJECTION | G_MTX_MUL | G_MTX_NOPUSH);
 
@@ -1087,7 +1109,7 @@ static void geo_process_shadow(struct GraphNodeShadow *node) {
             if (gShadowAboveWaterOrLava == TRUE) {
                 geo_append_display_list2((void *) VIRTUAL_TO_PHYSICAL(shadowList),
                                          (void *) VIRTUAL_TO_PHYSICAL(shadowListInterpolated), 4);
-            } else if (gMarioOnIceOrCarpet == 1) {
+            } else if (gMarioOnIceOrCarpet == 1 || gShadowAboveCustomWater == 1) {
                 geo_append_display_list2((void *) VIRTUAL_TO_PHYSICAL(shadowList),
                                          (void *) VIRTUAL_TO_PHYSICAL(shadowListInterpolated), 5);
             } else {
@@ -1097,7 +1119,7 @@ static void geo_process_shadow(struct GraphNodeShadow *node) {
 #else
             if (gShadowAboveWaterOrLava == TRUE) {
                 geo_append_display_list((void *) VIRTUAL_TO_PHYSICAL(shadowList), 4);
-            } else if (gMarioOnIceOrCarpet == 1) {
+            } else if (gMarioOnIceOrCarpet == 1 || gShadowAboveCustomWater == 1) {
                 geo_append_display_list((void *) VIRTUAL_TO_PHYSICAL(shadowList), 5);
             } else {
                 geo_append_display_list((void *) VIRTUAL_TO_PHYSICAL(shadowList), 6);

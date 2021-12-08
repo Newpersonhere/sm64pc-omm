@@ -11,7 +11,7 @@
 enum ShadowType {
     SHADOW_CIRCLE_9_VERTS = 0,
     SHADOW_CIRCLE_4_VERTS = 1,
-    SHADOW_CIRCLE_4_VERTS_FLAT_UNUSED = 2,
+    SHADOW_SPIKE = 2,
     SHADOW_SQUARE_PERMANENT = 10,
     SHADOW_SQUARE_SCALABLE = 11,
     SHADOW_SQUARE_TOGGLABLE = 12,
@@ -37,6 +37,7 @@ extern s16 sSurfaceTypeBelowShadow;
  * Flag for if the current shadow is above water or lava.
  */
 extern s8 gShadowAboveWaterOrLava;
+extern s8 gShadowAboveCustomWater;
 
 /**
  * Flag for if Mario is on ice or a flying carpet.

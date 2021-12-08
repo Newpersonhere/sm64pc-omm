@@ -463,7 +463,6 @@ s32 update_boss_fight_camera(struct Camera *c, Vec3f, Vec3f);
 s32 update_parallel_tracking_camera(struct Camera *c, Vec3f, Vec3f);
 s32 update_fixed_camera(struct Camera *c, Vec3f, Vec3f);
 s32 update_8_directions_camera(struct Camera *c, Vec3f, Vec3f);
-s32 update_slide_or_0f_camera(struct Camera *c, Vec3f, Vec3f);
 s32 update_spiral_stairs_camera(struct Camera *c, Vec3f, Vec3f);
 
 typedef s32 (*CameraTransition)(struct Camera *c, Vec3f, Vec3f);
@@ -483,7 +482,7 @@ CameraTransition sModeTransitions[] = {
     update_parallel_tracking_camera,
     update_fixed_camera,
     update_8_directions_camera,
-    update_slide_or_0f_camera,
+    update_8_directions_camera, // duplicate for 2D camera
     update_mario_camera,
     update_spiral_stairs_camera
 };
@@ -823,14 +822,17 @@ void set_camera_height(struct Camera *c, f32 goalHeight) {
  */
 s16 look_down_slopes(s16 camYaw) {
     struct Surface *floor;
-    f32 floorDY;
     // Default pitch
     s16 pitch = 0x05B0;
     // x and z offsets towards the camera
     f32 xOff = sMarioCamState->pos[0] + sins(camYaw) * 40.f;
     f32 zOff = sMarioCamState->pos[2] + coss(camYaw) * 40.f;
 
-    floorDY = find_floor(xOff, sMarioCamState->pos[1], zOff, &floor) - sMarioCamState->pos[1];
+#ifdef CENTERED_COLLISION
+    f32 floorDY = (find_floor(xOff, (sMarioCamState->pos[1] + gMarioState->midY), zOff, &floor) - sMarioCamState->pos[1]);
+#else
+    f32 floorDY = (find_floor(xOff, sMarioCamState->pos[1], zOff, &floor) - sMarioCamState->pos[1]);
+#endif
 
     if (floor != NULL) {
         if (floor->type != SURFACE_WALL_MISC && floorDY > 0) {
@@ -895,6 +897,7 @@ void pan_ahead_of_player(struct Camera *c) {
     vec3f_add(c->focus, pan);
 }
 
+#ifdef CAMERA_SPECIFIC_FUNCTION_DEFINES
 s16 find_in_bounds_yaw_wdw_bob_thi(Vec3f pos, Vec3f origin, s16 yaw) {
     switch (gCurrLevelArea) {
         case AREA_WDW_MAIN:
@@ -912,6 +915,7 @@ s16 find_in_bounds_yaw_wdw_bob_thi(Vec3f pos, Vec3f origin, s16 yaw) {
     }
     return yaw;
 }
+#endif
 
 /**
  * Rotates the camera around the area's center point.
@@ -931,7 +935,9 @@ s32 update_radial_camera(struct Camera *c, Vec3f focus, Vec3f pos) {
     sAreaYaw = camYaw - sModeOffsetYaw;
     calc_y_to_curr_floor(&posY, 1.f, 200.f, &focusY, 0.9f, 200.f);
     focus_on_mario(focus, pos, posY + yOff, focusY + yOff, sLakituDist + baseDist, pitch, camYaw);
+#ifdef CAMERA_SPECIFIC_FUNCTION_DEFINES
     camYaw = find_in_bounds_yaw_wdw_bob_thi(pos, focus, camYaw);
+#endif
 
     return camYaw;
 }
@@ -954,9 +960,9 @@ s32 update_8_directions_camera(struct Camera *c, Vec3f focus, Vec3f pos) {
     calc_y_to_curr_floor(&posY, 1.f, 200.f, &focusY, 0.9f, 200.f);
     focus_on_mario(focus, pos, posY + yOff, focusY + yOff, sLakituDist + baseDist, pitch, camYaw);
     pan_ahead_of_player(c);
-    if (gCurrLevelArea == AREA_DDD_SUB) {
-        camYaw = clamp_positions_and_find_yaw(pos, focus, 6839.f, 995.f, 5994.f, -3945.f);
-    }
+    //if (gCurrLevelArea == AREA_DDD_SUB) {
+    //    camYaw = clamp_positions_and_find_yaw(pos, focus, 6839.f, 995.f, 5994.f, -3945.f);
+    //}
 
     return camYaw;
 }
@@ -1184,6 +1190,24 @@ void mode_radial_camera(struct Camera *c) {
 }
 
 /**
+ * A mode that only has 1 camera angle.
+ */
+void mode_2_directions_camera(struct Camera *c) {
+    Vec3f pos;
+    s16 oldAreaYaw = sAreaYaw;
+
+    radial_camera_input(c, 0.f);
+
+    lakitu_zoom(400.f, 0x900);
+    c->nextYaw = update_8_directions_camera(c, c->focus, pos);
+	s8DirModeYawOffset=0x4000;
+    c->pos[0] = pos[0];
+    c->pos[2] = pos[2];
+    sAreaYawChange = sAreaYaw - oldAreaYaw;
+    set_camera_height(c, pos[1]);
+}
+
+/**
  * A mode that only has 8 camera angles, 45 degrees apart
  */
 void mode_8_directions_camera(struct Camera *c) {
@@ -1197,9 +1221,22 @@ void mode_8_directions_camera(struct Camera *c) {
         s8DirModeYawOffset += DEGREES(45);
         play_sound_cbutton_side();
     }
-    if (gPlayer1Controller->buttonPressed & L_CBUTTONS) {
+    else if (gPlayer1Controller->buttonPressed & L_CBUTTONS) {
         s8DirModeYawOffset -= DEGREES(45);
         play_sound_cbutton_side();
+    }
+	// extra functionality
+    else if (gPlayer1Controller->buttonPressed & U_JPAD) {
+        s8DirModeYawOffset = -gMarioState->faceAngle[1]-0x8000;
+    }
+    else if (gPlayer1Controller->buttonDown & L_JPAD) {
+        s8DirModeYawOffset -= DEGREES(2);
+    }
+    else if (gPlayer1Controller->buttonDown & R_JPAD) {
+        s8DirModeYawOffset += DEGREES(2);
+    }
+    else if (gPlayer1Controller->buttonPressed & D_JPAD) {
+        s8DirModeYawOffset = s8DirModeYawOffset&0xE000;
     }
 
     lakitu_zoom(400.f, 0x900);
@@ -2253,7 +2290,8 @@ s16 update_default_camera(struct Camera *c) {
             yawVel = 0;
         }
         if (yawVel != 0 && get_dialog_id() == DIALOG_NONE) {
-            camera_approach_s16_symmetric_bool(&yaw, yawGoal, yawVel);
+            // stop mario cam from swinging behind mario
+            //camera_approach_s16_symmetric_bool(&yaw, yawGoal, yawVel);
         }
     }
 
@@ -3071,7 +3109,7 @@ void update_camera(struct Camera *c) {
 #endif
     ) {
         // Only process R_TRIG if 'fixed' is not selected in the menu
-        if (cam_select_alt_mode(0) == CAM_SELECTION_MARIO) {
+        if (cam_select_alt_mode(0) == CAM_SELECTION_MARIO && c->mode != CAMERA_MODE_2_DIRECTIONS) {
             if (gPlayer1Controller->buttonPressed & R_TRIG) {
                 if (set_cam_angle(0) == CAM_ANGLE_LAKITU) {
                     set_cam_angle(CAM_ANGLE_MARIO);
@@ -3112,7 +3150,10 @@ void update_camera(struct Camera *c) {
     c->mode = gLakituState.mode;
     c->defMode = gLakituState.defMode;
 
+#ifdef CAMERA_SPECIFIC_FUNCTION_DEFINES
     camera_course_processing(c);
+#endif
+
     stub_camera_3(c);
     sCButtonsPressed = find_c_buttons_pressed(sCButtonsPressed, gPlayer1Controller->buttonPressed,gPlayer1Controller->buttonDown);
 
@@ -3175,6 +3216,10 @@ void update_camera(struct Camera *c) {
 
                 case CAMERA_MODE_8_DIRECTIONS:
                     mode_8_directions_camera(c);
+                    break;
+
+                case CAMERA_MODE_2_DIRECTIONS:
+                    mode_2_directions_camera(c);
                     break;
 
                 case CAMERA_MODE_RADIAL:
@@ -3591,9 +3636,11 @@ void zoom_out_if_paused_and_outside(struct GraphNodeCamera *camera) {
                 camera->focus[2] = gCamera->areaCenZ;
                 vec3f_get_dist_and_angle(camera->focus, sMarioCamState->pos, &dist, &pitch, &yaw);
                 vec3f_set_dist_and_angle(sMarioCamState->pos, camera->pos, 6000.f, 0x1000, yaw);
+                #ifdef CAMERA_SPECIFIC_FUNCTION_DEFINES
                 if (gCurrLevelNum != LEVEL_THI) {
                     find_in_bounds_yaw_wdw_bob_thi(camera->pos, camera->focus, 0);
                 }
+                #endif
             }
         } else {
             sFramesPaused++;
@@ -4052,7 +4099,7 @@ s32 collide_with_walls(Vec3f pos, f32 offsetY, f32 radius) {
     f32 originOffset;
     f32 offset;
     f32 offsetAbsolute;
-    Vec3f newPos[4];
+    Vec3f newPos[MAX_REFEREMCED_WALLS];
     s32 i;
     s32 numCollisions = 0;
 

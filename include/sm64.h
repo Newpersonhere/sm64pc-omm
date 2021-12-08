@@ -14,6 +14,14 @@
 #include "surface_terrains.h"
 #include "macros.h"
 
+//defines
+#include "game/tweaks.inc.c"
+
+#define bhvFish2 bhvManyBlueFishSpawner
+#define bhvFish3 bhvFewBlueFishSpawner
+#define bhvLargeFishGroup bhvFishSpawner
+#define MODEL_VCUTM_CHECKERBOARD_PLATFORM_SPAWNER MODEL_NONE
+
 #if defined(__GNUC__) && defined(TARGET_N64)
 void *memset(void *dest, int c, size_t n);
 int memcmp(const void *str1, const void *str2, size_t n);
@@ -88,6 +96,7 @@ int strcmp(char *s, char *t);
 #define AIR_STEP_GRABBED_LEDGE   3
 #define AIR_STEP_GRABBED_CEILING 4
 #define AIR_STEP_HIT_LAVA_WALL   6
+#define AIR_STEP_HIT_CEILING     8
 
 #define WATER_STEP_NONE        0
 #define WATER_STEP_HIT_FLOOR   1

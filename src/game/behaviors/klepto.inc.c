@@ -329,6 +329,12 @@ void obj_set_speed_to_zero(void) {
 }
 
 void bhv_klepto_update(void) {
+    // STAR ROAD custom code, copy of bhv_castle_cannon_grate_init
+    if (save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1) >= 1) { // STAR ROAD change
+        o->activeFlags = ACTIVE_FLAG_DEACTIVATED;
+    }
+    
+    /*
     UNUSED u8 filler[4];
 
     cur_obj_update_floor_and_walls();
@@ -377,7 +383,11 @@ void bhv_klepto_update(void) {
             || o->oAnimState == KLEPTO_ANIM_STATE_HOLDING_TRANSPARENT_STAR
             #endif
             ) {
+				#ifdef RM2C
+                spawn_default_star(KleptoStarPos);
+				#else
                 spawn_default_star(-5550.0f, 300.0f, -930.0f);
+                #endif
             }
 
             o->oAnimState = KLEPTO_ANIM_STATE_HOLDING_NOTHING;
@@ -399,4 +409,5 @@ void bhv_klepto_update(void) {
 
     obj_roll_to_match_yaw_turn(o->oKleptoYawToTarget, 0x3000, 600);
     cur_obj_move_standard(78);
+    */
 }

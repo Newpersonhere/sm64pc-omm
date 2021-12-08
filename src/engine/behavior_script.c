@@ -6,6 +6,7 @@
 #include "game/area.h"
 #include "game/behavior_actions.h"
 #include "game/game_init.h"
+#include "game/level_update.h" // Frameskip
 #include "game/mario.h"
 #include "game/memory.h"
 #include "game/obj_behaviors_2.h"
@@ -919,6 +920,14 @@ void cur_obj_update(void) {
     f32 distanceFromMario;
     BhvCommandProc bhvCmdProc;
     s32 bhvProcResult;
+#ifdef TARGET_N64
+    s32 hasAnimation = (gCurrentObject->header.gfx.node.flags & GRAPH_RENDER_HAS_ANIMATION) != 0;
+    // frameskip
+    if ((doneSkipped >= 0) && hasAnimation && gCurrentObject->header.gfx.animInfo.curAnim != NULL) {
+        gCurrentObject->header.gfx.animInfo.animFrame = geo_update_animation_frame(
+            &gCurrentObject->header.gfx.animInfo, &gCurrentObject->header.gfx.animInfo.animFrameAccelAssist);
+    }
+#endif
 
     // Calculate the distance from the object to Mario.
     if (objFlags & OBJ_FLAG_COMPUTE_DIST_TO_MARIO) {
@@ -1014,4 +1023,11 @@ void cur_obj_update(void) {
             }
         }
     }
+    
+#ifdef TARGET_N64
+    // frameskip
+    if (gCurrentObject->header.gfx.animInfo.animFrame < 0) {
+        gCurrentObject->header.gfx.animInfo.animFrame = 0;
+    }
+#endif
 }

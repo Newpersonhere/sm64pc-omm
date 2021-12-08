@@ -233,11 +233,15 @@ void bhv_bob_pit_bowling_ball_init(void) {
 }
 
 void bhv_bob_pit_bowling_ball_loop(void) {
-    struct FloorGeometry *sp1c;
-    UNUSED s16 collisionFlags = object_step();
+    struct Surface *floor;
+    object_step();
 
-    find_floor_height_and_data(o->oPosX, o->oPosY, o->oPosZ, &sp1c);
-    if ((sp1c->normalX == 0) && (sp1c->normalZ == 0)) {
+#ifdef CENTERED_COLLISION
+    find_floor(o->oPosX, (o->oPosY + (o->hitboxHeight / 2.0f)), o->oPosZ, &floor);
+#else
+    find_floor(o->oPosX, o->oPosY, o->oPosZ, &floor);
+#endif
+    if ((floor != NULL) && (floor->normal.x == 0) && (floor->normal.z == 0)) {
         o->oForwardVel = 28.0f;
     }
 

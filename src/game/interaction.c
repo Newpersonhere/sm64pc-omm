@@ -758,8 +758,8 @@ u32 interact_coin(struct MarioState *m, UNUSED u32 interactType, struct Object *
 
     o->oInteractStatus = INT_STATUS_INTERACTED;
 
-    if (COURSE_IS_MAIN_COURSE(gCurrCourseNum) && m->numCoins - o->oDamageOrCoinValue < 100
-        && m->numCoins >= 100) {
+    if (COURSE_IS_MAIN_COURSE(gCurrCourseNum) && m->numCoins - o->oDamageOrCoinValue < COINS_REQ_COINSTAR
+        && m->numCoins >= COINS_REQ_COINSTAR) {
         bhv_spawn_star_no_level_exit(6);
     }
 #ifdef RUMBLE_FEEDBACK
@@ -1639,17 +1639,17 @@ u32 interact_cap(struct MarioState *m, UNUSED u32 interactType, struct Object *o
 
         switch (capFlag) {
             case MARIO_VANISH_CAP:
-                capTime = 600;
-                capMusic = SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP);
+                capTime = VC_TIME / 2;
+                capMusic = SEQUENCE_ARGS(4, 0x32); // SMG Chasing Sequence
                 break;
 
             case MARIO_METAL_CAP:
-                capTime = 600;
+                capTime = MC_TIME / 2;
                 capMusic = SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP);
                 break;
 
             case MARIO_WING_CAP:
-                capTime = 1800;
+                capTime = WC_TIME / 2;
                 capMusic = SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP);
                 break;
         }
@@ -1798,13 +1798,22 @@ u32 interact_text(struct MarioState *m, UNUSED u32 interactType, struct Object *
 }
 
 void check_kick_or_punch_wall(struct MarioState *m) {
+#ifdef BETTER_WALL_COLLISION
+    struct WallCollisionData wallData;
+#endif
     if (m->flags & (MARIO_PUNCHING | MARIO_KICKING | MARIO_TRIPPING)) {
         Vec3f detector;
         detector[0] = m->pos[0] + 50.0f * sins(m->faceAngle[1]);
         detector[2] = m->pos[2] + 50.0f * coss(m->faceAngle[1]);
         detector[1] = m->pos[1];
 
-        if (resolve_and_return_wall_collisions(detector, 80.0f, 5.0f) != NULL) {
+#ifdef BETTER_WALL_COLLISION
+        resolve_and_return_wall_collisions(detector, 80.0f, 5.0f, &wallData);
+        if (wallData.numWalls > 0)
+#else
+        if (resolve_and_return_wall_collisions(detector, 80.0f, 5.0f) != NULL)
+#endif
+        {
             if (m->action != ACT_MOVE_PUNCHING || m->forwardVel >= 0.0f) {
                 if (m->action == ACT_PUNCHING) {
                     m->action = ACT_MOVE_PUNCHING;
@@ -1910,9 +1919,13 @@ void pss_end_slide(struct MarioState *m) {
 #endif
     if (gPssSlideStarted) {
         u16 slideTime = level_control_timer(TIMER_CONTROL_STOP);
-        if (slideTime < 630) {
+        if (slideTime < SLIDE_TIME) {
             m->marioObj->oBehParams = (1 << 24);
+			#ifdef RM2C
+            spawn_default_star(PssSlideStarPos);
+			#else
             spawn_default_star(-6358.0f, -4300.0f, 4700.0f);
+            #endif
         }
         gPssSlideStarted = FALSE;
     }

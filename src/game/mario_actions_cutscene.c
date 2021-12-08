@@ -52,7 +52,7 @@ static s8 D_8032CBE4 = 0;
 static s8 D_8032CBE8 = 0;
 static s8 D_8032CBEC[7] = { 2, 3, 2, 1, 2, 3, 2 };
 
-static u8 sStarsNeededForDialog[] = { 1, 3, 8, 30, 50, 70 };
+static u8 sStarsNeededForDialog[] = { STAR_MILESTONES };
 
 /**
  * Data for the jumbo star cutscene. It specifies the flight path after triple
@@ -279,7 +279,11 @@ void handle_save_menu(struct MarioState *m) {
             disable_time_stop();
             m->faceAngle[1] += 0x8000;
             // figure out what dialog to show, if we should
-            dialogID = get_star_collection_dialog(m);
+			if (SHOW_STAR_MILESTONES){
+				dialogID = get_star_collection_dialog(m);
+			} else {
+				dialogID = 0;
+			}
             if (dialogID) {
                 play_peachs_jingle();
                 // look up for dialog
@@ -550,6 +554,9 @@ s32 act_reading_sign(struct MarioState *m) {
 }
 
 s32 act_debug_free_move(struct MarioState *m) {
+#ifdef BETTER_WALL_COLLISION
+    struct WallCollisionData wallData;
+#endif
     struct Surface *surf;
     f32 floorHeight;
     Vec3f pos;
@@ -577,9 +584,18 @@ s32 act_debug_free_move(struct MarioState *m) {
         pos[2] += 32.0f * speed * coss(m->intendedYaw);
     }
 
-    resolve_and_return_wall_collisions(pos, 60.0f, 50.0f);
+#ifdef BETTER_WALL_COLLISION
+    resolve_and_return_wall_collisions(pos, 60.0f, 50.0f, &wallData);
+    m->wall = ((wallData.numWalls > 0) ? wallData.walls[0] : NULL); //! only returns first wall
+#else
+    m->wall = resolve_and_return_wall_collisions(pos, 60.0f, 50.0f);
+#endif
 
+#ifdef CENTERED_COLLISION
+    floorHeight = find_floor(pos[0], (pos[1] + m->midY), pos[2], &surf);
+#else
     floorHeight = find_floor(pos[0], pos[1], pos[2], &surf);
+#endif
     if (surf != NULL) {
         if (pos[1] < floorHeight) {
             pos[1] = floorHeight;
@@ -662,7 +678,11 @@ void general_star_dance_handler(struct MarioState *m, s32 isInWater) {
     } else if (m->actionState == 2 && is_anim_at_end(m)) {
         disable_time_stop();
         enable_background_sound();
-        dialogID = get_star_collection_dialog(m);
+		if (SHOW_STAR_MILESTONES){
+			dialogID = get_star_collection_dialog(m);
+		} else {
+			dialogID = 0;
+		}
         if (dialogID) {
             // look up for dialog
             set_mario_action(m, ACT_READING_AUTOMATIC_DIALOG, dialogID);
@@ -1604,13 +1624,26 @@ s32 act_squished(struct MarioState *m) {
             break;
     }
 
+#ifdef BETTER_CEILING_HANDLING
+    m->actionArg++;
+    if ((m->floor != NULL) && (m->ceil != NULL) && ((m->actionArg > 8) || (m->floor->type == SURFACE_BURNING) || (m->ceil->type == SURFACE_BURNING))) {
+        // steep floor
+        if (m->floor->normal.y < 0.9063078f)
+#else
     // steep floor
-    if (m->floor != NULL && m->floor->normal.y < 0.5f) {
+    if (m->floor != NULL && m->floor->normal.y < 0.5f)
+#endif
+    {
         surfAngle = atan2s(m->floor->normal.z, m->floor->normal.x);
         underSteepSurf = TRUE;
     }
     // steep ceiling
-    if (m->ceil != NULL && -0.5f < m->ceil->normal.y) {
+#ifdef BETTER_CEILING_HANDLING
+        if (-0.9063078f < m->ceil->normal.y)
+#else
+    if (m->ceil != NULL && -0.5f < m->ceil->normal.y)
+#endif
+    {
         surfAngle = atan2s(m->ceil->normal.z, m->ceil->normal.x);
         underSteepSurf = TRUE;
     }
@@ -1628,6 +1661,9 @@ s32 act_squished(struct MarioState *m) {
             return FALSE;
         }
     }
+#ifdef BETTER_CEILING_HANDLING
+    }
+#endif
 
     // squished for more than 10 seconds, so kill Mario
     if (m->actionArg++ > 300) {

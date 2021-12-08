@@ -27,6 +27,8 @@ DEFINES :=
 COMPILER_N64 ?= gcc
 $(eval $(call validate-option,COMPILER_N64,ido gcc))
 
+# Accept RM2C level folder output
+RM2C ?= 1
 # Build debug version
 DEBUG ?= 0
 # Build for original N64 (no pc code)
@@ -65,14 +67,14 @@ EXTERNAL_DATA ?= 0
 DISCORDRPC ?= 0
 # Enable rumble functions (Originally in Shindou)
 RUMBLE_FEEDBACK ?= 0
-# Enable Goddard (Mario Face)
-GODDARD_MFACE ?= 1
+# Enable Goddard (Mario Face) # MUST BE DISABLED TO GET 0 LIFE AREA WORKING
+GODDARD_MFACE ?= 0
 # Enable Command Line Options
 COMMAND_LINE_OPTIONS ?= 1
 # Kaze MOP Objects Port, disabled by default
 PORT_MOP_OBJS ?= 0
 # Enable 60 fps interpolation (PC Port only)
-HIGH_FPS_PC ?= 0
+HIGH_FPS_PC ?= 1
 # Enable PC Port defines
 PC_PORT_DEFINES ?= 0
 
@@ -104,6 +106,36 @@ AUDIO_API ?= SDL2
 # Controller backends (can have multiple, space separated): SDL1, SDL2
 # WII_U (forced if the target is Wii U), 3DS (forced if the target is 3DS), SWITCH (forced if the target is SWITCH)
 CONTROLLER_API ?= SDL2
+
+.PHONY: RM2CPC
+RM2CPC:
+	$(info "Running ...")
+	make -j4 RM2C=1 TARGET_N64=0 DEBUG=1 NODRAWINGDISTANCE=1
+
+.PHONY: RM2CWIIU
+RM2CWIIU:
+	$(info "Running ...")
+	make -j4 RM2C=1 TARGET_WII_U=1 DEBUG=1 NODRAWINGDISTANCE=1
+
+.PHONY: RM2CSWITCH
+RM2CSWITCH:
+	$(info "Running ...")
+	make -j4 RM2C=1 TARGET_SWITCH=1 DEBUG=1 NODRAWINGDISTANCE=1
+
+.PHONY: RM2CN64
+RM2CN64:
+	$(info "Running ...")
+	make -j4 RM2C=1 TARGET_N64=1 DEBUG=1
+
+.PHONY: RM2C3DS
+RM2C3DS:
+	$(info "Running ...")
+	make -j4 RM2C=1 TARGET_N3DS=1 DEBUG=1 HIGH_FPS_PC=0
+
+.PHONY: RM2CANDROID
+RM2CANDROID:
+	$(info "Running ...")
+	make -j4 RM2C=1 TARGET_ANDROID=1 DEBUG=1 HIGH_FPS_PC=0 NODRAWINGDISTANCE=1
 
 ifeq ($(TARGET_WII_U),1)
   RENDER_API := WHB
@@ -580,7 +612,7 @@ endif
 include Makefile.split
 
 # Source code files
-LEVEL_C_FILES := $(wildcard levels/*/leveldata.c) $(wildcard levels/*/script.c) $(wildcard levels/*/geo.c)
+LEVEL_C_FILES := $(wildcard levels/*/leveldata.c) $(wildcard levels/*/script.c) $(wildcard levels/*/geo.c) $(wildcard levels/*/custom.geo.c) $(wildcard levels/*/custom.script.c) $(wildcard levels/*/custom.leveldata.c)
 C_FILES       := $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.c)) $(LEVEL_C_FILES)
 CXX_FILES     := $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.cpp))
 S_FILES       := $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.s))
@@ -733,6 +765,11 @@ endif # !TARGET_ANDROID
 endif # !TARGET_PORT_CONSOLE
 
 endif # !TARGET_N64
+
+# Add RM2C to flags, add var for internal name
+ifeq ($(RM2C),1)
+  CUSTOM_C_DEFINES += -DRM2C
+endif
 
 # Check for Debug option
 ifeq ($(DEBUG),1)
@@ -1219,6 +1256,7 @@ MIO0TOOL = $(TOOLS_DIR)/mio0$(EXT_PREFIX)
 N64CKSUM = $(TOOLS_DIR)/n64cksum$(EXT_PREFIX)
 N64GRAPHICS = $(TOOLS_DIR)/n64graphics$(EXT_PREFIX)
 N64GRAPHICS_CI = $(TOOLS_DIR)/n64graphics_ci$(EXT_PREFIX)
+BINPNG = $(TOOLS_DIR)/BinPNG.py
 TEXTCONV = $(TOOLS_DIR)/textconv$(EXT_PREFIX)
 AIFF_EXTRACT_CODEBOOK = $(TOOLS_DIR)/aiff_extract_codebook$(EXT_PREFIX)
 VADPCM_ENC = $(TOOLS_DIR)/vadpcm_enc$(EXT_PREFIX)
@@ -1492,14 +1530,14 @@ endif
 ifeq ($(EXTERNAL_DATA),0)
 
 # Color Index CI8
-$(BUILD_DIR)/%.ci8: %.ci8.png
-	$(call print,Converting:,$<,$@)
-	$(V)$(N64GRAPHICS_CI) -i $@ -g $< -f ci8
+$(BUILD_DIR)/%.ci8.inc.c: %.ci8.png
+	$(call print,Converting CI:,$<,$@)
+	python3 $(BINPNG) $< $@ 8
 
 # Color Index CI4
-$(BUILD_DIR)/%.ci4: %.ci4.png
-	$(call print,Converting:,$<,$@)
-	$(V)$(N64GRAPHICS_CI) -i $@ -g $< -f ci4
+$(BUILD_DIR)/%.ci4.inc.c: %.ci4.png
+	$(call print,Converting CI:,$<,$@)
+	python3 $(BINPNG) $< $@ 4
 
 endif
 
@@ -1515,7 +1553,7 @@ $(BUILD_DIR)/%.elf: $(BUILD_DIR)/%.o
 # Override for level.elf, which otherwise matches the above pattern
 .SECONDEXPANSION:
 $(BUILD_DIR)/levels/%/leveldata.elf: $(BUILD_DIR)/levels/%/leveldata.o $(BUILD_DIR)/bin/$$(TEXTURE_BIN).elf
-	$(call print,Linking ELF file:,$<,$@)
+	$(call print,Linking Level ELF file:,$<,$@)
 	$(V)$(LD) -e 0 -Ttext=$(SEGMENT_ADDRESS) -Map $@.map --just-symbols=$(BUILD_DIR)/bin/$(TEXTURE_BIN).elf -o $@ $<
 
 $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf

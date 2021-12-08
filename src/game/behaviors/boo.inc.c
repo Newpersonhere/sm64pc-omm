@@ -575,6 +575,15 @@ static void big_boo_act_2(void) {
     }
 }
 
+#ifdef RM2C
+static void big_boo_spawn_ghost_hunt_star(void) {
+    spawn_default_star(GhostHuntBooStarPos);
+}
+
+static void big_boo_spawn_balcony_star(void) {
+    spawn_default_star(BalconyBooStarPos);
+}
+#else
 static void big_boo_spawn_ghost_hunt_star(void) {
     spawn_default_star(980.0f, 1100.0f, 250.0f);
 }
@@ -582,11 +591,16 @@ static void big_boo_spawn_ghost_hunt_star(void) {
 static void big_boo_spawn_balcony_star(void) {
     spawn_default_star(700.0f, 3200.0f, 1900.0f);
 }
+#endif
 
 static void big_boo_spawn_merry_go_round_star(void) {
     struct Object *merryGoRound;
 
+	#ifdef RM2C
+    spawn_default_star(MerryGoRoundStarPos);
+	#else
     spawn_default_star(-1600.0f, -2100.0f, 205.0f);
+	#endif
 
     merryGoRound = cur_obj_nearest_object_with_behavior(bhvMerryGoRound);
 
@@ -720,12 +734,19 @@ static void boo_with_cage_act_3(void) {
 }
 
 void bhv_boo_with_cage_init(void) {
+    // STAR ROAD custom code, deactivate if less than 121 stars
+    if (gHudDisplay.stars < 121) {
+        obj_mark_for_deletion(o);
+    }
+
+    /*
     if (gHudDisplay.stars < SPAWN_CASTLE_BOO_STAR_REQUIREMENT) {
         obj_mark_for_deletion(o);
     } else {
         struct Object *cage = spawn_object(o, MODEL_HAUNTED_CAGE, bhvBooCage);
         cage->oBehParams = o->oBehParams;
     }
+    */
 }
 
 static void (*sBooWithCageActions[])(void) = {
