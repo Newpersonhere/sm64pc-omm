@@ -152,19 +152,13 @@ If it detects a new version, the builder will ask you if you want to update it w
 
 ## Speedrunning
 
-For speedrunners, OMM comes with a LiveSplit auto-splitter script file.<br>
-It works with every game that can be built with OMM.
+For speedrunners, OMM comes with a LiveSplit auto-splitter.<br>It works with every game that can be built with OMM.
 
-- **What's an auto-splitter?**
-
-It's a script, a small program, that runs through LiveSplit and does the splits automatically, so the player doesn't need to press a key or a button to trigger each one.<br>
-What it does in *Super Mario 64* is fairly simple:
+An auto-splitter is a script, a small program, that runs through LiveSplit and does the splits automatically, so the player doesn't need to press a key or a button to trigger each one.<br>What it does in *Super Mario 64* is fairly simple:
 - Starts the timer when the player selects a file,
 - Splits each time a specific amount of stars is collected,
 - Stops when the Grand Star is collected at the end of a run, or when the last split is triggered,
 - Resets when the game returns to the main menu.
-
-- **How to use it?**
 
 To install it and make it work, follow these steps:
 - Your OMM version must be 6.1.0 or later.
