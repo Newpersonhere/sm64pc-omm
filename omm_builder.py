@@ -386,7 +386,6 @@ if __name__ == "__main__":
     # Clone the target repository
     print("--- Cloning target repository...")
     if not os.path.isdir(versionDir):
-        os.chdir()
         os.system("git clone {} {}".format(VERSIONS[version]["repo"], versionDir))
         if not os.path.isdir(versionDir):
             raise_error("Cannot clone the git repository: " + VERSIONS[version]["repo"], False)
