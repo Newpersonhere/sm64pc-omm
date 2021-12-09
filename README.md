@@ -157,7 +157,7 @@ An auto-splitter is a script, a small program, that runs through LiveSplit and d
 - Starts the timer when the player selects a file,
 - Splits each time a specific amount of stars is collected,
 - Stops when the Grand Star is collected at the end of a run, or when the last split is triggered,
-- Resets when the game returns to the main menu.
+- Resets when the player returns to the main menu.
 
 To install it and make it work, follow these steps:
 - Your OMM version must be 6.1.0 or later.
@@ -165,10 +165,10 @@ To install it and make it work, follow these steps:
   - For star splits, you must indicate the amount of stars needed in brackets or parentheses like this: "\[20\]" or "(20)".
   - If a split has "Bowser" in its name but no star amount, it will be interpreted as a Bowser key split or a Grand Star split.
   - If the final split has no star amount, it is interpreted as a Grand Star split (i.e. after defeating the last Bowser).
-- Right click, select `Save Splits As...` and save them as a `splits.lss` file inside the `omm` directory next to the `sm64.us.f3dex2e.exe` executable.
+- Right click, select `Save Splits As...` and save them as a `splits.lss` file next to the `sm64.us.f3dex2e.exe` executable.
 - Right click again, and select `Edit Layout...`.
 - Add a `Scriptable Auto Splitter`, double-click on it, and select `Browse...`.
-- Navigate to the repository of the game, and select the file `omm.asl`.
+- Navigate to the OMM builder directory and select the file `omm.asl`.
 - Press `OK` twice, then start the game. The timer should start as soon as an **empty** save file is selected.
 
 ---
@@ -186,16 +186,20 @@ To install it and make it work, follow these steps:
 -----
 
 ## Version 6.1.0
+```diff
+- Odyssey Mario's Moveset v6.1.0 is not out yet.
+```
 
 ### OMM Builder:
 - The `star_road.patch` file is no longer needed to build *Super Mario Star Road*.
 - Added *Render96 ex-alpha* repository.
 - Added compatibility checks:
-  - *Render96 ex-alpha* cannot be built with a version of OMM below 6.1.0.
+  - *Render96 ex-alpha*, *Super Mario 64 ex-alo* and *Super Mario Star Road* cannot be built with a version of OMM prior to 6.1.0.
   - *Super Mario 64 ex-alo*, *Super Mario 74* and *Super Mario Star Road* cannot be built with DynOS.
 - Added the `DYNOS` option. When selected, download and install the latest version of DynOS with the selected repository, and copy the contents of the `custom/dynos/packs` directory to the executable directory.
 - Added the `PATCHES` option. This option must be explicitly set to tell the builder to apply custom patches from the `custom/patches` directory before compiling.
 - Modified the `EXT_DATA` option. This option must be explicitly set to tell the builder to compile with the flag `EXTERNAL_DATA=1`, and copy the contents of the `custom/res` directory to the executable directory.
+- Added the LiveSplit auto-splitter file `omm.asl` for speedruns.
 
 ### Bug fixes:
 - The star number is now hidden during the ending cutscene.
@@ -232,8 +236,8 @@ To install it and make it work, follow these steps:
   - All textures are stored in the `omm/gfx/peach` directory.
 
 ### LiveSplit auto-splitter:
-- The player no longer needs to enter his splits manually in a text file.
-- To make the game read splits, save them from LiveSplit as a `splits.lss` file inside the `omm` directory next to the `sm64.us.f3dex2e.exe` executable.
+- The player no longer needs to enter their splits manually in a text file.
+- To make the game read splits, save them from LiveSplit as a `splits.lss` file next to the `sm64.us.f3dex2e.exe` executable.
 - See [Speedrunning](https://github.com/PeachyPeachSM64/sm64pc-omm/tree/master#speedrunning) for more details.
 
 ### Other changes:

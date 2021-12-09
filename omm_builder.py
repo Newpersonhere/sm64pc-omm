@@ -348,10 +348,10 @@ if __name__ == "__main__":
 
     # Check compatibility
     print("--- Checking compatibility...")
-    if version in ["r96a"] and vn2i(OMM_VERSION_NUMBER) < vn2i("6.1.0"):
-        raise_error("Render96 ex-alpha (r96a) can be built only with OMM v6.1.0 and later.", False)
+    if version in ["xalo", "smsr", "r96a"] and vn2i(OMM_VERSION_NUMBER) < vn2i("6.1.0"):
+        raise_error("{} ({}) can be built only with OMM v6.1.0 and later.".format(VERSIONS[version]["name"], version), False)
     if version in ["xalo", "sm74", "smsr"] and args["DYNOS"]:
-        raise_error("{} cannot be built with DynOS.".format(VERSIONS[version]["name"]), False)
+        raise_error("{} ({}) cannot be built with DynOS.".format(VERSIONS[version]["name"], version), False)
 
     # Check baserom
     print("--- Checking baserom...")
