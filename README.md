@@ -186,9 +186,6 @@ To install it and make it work, follow these steps:
 -----
 
 ## Version 6.1.0
-```diff
-- Odyssey Mario's Moveset v6.1.0 is not out yet.
-```
 
 ### OMM Builder:
 - The `star_road.patch` file is no longer needed to build *Super Mario Star Road*.
