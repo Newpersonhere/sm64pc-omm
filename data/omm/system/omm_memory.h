@@ -32,6 +32,7 @@ s32 __omm_array_find(const OmmArray arr, const void *item);
 #define omm_array_add_inplace(arr, type, ...)               { type __inplace__ = __VA_ARGS__; omm_array_add(arr, __inplace__); }
 #define omm_array_set_inplace(arr, index, type, ...)        { type __inplace__ = __VA_ARGS__; omm_array_set(arr, __inplace__, index); }
 #define omm_array_grow(arr, count, type, ...)               { omm_array_init(arr, type); while (omm_array_count(arr) < (count)) { omm_array_add_inplace(arr, type, __VA_ARGS__); } }
+#define omm_array_for_each(arr, type, item)                 s32 index_##item = (arr ? 0 : -1); for (type *item = omm_array_getp(arr, type, 0); index_##item != -1 && index_##item != omm_array_count(arr); ++index_##item, item++)
 
 //
 // Memory pools

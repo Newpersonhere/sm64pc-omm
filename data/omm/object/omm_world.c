@@ -22,18 +22,16 @@ struct WarpPipeInfo _WarpPipeInfo(u8 area, u8 warpId, f32 pipePosX, f32 pipePosY
 static struct SpawnInfo *get_warp_pipe_spawn_info(struct WarpPipeInfo *wpi) {
     static OmmArray sWarpPipeSpawnInfo = NULL;
     omm_array_init(sWarpPipeSpawnInfo, struct SpawnInfo *);
-
-    for (s32 i = 0; i != omm_array_count(sWarpPipeSpawnInfo); ++i) {
-        struct SpawnInfo *spawnInfo = omm_array_get(sWarpPipeSpawnInfo, struct SpawnInfo *, i);
-        if (spawnInfo->behaviorArg   == ((u32) (wpi->warpId << 16u) | (u32) (wpi->exitOnly << 8u)) &&
-            spawnInfo->areaIndex     == wpi->area &&
-            spawnInfo->startPos[0]   == wpi->pipePos[0] &&
-            spawnInfo->startPos[1]   == wpi->pipePos[1] &&
-            spawnInfo->startPos[2]   == wpi->pipePos[2] &&
-            spawnInfo->startAngle[0] == wpi->pipeAngle[0] &&
-            spawnInfo->startAngle[1] == wpi->pipeAngle[1] &&
-            spawnInfo->startAngle[2] == wpi->pipeAngle[2]) {
-            return spawnInfo;
+    omm_array_for_each(sWarpPipeSpawnInfo, struct SpawnInfo *, spawnInfo) {
+        if ((*spawnInfo)->behaviorArg   == ((u32) (wpi->warpId << 16u) | (u32) (wpi->exitOnly << 8u)) &&
+            (*spawnInfo)->areaIndex     == wpi->area &&
+            (*spawnInfo)->startPos[0]   == wpi->pipePos[0] &&
+            (*spawnInfo)->startPos[1]   == wpi->pipePos[1] &&
+            (*spawnInfo)->startPos[2]   == wpi->pipePos[2] &&
+            (*spawnInfo)->startAngle[0] == wpi->pipeAngle[0] &&
+            (*spawnInfo)->startAngle[1] == wpi->pipeAngle[1] &&
+            (*spawnInfo)->startAngle[2] == wpi->pipeAngle[2]) {
+            return (*spawnInfo);
         }
     }
 
@@ -87,14 +85,12 @@ static struct Object *load_warp_pipe_spawn_info(struct WarpPipeInfo *wpi) {
 static struct ObjectWarpNode *get_warp_pipe_warp_node(u8 level, struct WarpPipeInfo *wpiFrom, struct WarpPipeInfo *wpiTo, struct Object *pipe) {
     static OmmArray sWarpPipeWarpNodes = NULL;
     omm_array_init(sWarpPipeWarpNodes, struct ObjectWarpNode *);
-
-    for (s32 i = 0; i != omm_array_count(sWarpPipeWarpNodes); ++i) {
-        struct ObjectWarpNode *warpNode = omm_array_get(sWarpPipeWarpNodes, struct ObjectWarpNode *, i);
-        if (warpNode->node.id        == wpiFrom->warpId &&
-            warpNode->node.destLevel == level           &&
-            warpNode->node.destArea  == wpiTo->area     &&
-            warpNode->node.destNode  == wpiTo->warpId) {
-            return warpNode;
+    omm_array_for_each(sWarpPipeWarpNodes, struct ObjectWarpNode *, warpNode) {
+        if ((*warpNode)->node.id        == wpiFrom->warpId &&
+            (*warpNode)->node.destLevel == level           &&
+            (*warpNode)->node.destArea  == wpiTo->area     &&
+            (*warpNode)->node.destNode  == wpiTo->warpId) {
+            return (*warpNode);
         }
     }
 
@@ -612,6 +608,7 @@ static void omm_update_worlds(struct MarioState *m) {
 #endif
     }
 
+#if !defined(R96A)
     // Disable Bowser objects outside of Bowser fights
     if (gCurrLevelNum != LEVEL_BOWSER_1 &&
         gCurrLevelNum != LEVEL_BOWSER_2 &&
@@ -623,6 +620,7 @@ static void omm_update_worlds(struct MarioState *m) {
         omm_world_behavior_set_dormant(bhvBowserFlameSpawn, true);
         omm_world_behavior_set_dormant(bhvBowserBomb, true);
     }
+#endif
     
 #if !defined(SMMS)
     // Hide red coins star markers if Colored Stars

@@ -75,7 +75,7 @@ s32 cappy_mr_blizzard_update(struct Object *o) {
                 obj_spawn_particles(o, 8, MODEL_WHITE_PARTICLE, 0, 8, 4, 15, 8, -3, 0.4f, 0.3f);
             } break;
             case POBJ_RESULT_HOP_LARGE: {
-                o->oVelY = omm_capture_get_jump_velocity(o) * (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_NORMAL) && gCurrLevelNum == LEVEL_SL ? 1.25f : 1.f);
+                o->oVelY = omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER * (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_NORMAL) && gCurrLevelNum == LEVEL_SL ? 1.25f : 1.f);
                 obj_play_sound(o, SOUND_OBJ_SNOW_SAND1);
                 obj_play_sound(o, SOUND_OBJ_MR_BLIZZARD_ALERT);
                 obj_spawn_particles(o, 8, MODEL_WHITE_PARTICLE, 0, 8, 4, 15, 8, -3, 0.4f, 0.3f);

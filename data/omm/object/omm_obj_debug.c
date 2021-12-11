@@ -40,19 +40,22 @@
 // Gfx data
 //
 
-static const Lights1 omm_debug_hitbox_light = OMM_LIGHT(
+static const Lights1 omm_debug_hitbox_light = gdSPDefLights1(
     0x40, 0xc0, 0xff,
-    0x40, 0xc0, 0xff
+    0x40, 0xc0, 0xff,
+    0x28, 0x28, 0x28
 );
 
-static const Lights1 omm_debug_hurtbox_light = OMM_LIGHT(
+static const Lights1 omm_debug_hurtbox_light = gdSPDefLights1(
     0xff, 0x40, 0x40,
-    0xff, 0x40, 0x40
+    0xff, 0x40, 0x40,
+    0x28, 0x28, 0x28
 );
 
-static const Lights1 omm_debug_wallbox_light = OMM_LIGHT(
+static const Lights1 omm_debug_wallbox_light = gdSPDefLights1(
     0x40, 0xc0, 0x40,
-    0x40, 0xc0, 0x40
+    0x40, 0xc0, 0x40,
+    0x28, 0x28, 0x28
 );
 
 static const Vtx omm_debug_box_vertices[] = {
@@ -369,7 +372,11 @@ static void omm_debug_update_counters() {
             sCounters[i][1] = sCounters[i][0] / 30;
             sCounters[i][0] = 0;
         }
+#if defined(R96A)
+        sFPSCounters[1] = (s32) ((config60FPS ? OMM_60 : OMM_30) * (1000000.0 / omm_max_s(1, sFPSCounters[0])));
+#else
         sFPSCounters[1] = (s32) ((OMM_IS_60_FPS ? OMM_60 : OMM_30) * (1000000.0 / omm_max_s(1, sFPSCounters[0])));
+#endif
         sFPSCounters[0] = 0;
     }
     if (gOmmDebugProfiler) {
@@ -383,7 +390,7 @@ static void omm_debug_update_counters() {
 
 #else
 
-static void omm_debug_display_counters() {
+static void omm_debug_update_counters() {
 }
 
 #endif

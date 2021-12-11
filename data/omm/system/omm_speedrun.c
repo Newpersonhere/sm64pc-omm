@@ -1,93 +1,156 @@
 #define OMM_ALL_HEADERS
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
-#if OMM_CODE_VANILLA
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
 
 //
 // LiveSplit auto-splitter support
-// You need an omm.*.asl file to make it work
-//
-// The way it works is fairly simple
-// A string is written into the executable, as well as 4 flag slots
-// The volatile keyword is here to prevent the compiler from "optimizing" the array
-// The script will attempt to find this string to locate the flag slots
-// The flags are set to 1 by the game, read and processed by the AS script, then set back to 0
-// The first flag is set to 1 if the player leaves the main menu, i.e. when a save file is selected
-// The second flag is set to 1 if the player collects a split star (see below), or touches the Grand Star
-// The third flag is set to 1 if the player returns to the main menu
-// The fourth flag is currently unused
-//
-// Split stars: when the game starts, the file "omm/omm_splits.txt" is read
-// The file must contain a list of the star counts when the script needs to split
-// For instance, if the file contains the values "1 5 9 15 34", the script will trigger a split
-// as soon as Mario collects the 1st star, the 5th star, the 9th star and so on
-// If the file is missing or badly written, only the Grand Star split will be triggered
+// The file 'omm.asl' is needed to make it work
 //
 
 static volatile u8 sOmmSplitFlags[16] = { 'O', 'M', 'M', 'A', 'U', 'T', 'O', 'S', 'P', 'L', 'I', 'T', 0, 0, 0, 0 };
-static OmmArray sOmmSplitStars = NULL;
+static volatile s32 *sOmmSplitIndex = (s32 *) (&sOmmSplitFlags[12]);
+static OmmArray sOmmSplits = NULL;
 
-static void omm_speedrun_update() {
-    static s32 pMainMenu = 0;
-    static s32 pNumStars = 0;
-    static s32 pMarioAct = 0;
-    static s32 tMainMenu = 0;
-
-    // Current
-    s32 cMainMenu = omm_is_main_menu();
-    s32 cNumStars = gMarioState->numStars;
-    s32 cMarioAct = gMarioState->action;
-
-    // Start
-    if (cMainMenu != pMainMenu && cMainMenu == 0) {
-        sOmmSplitFlags[0xC] = 1;
-        tMainMenu = 150;
+void omm_speedrun_split(s32 numStars) {
+    if (sOmmSplits && 0 <= *sOmmSplitIndex && *sOmmSplitIndex < omm_array_count(sOmmSplits) && omm_array_get(sOmmSplits, s32, *sOmmSplitIndex) == numStars) {
+        (*sOmmSplitIndex)++;
     }
+}
 
-    // Split
-    if ((cNumStars != pNumStars && omm_array_find(sOmmSplitStars, cNumStars) != -1) ||
-        (cMarioAct != pMarioAct && cMarioAct == ACT_JUMBO_STAR_CUTSCENE)) {
-        sOmmSplitFlags[0xD] = 1;
+// Main menu/File select screen -> 'reset' (-1)
+// 'start' (-2) or 'reset' (-1) but empty save and Mario not loaded -> 'start'
+// As soon as Mario loads or if an existing save file is selected, set index to 0
+OMM_ROUTINE_UPDATE(omm_speedrun_update) {
+    if (sOmmSplits) {
+        if (omm_is_main_menu()) {
+            *sOmmSplitIndex = -1;
+        } else if (*sOmmSplitIndex < 0) {
+            if (!gMarioObject && !save_file_exists(gCurrSaveFileNum - 1)) {
+                *sOmmSplitIndex = -2;
+            } else {
+                *sOmmSplitIndex = 0;
+            }
+        }
     }
+}
 
-    // Reset
-    if (tMainMenu-- <= 0 && cMainMenu != pMainMenu && cMainMenu == 1) {
-        sOmmSplitFlags[0xE] = 1;
+//
+// Init
+//
+
+static const char *omm_speedrun_lss_get_data(const char *line, const char *beginsWith, const char *endsWith) {
+    static char data[1024];
+    const char *begin = strstr(line, beginsWith);
+    const char *end = strstr(line, endsWith);
+    if (begin && end) {
+        begin += strlen(beginsWith);
+        s32 length = (s32) (end - begin);
+        OMM_MEMSET(data, 0, 1024);
+        OMM_MEMCPY(data, begin, omm_max_s(0, length));
+        return data;
     }
+    return NULL;
+}
 
-    // Update
-    pMainMenu = cMainMenu;
-    pNumStars = cNumStars;
-    pMarioAct = cMarioAct;
+static s32 omm_speedrun_split_data_get_stars(const char *split) {
+    static const char *sOpenBrackets[] = { "[", "(", NULL };
+    static const char *sCloseBrackets[] = { "]", ")", NULL };
+    for_each_until_null(const char *, openBracket, sOpenBrackets) {
+        const char *closeBracket = sCloseBrackets[(s32) (openBracket - sOpenBrackets)];
+        const char *p = split;
+        while ((p = strstr(p, *openBracket)) != NULL) {
+            if (strstr(++p, closeBracket)) {
+                s32 numStars;
+                if (sscanf(p, "%d", &numStars)) {
+                    return numStars;
+                }
+            } else break;
+        }
+    }
+    return -1;
+}
+
+static bool omm_speedrun_split_data_is_bowser(const char *split) {
+    char lower[1024] = { 0 };
+    for (const char *c = split; *c; ++c) {
+        lower[(s32) (c - split)] = tolower(*c);
+    }
+    return strstr(lower, "bowser") != NULL;
 }
 
 OMM_AT_STARTUP static void omm_speedrun_init() {
-    OMM_STRING(filename, 256, "%s/%s/%s", OMM_EXE_FOLDER, OMM_RES_FOLDER, "omm_splits.txt");
+    OMM_STRING(filename, 256, "%s/%s", OMM_EXE_FOLDER, "splits.lss");
     FILE *f = fopen(filename, "r");
     if (f) {
-        sOmmSplitStars = omm_array_new(s32);
+        sOmmSplits = omm_array_new(s32);
+        printf("\nExtracting split data from file: %s\n", filename);
+
+        // Looking for game info and splits
+        OmmArray splits = omm_array_new(const char *);
+        bool isSegment = false;
         char buffer[1024];
         while (fgets(buffer, 1024, f)) {
-            for (char *p = buffer; *p != 0;) {
-                while (*p != 0 && (*p < '0' || *p > '9')) ++p;
-                s32 i; if (sscanf(p, "%d", &i)) { omm_array_add(sOmmSplitStars, i); }
-                while (*p >= '0' && *p <= '9') ++p;
+
+            // Game name
+            const char *gameName = omm_speedrun_lss_get_data(buffer, "<GameName>", "</GameName>");
+            if (gameName) {
+                printf("Game: %s\n", gameName);
+                continue;
+            }
+            
+            // Category name
+            const char *categoryName = omm_speedrun_lss_get_data(buffer, "<CategoryName>", "</CategoryName>");
+            if (categoryName) {
+                printf("Category: %s\n", categoryName);
+                continue;
+            }
+
+            // Segment start
+            if (omm_speedrun_lss_get_data(buffer, "<Segment>", "")) {
+                isSegment = true;
+                continue;
+            }
+            
+            // Segment end
+            if (omm_speedrun_lss_get_data(buffer, "</Segment>", "")) {
+                isSegment = false;
+                continue;
+            }
+            
+            // Splits
+            if (isSegment) {
+                const char *splitName = omm_speedrun_lss_get_data(buffer, "<Name>", "</Name>");
+                if (splitName) {
+                    omm_array_add_inplace(splits, const char *, OMM_MEMDUP(splitName, strlen(splitName) + 1));
+                }
             }
         }
-        printf("omm_splits.txt file successfully loaded.\n");
-        printf("Loaded splits (stars):");
-        for (s32 i = 0; i != omm_array_count(sOmmSplitStars); ++i) {
-            printf(" %d", omm_array_get(sOmmSplitStars, s32, i));
+
+        // Generating splits
+        printf("Splits:\n");
+        omm_array_for_each(splits, const char *, split) {
+            s32 numStars = omm_speedrun_split_data_get_stars(*split);
+            if (numStars != -1) {
+                omm_array_add(sOmmSplits, numStars);
+                printf("- %d Star split: %s\n", numStars, *split);
+            } else if (index_split == omm_array_count(splits) - 1) {
+                omm_array_add_inplace(sOmmSplits, s32, -1);
+                printf("- Grand Star split: %s\n", *split);
+            } else if (omm_speedrun_split_data_is_bowser(*split)) {
+                omm_array_add_inplace(sOmmSplits, s32, -1);
+                printf("- Bowser key split: %s\n", *split);
+            } else {
+                printf("[!] Invalid split format: %s\n", *split);
+            }
         }
-        printf("\n");
+
+        // Done
+        printf("Data successfully extracted. Closing file.\n\n");
         fflush(stdout);
         fclose(f);
     }
-    sOmmSplitFlags[0xC] = 0;
-    sOmmSplitFlags[0xD] = 0;
-    sOmmSplitFlags[0xE] = 0;
-    sOmmSplitFlags[0xF] = 0;
-    omm_add_routine(OMM_ROUTINE_TYPE_UPDATE, omm_speedrun_update);
 }
 
-#endif
+#pragma GCC pop_options

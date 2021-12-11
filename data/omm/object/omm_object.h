@@ -235,8 +235,9 @@ f32 *omm_geo_get_marios_head_up();
 f32 *omm_geo_get_marios_head_forward();
 f32 *omm_geo_get_marios_head_right();
 f32 *omm_geo_get_marios_root_pos();
+f32  omm_geo_get_marios_height();
 void omm_geo_fix_marios_anim_translation_y(struct Object *o, struct GraphNodeAnimatedPart *node, f32 *translationY);
-void omm_geo_preprocess_object_graph_node(struct Object *o, void (*func)(void *, struct Object *, struct GraphNode *, f32, f32, f32));
+void omm_geo_preprocess_object_graph_node(struct Object *o);
 
 //
 // World

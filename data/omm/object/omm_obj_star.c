@@ -7,9 +7,10 @@
 // Gfx data
 //
 
-static const Lights1 omm_star_light = OMM_LIGHT(
+static const Lights1 omm_star_light = gdSPDefLights1(
     0x7F, 0x7F, 0x7F,
-    0xFF, 0xFF, 0xFF
+    0xFF, 0xFF, 0xFF,
+    0x28, 0x28, 0x28
 );
 
 //
@@ -558,9 +559,9 @@ static void omm_geo_star_compute_color(OmmStarGeoData *data, const char *texture
     if (strstr(texture, OMM_GFX) == texture) {
 
         // Look for a registered texture
-        for (s32 i = 0; i != omm_array_count(sOmmStarTextures); ++i) {
-            if (OMM_MEMCMP(texture, omm_array_get(sOmmStarTextures, const char *, i), strlen(texture) + 1)) {
-                u32 color = omm_array_get(sOmmStarColors, u32, i);
+        omm_array_for_each(sOmmStarTextures, const char *, starTex) {
+            if (OMM_MEMCMP(texture, *starTex, strlen(texture) + 1)) {
+                u32 color = omm_array_get(sOmmStarColors, u32, index_starTex);
                 data->color.r = (color >> 16) & 0xFF;
                 data->color.g = (color >>  8) & 0xFF;
                 data->color.b = (color >>  0) & 0xFF;
@@ -569,7 +570,7 @@ static void omm_geo_star_compute_color(OmmStarGeoData *data, const char *texture
         }
         
         // Not found, compute color and register it
-        OMM_STRING(filename, 256, "%s/%s/%s", OMM_EXE_FOLDER, OMM_GFX_FOLDER, texture + sizeof(OMM_GFX) - 1);
+        OMM_STRING(filename, 256, "%s/%s/%s.png", OMM_EXE_FOLDER, OMM_GFX_FOLDER, texture + sizeof(OMM_GFX) - 1);
         s32 w, h;
         u8 *p = stbi_load(filename, &w, &h, NULL, 4);
         if (p) {

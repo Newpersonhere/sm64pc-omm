@@ -230,7 +230,7 @@ static u32 omm_stars_get_color_per_course(s32 course) {
             OMM_TEXTURE_STAR_BODY_15, OMM_TEXTURE_STAR_BODY_16, OMM_TEXTURE_STAR_BODY_17,
         };
         for (s32 i = 0; i != 18; ++i) {
-            OMM_STRING(filename, 256, "%s/%s/%s", OMM_EXE_FOLDER, OMM_GFX_FOLDER, sOmmStarsTextures[i] + sizeof(OMM_GFX) - 1);
+            OMM_STRING(filename, 256, "%s/%s/%s.png", OMM_EXE_FOLDER, OMM_GFX_FOLDER, sOmmStarsTextures[i] + sizeof(OMM_GFX) - 1);
             s32 w, h;
             u8 *p = stbi_load(filename, &w, &h, NULL, 4);
             if (p) {

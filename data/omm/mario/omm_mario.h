@@ -3,6 +3,10 @@
 
 #include "data/omm/omm_includes.h"
 
+#define HANG_STEP_NONE 0
+#define HANG_STEP_HIT_WALL 1
+#define HANG_STEP_LEFT_CEIL 2
+
 enum OmmActionResult {
     OMM_MARIO_ACTION_RESULT_BREAK,
     OMM_MARIO_ACTION_RESULT_CANCEL,
@@ -47,6 +51,7 @@ extern OmmSurfaceHashMap gOmmDynamicSurfaces;
 bool omm_mario_update_walking_speed             (struct MarioState *m);
 bool omm_mario_update_air_without_turn          (struct MarioState *m);
 bool omm_mario_update_air_with_turn             (struct MarioState *m);
+bool omm_mario_update_hanging_speed             (struct MarioState *m);
 
 //
 // Interactions
@@ -77,6 +82,7 @@ bool omm_mario_is_roll_landing                  (struct MarioState *m);
 bool omm_mario_is_reading                       (struct MarioState *m);
 bool omm_mario_is_picking_up                    (struct MarioState *m);
 bool omm_mario_is_holding                       (struct MarioState *m);
+bool omm_mario_is_hanging                       (struct MarioState *m);
 bool omm_mario_is_stuck_in_ground_after_fall    (struct MarioState *m);
 bool omm_mario_is_star_dancing                  (struct MarioState *m);
 bool omm_mario_should_walk                      (struct MarioState *m);

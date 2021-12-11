@@ -38,7 +38,7 @@ s32 cappy_spindrift_update(struct Object *o) {
     POBJ_SET_ABLE_TO_MOVE_ON_SLOPES;
 
     // Inputs
-    if (!omm_mario_is_locked(gMarioState)) {
+    if (!obj_update_door(o) && !omm_mario_is_locked(gMarioState)) {
 
         // Propeller states
         if (obj_is_on_ground(o)) {
@@ -55,7 +55,7 @@ s32 cappy_spindrift_update(struct Object *o) {
 
         // Propeller jump
         else if (POBJ_A_BUTTON_PRESSED && !obj_is_on_ground(o) && (gOmmData->object->state.actionState == 0)) {
-            o->oVelY = omm_capture_get_jump_velocity(o) * 2.5f;
+            o->oVelY = omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER * 2.5f;
             omm_sound_play(OMM_SOUND_EFFECT_PROPELLER_1, o->oCameraToObject);
             gOmmData->object->state.actionState = 1;
         }
@@ -73,7 +73,7 @@ s32 cappy_spindrift_update(struct Object *o) {
         // Spin attack
         if (POBJ_B_BUTTON_PRESSED && (gOmmData->object->state.actionTimer == 0)) {
             omm_sound_play(OMM_SOUND_EFFECT_PROPELLER_3, o->oCameraToObject);
-            o->oVelY = omm_capture_get_jump_velocity(o) / 2.f;
+            o->oVelY = omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER / 2.f;
             gOmmData->object->state.actionTimer = 30;
             gOmmData->object->state.actionFlag = false;
             omm_mario_lock(gMarioState, 8);
@@ -90,7 +90,12 @@ s32 cappy_spindrift_update(struct Object *o) {
     POBJ_STOP_IF_UNPOSSESSED;
 
     // Interactions
-    POBJ_INTERACTIONS();
+    POBJ_INTERACTIONS(
+
+    // Doors
+    obj_open_door(o, obj);
+    
+    );
     POBJ_STOP_IF_UNPOSSESSED;
 
     // Gfx

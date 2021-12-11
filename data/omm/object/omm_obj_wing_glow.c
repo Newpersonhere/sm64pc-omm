@@ -97,10 +97,10 @@ static void omm_bhv_wing_glow_update() {
     Vec3f hPos = { wPos[0], wPos[1], wPos[2] };
     f32 delta  = sqrtf(omm_sqr_f(dPos[0]) + omm_sqr_f(dPos[1]) + omm_sqr_f(dPos[2]));
     if (delta != 0.f) {
-        f32 mult = (OMM_PLAYER_IS_PEACH ? 8.f : 15.f) / delta;
-        hPos[0] += dPos[0] * m->marioObj->oScaleX * mult;
-        hPos[1] += dPos[1] * m->marioObj->oScaleY * mult;
-        hPos[2] += dPos[2] * m->marioObj->oScaleZ * mult;
+        f32 offset = (180.f - omm_geo_get_marios_height()) / (4.f * delta);
+        hPos[0] += dPos[0] * m->marioObj->oScaleX * offset;
+        hPos[1] += dPos[1] * m->marioObj->oScaleY * offset;
+        hPos[2] += dPos[2] * m->marioObj->oScaleZ * offset;
     }
 
     // Update vertex color
@@ -206,10 +206,10 @@ static void omm_bhv_wing_trail_update() {
         Vec3f hPos = { wPos[0], wPos[1], wPos[2] };
         f32 delta  = sqrtf(omm_sqr_f(dPos[0]) + omm_sqr_f(dPos[1]) + omm_sqr_f(dPos[2]));
         if (delta != 0.f) {
-            f32 mult = (OMM_PLAYER_IS_PEACH ? 8.f : 15.f) / delta;
-            hPos[0] += dPos[0] * m->marioObj->oScaleX * mult;
-            hPos[1] += dPos[1] * m->marioObj->oScaleY * mult;
-            hPos[2] += dPos[2] * m->marioObj->oScaleZ * mult;
+            f32 offset = (180.f - omm_geo_get_marios_height()) / (4.f * delta);
+            hPos[0] += dPos[0] * m->marioObj->oScaleX * offset;
+            hPos[1] += dPos[1] * m->marioObj->oScaleY * offset;
+            hPos[2] += dPos[2] * m->marioObj->oScaleZ * offset;
         }
 
         // Update current vertex

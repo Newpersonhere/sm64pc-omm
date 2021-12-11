@@ -14,7 +14,7 @@ bool cappy_koopa_shell_init(struct Object *o) {
 
 void cappy_koopa_shell_end(struct Object *o) {
     o->behavior = bhvKoopaShell;
-    stop_shell_music();
+    audio_stop_shell_music();
 }
 
 f32 cappy_koopa_shell_get_top(struct Object *o) {
@@ -29,7 +29,7 @@ s32 cappy_koopa_shell_update(struct Object *o) {
 
     // Init
     if (!gOmmData->object->state.actionFlag) {
-        play_shell_music();
+        audio_play_shell_music();
         gOmmData->object->state.actionFlag = true;
     }
 

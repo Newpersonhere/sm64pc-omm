@@ -10,6 +10,14 @@ struct Object *omm_cappy_get_object() {
     return obj_get_first_with_behavior(omm_bhv_cappy);
 }
 
+struct Object *omm_cappy_get_object_play_as() {
+    struct Object *cappy = omm_cappy_get_object();
+    if (cappy && (cappy->oCappyFlags & CAPPY_FLAG_PLAY_AS)) {
+        return cappy;
+    }
+    return NULL;
+}
+
 //
 // Spawn
 //
@@ -42,8 +50,7 @@ struct Object *omm_cappy_spawn(struct MarioState *m) {
     struct Object *cappy       = spawn_object(m->marioObj, omm_player_get_selected_cap(wing, metal), omm_bhv_cappy);
     cappy->oCappyBehavior      = omm_cappy_get_behavior(m);
     cappy->oCappyLifeTimer     = -255;
-    cappy->oCappyStartAnim     = true;
-    cappy->oCappyHomingAttack  = false;
+    cappy->oCappyFlags         = CAPPY_FLAG_START_ANIM;
     cappy->oCappyThrowStrength = 0;
     cappy->oIntangibleTimer    = 0;
     obj_set_dormant(cappy, true);

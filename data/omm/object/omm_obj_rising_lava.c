@@ -6,9 +6,10 @@
 // Gfx data
 //
 
-static const Lights1 omm_rising_lava_light = OMM_LIGHT(
+static const Lights1 omm_rising_lava_light = gdSPDefLights1(
     0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF
+    0xFF, 0xFF, 0xFF,
+    0x28, 0x28, 0x28
 );
 
 static const Vtx omm_rising_lava_vertices[] = {

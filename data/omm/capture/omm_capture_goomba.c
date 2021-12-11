@@ -116,7 +116,7 @@ s32 cappy_goomba_update(struct Object *o) {
     POBJ_SET_ABLE_TO_MOVE_ON_SLOPES;
 
     // Inputs
-    if (!omm_mario_is_locked(gMarioState)) {
+    if (!obj_update_door(o) && !omm_mario_is_locked(gMarioState)) {
         pobj_move(o, POBJ_B_BUTTON_DOWN, false, false);
         if (pobj_jump(o, 0, 1) == POBJ_RESULT_JUMP_START) {
             obj_play_sound(o, SOUND_OBJ_GOOMBA_ALERT);
@@ -132,6 +132,9 @@ s32 cappy_goomba_update(struct Object *o) {
 
     // Interactions
     POBJ_INTERACTIONS(
+
+    // Doors
+    obj_open_door(o, obj);
 
     // Goomba stack
     if (gOmmData->object->goomba.stackCount < (OBJ_GOOMBA_STACK_MAX - 1) && omm_obj_is_goomba(obj) && obj->oIntangibleTimer == 0) {

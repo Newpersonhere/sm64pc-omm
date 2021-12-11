@@ -34,8 +34,6 @@ bool omm_mario_throw_cappy(struct MarioState *m, u32 action, u32 actionArg, u16 
 }
 
 void omm_mario_init_next_action(struct MarioState *m) {
-    //m->input &= ~(INPUT_A_PRESSED | INPUT_B_PRESSED | INPUT_Z_PRESSED);
-    // TODO: Reenable this line if strange behaviors appear
 
     // Set Mario's facing direction
     if ((m->controller->stickMag > 32.f) && (
@@ -166,6 +164,9 @@ bool omm_mario_is_kicking(struct MarioState *m) {
 
 bool omm_mario_is_ground_pounding(struct MarioState *m) {
     return (m->action == ACT_GROUND_POUND) ||
+#if defined(R96A)
+           (m->action == ACT_WARIO_PILE_DRIVER) ||
+#endif
            (m->action == ACT_OMM_SPIN_POUND) ||
            (m->action == ACT_OMM_WATER_GROUND_POUND) ||
            (m->action == ACT_OMM_METAL_WATER_GROUND_POUND) ||
@@ -174,6 +175,9 @@ bool omm_mario_is_ground_pounding(struct MarioState *m) {
 
 bool omm_mario_is_ground_pound_landing(struct MarioState *m) {
     return (m->action == ACT_GROUND_POUND_LAND) ||
+#if defined(R96A)
+           (m->action == ACT_WARIO_PILE_DRIVER_LAND) ||
+#endif
            (m->action == ACT_OMM_SPIN_POUND_LAND) ||
            (m->action == ACT_OMM_WATER_GROUND_POUND_LAND) ||
            (m->action == ACT_OMM_METAL_WATER_GROUND_POUND_LAND) ||
@@ -236,6 +240,12 @@ bool omm_mario_is_holding(struct MarioState *m) {
            (m->action == ACT_HOLDING_POLE) ||
            (m->action == ACT_HOLDING_BOWSER) ||
            (m->action == ACT_OMM_HOLD_BOWSER);
+}
+
+bool omm_mario_is_hanging(struct MarioState *m) {
+    return (m->action == ACT_START_HANGING) ||
+           (m->action == ACT_HANGING) ||
+           (m->action == ACT_HANG_MOVING);
 }
 
 bool omm_mario_is_stuck_in_ground_after_fall(struct MarioState *m) {
@@ -367,10 +377,14 @@ bool omm_mario_check_grab(struct MarioState *m, struct Object *o, bool ignoreAng
 
             // Vanilla Bowser?
             if (bowser && !obj_is_dormant(bowser)) {
-                s16 deltaYaw = m->faceAngle[1] - bowser->oFaceAngleYaw;
-
+#if defined(R96A)
+                // Spamba Bowser
+                if (bowser->oInteractType == INTERACT_DAMAGE) {
+                    return false;
+                }
+#endif
                 // Is Mario facing Bowser's tail, in a 120 deg arc?
-                if (ignoreAngles || (-0x5555 < deltaYaw && deltaYaw < +0x5555)) {
+                if (ignoreAngles || omm_abs_s((s16) (m->faceAngle[1] - bowser->oFaceAngleYaw)) < 0x5555) {
                     gOmmData->mario->grab.obj = bowser;
                     return true;
                 }
@@ -1036,7 +1050,11 @@ void bhv_mario_update() {
     omm_world_update(m);
 
     // Gfx & camera stuff
+#if defined(R96A)
+    if (!m->milk) squish_mario_model(m);
+#else
     squish_mario_model(m);
+#endif
     sink_mario_in_quicksand(m);
     set_submerged_cam_preset_and_spawn_bubbles(m);
     update_mario_info_for_cam(m);
@@ -1064,7 +1082,9 @@ void bhv_mario_update() {
     }
 
     // Misc
+#if !defined(R96A)
     play_infinite_stairs_music();
+#endif
     m->numLives = omm_max_s(m->numLives, 1);
     m->numStars = save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1);
 
@@ -1076,14 +1096,56 @@ void bhv_mario_update() {
     gMarioObject->oInteractStatus = 0;
     gMarioObject->oMarioParticleFlags = m->particleFlags;
 
+    // Update Peach's body state
+    if (OMM_PLAYER_IS_PEACH) {
+
+        // Torso
+        // Between Mario and Beytah
+        m->marioBodyState->torsoAngle[0] *= 0.0f;
+        m->marioBodyState->torsoAngle[1] *= 1.0f;
+        m->marioBodyState->torsoAngle[2] *= 0.5f;
+
+        // Head
+        // Move the head up and down if she's crying
+        if (m->action == ACT_IDLE && omm_peach_vibe_is_gloom()) {
+            f32 tAnim = (f32) m->marioObj->header.gfx.mAnimInfo.animFrame / (f32) m->marioObj->header.gfx.mAnimInfo.curAnim->mLoopEnd;
+            m->marioBodyState->action |= ACT_FLAG_WATER_OR_TEXT;
+            m->marioBodyState->headAngle[0] = omm_relerp_f(sins(tAnim * 0x30000), -1.f, +1.f, -0x1000, -0x1800);
+            m->marioBodyState->headAngle[1] = 0;
+            m->marioBodyState->headAngle[2] = 0;
+        }
+
+        // Eyes
+        // Each Vibe has a unique expression
+        if (omm_peach_vibe_is_joy()) {
+            m->marioBodyState->eyeState = 4;
+        } else if (omm_peach_vibe_is_rage()) {
+            m->marioBodyState->eyeState = 5;
+        } else if (omm_peach_vibe_is_gloom()) {
+            m->marioBodyState->eyeState = 6;
+        } else if (m->marioBodyState->handState == MARIO_HAND_PEACE_SIGN) {
+            m->marioBodyState->eyeState = 7;
+        }
+
+        // Hands
+        // Show Peach's crown or Tiara in her right hand
+        bool tiara = !OMM_CAP_CLASSIC && gOmmExtrasCappyEyesOnMariosCap;
+        if (tiara && m->marioBodyState->handState == MARIO_HAND_HOLDING_CAP) {
+            m->marioBodyState->handState = MARIO_HAND_HOLDING_WING_CAP;
+        } else if (!tiara && m->marioBodyState->handState == MARIO_HAND_HOLDING_WING_CAP) {
+            m->marioBodyState->handState = MARIO_HAND_HOLDING_CAP;
+        }
+
+        // Cap
+        // Hide the wings if invisible mode is enabled
+        if (gOmmExtrasInvisibleMode) {
+            m->marioBodyState->capState = MARIO_HAS_DEFAULT_CAP_OFF;
+        }
+    }
+    
     // Graph node preprocessing
     // Compute Mario's hands, arms, head and root positions
-    if (OMM_PLAYER_IS_PEACH) {
-        extern void omm_geo_peach_preprocess(void *caller, struct Object *obj, struct GraphNode *node, f32 x, f32 y, f32 z);
-        omm_geo_preprocess_object_graph_node(gMarioObject, omm_geo_peach_preprocess);
-    } else {
-        omm_geo_preprocess_object_graph_node(gMarioObject, NULL);
-    }
+    omm_geo_preprocess_object_graph_node(gMarioObject);
 
     // Spawn particles
     if (m->particleFlags & PARTICLE_DUST                ) spawn_particle(ACTIVE_PARTICLE_DUST,                 MODEL_MIST,                 bhvMistParticleSpawner);

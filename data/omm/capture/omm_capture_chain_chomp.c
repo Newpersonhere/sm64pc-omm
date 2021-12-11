@@ -124,7 +124,7 @@ s32 cappy_chain_chomp_update(struct Object *o) {
     if (gOmmData->object->chain_chomp.isBiting) {
         if (o->oWall && o->oWall->object && o->oWall->object->behavior == bhvChainChompGate) {
             o->oChainChompHitGate = true;
-            play_puzzle_jingle();
+            audio_play_puzzle_jingle();
         }
     }
 

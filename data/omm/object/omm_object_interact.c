@@ -57,7 +57,6 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvAirborneDeathWarp, 0 },
     { bhvAirborneStarCollectWarp, 0 },
     { bhvAirborneWarp, 0 },
-    { bhvAlphaBooKey, 0 },
     { bhvAmbientSounds, 0 },
     { bhvAnimatedTexture, 0 },
     { bhvAnimatesOnFloorSwitchPress, 0 },
@@ -601,6 +600,27 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvgoombone, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_GOOMBA | BHV_TYPE_VIBE_SPARKLES_3 },
 #endif
 
+#if defined(R96A)
+    { bhvBetaBooKey, BHV_TYPE_MUSHROOM_1UP },
+    { bhvWarioCoin, BHV_TYPE_MUSHROOM_1UP },
+    { bhvMovingYellowCoinWario, BHV_TYPE_COIN },
+    { bhvBlueCoinMotos, BHV_TYPE_COIN },
+    { bhvMotosHand, 0 },
+    { bhvMotos, BHV_TYPE_BULLY | BHV_TYPE_GRABBABLE | BHV_TYPE_VIBE_SPARKLES_4 },
+    { bhvYoshiEgg, BHV_TYPE_COIN },
+    { bhvBlargg, BHV_TYPE_FLAME | BHV_TYPE_VIBE_SPARKLES_3 },
+    { bhvFriendlyBlargg, 0 },
+    { bhvCharacterSwitchPipe, 0 },
+    { bhvCharacterSwitchPipeWarioLocked, 0 },
+    { bhvCharacterSwitchPipeWarioUnlocked, 0 },
+    { bhvCharacterSwitchPipeLuigiLocked, 0 },
+    { bhvCharacterSwitchPipeLuigiUnlocked, 0 },
+    { bhvMilk, BHV_TYPE_MUSHROOM_1UP },
+    { bhvSpambaYellowCoin, BHV_TYPE_COIN },
+    { bhvSpambaRedCoin, BHV_TYPE_COIN },
+    { bhvSpambaBlueCoin, BHV_TYPE_COIN },
+#endif
+
 #if defined(SMSR)
     { bhvCustomSMSRBreakableRock, BHV_TYPE_BREAKABLE | BHV_TYPE_VIBE_SPARKLES_5 },
     { bhvCustomSMSRWoodenOctagonalPlatform, 0 },
@@ -694,7 +714,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { omm_bhv_flaming_bobomb, BHV_TYPE_INVULNERABLE },
     { omm_bhv_flaming_bobomb_aura, 0 },
     { omm_bhv_flaming_bobomb_explosion, 0 },
-    { omm_bhv_sparkly_star, 0 },
+    { omm_bhv_sparkly_star, BHV_TYPE_STAR_OR_KEY },
     { omm_bhv_sparkly_star_hint, 0 },
     { omm_bhv_sparkly_star_1_block, BHV_TYPE_BREAKABLE },
     { omm_bhv_sparkly_star_2_block, BHV_TYPE_BREAKABLE },
@@ -1096,7 +1116,7 @@ CAPPY_ONLY_CODE(
                 if (omm_obj_is_wf_star_wall(target)) {
                     omm_obj_handle_perry_attack(target, interactionFlags);
                     target->oInteractStatus = INT_STATUS_INTERACTED;
-                    play_puzzle_jingle();
+                    audio_play_puzzle_jingle();
                     obj_destroy(target);
 CAPPY_ONLY_CODE(
                     omm_cappy_bounce_back(o);
@@ -1172,6 +1192,9 @@ CAPPY_ONLY_CODE(
             if (interactionFlags & OBJ_INT_COLLECT_STARS) {
                 if (omm_obj_is_star_or_key(target)) {
                     omm_mario_interact_star_or_key(m, target);
+CAPPY_ONLY_CODE(
+                    omm_cappy_return_to_mario(o);
+);
                 }
             }
 
@@ -1294,6 +1317,7 @@ CAPPY_ONLY_CODE(
                     target->oMoveAngleYaw = obj_get_object1_angle_yaw_to_object2((o->parentObj != NULL) ? o->parentObj : o, target);
                     target->oFaceAngleYaw = target->oMoveAngleYaw + 0x8000;
                     target->oInteractStatus = (ATTACK_KICK_OR_TRIP | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED);
+                    target->oInteractStatus |= (interactionFlags & (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG)) << 24; // Attack type
                     play_sound(SOUND_OBJ_BULLY_METAL, target->oCameraToObject);
 CAPPY_ONLY_CODE(
                     omm_cappy_bounce_back(o);

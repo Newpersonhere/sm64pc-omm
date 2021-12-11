@@ -116,7 +116,10 @@ void omm_sparkly_ending_render_screen() {
         sSoundTimer = (sSoundTimer + 1) * (gGlobalTimer == sLastTick + 1);
         sLastTick = gGlobalTimer;
         switch (sSoundTimer) {
-            case   1: sound_banks_disable(SEQ_PLAYER_SFX, 0xFFFF); break;
+            case 001: sound_banks_disable(SEQ_PLAYER_SFX, 0xFFFF); break;
+#if defined(R96A)
+            case 120: dynos_sound_stop(1); break;
+#endif
             case 121: sound_banks_enable(SEQ_PLAYER_SFX, 0xFFFF); break;
             case 122: play_sound(sOmmEndingSounds[omm_sparkly_ending], gGlobalSoundArgs); break;
         }

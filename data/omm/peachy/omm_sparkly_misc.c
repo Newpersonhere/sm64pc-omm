@@ -58,6 +58,8 @@ void omm_sparkly_turn_off_cheats() {
         gOmmCheatCappyStaysForever = false;
         gOmmCheatHomingAttackGlobalRange = false;
         gOmmCheatMarioTeleportsToCappy = false;
+        gOmmCheatCappyCanCollectStars = false;
+        gOmmCheatPlayAsCappy = false;
         gOmmCheatPeachEndlessVibeGauge = false;
     }
 }

@@ -97,6 +97,7 @@
 #include "game/print.h"
 #include "game/rendering_graph_node.h"
 #include "game/save_file.h"
+#include "game/screen_transition.h"
 #include "game/segment2.h"
 #include "game/sound_init.h"
 #include "game/spawn_object.h"
@@ -121,6 +122,7 @@
 #include FILE_OPTIONS_H
 #include FILE_SOUNDS_H
 #include FILE_CHEATS_H
+#include FILE_MARIO_CHEATS_H
 #include FILE_TITLE_H
 #include FILE_BETTERCAM_H
 #include FILE_TXT_CONV_H
@@ -129,14 +131,14 @@
 #endif
 
 // SM64 globals
-extern s8 gDialogBoxState;
-extern s8 gDialogBoxType;
-extern s8 gDialogLineNum;
-extern s8 gLastDialogResponse;
+extern s8 gDialogType;
+extern s8 gDialogState;
+extern s8 gDialogLineIndex;
+extern s8 gDialogChoice;
 extern u8 gCurrentAnimType;
 extern u8 sFramesSinceCutsceneEnded;
 extern u8 sSpawnTypeFromWarpBhv[];
-extern u8 gDialogCharWidths[256];
+extern u8 gDialogCharWidths[];
 extern u8 texture_hud_char_puppycam[];
 extern u8 *gEndCutsceneStringsEn[];
 extern s16 *gCurrentAnimData;
@@ -144,18 +146,20 @@ extern s16 gCurrAnimFrame;
 extern s16 gCutsceneMsgIndex;
 extern s16 gDialogID;
 extern s16 gDialogScrollOffsetY;
-extern s16 gDialogTextPos;
-extern s16 gLastDialogPageStrPos;
+extern s16 gDialogPageStart;
+extern s16 gDialogPageStartNext;
 extern s16 gMenuMode;
 extern s16 gIsHardMode;
+extern s16 sInvulnerable;
 extern s16 sStatusFlags;
 extern s16 sYawSpeed;
 extern u16 sAcousticReachPerLevel[];
 extern u16 *gCurrAnimAttribute;
 extern s32 gFindFloorForCutsceneStar;
 extern s32 sNumKilledFirePiranhaPlants;
-extern f32 gDialogBoxOpenTimer;
-extern f32 gDialogBoxScale;
+extern u32 gKeyPressed;
+extern f32 gDialogAngle;
+extern f32 gDialogScale;
 extern const Gfx NULL_dl[];
 extern const BehaviorScript *sWarpBhvSpawnTable[];
 extern struct PlayerGeometry sMarioGeometry;
@@ -168,13 +172,15 @@ extern s32 begin_braking_action(struct MarioState *m);
 extern s32 check_ground_dive_or_punch(struct MarioState *m);
 extern s32 check_horizontal_wind(struct MarioState *m);
 extern s32 lava_boost_on_wall(struct MarioState *);
+extern s32 perform_hang_step(struct MarioState *m);
 extern s32 perform_water_step(struct MarioState *m);
 extern s32 should_begin_sliding(struct MarioState *m);
 extern u32 common_air_action_step(struct MarioState *, u32, s32, u32);
 extern u32 determine_interaction(struct MarioState *m, struct Object *o);
-extern u32 interact_cap(struct MarioState *m, UNUSED u32 interactType, struct Object *o);
-extern u32 interact_coin(struct MarioState *m, UNUSED u32 interactType, struct Object *o);
-extern u32 interact_warp(struct MarioState *m, UNUSED u32 interactType, struct Object *o);
+extern u32 interact_cap(struct MarioState *m, u32 interactType, struct Object *o);
+extern u32 interact_coin(struct MarioState *m, u32 interactType, struct Object *o);
+extern u32 interact_flame(struct MarioState *m, u32 interactType, struct Object *o);
+extern u32 interact_warp(struct MarioState *m, u32 interactType, struct Object *o);
 extern f32 get_buoyancy(struct MarioState *m);
 extern bool cur_obj_update_behavior_func(void (*func)(void));
 extern void apply_slope_accel(struct MarioState *m);

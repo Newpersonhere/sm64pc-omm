@@ -47,11 +47,9 @@ static void omm_opt_init_warp_to_level() {
     sOmmWarpActChoices[1] = sOmmWarpActChoices[0];
     sOmmWarpActChoices[2] = sOmmWarpActChoices[0] + omm_array_count(sOmmWarpActValues[1]);
     for (sm74_mode__omm_opt_init_warp_to_level = 1; sm74_mode__omm_opt_init_warp_to_level <= 2; ++sm74_mode__omm_opt_init_warp_to_level) {
-        for (s32 i = 0; i != omm_array_count(sOmmWarpActValues[sm74_mode__omm_opt_init_warp_to_level]); ++i) {
-            s32 level = omm_array_getp(sOmmWarpActValues[sm74_mode__omm_opt_init_warp_to_level], ActValues, i)->level;
-            s32 act = omm_array_getp(sOmmWarpActValues[sm74_mode__omm_opt_init_warp_to_level], ActValues, i)->act;
-            const u8 *name = omm_level_get_act_name(level, act, true, true);
-            sOmmWarpActChoices[sm74_mode__omm_opt_init_warp_to_level][i] = OMM_MEMDUP(name, omm_text_length(name) + 1);
+        omm_array_for_each(sOmmWarpActValues[sm74_mode__omm_opt_init_warp_to_level], ActValues, actValues) {
+            const u8 *name = omm_level_get_act_name(actValues->level, actValues->act, true, true);
+            sOmmWarpActChoices[sm74_mode__omm_opt_init_warp_to_level][index_actValues] = OMM_MEMDUP(name, omm_text_length(name) + 1);
         }
     }
 }
@@ -103,9 +101,9 @@ static u32 omm_opt_get_level_index(s32 level) {
 
 static u32 omm_opt_get_first_act_index(s32 level) {
     s32 mode = sOmmWarpArea + 1;
-    for (s32 i = 0; i != omm_array_count(sOmmWarpActValues[mode]); ++i) {
-        if (omm_array_getp(sOmmWarpActValues[mode], ActValues, i)->level == level) {
-            return i;
+    omm_array_for_each(sOmmWarpActValues[mode], ActValues, actValues) {
+        if (actValues->level == level) {
+            return index_actValues;
         }
     }
     return 0;
@@ -166,7 +164,7 @@ void omm_opt_sm74_change_mode(UNUSED void *opt, s32 arg) {
         initiate_warp(gCurrLevelNum, gCurrAreaIndex ^ 3, 0x0A, 0);
         fade_into_special_warp(0, 0);
         gSavedCourseNum = COURSE_NONE;
-        gDialogBoxState = 0;
+        gDialogState = 0;
         gMenuMode = -1;
     }
 }

@@ -47,7 +47,7 @@ static void omm_bhv_sparkly_star_update() {
         // Invisible
         case 0: {
             if (o->oTimer == 15) {
-                play_puzzle_jingle();
+                audio_play_puzzle_jingle();
             } else if (o->oTimer >= 90) {
                 o->oHomeX = o->oSparklyStarPosX;
                 o->oHomeY = o->oSparklyStarPosY;
@@ -93,7 +93,7 @@ static void omm_bhv_sparkly_star_update() {
                     o->oFaceAngleYaw += 0x0800;
                     play_sound(SOUND_ENV_STAR, o->oCameraToObject);
                     if (o->oTimer >= 30) {
-                        play_power_star_jingle(true);
+                        audio_play_star_jingle();
                         o->oForwardVel = 0;
                         o->oSubAction++;
                         o->oTimer = 0;
@@ -158,7 +158,7 @@ static void omm_bhv_sparkly_star_update() {
 
     // Interaction
     bool tangible = (o->oAction == 2);
-    s32 interactType = INTERACT_UNKNOWN_31 * tangible;
+    s32 interactType = INTERACT_STAR_OR_KEY * tangible;
     f32 hitboxRadius = 50.f * tangible;
     f32 hitboxHeight = 100.f * tangible;
     obj_set_params(o, interactType, 0, 0, 0, tangible);

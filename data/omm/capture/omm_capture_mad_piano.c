@@ -2,6 +2,10 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
+#if defined(R96A)
+#define cappy_mad_piano_play_song(...)
+#else
+
 static s32 sSeqCurrentId = -1;
 OMM_ROUTINE_LEVEL_ENTRY(cappy_mad_piano_reset_seq_current_id) {
     sSeqCurrentId = -1;
@@ -21,6 +25,8 @@ static void cappy_mad_piano_play_song(bool aPress, bool bPress) {
         play_sequence(SEQ_PLAYER_LEVEL, sSeqCurrentId + 1, 60);
     }
 }
+
+#endif
 
 //
 // Init

@@ -77,7 +77,7 @@ s32 cappy_penguin_small_update(struct Object *o) {
         // Dive
         if (POBJ_B_BUTTON_PRESSED && (obj_is_on_ground(o) || gOmmData->object->state.actionState != 1)) {
             obj_set_forward_vel(o, o->oFaceAngleYaw, 1.f, omm_clamp_f(o->oForwardVel * 1.5f, omm_capture_get_walk_speed(o), omm_capture_get_dash_speed(o) * maxSpeedMult));
-            o->oVelY = omm_max_f(o->oVelY, omm_capture_get_jump_velocity(o) / 2.f);
+            o->oVelY = omm_max_f(o->oVelY, omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER / 2.f);
             o->oFloor = NULL;
             gOmmData->object->state.actionState = 1;
             omm_mario_lock(gMarioState, 15);

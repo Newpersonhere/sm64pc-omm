@@ -75,7 +75,7 @@ s32 cappy_koopa_update(struct Object *o) {
     obj_scale(o, gOmmData->object->koopa.scale);
 
     // Inputs
-    if (!omm_mario_is_locked(gMarioState)) {
+    if (!obj_update_door(o) && !omm_mario_is_locked(gMarioState)) {
         bool shelled = (o->oKoopaMovementType != KOOPA_BP_UNSHELLED);
         pobj_move(o, !shelled && POBJ_B_BUTTON_DOWN, shelled && POBJ_B_BUTTON_DOWN, false);
         if (pobj_jump(o, 0, 1) == POBJ_RESULT_JUMP_START) {
@@ -134,6 +134,9 @@ s32 cappy_koopa_update(struct Object *o) {
 
     // Interactions
     POBJ_INTERACTIONS(
+
+    // Doors
+    obj_open_door(o, obj);
 
     // Koopa shell
     if (obj->behavior == bhvKoopaShell && o->oKoopaMovementType == KOOPA_BP_UNSHELLED) {

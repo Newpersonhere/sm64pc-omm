@@ -83,7 +83,7 @@ void omm_select_save_file(s32 saveFileNum) {
 void omm_return_to_main_menu() {
     if (optmenu_open) optmenu_toggle();
     fade_into_special_warp(-2, 0);
-    gDialogBoxState = 0;
+    gDialogState = 0;
     gMenuMode = -1;
 }
 
@@ -111,7 +111,11 @@ void omm_update() {
             if ((buttonPressed & buttonRequired) == buttonRequired) {
                 sOmmCompleteSaveSequenceIndex++;
                 if (sOmmCompleteSaveButtons[sOmmCompleteSaveSequenceIndex] == A_BUTTON) {
+#if defined(R96A)
+                    play_sound(SOUND_MENU_STAR_SOUND | 0xFF00, gGlobalSoundArgs); // For some reason the 'right answer' sound effect doesn't play
+#else
                     play_sound(SOUND_GENERAL2_RIGHT_ANSWER | 0xFF00, gGlobalSoundArgs);
+#endif
                 }
             } else {
                 sOmmCompleteSaveSequenceIndex = 0;
@@ -148,13 +152,16 @@ void omm_update() {
 static void omm_gfx_update_stars_models() {
 
     // Stars number
-    if (gOmmExtrasShowStarNumber
+    if (gOmmExtrasShowStarNumber && !omm_is_ending_cutscene()
 #if defined(SMSR)
         && gCurrLevelNum != LEVEL_ENDING
 #endif
     ) { for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_star_or_key_behaviors()) {
             for_each_object_with_behavior(star, *bhv) {
-                if (!obj_is_dormant(star) && star->behavior != bhvBowserKey && star->behavior != bhvGrandStar) {
+                if (!obj_is_dormant(star) &&
+                    star->behavior != bhvBowserKey &&
+                    star->behavior != bhvGrandStar &&
+                    star->behavior != omm_bhv_sparkly_star) {
                     bool numberSpawned = false;
                     for_each_object_with_behavior(obj, omm_bhv_star_number) {
                         if (obj->activeFlags && obj->parentObj == star) {
@@ -233,28 +240,27 @@ static void omm_gfx_update_stars_models() {
 }
 
 static void omm_gfx_update_caps_models() {
-    s32 playerCaps[] = {
-        omm_player_get_selected_normal_cap(),
-        omm_player_get_selected_wing_cap(),
-        omm_player_get_selected_metal_cap(),
-        omm_player_get_selected_winged_metal_cap()
+    static s32 (*sCapFunctions[])(s32) = {
+        omm_player_get_normal_cap,
+        omm_player_get_wing_cap,
+        omm_player_get_metal_cap,
+        omm_player_get_winged_metal_cap,
     };
-    for (s32 i = 0; i != OMM_NUM_PLAYABLE_CHARACTERS; ++i) {
-        s32 characterCaps[] = {
-            omm_player_get_normal_cap(i),
-            omm_player_get_wing_cap(i),
-            omm_player_get_metal_cap(i),
-            omm_player_get_winged_metal_cap(i)
-        };
-        for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_cap_behaviors()) {
-            for_each_object_with_behavior(obj, *bhv) {
-                for (s32 i = 0; i != 4; ++i) {
-                    if (obj_check_model(obj, characterCaps[i])) {
-                        obj->oGraphNode = gLoadedGraphNodes[playerCaps[i]];
+    s32 playerIndex = omm_player_get_selected_index();
+    for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_cap_behaviors()) {
+        for_each_object_with_behavior(obj, *bhv) {
+            for (s32 capType = 0; capType != 4; ++capType) {
+                s32 playerCapModel = sCapFunctions[capType](playerIndex);
+                for (s32 charIndex = 0; charIndex != OMM_NUM_PLAYABLE_CHARACTERS; ++charIndex) {
+                    s32 charCapModel = sCapFunctions[capType](charIndex);
+                    if (charCapModel != playerCapModel && obj_check_model(obj, charCapModel)) {
+                        obj->oGraphNode = gLoadedGraphNodes[playerCapModel];
+                        capType = 3; // break the other for loop
                         break;
                     }
                 }
             }
+            omm_geo_preprocess_object_graph_node(obj);
         }
     }
 }

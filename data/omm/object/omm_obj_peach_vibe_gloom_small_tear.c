@@ -6,14 +6,16 @@
 // Gfx data
 //
 
-static const Lights1 omm_peach_vibe_gloom_tear_small_light_1 = OMM_LIGHT(
+static const Lights1 omm_peach_vibe_gloom_tear_small_light_1 = gdSPDefLights1(
     0x80, 0xC0, 0xFF,
-    0x80, 0xC0, 0xFF
+    0x80, 0xC0, 0xFF,
+    0x28, 0x28, 0x28
 );
 
-static const Lights1 omm_peach_vibe_gloom_tear_small_light_2 = OMM_LIGHT(
+static const Lights1 omm_peach_vibe_gloom_tear_small_light_2 = gdSPDefLights1(
     0x00, 0x80, 0xFF,
-    0x00, 0x80, 0xFF
+    0x00, 0x80, 0xFF,
+    0x28, 0x28, 0x28
 );
 
 static const Vtx omm_peach_vibe_gloom_tear_small_vertices[] = {

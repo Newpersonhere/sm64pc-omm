@@ -8,7 +8,7 @@
 
 static bool omm_cappy_is_obj_targetable(struct Object *o, struct MarioState *m) {
     return o->behavior == bhvTreasureChestBottom || (
-           omm_obj_check_interaction(o, m, false) && 
+           omm_obj_check_interaction(o, m, false) &&
           !omm_obj_is_intangible_to_cappy(o) && (
            omm_obj_is_coin(o) ||
            omm_obj_is_weak(o) ||
@@ -17,7 +17,8 @@ static bool omm_cappy_is_obj_targetable(struct Object *o, struct MarioState *m) 
            omm_obj_is_unagis_tail(o) ||
            omm_obj_is_mushroom_1up(o) ||
            omm_obj_is_exclamation_box(o) ||
-          (OMM_CAP_CAPPY_CAPTURE && (omm_capture_get_data(o) != NULL))));
+          (omm_obj_is_star_or_key(o) && OMM_CHEAT_CAPPY_CAN_COLLECT_STARS) ||
+          (omm_capture_get_data(o) && OMM_CAP_CAPPY_CAPTURE)));
 }
 
 struct Object *omm_cappy_find_target(struct Object *cappy, struct MarioState *m, f32 distanceMax) {
@@ -67,6 +68,13 @@ bool omm_cappy_is_mario_available(struct MarioState *m, bool isCapture) {
         return true;
     }
 
+#if defined(R96A)
+    // Wario's shoulder bash
+    if (m->action == ACT_WARIO_CHARGE) {
+        return true;
+    }
+#endif
+
     // Not intangible/interacting
     if (((m->action & ACT_FLAG_ON_POLE)      != 0 && !isCapture) ||
         ((m->action & ACT_FLAG_HANGING)      != 0 && !isCapture) ||
@@ -81,7 +89,7 @@ bool omm_cappy_is_mario_available(struct MarioState *m, bool isCapture) {
 }
 
 void omm_cappy_try_to_target_next_coin(struct Object *cappy) {
-    if (cappy->oCappyHomingAttack) {
+    if (cappy->oCappyFlags & CAPPY_FLAG_HOMING_ATTACK) {
         struct Object *target = omm_cappy_find_target(cappy, gMarioState, CAPPY_HOMING_ATTACK_VEL * CAPPY_HOMING_ATTACK_DURATION);
         if (target) {
             f32 dx = target->oPosX - cappy->oPosX;
@@ -99,7 +107,7 @@ void omm_cappy_try_to_target_next_coin(struct Object *cappy) {
 }
 
 void omm_cappy_bounce_back(struct Object *cappy) {
-    if (cappy->oCappyBehavior < OMM_CAPPY_BHV_SPIN_GROUND) {
+    if (cappy->oCappyBehavior < OMM_CAPPY_BHV_SPIN_GROUND && !(cappy->oCappyFlags & CAPPY_FLAG_PLAY_AS)) {
         spawn_object(cappy, MODEL_NONE, bhvHorStarParticleSpawner);
         play_sound(SOUND_OBJ_DEFAULT_DEATH, cappy->oCameraToObject);
         omm_cappy_return_to_mario(cappy);
@@ -109,7 +117,7 @@ void omm_cappy_bounce_back(struct Object *cappy) {
 void omm_cappy_process_interactions(struct Object *cappy, struct MarioState *m) {
 
     // Is Cappy tangible for Mario?
-    if (cappy->oCappyInteractMario && !gOmmData->mario->cappy.bounced) {
+    if ((cappy->oCappyFlags & CAPPY_FLAG_INTERACT_MARIO) && !gOmmData->mario->cappy.bounced) {
 
         // Mario must be available and not swimming
         if (omm_cappy_is_mario_available(m, false) && !(m->action & ACT_FLAG_SWIMMING)) {

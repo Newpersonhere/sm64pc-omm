@@ -3,6 +3,7 @@
 #undef OMM_ALL_HEADERS
 
 struct OmmData *gOmmData = NULL;
+s32 *gOmmPeachVibeTypeRef = NULL;
 
 static void omm_data_reset_mario_fields() {
 
@@ -167,4 +168,5 @@ OMM_AT_STARTUP static void omm_data_init() {
     gOmmData->updateMario = omm_data_update_mario_fields;
     gOmmData->updateObject = omm_data_update_object_fields;
     gOmmData->reset();
+    gOmmPeachVibeTypeRef = &gOmmData->mario->peach.vibeType;
 }

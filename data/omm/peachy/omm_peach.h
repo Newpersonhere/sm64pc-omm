@@ -9,10 +9,6 @@
 #define MODEL_PEACHS_METAL_CAP_OMM          0x33
 #define MODEL_PEACHS_WINGED_METAL_CAP_OMM   0x34
 
-bool omm_peach_is_unlocked();
-bool omm_peach_is_selected();
-bool omm_peach_select(bool select);
-
 bool omm_peach_vibe_is_active();
 bool omm_peach_vibe_is_joy();
 bool omm_peach_vibe_is_rage();

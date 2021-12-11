@@ -64,7 +64,7 @@ s32 cappy_bobomb_update(struct Object *o) {
     POBJ_SET_ABOVE_WATER;
 
     // Inputs
-    if (!omm_mario_is_locked(gMarioState)) {
+    if (!obj_update_door(o) && !omm_mario_is_locked(gMarioState)) {
         pobj_move(o, false, false, false);
         if (pobj_jump(o, 0, 1) == POBJ_RESULT_JUMP_START) {
             obj_play_sound(o, SOUND_OBJ_GOOMBA_ALERT);
@@ -83,7 +83,7 @@ s32 cappy_bobomb_update(struct Object *o) {
 
             // If airborne, do a double jump
             if (!obj_is_on_ground(o)) {
-                o->oVelY = 1.6f * omm_capture_get_jump_velocity(o);
+                o->oVelY = 1.6f * omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER;
             }
 
             // If used three times in a row, delete the bob-omb
@@ -108,7 +108,12 @@ s32 cappy_bobomb_update(struct Object *o) {
     POBJ_STOP_IF_UNPOSSESSED;
 
     // Interactions
-    POBJ_INTERACTIONS();
+    POBJ_INTERACTIONS(
+
+    // Doors
+    obj_open_door(o, obj);
+    
+    );
     POBJ_STOP_IF_UNPOSSESSED;
 
     // Gfx

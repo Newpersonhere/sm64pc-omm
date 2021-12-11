@@ -2,73 +2,100 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
-#define SOUND_ID(sound) ((sound >> 16) & 0xFFFF)
-#define SOUND_PRIO(sound) ((sound >> 8) & 0xFF)
+#define SOUND_ID(sound)     (((sound) >> 16) & 0xFFFF)
+#define SOUND_PRIO(sound)   (((sound) >> 8) & 0xFF)
+#define SOUND_FREQ          32000
 
 //
 // Audio
 //
 
-#define OMM_AUDIO_FREQUENCY         32000
-#define OMM_AUDIO_FREQUENCY_STR     STRINGIFY(OMM_AUDIO_FREQUENCY)
-#define OMM_AUDIO_SEQUENCE_SIZE     (OMM_AUDIO_FREQUENCY / 10)
-#define OMM_AUDIO_OVERLAP_SIZE      (OMM_AUDIO_FREQUENCY / 50)
-#define OMM_AUDIO_WINDOW_SIZE       (OMM_AUDIO_FREQUENCY / 60)
+#define OMM_AUDIO_SEQUENCE_SIZE     (audioFreq / 10)
+#define OMM_AUDIO_OVERLAP_SIZE      (audioFreq / 50)
+#define OMM_AUDIO_WINDOW_SIZE       (audioFreq / 60)
 #define OMM_AUDIO_FLAT_DURATION     (OMM_AUDIO_SEQUENCE_SIZE - 2 * (OMM_AUDIO_OVERLAP_SIZE))
 #define OMM_AUDIO_SEQUENCE_SKIP     ((s32) ((OMM_AUDIO_SEQUENCE_SIZE - OMM_AUDIO_OVERLAP_SIZE) * (timeScale)))
 
 // Resampling is done in a temporary buffer, so output and input can be the same buffer
-// outputScale > 1 = time up, pitch down
-static s32 omm_audio_resample(u8 **output, const u8 *input, s32 inputLength, f32 outputScale) {
+// outputScale > 1 = time up, pitch down, uses linear interpolation
+s32 omm_audio_resample(u8 **output, const u8 *input, s32 inputLength, f32 outputScale) {
+    const s16 *inputBuffer = (const s16 *) input;
     s32 inputSamples = inputLength / sizeof(s16);
     s32 outputSamples = inputSamples * outputScale;
-    u8 *temp = OMM_MEMNEW(s16, outputSamples);
+    s16 *temp = OMM_MEMNEW(s16, outputSamples);
+    f32 invOutputScale = 1.f / outputScale;
 
     // Resampling
     for (s32 i = 0; i != outputSamples; ++i) {
-        s32 i0 = omm_clamp_s(((i / outputScale) + 0), 0, inputSamples - 1);
-        s32 i1 = omm_clamp_s(((i / outputScale) + 1), 0, inputSamples - 1);
-        f32 fi = (i / outputScale) - (f32) i0;
-        ((s16 *) temp)[i] = (s16) ((((const s16 *) input)[i0] * (1.f - fi)) + (((const s16 *) input)[i1] * fi));
+        s32 i0 = omm_clamp_s(i * invOutputScale, 0, inputSamples - 1);
+        s32 i1 = omm_clamp_s(i0 + 1, 0, inputSamples - 1);
+        f32 fi = (i * invOutputScale) - (f32) i0;
+        temp[i] = (inputBuffer[i0] * (1.f - fi)) + (inputBuffer[i1] * fi);
     }
 
     // Copy temp to output
     OMM_MEMDEL(*output);
-    *output = OMM_MEMDUP(temp, outputSamples * sizeof(s16));
-    OMM_MEMDEL(temp);
+    *output = (u8 *) temp;
+    return outputSamples * sizeof(s16);
+}
+
+// Resampling is done in a temporary buffer, so output and input can be the same buffer
+// outputScale > 1 = time up, pitch down, uses nearest neighbor
+s32 omm_audio_resample_fast(u8 **output, const u8 *input, s32 inputLength, f32 outputScale) {
+    const s16 *inputBuffer = (const s16 *) input;
+    s32 inputSamples = inputLength / sizeof(s16);
+    s32 outputSamples = inputSamples * outputScale;
+    s16 *temp = OMM_MEMNEW(s16, outputSamples);
+    f32 invOutputScale = 1.f / outputScale;
+
+    // Resampling
+    for (s32 i = 0; i != outputSamples; ++i) {
+        temp[i] = inputBuffer[omm_clamp_s(i * invOutputScale, 0, inputSamples - 1)];
+    }
+
+    // Copy temp to output
+    OMM_MEMDEL(*output);
+    *output = (u8 *) temp;
     return outputSamples * sizeof(s16);
 }
 
 // Time stretching is done in a temporary buffer, so output and input can be the same buffer
 // timeStretch > 1 = time up, pitch stays the same
-static s32 omm_audio_time_stretch(u8 **output, const u8 *input, s32 inputLength, f32 timeStretch) {
+s32 omm_audio_time_stretch(u8 **output, const u8 *input, s32 inputLength, s32 audioFreq, f32 timeStretch) {
     s32 inputSamples = inputLength / sizeof(s16);
     s32 outputSamples = inputSamples * timeStretch;
-    u8 *temp = OMM_MEMNEW(s16, outputSamples);
+    s16 *temp = OMM_MEMNEW(s16, outputSamples);
 
     // Synchronized OverLap-Add (SOLA) algorithm
     const s16 *inputBuffer = (const s16 *) input;
     const s16 *currOffset = inputBuffer;
-    s16 *outputBuffer = (s16 *) temp;
+    s16 *outputBuffer = temp;
+    f32 *overlap = OMM_MEMNEW(f32, OMM_AUDIO_OVERLAP_SIZE);
     f32 timeScale = 1.f / timeStretch;
     for (s32 remaining = inputSamples; remaining > OMM_AUDIO_SEQUENCE_SKIP + OMM_AUDIO_WINDOW_SIZE; remaining -= OMM_AUDIO_SEQUENCE_SKIP) {
+
+        // Buffer overflow failsafe
+        if ((uintptr_t) (currOffset + OMM_AUDIO_FLAT_DURATION + OMM_AUDIO_OVERLAP_SIZE) > (uintptr_t) (input + inputLength)) {
+            currOffset = ((const s16 *) (input + inputLength)) - (OMM_AUDIO_FLAT_DURATION + OMM_AUDIO_OVERLAP_SIZE);
+        }
+        
+        // Prepare output
         OMM_MEMCPY(outputBuffer, currOffset, OMM_AUDIO_FLAT_DURATION * sizeof(s16));
         const s16 *prevOffset = currOffset + OMM_AUDIO_FLAT_DURATION;
         inputBuffer += OMM_AUDIO_SEQUENCE_SKIP - OMM_AUDIO_OVERLAP_SIZE;
         s32 bestOffset = 0;
         f32 bestCorr = -1e30f;
-        f32 temp[OMM_AUDIO_OVERLAP_SIZE];
 
         // Precalculate overlapping slopes with prevOffset
         for (s32 i = 0; i < OMM_AUDIO_OVERLAP_SIZE; ++i) {
-            temp[i] = (f32) (prevOffset[i] * i * (OMM_AUDIO_OVERLAP_SIZE - i));
+            overlap[i] = (f32) (prevOffset[i] * i * (OMM_AUDIO_OVERLAP_SIZE - i));
         }
 
         // Find best overlap offset within [0..OMM_AUDIO_WINDOW_SIZE]
         for (s32 i = 0; i < OMM_AUDIO_WINDOW_SIZE; ++i) {
             f32 crossCorr = 0;
             for (s32 j = 0; j < OMM_AUDIO_OVERLAP_SIZE; ++j) {
-                crossCorr += (f32) inputBuffer[i + j] * temp[j];
+                crossCorr += (f32) inputBuffer[i + j] * overlap[j];
             }
             if (crossCorr > bestCorr) {
                 bestCorr = crossCorr;
@@ -90,35 +117,36 @@ static s32 omm_audio_time_stretch(u8 **output, const u8 *input, s32 inputLength,
 
     // Copy temp to output
     OMM_MEMDEL(*output);
-    *output = OMM_MEMDUP(temp, outputSamples * sizeof(s16));
-    OMM_MEMDEL(temp);
+    OMM_MEMDEL(overlap);
+    *output = (u8 *) temp;
     return outputSamples * sizeof(s16);
 }
 
-static void omm_audio_resize(u8 **output, const u8 *input, s32 inputLength, s32 desiredLength) {
-    u8 *temp = OMM_MEMNEW(s16, desiredLength);
+// Resizing is done in a temporary buffer, so output and input can be the same buffer
+s32 omm_audio_resize(u8 **output, const u8 *input, s32 inputLength, s32 desiredLength) {
+    u8 *temp = OMM_MEMNEW(u8, desiredLength);
     OMM_MEMCPY(temp, input, omm_min_s(inputLength, desiredLength));
     OMM_MEMDEL(*output);
-    *output = OMM_MEMDUP(temp, desiredLength);
-    OMM_MEMDEL(temp);
+    *output = temp;
+    return desiredLength;
 }
 
 // Pitch shifting is done in a temporary buffer, so output and input can be the same buffer
 // pitchScale > 1 = pitch up, time stays the same
-static s32 omm_audio_pitch_shift(u8 **output, const u8 *input, s32 inputLength, f32 pitchScale) {
+s32 omm_audio_pitch_shift(u8 **output, const u8 *input, s32 inputLength, s32 audioFreq, f32 pitchScale) {
     if (pitchScale > 1.f) {
-        s32 tempLength = omm_audio_time_stretch(output, input, inputLength, pitchScale);
+        s32 tempLength = omm_audio_time_stretch(output, input, inputLength, audioFreq, pitchScale);
         s32 finalLength = omm_audio_resample(output, *output, tempLength, 1.f / pitchScale);
         omm_audio_resize(output, *output, finalLength, inputLength);
     } else if (pitchScale > 0.f && pitchScale < 1.f) {
         s32 tempLength = omm_audio_resample(output, input, inputLength, 1.f / pitchScale);
-        s32 finalLength = omm_audio_time_stretch(output, *output, tempLength, pitchScale);
+        s32 finalLength = omm_audio_time_stretch(output, *output, tempLength, audioFreq, pitchScale);
         omm_audio_resize(output, *output, finalLength, inputLength);
     }
     return inputLength;
 }
 
-static u8 *omm_audio_mix(u8 *output, const u8 *input, s32 length, s32 volume, s32 distance) {
+u8 *omm_audio_mix(u8 *output, const u8 *input, s32 length, s32 volume, s32 distance) {
     s32 acrVolume = omm_clamp_s((1 << 7) - ((distance << 7) / sAcousticReachPerLevel[gCurrLevelNum]), 0, 1 << 7);
     s32 mixVolume = omm_clamp_s((volume * acrVolume) >> 7, 0, 1 << 7);
     for (s32 i = 0; i < length; i += sizeof(s16)) {
@@ -162,7 +190,7 @@ static SDL_AudioDeviceID omm_sound_get_device(u8 bank) {
 
         // Open sound device
         SDL_AudioSpec want, have;
-        want.freq     = OMM_AUDIO_FREQUENCY;
+        want.freq     = SOUND_FREQ;
         want.format   = AUDIO_S16SYS;
         want.channels = 1;
         want.samples  = 0x200;
@@ -248,8 +276,8 @@ static void omm_sound_load_wav(s32 id, const char *name, u8 bank, s32 vibesPitch
     if (!SDL_LoadWAV(filename, &wav, &data, (u32 *) &length)) {
         sys_fatal("omm_sound_load_wav: Unable to load file %s.", filename);
     }
-    if (wav.freq != OMM_AUDIO_FREQUENCY) {
-        sys_fatal("omm_sound_load_wav: From file %s, audio frequency should be " OMM_AUDIO_FREQUENCY_STR " Hz, is %d.", filename, wav.freq);
+    if (wav.freq != SOUND_FREQ) {
+        sys_fatal("omm_sound_load_wav: From file %s, audio frequency should be " STRINGIFY(SOUND_FREQ) " Hz, is %d.", filename, wav.freq);
     }
     if (wav.format != AUDIO_S16SYS) {
         sys_fatal("omm_sound_load_wav: From file %s, audio format is not Signed 16-bit PCM.", filename);
@@ -278,11 +306,11 @@ static void omm_sound_load_wav(s32 id, const char *name, u8 bank, s32 vibesPitch
     if (vibesPitchShift) {
 
         // Joy: pitch up
-        omm_audio_pitch_shift(&sound->input[OMM_PEACH_VIBE_TYPE_JOY], data, length, OMM_PEACH_VIBE_SOUND_PITCH_MOD_JOY);
+        omm_audio_pitch_shift(&sound->input[OMM_PEACH_VIBE_TYPE_JOY], data, length, SOUND_FREQ, OMM_PEACH_VIBE_SOUND_PITCH_MOD_JOY);
 
         // Rage: demonic voice
-        u8 *rageL = OMM_MEMDUP(data, length * sizeof(u8)); omm_audio_pitch_shift(&rageL, data, length, OMM_PEACH_VIBE_SOUND_PITCH_MOD_RAGE * 0.98f);
-        u8 *rageR = OMM_MEMDUP(data, length * sizeof(u8)); omm_audio_pitch_shift(&rageR, data, length, OMM_PEACH_VIBE_SOUND_PITCH_MOD_RAGE * 1.02f);
+        u8 *rageL = OMM_MEMDUP(data, length * sizeof(u8)); omm_audio_pitch_shift(&rageL, data, length, SOUND_FREQ, OMM_PEACH_VIBE_SOUND_PITCH_MOD_RAGE * 0.98f);
+        u8 *rageR = OMM_MEMDUP(data, length * sizeof(u8)); omm_audio_pitch_shift(&rageR, data, length, SOUND_FREQ, OMM_PEACH_VIBE_SOUND_PITCH_MOD_RAGE * 1.02f);
         for (s32 i = 0; i < length; i += sizeof(s16)) {
             *((s16 *) (sound->input[OMM_PEACH_VIBE_TYPE_RAGE] + i)) = (s16) omm_clamp_s((((s32) *((s16 *) (rageL + i))) + ((s32) *((s16 *) (rageR + i)))) * 0.8f, -0x8000, +0x7FFF);
         }
@@ -291,7 +319,7 @@ static void omm_sound_load_wav(s32 id, const char *name, u8 bank, s32 vibesPitch
         omm_audio_resample(&sound->input[OMM_PEACH_VIBE_TYPE_GLOOM], data, length, 1.f / OMM_PEACH_VIBE_SOUND_PITCH_MOD_GLOOM);
 
         // Calm: pitch slightly up
-        omm_audio_pitch_shift(&sound->input[OMM_PEACH_VIBE_TYPE_CALM], data, length, OMM_PEACH_VIBE_SOUND_PITCH_MOD_CALM);
+        omm_audio_pitch_shift(&sound->input[OMM_PEACH_VIBE_TYPE_CALM], data, length, SOUND_FREQ, OMM_PEACH_VIBE_SOUND_PITCH_MOD_CALM);
     }
 }
 
@@ -386,226 +414,437 @@ OMM_AT_STARTUP static void omm_audio_init() {
 // Character sounds
 //
 
-typedef struct {
-    u8 type; // 0 = no sound, 1 = play_sound, 2 = omm_sound_play, 3 = dynos_sound_play
-    union { s32 idNum; const char *idStr; };
-} OmmCharacterSound;
+typedef struct { s32 type; union { s32 idNum; const char **idStr; }; } OmmCharacterSound;
 
-#define NUL_SOUND           { .type = 0, .idNum = 0 }
-#define N64_SOUND(sound)    { .type = 1, .idNum = sound }
-#define OMM_SOUND(sound)    { .type = 2, .idNum = sound }
+#define SOUND_TYPE_NUL      (0 << 1)
+#define SOUND_TYPE_N64      (1 << 1)
+#define SOUND_TYPE_OMM      (2 << 1)
+#define SOUND_TYPE_R96      (3 << 1)
+
+#define SOUND_NUL           { .type = SOUND_TYPE_NUL, .idNum = 0 }
+#define SOUND_N64(sound)    { .type = SOUND_TYPE_N64, .idNum = sound }
+#define SOUND_OMM(sound)    { .type = SOUND_TYPE_OMM, .idNum = sound }
+#define SOUND_R96(sound)    { .type = SOUND_TYPE_R96, .idStr = &sound }
 
 static const OmmCharacterSound sOmmCharacterSoundsMarioN64[] = {
-    N64_SOUND(SOUND_MARIO_YAH_WAH_HOO + 0x00000),       // Jump Yah
-    N64_SOUND(SOUND_MARIO_YAH_WAH_HOO + 0x10000),       // Jump Wah
-    N64_SOUND(SOUND_MARIO_YAH_WAH_HOO + 0x20000),       // Jump Hoo
-    N64_SOUND(SOUND_MARIO_PUNCH_YAH),                   // Punch Yah
-    N64_SOUND(SOUND_MARIO_PUNCH_WAH),                   // Punch Wah
-    N64_SOUND(SOUND_MARIO_PUNCH_HOO),                   // Punch Hoo
-    N64_SOUND(SOUND_MARIO_HOOHOO),                      // Hoo-hoo
-    N64_SOUND(SOUND_MARIO_YAHOO),                       // Yahoo
-    N64_SOUND(SOUND_MARIO_YAHOO_WAHA_YIPPEE + 0x00000), // Yahoo
-    N64_SOUND(SOUND_MARIO_YAHOO_WAHA_YIPPEE + 0x10000), // Yahoo
-    N64_SOUND(SOUND_MARIO_YAHOO_WAHA_YIPPEE + 0x20000), // Yahoo
-    N64_SOUND(SOUND_MARIO_YAHOO_WAHA_YIPPEE + 0x30000), // Waha
-    N64_SOUND(SOUND_MARIO_YAHOO_WAHA_YIPPEE + 0x40000), // Yippee
-    N64_SOUND(SOUND_MARIO_HAHA),                        // Ha-ha
-    N64_SOUND(SOUND_MARIO_HAHA_2),                      // Ha-ha
-    N64_SOUND(SOUND_MARIO_UH),                          // Grunt 1
-    N64_SOUND(SOUND_MARIO_UH2),                         // Grunt 2
-    N64_SOUND(SOUND_MARIO_UH2_2),                       // Grunt 2
-    N64_SOUND(SOUND_MARIO_HRMM),                        // Lift
-    N64_SOUND(SOUND_MARIO_WAH2),                        // Throw
-    N64_SOUND(SOUND_MARIO_GROUND_POUND_WAH),            // Ground pound Wah
-    N64_SOUND(SOUND_MARIO_WHOA),                        // Whoa
-    N64_SOUND(SOUND_MARIO_EEUH),                        // Pull-up
-    N64_SOUND(SOUND_MARIO_ATTACKED),                    // Attacked
-    N64_SOUND(SOUND_MARIO_OOOF),                        // Ooof
-    N64_SOUND(SOUND_MARIO_OOOF2),                       // Ooof
-    N64_SOUND(SOUND_MARIO_DOH),                         // Doh
-    N64_SOUND(SOUND_MARIO_HERE_WE_GO),                  // Here we go
-    N64_SOUND(SOUND_MARIO_YAWNING),                     // Yawning
-    N64_SOUND(SOUND_MARIO_SNORING1),                    // Snoring 1
-    N64_SOUND(SOUND_MARIO_SNORING2),                    // Snoring 2
-    N64_SOUND(SOUND_MARIO_SNORING3),                    // Snoring 3
-    N64_SOUND(SOUND_MARIO_PANTING + 0x00000),           // Panting 1
-    N64_SOUND(SOUND_MARIO_PANTING + 0x10000),           // Panting 2
-    N64_SOUND(SOUND_MARIO_PANTING + 0x20000),           // Panting 3
-    N64_SOUND(SOUND_MARIO_PANTING_COLD),                // Panting (cold)
-    N64_SOUND(SOUND_MARIO_COUGHING1),                   // Coughing 1
-    N64_SOUND(SOUND_MARIO_COUGHING2),                   // Coughing 2
-    N64_SOUND(SOUND_MARIO_COUGHING3),                   // Coughing 3
-    N64_SOUND(SOUND_MARIO_WAAAOOOW),                    // Falling
-    N64_SOUND(SOUND_MARIO_ON_FIRE),                     // Burned
-    N64_SOUND(SOUND_MARIO_DYING),                       // Dying
-    N64_SOUND(SOUND_MARIO_DROWNING),                    // Drowning
-    N64_SOUND(SOUND_MARIO_MAMA_MIA),                    // Mama-mia
-    N64_SOUND(SOUND_MARIO_OKEY_DOKEY),                  // Okey dokey
-    N64_SOUND(SOUND_MARIO_GAME_OVER),                   // Game Over
-    N64_SOUND(SOUND_MARIO_HELLO),                       // Hello
-    N64_SOUND(SOUND_MARIO_PRESS_START_TO_PLAY),         // Press Start to play
-    N64_SOUND(SOUND_MARIO_TWIRL_BOUNCE),                // Boing
-    N64_SOUND(SOUND_MARIO_SO_LONGA_BOWSER),             // So long-a Bowser
-    N64_SOUND(SOUND_MARIO_IMA_TIRED),                   // I'm-a tired
- // N64_SOUND(SOUND_MENU_COIN_ITS_A_ME_MARIO),          // It's-a me Mario
-    N64_SOUND(SOUND_MENU_THANK_YOU_PLAYING_MY_GAME),    // Thank you so much for playing my game
-    N64_SOUND(SOUND_MENU_STAR_SOUND_OKEY_DOKEY),        // Okey dokey (+ star sound)
-    N64_SOUND(SOUND_MENU_STAR_SOUND_LETS_A_GO),         // Let's-a go (+ star sound)
-    N64_SOUND(SOUND_PEACH_MARIO),                       // Peach: Mario
-    N64_SOUND(SOUND_PEACH_POWER_OF_THE_STARS),          // Peach: The power of the Stars...
-    N64_SOUND(SOUND_PEACH_THANKS_TO_YOU),               // Peach: Thanks to you
-    N64_SOUND(SOUND_PEACH_THANK_YOU_MARIO),             // Peach: Thank you Mario
-    N64_SOUND(SOUND_PEACH_SOMETHING_SPECIAL),           // Peach: We have to do something special...
-    N64_SOUND(SOUND_PEACH_BAKE_A_CAKE),                 // Peach: Let's bake a delicious cake
-    N64_SOUND(SOUND_PEACH_FOR_MARIO),                   // Peach: For Mario
-    N64_SOUND(SOUND_PEACH_MARIO2),                      // Peach: Mario!
-    OMM_SOUND(OMM_SOUND_EVENT_DEATH_MARIO),             // OMM sound: Dying
-    OMM_SOUND(OMM_SOUND_EVENT_DEATH_MARIO_WATER),       // OMM sound: Drowning
-    OMM_SOUND(OMM_SOUND_EVENT_DEATH_MARIO_FALL),        // OMM sound: Falling
+    SOUND_N64(SOUND_MARIO_YAH_WAH_HOO + 0x00000),       // Jump Yah
+    SOUND_N64(SOUND_MARIO_YAH_WAH_HOO + 0x10000),       // Jump Wah
+    SOUND_N64(SOUND_MARIO_YAH_WAH_HOO + 0x20000),       // Jump Hoo
+    SOUND_N64(SOUND_MARIO_PUNCH_YAH),                   // Punch Yah
+    SOUND_N64(SOUND_MARIO_PUNCH_WAH),                   // Punch Wah
+    SOUND_N64(SOUND_MARIO_PUNCH_HOO),                   // Punch Hoo
+    SOUND_N64(SOUND_MARIO_HOOHOO),                      // Hoo-hoo
+    SOUND_N64(SOUND_MARIO_YAHOO),                       // Yahoo
+    SOUND_N64(SOUND_MARIO_YAHOO_WAHA_YIPPEE + 0x00000), // Yahoo
+    SOUND_N64(SOUND_MARIO_YAHOO_WAHA_YIPPEE + 0x10000), // Yahoo
+    SOUND_N64(SOUND_MARIO_YAHOO_WAHA_YIPPEE + 0x20000), // Yahoo
+    SOUND_N64(SOUND_MARIO_YAHOO_WAHA_YIPPEE + 0x30000), // Waha
+    SOUND_N64(SOUND_MARIO_YAHOO_WAHA_YIPPEE + 0x40000), // Yippee
+    SOUND_N64(SOUND_MARIO_HAHA),                        // Ha-ha
+    SOUND_N64(SOUND_MARIO_HAHA_2),                      // Ha-ha
+    SOUND_N64(SOUND_MARIO_UH),                          // Grunt 1
+    SOUND_N64(SOUND_MARIO_UH2),                         // Grunt 2
+    SOUND_N64(SOUND_MARIO_UH2_2),                       // Grunt 2
+    SOUND_N64(SOUND_MARIO_HRMM),                        // Lift
+    SOUND_N64(SOUND_MARIO_WAH2),                        // Throw
+    SOUND_N64(SOUND_MARIO_GROUND_POUND_WAH),            // Ground pound Wah
+    SOUND_N64(SOUND_MARIO_WHOA),                        // Whoa
+    SOUND_N64(SOUND_MARIO_EEUH),                        // Pull-up
+    SOUND_N64(SOUND_MARIO_ATTACKED),                    // Attacked
+    SOUND_N64(SOUND_MARIO_OOOF),                        // Ooof
+    SOUND_N64(SOUND_MARIO_OOOF2),                       // Ooof
+    SOUND_N64(SOUND_MARIO_DOH),                         // Doh
+    SOUND_N64(SOUND_MARIO_HERE_WE_GO),                  // Here we go
+    SOUND_N64(SOUND_MARIO_YAWNING),                     // Yawning
+    SOUND_N64(SOUND_MARIO_SNORING1),                    // Snoring 1
+    SOUND_N64(SOUND_MARIO_SNORING2),                    // Snoring 2
+    SOUND_N64(SOUND_MARIO_SNORING3),                    // Snoring 3
+    SOUND_N64(SOUND_MARIO_PANTING + 0x00000),           // Panting 1
+    SOUND_N64(SOUND_MARIO_PANTING + 0x10000),           // Panting 2
+    SOUND_N64(SOUND_MARIO_PANTING + 0x20000),           // Panting 3
+    SOUND_N64(SOUND_MARIO_PANTING_COLD),                // Panting (cold)
+    SOUND_N64(SOUND_MARIO_COUGHING1),                   // Coughing 1
+    SOUND_N64(SOUND_MARIO_COUGHING2),                   // Coughing 2
+    SOUND_N64(SOUND_MARIO_COUGHING3),                   // Coughing 3
+    SOUND_N64(SOUND_MARIO_WAAAOOOW),                    // Falling
+    SOUND_N64(SOUND_MARIO_ON_FIRE),                     // Burned
+    SOUND_N64(SOUND_MARIO_DYING),                       // Dying
+    SOUND_N64(SOUND_MARIO_DROWNING),                    // Drowning
+    SOUND_N64(SOUND_MARIO_MAMA_MIA),                    // Mama-mia
+    SOUND_N64(SOUND_MARIO_TWIRL_BOUNCE),                // Boing
+    SOUND_N64(SOUND_MARIO_SO_LONGA_BOWSER),             // So long-a Bowser
+    SOUND_N64(SOUND_MARIO_IMA_TIRED),                   // I'm-a tired
+    SOUND_N64(SOUND_MENU_STAR_SOUND_LETS_A_GO),         // Let's-a go (+ star sound)
+    SOUND_N64(SOUND_MARIO_OKEY_DOKEY),                  // Okey dokey
+    SOUND_N64(SOUND_MARIO_GAME_OVER),                   // Game Over
+    SOUND_N64(SOUND_MARIO_HELLO),                       // Hello
+    SOUND_N64(SOUND_MARIO_PRESS_START_TO_PLAY),         // Press Start to play
+    SOUND_N64(SOUND_MENU_THANK_YOU_PLAYING_MY_GAME),    // Thank you so much for playing my game
+    SOUND_N64(SOUND_MENU_STAR_SOUND_OKEY_DOKEY),        // Okey dokey (+ star sound)
+    SOUND_N64(SOUND_PEACH_MARIO),                       // Peach: Mario
+    SOUND_N64(SOUND_PEACH_POWER_OF_THE_STARS),          // Peach: The power of the Stars...
+    SOUND_N64(SOUND_PEACH_THANKS_TO_YOU),               // Peach: Thanks to you
+    SOUND_N64(SOUND_PEACH_THANK_YOU_MARIO),             // Peach: Thank you Mario
+    SOUND_N64(SOUND_PEACH_SOMETHING_SPECIAL),           // Peach: We have to do something special...
+    SOUND_N64(SOUND_PEACH_BAKE_A_CAKE),                 // Peach: Let's bake a delicious cake
+    SOUND_N64(SOUND_PEACH_FOR_MARIO),                   // Peach: For Mario
+    SOUND_N64(SOUND_PEACH_MARIO2),                      // Peach: Mario!
+    SOUND_OMM(OMM_SOUND_EVENT_DEATH_MARIO),             // OMM sound: Dying
+    SOUND_OMM(OMM_SOUND_EVENT_DEATH_MARIO_WATER),       // OMM sound: Drowning
+    SOUND_OMM(OMM_SOUND_EVENT_DEATH_MARIO_FALL),        // OMM sound: Falling
 };
 
 static const OmmCharacterSound sOmmCharacterSoundsPeachOMM[] = {
-    OMM_SOUND(OMM_SOUND_PEACH_JUMP_YAH),             // Jump Yah
-    OMM_SOUND(OMM_SOUND_PEACH_JUMP_WAH),             // Jump Wah
-    OMM_SOUND(OMM_SOUND_PEACH_JUMP_HOO),             // Jump Hoo
-    OMM_SOUND(OMM_SOUND_PEACH_PUNCH_YAH),            // Punch Yah
-    OMM_SOUND(OMM_SOUND_PEACH_PUNCH_WAH),            // Punch Wah
-    OMM_SOUND(OMM_SOUND_PEACH_PUNCH_HOO),            // Punch Hoo
-    OMM_SOUND(OMM_SOUND_PEACH_DIVE_HOOHOO),          // Hoo-hoo
-    OMM_SOUND(OMM_SOUND_PEACH_JUMP_YAHOO),           // Yahoo
-    OMM_SOUND(OMM_SOUND_PEACH_JUMP_YAHOO),           // Yahoo
-    OMM_SOUND(OMM_SOUND_PEACH_JUMP_YAHOO),           // Yahoo
-    OMM_SOUND(OMM_SOUND_PEACH_JUMP_YAHOO),           // Yahoo
-    OMM_SOUND(OMM_SOUND_PEACH_JUMP_WAHA),            // Waha
-    OMM_SOUND(OMM_SOUND_PEACH_JUMP_YIPPEE),          // Yippee
-    OMM_SOUND(OMM_SOUND_PEACH_LAND_HAHA),            // Ha-ha
-    OMM_SOUND(OMM_SOUND_PEACH_LAND_HAHA),            // Ha-ha
-    OMM_SOUND(OMM_SOUND_PEACH_LEDGE_MISS_UH),        // Grunt 1
-    OMM_SOUND(OMM_SOUND_PEACH_LEDGE_CLIMB_UH2),      // Grunt 2
-    OMM_SOUND(OMM_SOUND_PEACH_LEDGE_CLIMB_UH2),      // Grunt 2
-    OMM_SOUND(OMM_SOUND_PEACH_GRAB_HRMM),            // Lift
-    OMM_SOUND(OMM_SOUND_PEACH_THROW_WAH2),           // Throw
-    OMM_SOUND(OMM_SOUND_PEACH_GROUND_POUND_WAH),     // Ground pound Wah
-    OMM_SOUND(OMM_SOUND_PEACH_LEDGE_GRAB_WHOA),      // Whoa
-    OMM_SOUND(OMM_SOUND_PEACH_LEDGE_CLIMB_EEUH),     // Pull-up
-    OMM_SOUND(OMM_SOUND_PEACH_ATTACKED),             // Attacked
-    OMM_SOUND(OMM_SOUND_PEACH_BONK_OOOF),            // Ooof
-    OMM_SOUND(OMM_SOUND_PEACH_BONK_OOOF),            // Ooof
-    OMM_SOUND(OMM_SOUND_PEACH_BONK_DOH),             // Doh
-    OMM_SOUND(OMM_SOUND_PEACH_HERE_WE_GO),           // Here we go
-    OMM_SOUND(OMM_SOUND_PEACH_YAWNING),              // Yawning
-    NUL_SOUND,                                       // Snoring 1
-    NUL_SOUND,                                       // Snoring 2
-    NUL_SOUND,                                       // Snoring 3
-    OMM_SOUND(OMM_SOUND_PEACH_PANTING1),             // Panting 1
-    OMM_SOUND(OMM_SOUND_PEACH_PANTING2),             // Panting 2
-    OMM_SOUND(OMM_SOUND_PEACH_PANTING3),             // Panting 3
-    NUL_SOUND,                                       // Panting (cold)
-    OMM_SOUND(OMM_SOUND_PEACH_COUGHING1),            // Coughing 1
-    OMM_SOUND(OMM_SOUND_PEACH_COUGHING2),            // Coughing 2
-    OMM_SOUND(OMM_SOUND_PEACH_COUGHING3),            // Coughing 3
-    OMM_SOUND(OMM_SOUND_PEACH_FALLING_WAAAOOOW),     // Falling
-    OMM_SOUND(OMM_SOUND_PEACH_ON_FIRE),              // Burned
-    OMM_SOUND(OMM_SOUND_PEACH_DYING),                // Dying
-    OMM_SOUND(OMM_SOUND_PEACH_DROWNING),             // Drowning
-    OMM_SOUND(OMM_SOUND_PEACH_MAMA_MIA),             // Mama-mia
-    N64_SOUND(SOUND_MENU_STAR_SOUND_OKEY_DOKEY),     // Okey dokey
-    N64_SOUND(SOUND_MARIO_GAME_OVER),                // Game Over
-    N64_SOUND(SOUND_MARIO_HELLO),                    // Hello
-    N64_SOUND(SOUND_MARIO_PRESS_START_TO_PLAY),      // Press Start to play
-    OMM_SOUND(OMM_SOUND_PEACH_TWIRL_BOUNCE),         // Boing
-    OMM_SOUND(OMM_SOUND_PEACH_SO_LONGA_BOWSER),      // So long-a Bowser
-    NUL_SOUND,                                       // I'm-a tired
- // N64_SOUND(SOUND_MENU_COIN_ITS_A_ME_MARIO),       // It's-a me Mario
-    N64_SOUND(SOUND_MENU_THANK_YOU_PLAYING_MY_GAME), // Thank you so much for playing my game
-    N64_SOUND(SOUND_MENU_STAR_SOUND_OKEY_DOKEY),     // Okey dokey (+ star sound)
-    OMM_SOUND(OMM_SOUND_PEACH_LETS_A_GO),            // Let's-a go (+ star sound)
-    N64_SOUND(SOUND_PEACH_MARIO),                    // Peach: Mario
-    N64_SOUND(SOUND_PEACH_POWER_OF_THE_STARS),       // Peach: The power of the Stars...
-    N64_SOUND(SOUND_PEACH_THANKS_TO_YOU),            // Peach: Thanks to you
-    N64_SOUND(SOUND_PEACH_THANK_YOU_MARIO),          // Peach: Thank you Mario
-    N64_SOUND(SOUND_PEACH_SOMETHING_SPECIAL),        // Peach: We have to do something special...
-    N64_SOUND(SOUND_PEACH_BAKE_A_CAKE),              // Peach: Let's bake a delicious cake
-    N64_SOUND(SOUND_PEACH_FOR_MARIO),                // Peach: For Mario
-    N64_SOUND(SOUND_PEACH_MARIO2),                   // Peach: Mario!
-    OMM_SOUND(OMM_SOUND_EVENT_DEATH_PEACH),          // OMM sound: Dying
-    OMM_SOUND(OMM_SOUND_EVENT_DEATH_PEACH_WATER),    // OMM sound: Drowning
-    OMM_SOUND(OMM_SOUND_EVENT_DEATH_PEACH_FALL),     // OMM sound: Falling
+    SOUND_OMM(OMM_SOUND_PEACH_JUMP_YAH),                // Jump Yah
+    SOUND_OMM(OMM_SOUND_PEACH_JUMP_WAH),                // Jump Wah
+    SOUND_OMM(OMM_SOUND_PEACH_JUMP_HOO),                // Jump Hoo
+    SOUND_OMM(OMM_SOUND_PEACH_PUNCH_YAH),               // Punch Yah
+    SOUND_OMM(OMM_SOUND_PEACH_PUNCH_WAH),               // Punch Wah
+    SOUND_OMM(OMM_SOUND_PEACH_PUNCH_HOO),               // Punch Hoo
+    SOUND_OMM(OMM_SOUND_PEACH_DIVE_HOOHOO),             // Hoo-hoo
+    SOUND_OMM(OMM_SOUND_PEACH_JUMP_YAHOO),              // Yahoo
+    SOUND_OMM(OMM_SOUND_PEACH_JUMP_YAHOO),              // Yahoo
+    SOUND_OMM(OMM_SOUND_PEACH_JUMP_YAHOO),              // Yahoo
+    SOUND_OMM(OMM_SOUND_PEACH_JUMP_YAHOO),              // Yahoo
+    SOUND_OMM(OMM_SOUND_PEACH_JUMP_WAHA),               // Waha
+    SOUND_OMM(OMM_SOUND_PEACH_JUMP_YIPPEE),             // Yippee
+    SOUND_OMM(OMM_SOUND_PEACH_LAND_HAHA),               // Ha-ha
+    SOUND_OMM(OMM_SOUND_PEACH_LAND_HAHA),               // Ha-ha
+    SOUND_OMM(OMM_SOUND_PEACH_LEDGE_MISS_UH),           // Grunt 1
+    SOUND_OMM(OMM_SOUND_PEACH_LEDGE_CLIMB_UH2),         // Grunt 2
+    SOUND_OMM(OMM_SOUND_PEACH_LEDGE_CLIMB_UH2),         // Grunt 2
+    SOUND_OMM(OMM_SOUND_PEACH_GRAB_HRMM),               // Lift
+    SOUND_OMM(OMM_SOUND_PEACH_THROW_WAH2),              // Throw
+    SOUND_OMM(OMM_SOUND_PEACH_GROUND_POUND_WAH),        // Ground pound Wah
+    SOUND_OMM(OMM_SOUND_PEACH_LEDGE_GRAB_WHOA),         // Whoa
+    SOUND_OMM(OMM_SOUND_PEACH_LEDGE_CLIMB_EEUH),        // Pull-up
+    SOUND_OMM(OMM_SOUND_PEACH_ATTACKED),                // Attacked
+    SOUND_OMM(OMM_SOUND_PEACH_BONK_OOOF),               // Ooof
+    SOUND_OMM(OMM_SOUND_PEACH_BONK_OOOF),               // Ooof
+    SOUND_OMM(OMM_SOUND_PEACH_BONK_DOH),                // Doh
+    SOUND_OMM(OMM_SOUND_PEACH_HERE_WE_GO),              // Here we go
+    SOUND_OMM(OMM_SOUND_PEACH_YAWNING),                 // Yawning
+    SOUND_NUL,                                          // Snoring 1
+    SOUND_NUL,                                          // Snoring 2
+    SOUND_NUL,                                          // Snoring 3
+    SOUND_OMM(OMM_SOUND_PEACH_PANTING1),                // Panting 1
+    SOUND_OMM(OMM_SOUND_PEACH_PANTING2),                // Panting 2
+    SOUND_OMM(OMM_SOUND_PEACH_PANTING3),                // Panting 3
+    SOUND_NUL,                                          // Panting (cold)
+    SOUND_OMM(OMM_SOUND_PEACH_COUGHING1),               // Coughing 1
+    SOUND_OMM(OMM_SOUND_PEACH_COUGHING2),               // Coughing 2
+    SOUND_OMM(OMM_SOUND_PEACH_COUGHING3),               // Coughing 3
+    SOUND_OMM(OMM_SOUND_PEACH_FALLING_WAAAOOOW),        // Falling
+    SOUND_OMM(OMM_SOUND_PEACH_ON_FIRE),                 // Burned
+    SOUND_OMM(OMM_SOUND_PEACH_DYING),                   // Dying
+    SOUND_OMM(OMM_SOUND_PEACH_DROWNING),                // Drowning
+    SOUND_OMM(OMM_SOUND_PEACH_MAMA_MIA),                // Mama-mia
+    SOUND_OMM(OMM_SOUND_PEACH_TWIRL_BOUNCE),            // Boing
+    SOUND_OMM(OMM_SOUND_PEACH_SO_LONGA_BOWSER),         // So long-a Bowser
+    SOUND_NUL,                                          // I'm-a tired
+    SOUND_OMM(OMM_SOUND_PEACH_LETS_A_GO),               // Let's-a go (+ star sound)
+#if defined(R96A)
+    SOUND_R96(R96_MARIO_OKEY_DOKEY),                    // Okey dokey
+    SOUND_R96(R96_MARIO_GAME_OVER),                     // Game Over
+    SOUND_R96(R96_MARIO_HELLO),                         // Hello
+    SOUND_R96(R96_MARIO_PRESS_START_TO_PLAY),           // Press Start to play
+    SOUND_R96(R96_MARIO_THANK_YOU_PLAYING_MY_GAME),     // Thank you so much for playing my game
+    SOUND_R96(R96_MARIO_OKEY_DOKEY),                    // Okey dokey (+ star sound)
+    SOUND_R96(R96_WARIO_PEACH_WARIO),                   // Peach: Mario
+    SOUND_R96(R96_WARIO_PEACH_POWER_OF_THE_STARS),      // Peach: The power of the Stars...
+    SOUND_R96(R96_WARIO_PEACH_THANKS_TO_YOU),           // Peach: Thanks to you
+    SOUND_R96(R96_WARIO_PEACH_THANK_YOU_WARIO),         // Peach: Thank you Mario
+    SOUND_R96(R96_WARIO_PEACH_SOMETHING_SPECIAL),       // Peach: We have to do something special...
+    SOUND_R96(R96_WARIO_PEACH_BAKE_A_CAKE),             // Peach: Let's bake a delicious cake
+    SOUND_R96(R96_WARIO_PEACH_FOR_WARIO),               // Peach: For Mario
+    SOUND_R96(R96_WARIO_SOUND_PEACH_WARIO2),            // Peach: Mario!
+#else
+    SOUND_N64(SOUND_MENU_STAR_SOUND_OKEY_DOKEY),        // Okey dokey
+    SOUND_N64(SOUND_MARIO_GAME_OVER),                   // Game Over
+    SOUND_N64(SOUND_MARIO_HELLO),                       // Hello
+    SOUND_N64(SOUND_MARIO_PRESS_START_TO_PLAY),         // Press Start to play
+    SOUND_N64(SOUND_MENU_THANK_YOU_PLAYING_MY_GAME),    // Thank you so much for playing my game
+    SOUND_N64(SOUND_MENU_STAR_SOUND_OKEY_DOKEY),        // Okey dokey (+ star sound)
+    SOUND_N64(SOUND_PEACH_MARIO),                       // Peach: Mario
+    SOUND_N64(SOUND_PEACH_POWER_OF_THE_STARS),          // Peach: The power of the Stars...
+    SOUND_N64(SOUND_PEACH_THANKS_TO_YOU),               // Peach: Thanks to you
+    SOUND_N64(SOUND_PEACH_THANK_YOU_MARIO),             // Peach: Thank you Mario
+    SOUND_N64(SOUND_PEACH_SOMETHING_SPECIAL),           // Peach: We have to do something special...
+    SOUND_N64(SOUND_PEACH_BAKE_A_CAKE),                 // Peach: Let's bake a delicious cake
+    SOUND_N64(SOUND_PEACH_FOR_MARIO),                   // Peach: For Mario
+    SOUND_N64(SOUND_PEACH_MARIO2),                      // Peach: Mario!
+#endif
+    SOUND_OMM(OMM_SOUND_EVENT_DEATH_PEACH),             // OMM sound: Dying
+    SOUND_OMM(OMM_SOUND_EVENT_DEATH_PEACH_WATER),       // OMM sound: Drowning
+    SOUND_OMM(OMM_SOUND_EVENT_DEATH_PEACH_FALL),        // OMM sound: Falling
 };
+
+#if defined(R96A)
+static const OmmCharacterSound sOmmCharacterSoundsMarioR96[] = {
+    SOUND_R96(R96_MARIO_YAH),                           // Jump Yah
+    SOUND_R96(R96_MARIO_WAH),                           // Jump Wah
+    SOUND_R96(R96_MARIO_HOO),                           // Jump Hoo
+    SOUND_R96(R96_MARIO_PUNCH_YAH),                     // Punch Yah
+    SOUND_R96(R96_MARIO_WAH),                           // Punch Wah
+    SOUND_R96(R96_MARIO_PUNCH_HOO),                     // Punch Hoo
+    SOUND_R96(R96_MARIO_HOOHOO),                        // Hoo-hoo
+    SOUND_R96(R96_MARIO_YAHOO),                         // Yahoo
+    SOUND_R96(R96_MARIO_YAHOO),                         // Yahoo
+    SOUND_R96(R96_MARIO_YAHOO),                         // Yahoo
+    SOUND_R96(R96_MARIO_YAHOO),                         // Yahoo
+    SOUND_R96(R96_MARIO_WAHA),                          // Waha
+    SOUND_R96(R96_MARIO_YIPPEE),                        // Yippee
+    SOUND_R96(R96_MARIO_HAHA),                          // Ha-ha
+    SOUND_R96(R96_MARIO_HAHA),                          // Ha-ha
+    SOUND_R96(R96_MARIO_GRUNT),                         // Grunt 1
+    SOUND_R96(R96_MARIO_GRUNT_2),                       // Grunt 2
+    SOUND_R96(R96_MARIO_GRUNT_2),                       // Grunt 2
+    SOUND_R96(R96_MARIO_LIFT),                          // Lift
+    SOUND_R96(R96_MARIO_THROW),                         // Throw
+    SOUND_R96(R96_MARIO_THROW),                         // Ground pound Wah
+    SOUND_R96(R96_MARIO_WHOA),                          // Whoa
+    SOUND_R96(R96_MARIO_PULL_UP),                       // Pull-up
+    SOUND_R96(R96_MARIO_ATTACKED),                      // Attacked
+    SOUND_R96(R96_MARIO_OOOF),                          // Ooof
+    SOUND_R96(R96_MARIO_OOOF),                          // Ooof
+    SOUND_R96(R96_MARIO_DOH),                           // Doh
+    SOUND_R96(R96_MARIO_HERE_WE_GO),                    // Here we go
+    SOUND_R96(R96_MARIO_YAWNING),                       // Yawning
+    SOUND_R96(R96_MARIO_SNORING_1),                     // Snoring 1
+    SOUND_R96(R96_MARIO_SNORING_2),                     // Snoring 2
+    SOUND_R96(R96_MARIO_SNORING_3),                     // Snoring 3
+    SOUND_R96(R96_MARIO_PANTING),                       // Panting 1
+    SOUND_R96(R96_MARIO_PANTING),                       // Panting 2
+    SOUND_R96(R96_MARIO_PANTING),                       // Panting 3
+    SOUND_R96(R96_MARIO_PANTING_COLD),                  // Panting (cold)
+    SOUND_R96(R96_MARIO_COUGHING_1),                    // Coughing 1
+    SOUND_R96(R96_MARIO_COUGHING_1),                    // Coughing 2
+    SOUND_R96(R96_MARIO_COUGHING_1),                    // Coughing 3
+    SOUND_R96(R96_MARIO_FALLING),                       // Falling
+    SOUND_R96(R96_MARIO_ON_FIRE),                       // Burned
+    SOUND_R96(R96_MARIO_DYING),                         // Dying
+    SOUND_R96(R96_MARIO_DROWNING),                      // Drowning
+    SOUND_R96(R96_MARIO_MAMA_MIA),                      // Mama-mia
+    SOUND_R96(R96_MARIO_TWIRL_BOUNCE),                  // Boing
+    SOUND_R96(R96_MARIO_SO_LONGA_BOWSER),               // So long-a Bowser
+    SOUND_R96(R96_MARIO_IMA_TIRED),                     // I'm-a tired
+    SOUND_R96(R96_MARIO_SOUND_LETS_A_GO),               // Let's-a go (+ star sound)
+    SOUND_R96(R96_MARIO_OKEY_DOKEY),                    // Okey dokey
+    SOUND_R96(R96_MARIO_GAME_OVER),                     // Game Over
+    SOUND_R96(R96_MARIO_HELLO),                         // Hello
+    SOUND_R96(R96_MARIO_PRESS_START_TO_PLAY),           // Press Start to play
+    SOUND_R96(R96_MARIO_THANK_YOU_PLAYING_MY_GAME),     // Thank you so much for playing my game
+    SOUND_R96(R96_MARIO_OKEY_DOKEY),                    // Okey dokey (+ star sound)
+    SOUND_R96(R96_MARIO_PEACH_MARIO),                   // Peach: Mario
+    SOUND_R96(R96_MARIO_PEACH_POWER_OF_THE_STARS),      // Peach: The power of the Stars...
+    SOUND_R96(R96_MARIO_PEACH_THANKS_TO_YOU),           // Peach: Thanks to you
+    SOUND_R96(R96_MARIO_PEACH_THANK_YOU_MARIO),         // Peach: Thank you Mario
+    SOUND_R96(R96_MARIO_PEACH_SOMETHING_SPECIAL),       // Peach: We have to do something special...
+    SOUND_R96(R96_MARIO_PEACH_BAKE_A_CAKE),             // Peach: Let's bake a delicious cake
+    SOUND_R96(R96_MARIO_PEACH_FOR_MARIO),               // Peach: For Mario
+    SOUND_R96(R96_MARIO_SOUND_PEACH_MARIO2),            // Peach: Mario!
+    SOUND_OMM(OMM_SOUND_EVENT_DEATH_MARIO),             // OMM sound: Dying
+    SOUND_OMM(OMM_SOUND_EVENT_DEATH_MARIO_WATER),       // OMM sound: Drowning
+    SOUND_OMM(OMM_SOUND_EVENT_DEATH_MARIO_FALL),        // OMM sound: Falling
+};
+
+static const OmmCharacterSound sOmmCharacterSoundsLuigiR96[] = {
+    SOUND_R96(R96_LUIGI_YAH),                           // Jump Yah
+    SOUND_R96(R96_LUIGI_WAH),                           // Jump Wah
+    SOUND_R96(R96_LUIGI_HOO),                           // Jump Hoo
+    SOUND_R96(R96_LUIGI_PUNCH_YAH),                     // Punch Yah
+    SOUND_R96(R96_LUIGI_WAH),                           // Punch Wah
+    SOUND_R96(R96_LUIGI_PUNCH_HOO),                     // Punch Hoo
+    SOUND_R96(R96_LUIGI_HOOHOO),                        // Hoo-hoo
+    SOUND_R96(R96_LUIGI_YAHOO),                         // Yahoo
+    SOUND_R96(R96_LUIGI_YAHOO),                         // Yahoo
+    SOUND_R96(R96_LUIGI_YAHOO),                         // Yahoo
+    SOUND_R96(R96_LUIGI_YAHOO),                         // Yahoo
+    SOUND_R96(R96_LUIGI_WAHA),                          // Waha
+    SOUND_R96(R96_LUIGI_YIPPEE),                        // Yippee
+    SOUND_R96(R96_LUIGI_HAHA),                          // Ha-ha
+    SOUND_R96(R96_LUIGI_HAHA),                          // Ha-ha
+    SOUND_R96(R96_LUIGI_GRUNT),                         // Grunt 1
+    SOUND_R96(R96_LUIGI_GRUNT_2),                       // Grunt 2
+    SOUND_R96(R96_LUIGI_GRUNT_2),                       // Grunt 2
+    SOUND_R96(R96_LUIGI_LIFT),                          // Lift
+    SOUND_R96(R96_LUIGI_THROW),                         // Throw
+    SOUND_R96(R96_LUIGI_THROW),                         // Ground pound Wah
+    SOUND_R96(R96_LUIGI_WHOA),                          // Whoa
+    SOUND_R96(R96_LUIGI_PULL_UP),                       // Pull-up
+    SOUND_R96(R96_LUIGI_ATTACKED),                      // Attacked
+    SOUND_R96(R96_LUIGI_OOOF),                          // Ooof
+    SOUND_R96(R96_LUIGI_OOOF),                          // Ooof
+    SOUND_R96(R96_LUIGI_DOH),                           // Doh
+    SOUND_R96(R96_LUIGI_HERE_WE_GO),                    // Here we go
+    SOUND_R96(R96_LUIGI_YAWNING),                       // Yawning
+    SOUND_R96(R96_LUIGI_SNORING_1),                     // Snoring 1
+    SOUND_R96(R96_LUIGI_SNORING_2),                     // Snoring 2
+    SOUND_R96(R96_LUIGI_SNORING_3),                     // Snoring 3
+    SOUND_R96(R96_LUIGI_PANTING),                       // Panting 1
+    SOUND_R96(R96_LUIGI_PANTING),                       // Panting 2
+    SOUND_R96(R96_LUIGI_PANTING),                       // Panting 3
+    SOUND_R96(R96_LUIGI_PANTING_COLD),                  // Panting (cold)
+    SOUND_R96(R96_LUIGI_COUGHING_1),                    // Coughing 1
+    SOUND_R96(R96_LUIGI_COUGHING_1),                    // Coughing 2
+    SOUND_R96(R96_LUIGI_COUGHING_1),                    // Coughing 3
+    SOUND_R96(R96_LUIGI_FALLING),                       // Falling
+    SOUND_R96(R96_LUIGI_ON_FIRE),                       // Burned
+    SOUND_R96(R96_LUIGI_DYING),                         // Dying
+    SOUND_R96(R96_LUIGI_DROWNING),                      // Drowning
+    SOUND_R96(R96_LUIGI_MAMA_MIA),                      // Mama-mia
+    SOUND_R96(R96_LUIGI_TWIRL_BOUNCE),                  // Boing
+    SOUND_R96(R96_LUIGI_SO_LONGA_BOWSER),               // So long-a Bowser
+    SOUND_R96(R96_LUIGI_IMA_TIRED),                     // I'm-a tired
+    SOUND_R96(R96_LUIGI_SOUND_LETS_A_GO),               // Let's-a go (+ star sound)
+    SOUND_R96(R96_LUIGI_OKEY_DOKEY),                    // Okey dokey
+    SOUND_R96(R96_LUIGI_GAME_OVER),                     // Game Over
+    SOUND_R96(R96_LUIGI_HELLO),                         // Hello
+    SOUND_R96(R96_LUIGI_PRESS_START_TO_PLAY),           // Press Start to play
+    SOUND_R96(R96_LUIGI_THANK_YOU_PLAYING_MY_GAME),     // Thank you so much for playing my game
+    SOUND_R96(R96_LUIGI_OKEY_DOKEY),                    // Okey dokey (+ star sound)
+    SOUND_R96(R96_LUIGI_PEACH_LUIGI),                   // Peach: Mario
+    SOUND_R96(R96_LUIGI_PEACH_POWER_OF_THE_STARS),      // Peach: The power of the Stars...
+    SOUND_R96(R96_LUIGI_PEACH_THANKS_TO_YOU),           // Peach: Thanks to you
+    SOUND_R96(R96_LUIGI_PEACH_THANK_YOU_LUIGI),         // Peach: Thank you Mario
+    SOUND_R96(R96_LUIGI_PEACH_SOMETHING_SPECIAL),       // Peach: We have to do something special...
+    SOUND_R96(R96_LUIGI_PEACH_BAKE_A_CAKE),             // Peach: Let's bake a delicious cake
+    SOUND_R96(R96_LUIGI_PEACH_FOR_LUIGI),               // Peach: For Mario
+    SOUND_R96(R96_LUIGI_SOUND_PEACH_LUIGI2),            // Peach: Mario!
+    SOUND_OMM(OMM_SOUND_EVENT_DEATH_LUIGI),             // OMM sound: Dying
+    SOUND_OMM(OMM_SOUND_EVENT_DEATH_LUIGI_WATER),       // OMM sound: Drowning
+    SOUND_OMM(OMM_SOUND_EVENT_DEATH_LUIGI_FALL),        // OMM sound: Falling
+};
+
+static const OmmCharacterSound sOmmCharacterSoundsWarioR96[] = {
+    SOUND_R96(R96_WARIO_YAH),                           // Jump Yah
+    SOUND_R96(R96_WARIO_WAH),                           // Jump Wah
+    SOUND_R96(R96_WARIO_HOO),                           // Jump Hoo
+    SOUND_R96(R96_WARIO_PUNCH_YAH),                     // Punch Yah
+    SOUND_R96(R96_WARIO_WAH),                           // Punch Wah
+    SOUND_R96(R96_WARIO_PUNCH_HOO),                     // Punch Hoo
+    SOUND_R96(R96_WARIO_HOOHOO),                        // Hoo-hoo
+    SOUND_R96(R96_WARIO_YAHOO),                         // Yahoo
+    SOUND_R96(R96_WARIO_YAHOO),                         // Yahoo
+    SOUND_R96(R96_WARIO_YAHOO),                         // Yahoo
+    SOUND_R96(R96_WARIO_YAHOO),                         // Yahoo
+    SOUND_R96(R96_WARIO_WAHA),                          // Waha
+    SOUND_R96(R96_WARIO_YIPPEE),                        // Yippee
+    SOUND_R96(R96_WARIO_HAHA),                          // Ha-ha
+    SOUND_R96(R96_WARIO_HAHA),                          // Ha-ha
+    SOUND_R96(R96_WARIO_GRUNT),                         // Grunt 1
+    SOUND_R96(R96_WARIO_GRUNT_2),                       // Grunt 2
+    SOUND_R96(R96_WARIO_GRUNT_2),                       // Grunt 2
+    SOUND_R96(R96_WARIO_LIFT),                          // Lift
+    SOUND_R96(R96_WARIO_THROW),                         // Throw
+    SOUND_R96(R96_WARIO_THROW),                         // Ground pound Wah
+    SOUND_R96(R96_WARIO_WHOA),                          // Whoa
+    SOUND_R96(R96_WARIO_PULL_UP),                       // Pull-up
+    SOUND_R96(R96_WARIO_ATTACKED),                      // Attacked
+    SOUND_R96(R96_WARIO_OOOF),                          // Ooof
+    SOUND_R96(R96_WARIO_OOOF),                          // Ooof
+    SOUND_R96(R96_WARIO_DOH),                           // Doh
+    SOUND_R96(R96_WARIO_HERE_WE_GO),                    // Here we go
+    SOUND_R96(R96_WARIO_YAWNING),                       // Yawning
+    SOUND_R96(R96_WARIO_SNORING_1),                     // Snoring 1
+    SOUND_R96(R96_WARIO_SNORING_2),                     // Snoring 2
+    SOUND_R96(R96_WARIO_SNORING_3),                     // Snoring 3
+    SOUND_R96(R96_WARIO_PANTING),                       // Panting 1
+    SOUND_R96(R96_WARIO_PANTING),                       // Panting 2
+    SOUND_R96(R96_WARIO_PANTING),                       // Panting 3
+    SOUND_R96(R96_WARIO_PANTING_COLD),                  // Panting (cold)
+    SOUND_R96(R96_WARIO_COUGHING_1),                    // Coughing 1
+    SOUND_R96(R96_WARIO_COUGHING_1),                    // Coughing 2
+    SOUND_R96(R96_WARIO_COUGHING_1),                    // Coughing 3
+    SOUND_R96(R96_WARIO_FALLING),                       // Falling
+    SOUND_R96(R96_WARIO_ON_FIRE),                       // Burned
+    SOUND_R96(R96_WARIO_DYING),                         // Dying
+    SOUND_R96(R96_WARIO_DROWNING),                      // Drowning
+    SOUND_R96(R96_WARIO_MAMA_MIA),                      // Mama-mia
+    SOUND_R96(R96_WARIO_TWIRL_BOUNCE),                  // Boing
+    SOUND_R96(R96_WARIO_SO_LONGA_BOWSER),               // So long-a Bowser
+    SOUND_R96(R96_WARIO_IMA_TIRED),                     // I'm-a tired
+    SOUND_R96(R96_WARIO_SOUND_LETS_A_GO),               // Let's-a go (+ star sound)
+    SOUND_R96(R96_WARIO_OKEY_DOKEY),                    // Okey dokey
+    SOUND_R96(R96_WARIO_GAME_OVER),                     // Game Over
+    SOUND_R96(R96_WARIO_HELLO),                         // Hello
+    SOUND_R96(R96_WARIO_PRESS_START_TO_PLAY),           // Press Start to play
+    SOUND_R96(R96_WARIO_THANK_YOU_PLAYING_MY_GAME),     // Thank you so much for playing my game
+    SOUND_R96(R96_WARIO_OKEY_DOKEY),                    // Okey dokey (+ star sound)
+    SOUND_R96(R96_WARIO_PEACH_WARIO),                   // Peach: Mario
+    SOUND_R96(R96_WARIO_PEACH_POWER_OF_THE_STARS),      // Peach: The power of the Stars...
+    SOUND_R96(R96_WARIO_PEACH_THANKS_TO_YOU),           // Peach: Thanks to you
+    SOUND_R96(R96_WARIO_PEACH_THANK_YOU_WARIO),         // Peach: Thank you Mario
+    SOUND_R96(R96_WARIO_PEACH_SOMETHING_SPECIAL),       // Peach: We have to do something special...
+    SOUND_R96(R96_WARIO_PEACH_BAKE_A_CAKE),             // Peach: Let's bake a delicious cake
+    SOUND_R96(R96_WARIO_PEACH_FOR_WARIO),               // Peach: For Mario
+    SOUND_R96(R96_WARIO_SOUND_PEACH_WARIO2),            // Peach: Mario!
+    SOUND_OMM(OMM_SOUND_EVENT_DEATH_WARIO),             // OMM sound: Dying
+    SOUND_OMM(OMM_SOUND_EVENT_DEATH_WARIO_WATER),       // OMM sound: Drowning
+    SOUND_OMM(OMM_SOUND_EVENT_DEATH_WARIO_FALL),        // OMM sound: Falling
+};
+#endif
 
 static const OmmCharacterSound *sOmmCharacterSounds[] = {
     sOmmCharacterSoundsMarioN64,
     sOmmCharacterSoundsPeachOMM,
+#if defined(R96A)
+    sOmmCharacterSoundsMarioR96,
+    sOmmCharacterSoundsLuigiR96,
+    sOmmCharacterSoundsWarioR96,
+#endif
 };
-static const s32 sOmmCharacterSoundsNumSounds = OMM_ARRAY_SIZE(sOmmCharacterSoundsMarioN64);
-static const s32 sOmmCharacterSoundsNumBanks = OMM_ARRAY_SIZE(sOmmCharacterSounds);
+
+static const OmmCharacterSound *sOmmCharacterSoundBanks[] = {
+#if defined(R96A)
+    sOmmCharacterSoundsMarioR96,
+    sOmmCharacterSoundsPeachOMM,
+    sOmmCharacterSoundsLuigiR96,
+    sOmmCharacterSoundsWarioR96,
+#else
+    sOmmCharacterSoundsMarioN64,
+    sOmmCharacterSoundsPeachOMM,
+    sOmmCharacterSoundsMarioN64,
+    sOmmCharacterSoundsMarioN64,
+#endif
+};
 
 static void omm_sound_process_character_sound_from_index(s32 index, f32 *pos, bool play) {
-
-    // Find the corresponding sound for the selected character
-    const OmmCharacterSound *sound = NULL;
-    switch (omm_player_get_selected_index()) {
-        case OMM_PLAYER_MARIO: {
-            sound = &sOmmCharacterSoundsMarioN64[index];
-        } break;
-
-        case OMM_PLAYER_PEACH: {
-            sound = &sOmmCharacterSoundsPeachOMM[index];
-        } break;
-
-        case OMM_PLAYER_LUIGI: {
-            sound = &sOmmCharacterSoundsMarioN64[index];
-        } break;
-
-        case OMM_PLAYER_WARIO: {
-            sound = &sOmmCharacterSoundsMarioN64[index];
-        } break;
-    }
-
-    // Play or stop the sound if found
-    if (sound) {
-        if (pos == NULL) {
-            pos = gGlobalSoundArgs;
-        }
-        switch (sound->type) {
-
-            // No sound
-            case 0: {
-            } break;
-
-            // N64 sound
-            case 1: {
-                if (play) {
-                    play_sound(sound->idNum, pos);
-                } else {
-                    sound_stop(sound->idNum, pos);
-                }
-            } break;
-
-            // OMM sound
-            case 2: {
-                if (play) {
-                    omm_sound_play(sound->idNum, pos);
-                } else {
-                    omm_sound_stop(sound->idNum);
-                }
-            } break;
-        }
+    const OmmCharacterSound *sound = &sOmmCharacterSoundBanks[omm_player_get_selected_index()][index];
+    switch ((sound ? sound->type : 0) | play) {
+        case SOUND_TYPE_NUL | 0: break;
+        case SOUND_TYPE_NUL | 1: break;
+        case SOUND_TYPE_N64 | 0: sound_stop(sound->idNum, pos ? pos : gGlobalSoundArgs); break;
+        case SOUND_TYPE_N64 | 1: play_sound(sound->idNum, pos ? pos : gGlobalSoundArgs); break;
+        case SOUND_TYPE_OMM | 0: omm_sound_stop(sound->idNum); break;
+        case SOUND_TYPE_OMM | 1: omm_sound_play(sound->idNum, pos ? pos : gGlobalSoundArgs); break;
+#if defined(R96A)
+        case SOUND_TYPE_R96 | 0: if (dynos_sound_is_playing(*sound->idStr)) { dynos_sound_stop(1); } break;
+        case SOUND_TYPE_R96 | 1: dynos_sound_play(*sound->idStr, pos ? pos : gGlobalSoundArgs); break;
+#endif
     }
 }
 
-static bool omm_sound_process_character_sound(s32 idN64, s32 idOMM, const char *idR96, f32 *pos, bool play) {
+static bool omm_sound_compare(const OmmCharacterSound *left, const OmmCharacterSound *right) {
+    if (left->type == right->type) {
+        switch (left->type) {
+            case SOUND_TYPE_NUL: return false;
+            case SOUND_TYPE_N64: return SOUND_ID(left->idNum) == SOUND_ID(right->idNum);
+            case SOUND_TYPE_OMM: return left->idNum == right->idNum;
+            case SOUND_TYPE_R96: return strcmp(*left->idStr, *right->idStr) == 0;
+        }
+    }
+    return false;
+}
+
+static bool omm_sound_process_character_sound(const OmmCharacterSound sound, f32 *pos, bool play) {
     static bool exec = false;
     if (exec) return false;
     exec = true;
-    for (s32 i = 0; i != sOmmCharacterSoundsNumBanks; ++i) {
-        const OmmCharacterSound *bank = sOmmCharacterSounds[i];
-        for (s32 j = 0; j != sOmmCharacterSoundsNumSounds; ++j) {
-            const OmmCharacterSound *sound = &bank[j];
-            if ((sound->type == 1 && idN64 != -1 && SOUND_ID(idN64) == SOUND_ID(sound->idNum)) ||
-                (sound->type == 2 && idOMM != -1 && idOMM == sound->idNum) ||
-                (sound->type == 3 && idR96 != NULL && strcmp(idR96, sound->idStr) == 0)) {
-                omm_sound_process_character_sound_from_index(j, pos, play);
+    for_each(const OmmCharacterSound *, sounds, OMM_ARRAY_SIZE(sOmmCharacterSounds), sOmmCharacterSounds) {
+        for (s32 i = 0; i != OMM_ARRAY_SIZE(sOmmCharacterSoundsMarioN64); ++i) {
+            if (omm_sound_compare(*sounds + i, &sound)) {
+                omm_sound_process_character_sound_from_index(i, pos, play);
                 exec = false;
                 return true;
             }
@@ -616,25 +855,25 @@ static bool omm_sound_process_character_sound(s32 idN64, s32 idOMM, const char *
 }
 
 bool omm_sound_play_character_sound_n64(s32 id, f32 *pos) {
-    return omm_sound_process_character_sound(id, -1, NULL, pos, true);
+    return omm_sound_process_character_sound((const OmmCharacterSound) SOUND_N64(id), pos, true);
 }
 
 bool omm_sound_play_character_sound_omm(s32 id, f32 *pos) {
-    return omm_sound_process_character_sound(-1, id, NULL, pos, true);
+    return omm_sound_process_character_sound((const OmmCharacterSound) SOUND_OMM(id), pos, true);
 }
 
 bool omm_sound_play_character_sound_r96(const char *id, f32 *pos) {
-    return omm_sound_process_character_sound(-1, -1, id, pos, true);
+    return omm_sound_process_character_sound((const OmmCharacterSound) SOUND_R96(id), pos, true);
 }
 
 bool omm_sound_stop_character_sound_n64(s32 id, f32 *pos) {
-    return omm_sound_process_character_sound(id, -1, NULL, pos, false);
+    return omm_sound_process_character_sound((const OmmCharacterSound) SOUND_N64(id), pos, false);
 }
 
 bool omm_sound_stop_character_sound_omm(s32 id, f32 *pos) {
-    return omm_sound_process_character_sound(-1, id, NULL, pos, false);
+    return omm_sound_process_character_sound((const OmmCharacterSound) SOUND_OMM(id), pos, false);
 }
 
 bool omm_sound_stop_character_sound_r96(const char *id, f32 *pos) {
-    return omm_sound_process_character_sound(-1, -1, id, pos, false);
+    return omm_sound_process_character_sound((const OmmCharacterSound) SOUND_R96(id), pos, false);
 }

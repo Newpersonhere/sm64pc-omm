@@ -9,6 +9,7 @@
 #define FILE_OPTIONS_H      DEF("game/options_menu.h", "game/options_menu.h", "game/options_menu.h", "extras/options_menu.h", "extras/options_menu.h", "extras/options_menu.h")
 #define FILE_SOUNDS_H       DEF("audio_defines.h", "audio_defines.h", "audio_defines.h", "sounds.h", "sounds.h", "sounds.h")
 #define FILE_CHEATS_H       DEF("pc/cheats.h", "pc/cheats.h", "pc/cheats.h", "extras/cheats.h", "extras/cheats.h", "extras/cheats.h")
+#define FILE_MARIO_CHEATS_H DEF("pc/cheats.h", "pc/cheats.h", "game/mario_cheats.h", "extras/cheats.h", "extras/cheats.h", "extras/cheats.h")
 #define FILE_TITLE_H        DEF("menu/level_select_menu.h", "menu/level_select_menu.h", "menu/level_select_menu.h", "menu/title_screen.h", "menu/title_screen.h", "menu/title_screen.h")
 #define FILE_TXT_CONV_H     DEF("types.h", "types.h", "text/txtconv.h", "types.h", "types.h", "types.h")
 #define FILE_TEXT_LOADER_H  DEF("types.h", "types.h", "text/text-loader.h", "types.h", "types.h", "types.h")
@@ -18,7 +19,7 @@
 // Patches
 //
 
-#if defined(DYNOS)
+#if defined(DYNOS) || defined(R96A)
 #ifdef OMM_ALL_HEADERS
 #include "data/dynos.h"
 #endif
@@ -48,6 +49,9 @@
 #define intro_default_0 intro_default()
 #define intro_default_1 intro_default(void) { sDemoCounter = 0; extern int intro_default_(void); return intro_default_(); } int intro_default_(void)
 #define intro_default(...) CAT(intro_default_, N_ARGS(__VA_ARGS__))
+#define intro_play_its_a_me_mario_0 intro_play_its_a_me_mario()
+#define intro_play_its_a_me_mario_1 intro_play_its_a_me_mario(void) { sDemoCounter = 0; extern int intro_play_its_a_me_mario_(void); return intro_play_its_a_me_mario_(); } int intro_play_its_a_me_mario_(void)
+#define intro_play_its_a_me_mario(...) CAT(intro_play_its_a_me_mario_, N_ARGS(__VA_ARGS__))
 #define intro_regular_0 intro_regular()
 #define intro_regular_1 intro_regular(void) { sDemoCounter = 0; extern int intro_regular_(void); return intro_regular_(); } int intro_regular_(void)
 #define intro_regular(...) CAT(intro_regular_, N_ARGS(__VA_ARGS__))
@@ -69,6 +73,9 @@
 #define render_pause_courses_and_castle_0 omm_render_pause()
 #define render_pause_courses_and_castle_1 render_pause_courses_and_castle()
 #define render_pause_courses_and_castle(...) CAT(render_pause_courses_and_castle_, N_ARGS(__VA_ARGS__))
+#define render_pause_screen_0 omm_render_pause()
+#define render_pause_screen_1 render_pause_screen()
+#define render_pause_screen(...) CAT(render_pause_screen_, N_ARGS(__VA_ARGS__))
 
 // render_course_complete_screen is replaced by omm_render_course_complete
 #define render_course_complete_screen_0 omm_render_course_complete()

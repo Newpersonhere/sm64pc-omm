@@ -63,8 +63,8 @@
 #endif
 
 // OMM_DEV_DEBUG | Enables advanced debug stuff
-#if defined(OMM_DEBUG) && defined(DEBUG) && defined(WAPI_SDL2) && !defined(HIGH_FPS_PC)
-#define OMM_CODE_DEV_DEBUG      DEF(OMM_DEBUG, OMM_DEBUG, OMM_DEBUG, OMM_DEBUG, OMM_DEBUG, OMM_DEBUG)
+#if defined(OMM_DEBUG) && defined(DEBUG) && defined(WAPI_SDL2)
+#define OMM_CODE_DEV_DEBUG      DEF(OMM_DEBUG, OMM_DEBUG, 0, OMM_DEBUG, OMM_DEBUG, OMM_DEBUG)
 #else
 #define OMM_CODE_DEV_DEBUG      DEF(0, 0, 0, 0, 0, 0)
 #endif
@@ -88,7 +88,7 @@
 //
 
 // Better camera
-#define BETTER_CAM_IS_PUPPY_CAM         DEF(0, 0, 0, 1, 0, 1)
+#define BETTER_CAM_IS_PUPPY_CAM         DEF(0, 0, 0, 1, 1, 1)
 #define BETTER_CAM_IS_ENABLED           DEF(newcam_active, newcam_active, newcam_active, gPuppyCam.enabled, gPuppyCam.enabled, gPuppyCam.enabled)
 #define BETTER_CAM_MODE                 DEF(CAMERA_MODE_NEWCAM, CAMERA_MODE_NEWCAM, CAMERA_MODE_NEWCAM, 0, 0, 0)
 #define BETTER_CAM_YAW                  DEF(newcam_yaw, newcam_yaw, newcam_yaw, 0, 0, 0)
@@ -106,34 +106,69 @@
 #define gCurrentAnimType                DEF(gCurAnimType, gCurAnimType, gCurAnimType, gCurrAnimType, gCurrAnimType, gCurrAnimType)
 #define gCurrentAnimData                DEF(gCurAnimData, gCurAnimData, gCurAnimData, gCurrAnimData, gCurrAnimData, gCurrAnimData)
 
+// Mario animation
+#define MarioAnimationsStruct           DEF(struct MarioAnimation, struct MarioAnimation, struct MarioAnimation, struct DmaHandlerList, struct DmaHandlerList, struct DmaHandlerList)
+#define mMarioAnimations                DEF(animation, animation, animation, animList, animList, animList)
+#define mMarioTargetAnim                DEF(targetAnim, targetAnim, targetAnim, bufTarget, bufTarget, bufTarget)
+#define gMarioAnimsData                 DEF(D_80339D10, D_80339D10, Data_MarioAnims, gMarioAnimsBuf, gMarioAnimsBuf, gMarioAnimsBuf)
+
 // Audio
 #define gGlobalSoundArgs                DEF(gDefaultSoundArgs, gDefaultSoundArgs, gDefaultSoundArgs, gGlobalSoundSource, gGlobalSoundSource, gGlobalSoundSource)
 #define sAcousticReachPerLevel          DEF(D_80332028, D_80332028, D_80332028, sLevelAcousticReaches, sLevelAcousticReaches, sLevelAcousticReaches)
-#define music_fade_out                  DEF(sequence_player_fade_out, sequence_player_fade_out, sequence_player_fade_out, seq_player_fade_out, seq_player_fade_out, seq_player_fade_out)
-#define music_lower_volume              DEF(func_8031FFB4, func_8031FFB4, func_8031FFB4, seq_player_lower_volume, seq_player_lower_volume, seq_player_lower_volume)
-#define music_unlower_volume            DEF(sequence_player_unlower, sequence_player_unlower, sequence_player_unlower, seq_player_unlower_volume, seq_player_unlower_volume, seq_player_unlower_volume)
+#define audio_play_wing_cap_music()     DEF(play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), r96_play_cap_music(R96_EVENT_CAP_WING), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)))
+#define audio_play_metal_cap_music()    DEF(play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP)), r96_play_cap_music(R96_EVENT_CAP_METAL), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP)))
+#define audio_play_vanish_cap_music()   DEF(play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), r96_play_cap_music(R96_EVENT_CAP_VANISH), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)))
+#define audio_stop_cap_music()          DEF(stop_cap_music(), stop_cap_music(), r96_stop_cap_music(), stop_cap_music(), stop_cap_music(), stop_cap_music())
+#define audio_play_shell_music()        DEF(play_shell_music(), play_shell_music(), r96_play_shell_music(), play_shell_music(), play_shell_music(), play_shell_music())
+#define audio_stop_shell_music()        DEF(stop_shell_music(), stop_shell_music(), r96_stop_shell_music(), stop_shell_music(), stop_shell_music(), stop_shell_music())
+#define audio_play_course_clear()       DEF(play_course_clear(), play_course_clear(), dynos_music_pause(); r96_play_jingle(R96_EVENT_STAR_COLLECT), play_course_clear(), play_course_clear(), play_course_clear())
+#define audio_stop_course_clear()       DEF(, __EXPAND(stop_background_music(SEQ_EVENT_BOSS); play_secondary_music(0, 0, 0, 0); func_80321080(60)), dynos_music_resume(), , , )
+#define audio_play_puzzle_jingle()      DEF(play_puzzle_jingle(), play_puzzle_jingle(), r96_play_jingle(R96_EVENT_SOLVE_PUZZLE), play_puzzle_jingle(), play_puzzle_jingle(), play_puzzle_jingle())
+#define audio_play_toads_jingle()       DEF(play_toads_jingle(), play_toads_jingle(), r96_play_jingle(R96_EVENT_TOAD_MESSAGE), play_toads_jingle(), play_toads_jingle(), play_toads_jingle())
+#define audio_play_star_jingle()        DEF(play_power_star_jingle(1), play_power_star_jingle(1), r96_play_jingle(R96_EVENT_STAR_APPEAR), play_power_star_jingle(1), play_power_star_jingle(1), play_power_star_jingle(1))
+#define audio_play_star_fanfare()       DEF(play_star_fanfare(), play_star_fanfare(), r96_play_jingle(R96_EVENT_STAR_FANFARE), play_star_fanfare(), play_star_fanfare(), play_star_fanfare())
+
+// Music
+#define music_pause()                   DEF(gSequencePlayers[0].muted = true, gSequencePlayers[0].muted = true, dynos_music_pause(), gSequencePlayers[0].muted = true, gSequencePlayers[0].muted = true, gSequencePlayers[0].muted = true)
+#define music_resume()                  DEF(gSequencePlayers[0].muted = false, gSequencePlayers[0].muted = false, dynos_music_resume(), gSequencePlayers[0].muted = false, gSequencePlayers[0].muted = false, gSequencePlayers[0].muted = false)
+#define music_stop()                    DEF(, , dynos_music_stop(); dynos_jingle_stop(), , , )
+#define audio_mute(...)                 DEF(set_sound_disabled(__VA_ARGS__), set_sound_disabled(__VA_ARGS__), set_sound_disabled(__VA_ARGS__), set_audio_muted(__VA_ARGS__), set_audio_muted(__VA_ARGS__), set_audio_muted(__VA_ARGS__))
+#define music_fade_out(...)             DEF(sequence_player_fade_out(__VA_ARGS__), sequence_player_fade_out(__VA_ARGS__), sequence_player_fade_out(__VA_ARGS__), seq_player_fade_out(__VA_ARGS__), seq_player_fade_out(__VA_ARGS__), seq_player_fade_out(__VA_ARGS__))
+#define music_lower_volume(...)         DEF(func_8031FFB4(__VA_ARGS__), func_8031FFB4(__VA_ARGS__), func_8031FFB4(__VA_ARGS__), seq_player_lower_volume(__VA_ARGS__), seq_player_lower_volume(__VA_ARGS__), seq_player_lower_volume(__VA_ARGS__))
+#define music_unlower_volume(...)       DEF(sequence_player_unlower(__VA_ARGS__), sequence_player_unlower(__VA_ARGS__), sequence_player_unlower(__VA_ARGS__), seq_player_unlower_volume(__VA_ARGS__), seq_player_unlower_volume(__VA_ARGS__), seq_player_unlower_volume(__VA_ARGS__))
 #define music_play_sequence_define      DEF(0, 0, 0, 1, 1, 1)
-#define audio_mute                      DEF(set_sound_disabled, set_sound_disabled, set_sound_disabled, set_audio_muted, set_audio_muted, set_audio_muted)
-#define sound_stop                      DEF(func_803205E8, func_803205E8, func_803205E8, stop_sound, stop_sound, stop_sound)
-#define sound_stop_from_source          DEF(func_803206F8, func_803206F8, func_803206F8, stop_sounds_from_source, stop_sounds_from_source, stop_sounds_from_source)
-#define sound_stop_in_continuous_banks  DEF(func_80320890, func_80320890, func_80320890, stop_sounds_in_continuous_banks, stop_sounds_in_continuous_banks, stop_sounds_in_continuous_banks)
-#define sound_set_moving_speed          DEF(func_80320A4C, func_80320A4C, func_80320A4C, set_sound_moving_speed, set_sound_moving_speed, set_sound_moving_speed)
+
+// Sound
+#define sound_stop(...)                 DEF(func_803205E8(__VA_ARGS__), func_803205E8(__VA_ARGS__), func_803205E8(__VA_ARGS__), stop_sound(__VA_ARGS__), stop_sound(__VA_ARGS__), stop_sound(__VA_ARGS__))
+#define sound_stop_from_source(...)     DEF(func_803206F8(__VA_ARGS__), func_803206F8(__VA_ARGS__), func_803206F8(__VA_ARGS__), stop_sounds_from_source(__VA_ARGS__), stop_sounds_from_source(__VA_ARGS__), stop_sounds_from_source(__VA_ARGS__))
+#define sound_set_moving_speed(...)     DEF(func_80320A4C(__VA_ARGS__), func_80320A4C(__VA_ARGS__), func_80320A4C(__VA_ARGS__), set_sound_moving_speed(__VA_ARGS__), set_sound_moving_speed(__VA_ARGS__), set_sound_moving_speed(__VA_ARGS__))
 #define SOUND_OBJ_WHOMP_SLAM            DEF(SOUND_OBJ_WHOMP_LOWPRIO, SOUND_OBJ_WHOMP_LOWPRIO, SOUND_OBJ_WHOMP_LOWPRIO, SOUND_OBJ_WHOMP, SOUND_OBJ_WHOMP, SOUND_OBJ_WHOMP)
 
 // Object fields
 #define oBitsPlatformBowserObject       DEF(oPlatformUnkF8, oPlatformUnkF8, oPlatformUnkF8, oBitsPlatformBowser, oBitsPlatformBowser, oBitsPlatformBowser)
 #define oBowserRainbowLightEffect       DEF(oBowserUnk1B2, oBowserUnk1B2, oBowserUnk1B2, oBowserRainbowLight, oBowserRainbowLight, oBowserRainbowLight)
+#define oBowserShockwaveScale           DEF(oBowserShockWaveUnkF4, oBowserShockWaveUnkF4, oBowserShockWaveUnkF4, oBowserShockWaveScale, oBowserShockWaveScale, oBowserShockWaveScale)
 #define oSnowmansBodyScale              DEF(oSnowmansBottomUnkF4, oSnowmansBottomUnkF4, oSnowmansBottomUnkF4, oSnowmansBottomScale, oSnowmansBottomScale, oSnowmansBottomScale)
+
+// Dialogs and menus
+#define gDialogType                     DEF(gDialogBoxType, gDialogBoxType, gDialogBoxType, gDialogBoxType, gDialogBoxType, gDialogBoxType)
+#define gDialogState                    DEF(gDialogBoxState, gDialogBoxState, gDialogBoxState, gMenuState, gDialogBoxState, gMenuState)
+#define gDialogAngle                    DEF(gDialogBoxOpenTimer, gDialogBoxOpenTimer, gDialogBoxOpenTimer, gDialogBoxAngle, gDialogBoxOpenTimer, gDialogBoxAngle)
+#define gDialogScale                    DEF(gDialogBoxScale, gDialogBoxScale, gDialogBoxScale, gDialogBoxScale, gDialogBoxScale, gDialogBoxScale)
+#define gDialogPageStartNext            DEF(gLastDialogPageStrPos, gLastDialogPageStrPos, gLastDialogPageStrPos, gNextDialogPageStartStrIndex, gLastDialogPageStrPos, gNextDialogPageStartStrIndex)
+#define gDialogPageStart                DEF(gDialogTextPos, gDialogTextPos, gDialogTextPos, gDialogPageStartStrIndex, gDialogTextPos, gDialogPageStartStrIndex)
+#define gDialogLineIndex                DEF(gDialogLineNum, gDialogLineNum, gDialogLineNum, gMenuLineNum, gDialogLineNum, gMenuLineNum)
+#define gDialogChoice                   DEF(gLastDialogResponse, gLastDialogResponse, gLastDialogResponse, gDialogWithChoice, gLastDialogResponse, gDialogWithChoice)
 
 // Misc
 #define GodModeCheat                    DEF(Cheats.GodMode, Cheats.GodMode, Cheats.GodMode, Cheats.InfiniteHealth, Cheats.InfiniteHealth, Cheats.InfiniteHealth)
 #define sDemoCounter                    DEF(gDemoCountdown, gDemoCountdown, gDemoCountdown, sDemoCountdown, sDemoCountdown, sDemoCountdown)
 #define level_intro_goddard             DEF(level_intro_entry_2, level_intro_entry_2, level_intro_entry_2, level_intro_mario_head_regular, level_intro_mario_head_regular, level_intro_mario_head_regular)
-#define find_static_floor               DEF(find_floor, find_floor, find_floor, find_floor, find_floor, find_floor)
-#define find_dynamic_floor              DEF(find_floor, find_floor, find_floor, find_floor, find_floor, find_floor)
+#define find_static_floor(...)          DEF(find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__))
+#define find_dynamic_floor(...)         DEF(find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__))
 #define render_dialog_triangle_page     DEF(render_dialog_string_color, render_dialog_string_color, render_dialog_string_color, render_dialog_triangle_next, render_dialog_triangle_next, render_dialog_triangle_next)
-#define load_gfx_memory_pool            DEF(config_gfx_pool, config_gfx_pool, config_gfx_pool, select_gfx_pool, select_gfx_pool, select_gfx_pool)
-#define init_scene_rendering            DEF(init_render_image, init_render_image, init_render_image, init_rcp, init_rcp, init_rcp)
+#define load_gfx_memory_pool()          DEF(config_gfx_pool(), config_gfx_pool(), config_gfx_pool(), select_gfx_pool(), select_gfx_pool(), select_gfx_pool())
+#define init_scene_rendering()          DEF(init_render_image(), init_render_image(), init_render_image(), init_rcp(), init_rcp(), init_rcp())
 #define spawnInfoModel                  DEF(unk18, unk18, unk18, model, model, model)
 #define gIsHardMode                     DEF(gOmmHardMode, gOmmHardMode, gOmmHardMode, gOmmHardMode, gOmmHardMode, gStarRoadHardMode)
 #define INPUT_STOMP                     DEF(INPUT_UNKNOWN_10, INPUT_UNKNOWN_10, INPUT_UNKNOWN_10, INPUT_STOMPED, INPUT_STOMPED, INPUT_STOMPED)
@@ -147,6 +182,7 @@
 #define OMM_TEXT_(id, str)              static const char OMM_TEXT_##id[] = \
                                         DEF(str, str, "OMM_TEXT_" #id, str, str, str);
 #define OMM_NUM_PLAYABLE_CHARACTERS     DEF(2, 2, 4, 2, 2, 2)
+#define OMM_CUTSCENE_MSG_INDEX          DEF(8, 8, 9, 8, 8, 8)
 #define STAR                            DEF("STAR", "MOON", "STAR", "STAR", "STAR", "STAR")
 #define Star                            DEF("Star", "Moon", "Star", "Star", "Star", "Star")
 
@@ -232,7 +268,11 @@
 //
 
 #if defined(EXT_BOUNDS)
+#if defined(__cplusplus) // g++ doesn't really like _Static_assert, and extended_bounds calls it
+#define __EXTENDED_BOUNDS_H__
+#else
 #include "engine/extended_bounds.h"
+#endif
 #undef EXTENDED_BOUNDS_MODE
 #undef MAX_REFEREMCED_WALLS
 #undef CELL_HEIGHT_LIMIT
@@ -265,10 +305,15 @@
 #define FLOOR_LOWER_LIMIT           -11000
 #define FLOOR_LOWER_LIMIT_MISC      (FLOOR_LOWER_LIMIT + 1000)
 #define FLOOR_LOWER_LIMIT_SHADOW    FLOOR_LOWER_LIMIT_MISC
+#if defined(OMM_COLLISION_LEVEL_BOUNDARY)
 #define LEVEL_BOUNDARY_MAX          OMM_COLLISION_LEVEL_BOUNDARY
 #define CELL_SIZE                   OMM_COLLISION_CELL_SIZE
-#define NUM_CELLS                   OMM_COLLISION_CELL_COUNT
-#define NUM_CELLS_INDEX             OMM_COLLISION_CELL_BITS
+#else
+#define LEVEL_BOUNDARY_MAX          0x8000
+#define CELL_SIZE                   0x400
+#endif
+#define NUM_CELLS                   (2 * (LEVEL_BOUNDARY_MAX / CELL_SIZE))
+#define NUM_CELLS_INDEX             (NUM_CELLS - 1)
 #endif
 
 //
@@ -354,8 +399,8 @@ define_actor(omm_geo_sparkly_star_3_sparkle), \
 define_actor(omm_geo_sparkly_star_3_block), \
 define_actor(omm_geo_sparkly_star_3_hint), \
 define_actor(omm_geo_peach), \
-define_actor(omm_geo_peach_crown), \
-define_actor(omm_geo_peach_crown_metal), \
+define_actor(omm_geo_peachs_cap), \
+define_actor(omm_geo_peachs_metal_cap), \
 define_actor(omm_geo_perry), \
 define_actor(omm_geo_perry_trail), \
 define_actor(omm_geo_perry_shockwave), \

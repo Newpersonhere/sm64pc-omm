@@ -76,7 +76,7 @@ static void cappy_boo_update_once(struct Object *o) {
     if (is_ghost_hunt_boo(o)) {
         o->oBooParentBigBoo->oBigBooNumMinionBoosKilled++;
         if (o->oBooParentBigBoo->oBigBooNumMinionBoosKilled == 5) {
-            play_puzzle_jingle();
+            audio_play_puzzle_jingle();
         }
     }
 

@@ -6,9 +6,10 @@
 // Gfx data
 //
 
-static const Lights1 omm_menu_button_light = OMM_LIGHT(
+static const Lights1 omm_menu_button_light = gdSPDefLights1(
     0x3f, 0x3f, 0x3f,
-    0xff, 0xff, 0xff
+    0xff, 0xff, 0xff,
+    0x28, 0x28, 0x28
 );
 
 static const Vtx omm_menu_button_vertices[] = {

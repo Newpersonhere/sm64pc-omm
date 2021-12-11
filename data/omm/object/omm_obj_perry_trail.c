@@ -200,8 +200,8 @@ OMM_ROUTINE_UPDATE(omm_spawn_perry_trail) {
     // Spawn new trail
     struct Object *trail = obj_spawn_from_geo(gMarioObject, omm_geo_perry_trail, omm_bhv_perry_trail);
     OmmPerryTrailGeoData *data = omm_geo_get_geo_data(trail, sizeof(OmmPerryTrailGeoData), omm_perry_trail_gfx, sizeof(omm_perry_trail_gfx));
-    data->lightsFront = (Lights1) OMM_LIGHT(cf[0], cf[1], cf[2], cf[0], cf[1], cf[2]);
-    data->lightsBack = (Lights1) OMM_LIGHT(cb[0], cb[1], cb[2], cb[0], cb[1], cb[2]);
+    data->lightsFront = (Lights1) gdSPDefLights1(cf[0], cf[1], cf[2], cf[0], cf[1], cf[2], 0x28, 0x28, 0x28);
+    data->lightsBack = (Lights1) gdSPDefLights1(cb[0], cb[1], cb[2], cb[0], cb[1], cb[2], 0x28, 0x28, 0x28);
     trail->oGeoData = (void *) data;
     trail->oAction = 0;
     trail->oSubAction = 0;

@@ -22,7 +22,7 @@ bool cappy_toad_init(struct Object *o) {
 
     // Toad dialog and star
     u32 saveFlags = save_file_get_flags();
-    u32 starCount = save_file_get_total_star_count(gCurrSaveFileNum - 1, 0, 24);
+    u32 starCount = save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1);
     for (s8 i = 0; i != 3; ++i) {
         if ((u32) gOmmData->object->toad.dialogId == sCappyToadParams[i][2]) {
             if (starCount >= sCappyToadParams[i][0]) {
@@ -79,7 +79,7 @@ s32 cappy_toad_update(struct Object *o) {
         // Start dialog
         if (gOmmData->object->state.actionState == 0) {
             if (omm_mario_lock(gMarioState, -1) && obj_dialog_start(gOmmData->object->toad.dialogId)) {
-                play_toads_jingle();
+                audio_play_toads_jingle();
                 gOmmData->object->state.actionState = 1;
             }
         }

@@ -6,9 +6,10 @@
 // Gfx data
 //
 
-static const Lights1 omm_sparkly_star_hint_light = OMM_LIGHT(
+static const Lights1 omm_sparkly_star_hint_light = gdSPDefLights1(
     0x7f, 0x7f, 0x7f,
-    0xff, 0xff, 0xff
+    0xff, 0xff, 0xff,
+    0x28, 0x28, 0x28
 );
 
 static const Vtx omm_sparkly_star_hint_vertices[] = {

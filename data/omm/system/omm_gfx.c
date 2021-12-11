@@ -44,7 +44,8 @@ static struct OmmTexture *omm_gfx_get_texture(const char *id) {
     }
 
     // Open file
-    OMM_STRING(filename, 256, "%s/%s/%s", OMM_EXE_FOLDER, OMM_GFX_FOLDER, id + sizeof(OMM_GFX) - 1);
+    bool isBin = strstr(id, ".bin") != NULL;
+    OMM_STRING(filename, 256, "%s/%s/%s%s", OMM_EXE_FOLDER, OMM_GFX_FOLDER, id + sizeof(OMM_GFX) - 1, (isBin ? "" : ".png"));
     FILE *f = fopen(filename, "rb");
     if (!f) {
         return NULL;

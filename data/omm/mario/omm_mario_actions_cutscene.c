@@ -386,7 +386,7 @@ static bool omm_update_star_dance(struct MarioState *m) {
         m->faceAngle[1] = m->area->camera->yaw;
         vec3s_set(m->marioObj->header.gfx.angle, 0, m->area->camera->yaw, 0);
         disable_background_sound();
-        play_course_clear();
+        audio_play_course_clear();
         f32 radius =  60.f * m->marioObj->oScaleX;
         f32 height = 160.f * m->marioObj->oScaleY;
         celebStar = omm_spawn_star_celebration(m->marioObj, radius, height);
@@ -411,11 +411,7 @@ static bool omm_update_star_dance(struct MarioState *m) {
         m->marioObj->activeFlags &= ~ACTIVE_FLAG_INITIATED_TIME_STOP;
         clear_time_stop_flags(TIME_STOP_ENABLED | TIME_STOP_MARIO_AND_DOORS);
         enable_background_sound();
-#if defined(SMMS)
-        stop_background_music(SEQ_EVENT_BOSS);
-        play_secondary_music(0, 0, 0, 0);
-        func_80321080(60);
-#endif
+        audio_stop_course_clear();
         omm_render_stop_you_got_a_star();
         omm_health_fully_heal_mario(m);
         m->healCounter = OMM_O2_REFILL;

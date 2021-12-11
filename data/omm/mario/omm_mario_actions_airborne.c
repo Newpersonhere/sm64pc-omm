@@ -447,6 +447,13 @@ static s32 omm_act_thrown_backward(struct MarioState *m) {
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
+#if defined(R96A)
+static s32 omm_act_wario_triple_jump(struct MarioState *m) {
+    action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
+    return OMM_MARIO_ACTION_RESULT_CONTINUE;
+}
+#endif
+
 static s16 omm_wall_slide_get_jump_angle(struct MarioState *m) {
     s16 wAngle = atan2s(m->wall->normal.z, m->wall->normal.x);
     s16 dAngle = m->faceAngle[1] - wAngle;
@@ -876,6 +883,9 @@ s32 omm_mario_execute_airborne_action(struct MarioState *m) {
         case ACT_GETTING_BLOWN:             return omm_act_getting_blown(m);
         case ACT_THROWN_FORWARD:            return omm_act_thrown_forward(m);
         case ACT_THROWN_BACKWARD:           return omm_act_thrown_backward(m);
+#if defined(R96A)
+        case ACT_WARIO_TRIPLE_JUMP:         return omm_act_wario_triple_jump(m);
+#endif
 
         // Odyssey
         case ACT_OMM_WALL_SLIDE:            return omm_act_wall_slide(m);

@@ -6,9 +6,10 @@
 // Gfx data
 //
 
-static const Lights1 omm_peach_vibe_joy_gust_light = OMM_LIGHT(
+static const Lights1 omm_peach_vibe_joy_gust_light = gdSPDefLights1(
     0xFF, 0xFF, 0x60,
-    0xFF, 0xFF, 0x60
+    0xFF, 0xFF, 0x60,
+    0x28, 0x28, 0x28
 );
 
 static const Vtx omm_peach_vibe_joy_gust_vertices[] = {

@@ -48,7 +48,7 @@ s32 cappy_crazy_box_update(struct Object *o) {
             } break;
             case POBJ_RESULT_HOP_LARGE: {
                 if (POBJ_B_BUTTON_DOWN) {
-                    o->oVelY = omm_capture_get_jump_velocity(o) * (1.50f + 0.25f * (gOmmData->object->state.actionState++)); // 1.50, 1.75, 2.00
+                    o->oVelY = omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER * (1.50f + 0.25f * (gOmmData->object->state.actionState++)); // 1.50, 1.75, 2.00
                     obj_spawn_white_puff(o, SOUND_GENERAL_BOING2);
                 } else {
                     obj_play_sound(o, SOUND_GENERAL_BOING1);

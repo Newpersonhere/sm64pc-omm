@@ -11,6 +11,53 @@ static s32 omm_act_punching(struct MarioState *m) {
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
+static s32 omm_act_holding_bowser(struct MarioState *m) {
+    static struct Object *sTargetBomb = NULL;
+    bool bPressed = (gPlayer1Controller->buttonPressed & B_BUTTON) != 0;
+    bool aDown = (gPlayer1Controller->buttonDown & A_BUTTON) != 0;
+
+    // If A is down, B is pressed and Mario spins fast enough, try to locate the nearest bomb
+    if (!m->actionState && aDown && bPressed && omm_abs_s(m->angleVel[1]) >= 0xE00) {
+        f32 distTarget = OMM_COLLISION_LEVEL_BOUNDARY;
+        sTargetBomb = NULL;
+        for_each_object_with_behavior(obj, bhvBowserBomb) {
+            f32 distToObj = obj_get_horizontal_distance(m->marioObj, obj);
+            if (distToObj < distTarget) {
+                distTarget = distToObj;
+                sTargetBomb = obj;
+                m->actionState = 1;
+            }
+        }
+    }
+
+    // If A is still down, hold Bowser until he's aligned with the bomb, then throw him
+    if (m->actionState && sTargetBomb) {
+        if (aDown) {
+            s16 angleToTarget = obj_get_object1_angle_yaw_to_object2(m->marioObj, sTargetBomb);
+            if (omm_abs_s((s16) (angleToTarget - m->faceAngle[1])) <= omm_abs_s(m->angleVel[1]) / 2) {
+                m->faceAngle[1] = angleToTarget;
+                m->input |= INPUT_B_PRESSED;
+            } else {
+                m->intendedMag = omm_max_f(21.f, m->intendedMag);
+                m->twirlYaw = m->intendedYaw;
+                m->input &= ~INPUT_B_PRESSED;
+            }
+        } else {
+            m->input |= INPUT_B_PRESSED;
+        }
+    }
+
+    return OMM_MARIO_ACTION_RESULT_CONTINUE;
+}
+
+#if defined(R96A)
+static s32 omm_act_wario_pile_driver_land(struct MarioState *m) {
+    action_cappy(1, ACT_OMM_CAPPY_THROW_GROUND, 0, RETURN_CANCEL);
+    action_a_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_GROUND_POUND_JUMP, 0, RETURN_CANCEL);
+    return OMM_MARIO_ACTION_RESULT_CONTINUE;
+}
+#endif
+
 //
 // Object
 //
@@ -58,7 +105,11 @@ s32 omm_mario_execute_object_action(struct MarioState *m) {
 
     // Actions
     switch (m->action) {
-        case ACT_PUNCHING: return omm_act_punching(m);
+        case ACT_PUNCHING:                  return omm_act_punching(m);
+        case ACT_HOLDING_BOWSER:            return omm_act_holding_bowser(m);
+#if defined(R96A)
+        case ACT_WARIO_PILE_DRIVER_LAND:    return omm_act_wario_pile_driver_land(m);
+#endif
     }
 
     return OMM_MARIO_ACTION_RESULT_CONTINUE;

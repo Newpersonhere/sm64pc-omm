@@ -4,6 +4,7 @@
 typedef uintptr_t GeoLayout;
 typedef uintptr_t BehaviorScript;
 typedef uintptr_t LevelScript;
+typedef s16 Collision;
 
 //
 // Flags
@@ -72,7 +73,7 @@ typedef uintptr_t LevelScript;
 #define OBJ_INT_PERRY_OPEN                                  (1 << 25)
 #define OBJ_INT_PERRY_TRAIL                                 (1 << 26)
 
-#define OBJ_INT_PRESET_CAPPY                                (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_GRAB_OBJECTS)
+#define OBJ_INT_PRESET_CAPPY                                (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_GRAB_OBJECTS | (OBJ_INT_COLLECT_STARS * OMM_CHEAT_CAPPY_CAN_COLLECT_STARS))
 #define OBJ_INT_PRESET_EXPLOSION                            (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_ATTACK_DESTRUCTIBLE)
 #define OBJ_INT_PRESET_ATTACK_AND_COLLECT                   (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_COLLECT_STARS)
 #define OBJ_INT_PRESET_SNOWBALL_SMALL                       (OBJ_INT_ATTACK_WEAK | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS)
@@ -188,8 +189,8 @@ extern const GeoLayout omm_geo_sparkly_star_3_sparkle[];
 extern const GeoLayout omm_geo_sparkly_star_3_block[];
 extern const GeoLayout omm_geo_sparkly_star_3_hint[];
 extern const GeoLayout omm_geo_peach[];
-extern const GeoLayout omm_geo_peach_crown[];
-extern const GeoLayout omm_geo_peach_crown_metal[];
+extern const GeoLayout omm_geo_peachs_cap[];
+extern const GeoLayout omm_geo_peachs_metal_cap[];
 extern const GeoLayout omm_geo_perry[];
 extern const GeoLayout omm_geo_perry_trail[];
 extern const GeoLayout omm_geo_perry_shockwave[];

@@ -15,6 +15,12 @@ enum OmmCappyBehavior {
     OMM_CAPPY_BHV_FLYING,
 };
 
+#define CAPPY_FLAG_START_ANIM                   (1 << 0)
+#define CAPPY_FLAG_INTERACT_MARIO               (1 << 1)
+#define CAPPY_FLAG_HOMING_ATTACK                (1 << 2)
+#define CAPPY_FLAG_PLAY_AS                      (1 << 3)
+#define CAPPY_FLAG_CAMERA                       (1 << 4)
+
 #define CAPPY_LIFETIME                          (OMM_CHEAT_CAPPY_STAYS_FOREVER ? 0xFFFFFF : 120) // 4 seconds (6 days and a half for CSF cheat)
 #define CAPPY_RETURN_VEL                        (120.f)
 #define CAPPY_SLOWDOWN_FACTOR                   (1.15f)
@@ -50,5 +56,7 @@ enum OmmCappyBehavior {
 #define CAPPY_HOMING_ATTACK_ORIGIN              (cappy->oCappyBehavior == OMM_CAPPY_BHV_FLYING ? m->marioObj : cappy)
 #define CAPPY_HOMING_ATTACK_VEL                 (80.f)
 #define CAPPY_HOMING_ATTACK_DURATION            (OMM_CHEAT_HOMING_ATTACK_GLOBAL_RANGE ? (CAPPY_LIFETIME - 20) : (cappy->oCappyBehavior == OMM_CAPPY_BHV_FLYING ? 5 : 4)) // Performs better with CSF cheat
+#define CAPPY_PLAY_AS_H_VEL                     (60.f)
+#define CAPPY_PLAY_AS_V_VEL                     (45.f)
 
 #endif // OMM_CAPPY_DATA_H

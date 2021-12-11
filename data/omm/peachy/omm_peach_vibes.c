@@ -344,6 +344,8 @@ void omm_peach_vibe_update(struct MarioState *m) {
 // Music variations caused by Vibes
 //
 
+#if !defined(R96A)
+
 static void update_sequence_channel(struct SequenceChannel *channel) {
     static f32 sSeqChannelInfoBuffer[0x80][OMM_PEACH_VIBE_TYPE_COUNT][2];
     static s32 sSeqChannelInfoIndex = 0;
@@ -412,3 +414,5 @@ OMM_ROUTINE_GFX(omm_peach_vibe_update_music) {
         omm_peach_vibe_update_sequences(SEQ_PLAYER_ENV, OMM_ARRAY_OF(s32) { SEQ_EVENT_PIRANHA_PLANT, SEQ_EVENT_MERRY_GO_ROUND, SEQ_EVENT_BOSS, SEQ_EVENT_ENDLESS_STAIRS, -1 });
     }
 }
+
+#endif

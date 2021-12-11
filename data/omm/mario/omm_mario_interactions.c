@@ -133,8 +133,13 @@ bool omm_mario_interact_coin(struct MarioState *m, struct Object *o) {
 }
 
 bool omm_mario_interact_star_or_key(struct MarioState *m, struct Object *o) {
-    if (m->health > OMM_HEALTH_DEAD) {
+    if (m->health > OMM_HEALTH_DEAD && o != NULL) {
 
+        // Sparkly star
+        if (omm_sparkly_interact_star(m, o)) {
+            return true;
+        }
+        
         // Collect star or key
         omm_sparkly_interact_grand_star(m, o);
         save_file_collect_star_or_key(m->numCoins, (o->oBehParams >> 24) & 0x1F);
@@ -187,6 +192,52 @@ bool omm_mario_interact_star_or_key(struct MarioState *m, struct Object *o) {
     return false;
 }
 
+bool omm_mario_interact_warp(struct MarioState *m, struct Object *o) {
+#if defined(R96A)
+    if (!(o->oInteractionSubtype & INT_SUBTYPE_FADING_WARP) && (m->action != ACT_EMERGE_FROM_PIPE) && (o->oObjectID == 1)) {
+        o->oInteractStatus = INT_STATUS_INTERACTED;
+        m->interactObj = o;
+        m->usedObj = o;
+        mario_stop_riding_and_holding(m);
+        play_sound(SOUND_MENU_ENTER_PIPE, m->marioObj->oCameraToObject);
+        play_transition(WARP_TRANSITION_FADE_INTO_MARIO, 0x15, 0x00, 0x00, 0x00);
+        
+        // Left to right: Luigi, Mario, Wario
+        s32 target = OMM_PLAYER_MARIO;
+        switch (o->oBehParams) {
+            case 0: target = OMM_PLAYER_LUIGI; break;
+            case 1: target = OMM_PLAYER_MARIO; break;
+            case 2: target = OMM_PLAYER_WARIO; break;
+        }
+        
+        // If already selected, select Peach if unlocked
+        // Otherwise, switch character if unlocked
+        if (omm_player_is_selected(target) && omm_player_is_unlocked(OMM_PLAYER_PEACH)) {
+            omm_player_select(OMM_PLAYER_PEACH);
+            omm_mario_set_action(m, ACT_CHARACTER_SWITCH, TRUE, 0);
+        } else if (omm_player_is_unlocked(target)) {
+            omm_player_select(target);
+            omm_mario_set_action(m, ACT_CHARACTER_SWITCH, TRUE, 0);
+        } else {
+            omm_mario_set_action(m, ACT_CHARACTER_SWITCH, FALSE, 0);
+        }
+        return true;
+    }
+#endif
+
+    // Grand star?
+    // Some rom-hacks replace the jumbo star cutscene by a warp to a 'we saved the world' cutscene level
+    if (o->behavior == bhvGrandStar) {
+        omm_speedrun_split(-1);
+        mario_stop_riding_and_holding(m);
+        play_sound(SOUND_MENU_STAR_SOUND, m->marioObj->oCameraToObject);
+        spawn_object(o, MODEL_NONE, bhvStarKeyCollectionPuffSpawner);
+        interact_warp(m, INTERACT_WARP, o);
+        return true;
+    }
+    return false;
+}
+
 static bool omm_mario_interact_whirlpool(struct MarioState *m, UNUSED struct Object *o) {
     return omm_mario_has_metal_cap(m);
 }
@@ -201,6 +252,13 @@ static bool omm_mario_interact_flame(UNUSED struct MarioState *m, struct Object 
         obj_mark_for_deletion(o);
         return true;
     }
+#if defined(R96A)
+    if (omm_sparkly_is_enabled() && omm_sparkly_is_bowser_4() && m->action == ACT_WARIO_CHARGE) {
+        sInvulnerable = 0;
+        interact_flame(m, INTERACT_FLAME, o);
+        return true;
+    }
+#endif
     return false;
 }
 
@@ -236,33 +294,30 @@ static bool omm_mario_interact_damage(struct MarioState *m, struct Object *o) {
     return false;
 }
 
-// flag, duration, music
-static const u32 sOmmCapValues[][3] = {
-    { MARIO_NORMAL_CAP, 0, 0 },
-    { MARIO_VANISH_CAP, OMM_IMPROVED_VANISH_CAP_DURATION, SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP) },
-    { MARIO_METAL_CAP, OMM_IMPROVED_METAL_CAP_DURATION, SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP) },
-    { MARIO_WING_CAP, OMM_IMPROVED_WING_CAP_DURATION, SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP) },
-};
-
-static s32 get_cap_index(struct Object *o) {
-    if (o->behavior == bhvNormalCap) return 0;
-    if (o->behavior == bhvVanishCap) return 1;
-    if (o->behavior == bhvMetalCap)  return 2;
-    if (o->behavior == bhvWingCap)   return 3;
-    return -1;
+static s32 get_cap(struct Object *o) {
+    if (o->behavior == bhvNormalCap) return MARIO_NORMAL_CAP;
+    if (o->behavior == bhvWingCap)   return MARIO_WING_CAP;
+    if (o->behavior == bhvMetalCap)  return MARIO_METAL_CAP;
+    if (o->behavior == bhvVanishCap) return MARIO_VANISH_CAP;
+    return 0;
 }
 
 bool omm_mario_interact_cap(struct MarioState *m, struct Object *o) {
     if (omm_peach_vibe_is_active()) {
         return true;
     }
-    s32 cap = get_cap_index(o);
-    if ((cap != -1) && OMM_POWER_UPS_IMPROVED && (m->action != ACT_OMM_POSSESSION) && (m->action != ACT_GETTING_BLOWN)) {
+    s32 cap = get_cap(o);
+    if (cap && OMM_POWER_UPS_IMPROVED && (m->action != ACT_OMM_POSSESSION) && (m->action != ACT_GETTING_BLOWN)) {
         m->interactObj = o;
         m->flags &= ~MARIO_CAP_ON_HEAD & ~MARIO_CAP_IN_HAND;
-        m->flags |= sOmmCapValues[cap][0];
-        m->capTimer = omm_max_s(m->capTimer, sOmmCapValues[cap][1]);
-        if (sOmmCapValues[cap][2]) play_cap_music(sOmmCapValues[cap][2]);
+        m->flags |= cap;
+        switch (cap) {
+            case MARIO_NORMAL_CAP: audio_stop_cap_music();        m->capTimer = 1; break;
+            case MARIO_WING_CAP:   audio_play_wing_cap_music();   m->capTimer = omm_max_s(m->capTimer, OMM_IMPROVED_WING_CAP_DURATION); break;
+            case MARIO_METAL_CAP:  audio_play_metal_cap_music();  m->capTimer = omm_max_s(m->capTimer, OMM_IMPROVED_METAL_CAP_DURATION); break;
+            case MARIO_VANISH_CAP: audio_play_vanish_cap_music(); m->capTimer = omm_max_s(m->capTimer, OMM_IMPROVED_VANISH_CAP_DURATION); break;
+        }
+        
         play_sound(SOUND_MENU_STAR_SOUND, m->marioObj->oCameraToObject);
         play_sound(SOUND_MARIO_HERE_WE_GO, m->marioObj->oCameraToObject);
         o->oInteractStatus = INT_STATUS_INTERACTED;
@@ -293,6 +348,7 @@ struct OmmInteractionHandler { u32 interactType; bool (*handler)(struct MarioSta
 static const struct OmmInteractionHandler sOmmInteractionHandlers[] = {
     { INTERACT_COIN,            omm_mario_interact_coin },
     { INTERACT_STAR_OR_KEY,     omm_mario_interact_star_or_key },
+    { INTERACT_WARP,            omm_mario_interact_warp },
     { INTERACT_WHIRLPOOL,       omm_mario_interact_whirlpool },
     { INTERACT_STRONG_WIND,     omm_mario_interact_strong_wind },
     { INTERACT_FLAME,           omm_mario_interact_flame },
@@ -304,7 +360,6 @@ static const struct OmmInteractionHandler sOmmInteractionHandlers[] = {
     { INTERACT_CAP,             omm_mario_interact_cap },
     { INTERACT_POLE,            omm_mario_interact_pole },
     { INTERACT_GRABBABLE,       omm_mario_interact_grabbable },
-    { INTERACT_UNKNOWN_31,      omm_sparkly_interact_star }
 };
 static const s32 sOmmInteractionHandlerCount = sizeof(sOmmInteractionHandlers) / sizeof(sOmmInteractionHandlers[0]);
 

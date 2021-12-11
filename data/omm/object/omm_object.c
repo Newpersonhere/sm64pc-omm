@@ -311,7 +311,7 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
         return false;
     }
 
-    // Slightly fix the racing penguin path to prevent him from going out of bounds
+    // Slightly fix the racing penguin path to prevent her from going out of bounds
     if (o->behavior == bhvRacingPenguin) {
         switch (o->oAction) {
             case RACING_PENGUIN_ACT_FINISH_RACE: {
@@ -373,6 +373,17 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
         func == bhv_1up_hidden_in_pole_loop) {
         if ((o->oNodeFlags & GRAPH_RENDER_ACTIVE) && !(o->oNodeFlags & GRAPH_RENDER_INVISIBLE) && (o->oIntangibleTimer == 0)) {
             if (obj_check_if_collided_with_object(o, gMarioObject)) {
+#if defined(R96A)
+                // Green Demon effect
+                if (Cheats.EnableCheats && Cheats.ChaosGreenDemon) {
+                    play_sound(SOUND_MENU_CAMERA_BUZZ, gDefaultSoundArgs);
+                    gMarioState->health = 0xFF;
+                    gMarioState->healCounter = 0;
+                    gMarioState->hurtCounter = 0;
+                    obj_mark_for_deletion(o);
+                    return true;
+                }
+#endif
                 omm_health_life_up(gMarioState);
                 obj_mark_for_deletion(o);
                 return true;
@@ -605,6 +616,28 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
         return false;
     }
 
+#if defined(R96A)
+    // bhv_motos_loop
+    // Gets mad if weak attacked, or knocked back if strong attacked
+    if (func == bhv_motos_loop) {
+        s32 attackFlags = (o->oInteractStatus >> 24) & (OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_WEAK);
+        if (attackFlags) {
+            if (attackFlags & OBJ_INT_ATTACK_STRONG) {
+                o->oHeldState = HELD_THROWN;
+            } else {
+                o->oMoveAngleYaw += 0x8000;
+                o->oAction = 1;
+            }
+            if (m->action == ACT_GRABBED && m->usedObj == o) {
+                o->oChuckyaUnk88 = 2;
+            }
+            o->oInteractStatus = 0;
+            play_sound(SOUND_OBJ2_LARGE_BULLY_ATTACKED, o->oCameraToObject);
+        }
+        return false;
+    }
+#endif
+
     // bhv_ukiki_loop
     // Cage Ukiki starts its path from the nearest point instead of the first
     if (func == bhv_ukiki_loop) {
@@ -774,6 +807,28 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
         return false;
     }
 
+    // bhv_bowser_shock_wave_loop
+    // Fix Bowser's shockwave interaction
+    if (func == bhv_bowser_shock_wave_loop) {
+        o->oDistanceToMario = 0.f;
+        func();
+        if (m->invincTimer == 0 && m->action != ACT_SHOCKED && o->oBowserShockwaveScale > 0.f && o->oTimer < 70) {
+
+            // Check vertical distance
+            if ((m->pos[1] - o->oPosY) < 40.f &&
+                (o->oPosY - m->pos[1]) < (m->marioObj->hitboxHeight + 40.f)) {
+
+                // Check horizontal distance
+                f32 hDistToMario = obj_get_horizontal_distance(o, m->marioObj) / o->oBowserShockwaveScale;
+                if ((1.9f < hDistToMario && hDistToMario < 2.4f) ||
+                    (4.0f < hDistToMario && hDistToMario < 4.8f)) {
+                    omm_spawn_damage_mario(m->marioObj, INTERACT_SHOCK, 1);
+                }
+            }
+        }
+        return true;
+    }
+
     // bhv_bowsers_sub_loop
     // Always spawn DDD sub and door in Non-Stop mode
     if (func == bhv_bowsers_sub_loop) {
@@ -876,7 +931,6 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
     // bhv_menu_button_manager_init
     // Spawn the character select button
     if (func == bhv_menu_button_manager_init) {
-        omm_player_select(gOmmCharacter);
         struct Object *charSelButton = spawn_object_rel_with_rot(o, MODEL_NONE, omm_bhv_menu_character_select_button, 6400.f, -3500.f, 0, 0, 0, 0);
         charSelButton->oMenuButtonScale = 1.0f;
         charSelButton->oAnimState = 0;

@@ -5,7 +5,7 @@
 #if defined(RAPI_RT64)
 #define NOT_COMPATIBLE
 #define MOD_NAME "Super Mario 64 RT"
-#elif defined(CHEATER)
+#elif defined(CHEATER) && !defined(R96A)
 #define NOT_COMPATIBLE
 #define MOD_NAME "CHEATER"
 #elif defined(ACT_SPINDASH) || defined(ACT_TRANSFORM)
@@ -309,6 +309,11 @@ static LONG omm_crash_handler(EXCEPTION_POINTERS *ExceptionInfo) {
     }
 
     // Game over sound effect
+#if defined(R96A)
+    dynos_music_stop();
+    dynos_jingle_stop();
+    dynos_sound_stop(1);
+#endif
     if (SDL_WasInit(SDL_INIT_AUDIO) || SDL_InitSubSystem(SDL_INIT_AUDIO) == 0) {
         SDL_AudioSpec want, have;
         want.freq = 32000;

@@ -53,7 +53,7 @@ bool omm_exit_level() {
         // Close the pause menu if it was open
         if (optmenu_open) optmenu_toggle();
         level_set_transition(0, NULL);
-        gDialogBoxState = 0;
+        gDialogState = 0;
         gMenuMode = -1;
 
         // Cancel out every music/sound/sequence
@@ -61,9 +61,9 @@ bool omm_exit_level() {
         for (u16 seqid = 0; seqid != SEQ_COUNT; ++seqid) {
             stop_background_music(seqid);
         }
-        play_shell_music();
-        stop_shell_music();
-        stop_cap_music();
+        audio_play_shell_music();
+        audio_stop_shell_music();
+        audio_stop_cap_music();
         func_80321080(0);
         fadeout_music(0);
         fadeout_level_music(0);
@@ -234,6 +234,7 @@ void *omm_update_warp(void *cmd, bool inited) {
                     play_sound(SOUND_MENU_MARIO_CASTLE_WARP, gGlobalSoundArgs);
 
                     // Set music
+                    music_stop();
                     set_background_music(gCurrentArea->musicParam, gCurrentArea->musicParam2, 0);
                     sTargetWarp = NULL;
                 }
@@ -255,7 +256,7 @@ void *omm_update_warp(void *cmd, bool inited) {
                 // Close the pause menu if it was open
                 if (optmenu_open) optmenu_toggle();
                 level_set_transition(0, NULL);
-                gDialogBoxState = 0;
+                gDialogState = 0;
                 gMenuMode = -1;
 
                 // Cancel out every music/sound/sequence
@@ -264,9 +265,9 @@ void *omm_update_warp(void *cmd, bool inited) {
                 for (u16 seqid = 0; seqid != SEQ_COUNT; ++seqid) {
                 stop_background_music(seqid);
                 }
-                play_shell_music();
-                stop_shell_music();
-                stop_cap_music();
+                audio_play_shell_music();
+                audio_stop_shell_music();
+                audio_stop_cap_music();
                 func_80321080(0);
                 fadeout_music(0);
                 fadeout_level_music(0);
@@ -343,10 +344,12 @@ void *omm_update_warp(void *cmd, bool inited) {
                     }
 
                     // Set music
+                    music_stop();
                     set_background_music(gCurrentArea->musicParam, gCurrentArea->musicParam2, 0);
-                    if (gMarioState->flags & MARIO_METAL_CAP)  play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP));
-                    if (gMarioState->flags & MARIO_VANISH_CAP) play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP));
-                    if (gMarioState->flags & MARIO_WING_CAP)   play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP));
+                    if (gMarioState->flags & MARIO_WING_CAP)   audio_play_wing_cap_music();
+                    if (gMarioState->flags & MARIO_METAL_CAP)  audio_play_metal_cap_music();
+                    if (gMarioState->flags & MARIO_VANISH_CAP) audio_play_vanish_cap_music();
+
                     if (gCurrLevelNum == LEVEL_BOWSER_1 ||
                         gCurrLevelNum == LEVEL_BOWSER_2 ||
                         gCurrLevelNum == LEVEL_BOWSER_3) {

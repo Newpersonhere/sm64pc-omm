@@ -6,9 +6,10 @@
 // Gfx data
 //
 
-static const Lights1 omm_sparkly_star_block_light = OMM_LIGHT(
+static const Lights1 omm_sparkly_star_block_light = gdSPDefLights1(
     0x3f, 0x3f, 0x3f,
-    0xff, 0xff, 0xff
+    0xff, 0xff, 0xff,
+    0x28, 0x28, 0x28
 );
 
 static const Vtx omm_sparkly_star_block_vertices[] = {
@@ -166,7 +167,7 @@ static void omm_bhv_sparkly_star_block_update() {
 
         case 3: {
             if (o->oTimer == 20) {
-                play_puzzle_jingle();
+                audio_play_puzzle_jingle();
                 obj_mark_for_deletion(o);
             }
         } break;

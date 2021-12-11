@@ -6,9 +6,10 @@
 // Gfx data
 //
 
-static const Lights1 omm_peach_vibe_aura_light = OMM_LIGHT(
-    OMM_PEACH_COLOR_VIBE_BACK,
-    OMM_PEACH_COLOR_VIBE_BACK
+static const Lights1 omm_peach_vibe_aura_light = gdSPDefLights1(
+    0xFF, 0x80, 0xFF,
+    0xFF, 0x80, 0xFF,
+    0x28, 0x28, 0x28
 );
 
 static const Vtx omm_peach_vibe_aura_vertices[] = {

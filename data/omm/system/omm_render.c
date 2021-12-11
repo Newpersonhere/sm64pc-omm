@@ -901,13 +901,6 @@ static bool omm_render_hud_power_up(struct MarioState *m, s16 y) {
 }
 
 //
-// Collectibles
-//
-
-static void omm_render_hud_collectibles() {
-}
-
-//
 // Camera
 //
 
@@ -917,7 +910,7 @@ static void omm_render_hud_camera(struct MarioState *m) {
         if (alpha) {
 
             // OMM cam
-            if (omm_camera_is_available(m)) {
+            if (!OMM_CAMERA_CLASSIC) {
                 omm_render_create_dl_ortho_matrix();
                 omm_render_glyph_hud(OMM_RENDER_CAMERA_X, OMM_RENDER_CAMERA_Y, 0xFF, 0xFF, 0xFF, alpha, OMM_TEXTURE_HUD_CAMERA, false);
                 if (OMM_CAMERA_8_DIRECTIONS) {
@@ -933,20 +926,17 @@ static void omm_render_hud_camera(struct MarioState *m) {
                 }
             }
             
-            // Puppy cam
-            else if (BETTER_CAM_IS_ENABLED && BETTER_CAM_IS_PUPPY_CAM) {
-                omm_render_create_dl_ortho_matrix();
-                omm_render_glyph_hud(OMM_RENDER_CAMERA_X, OMM_RENDER_CAMERA_Y, 0xFF, 0xFF, 0xFF, alpha, ((const u8 **) main_hud_camera_lut)[GLYPH_CAM_CAMERA], false);
-                omm_render_glyph_hud(OMM_RENDER_CAMERA_X + OMM_RENDER_CAMERA_OFFSET_X, OMM_RENDER_CAMERA_Y, 0xFF, 0xFF, 0xFF, alpha, texture_hud_char_puppycam, false);
-            }
-            
-            // Better cam
+            // Puppy/better cam
             else if (BETTER_CAM_IS_ENABLED) {
                 omm_render_create_dl_ortho_matrix();
                 omm_render_glyph_hud(OMM_RENDER_CAMERA_X, OMM_RENDER_CAMERA_Y, 0xFF, 0xFF, 0xFF, alpha, ((const u8 **) main_hud_camera_lut)[GLYPH_CAM_CAMERA], false);
+#if BETTER_CAM_IS_PUPPY_CAM
+                omm_render_glyph_hud(OMM_RENDER_CAMERA_X + OMM_RENDER_CAMERA_OFFSET_X, OMM_RENDER_CAMERA_Y, 0xFF, 0xFF, 0xFF, alpha, texture_hud_char_puppycam, false);
+#else
                 omm_render_glyph_hud(OMM_RENDER_CAMERA_X + OMM_RENDER_CAMERA_OFFSET_X, OMM_RENDER_CAMERA_Y, 0xFF, 0xFF, 0xFF, alpha, ((const u8 **) main_hud_camera_lut)[GLYPH_CAM_LAKITU_HEAD], false);
+#endif
             }
-                
+
             // Lakitu cam
             else {
                 s32 status = update_camera_hud_status(gCamera);
@@ -1604,6 +1594,43 @@ static void omm_render_pause_init() {
 }
 
 //
+// Collectibles
+//
+
+inline static void omm_render_collectible(s16 x, s16 y, const void *texture, bool collected) {
+    omm_render_glyph_hud(x, y, 0xFF * collected, 0xFF * collected, 0xFF * collected, sOmmDialogTextAlpha / (2 - collected), texture, false);
+}
+
+static void omm_render_collectibles() {
+#if defined(R96A)
+
+    // Luigi keys
+    if ((gHudDisplay.flags & HUD_DISPLAY_FLAG_KEYS) && gHudDisplay.keys > 0 && gHudDisplay.keys < NUM_KEYS) {
+        for (s32 i = 0; i != NUM_KEYS; ++i) {
+            omm_render_collectible(
+                OMM_RENDER_COLLECTIBLE_X + OMM_RENDER_NUMBER_OFFSET_X * i,
+                OMM_RENDER_COLLECTIBLE_Y,
+                "textures/segment2/boo_key.rgba16",
+                save_file_taken_key(gCurrSaveFileNum - 1, i)
+            );
+        }
+    }
+
+    // Wario coins
+    if ((gHudDisplay.flags & HUD_DISPLAY_FLAG_KEYS) && gHudDisplay.wario_coins > 0 && gHudDisplay.wario_coins < NUM_WARIO_COINS) {
+        for (s32 i = 0; i != NUM_WARIO_COINS; ++i) {
+            omm_render_collectible(
+                OMM_RENDER_COLLECTIBLE_X + OMM_RENDER_STAR_OFFSET_X * i,
+                OMM_RENDER_COLLECTIBLE_Y + OMM_RENDER_OFFSET_Y,
+                "textures/segment2/wario_coin.rgba16",
+                save_file_taken_wario_coin(gCurrSaveFileNum - 1, i)
+            );
+        }
+    }
+#endif
+}
+
+//
 // Pause (Course)
 //
 
@@ -1684,7 +1711,7 @@ static void omm_render_pause_course() {
     }
     
     // Collectibles
-    omm_render_hud_collectibles();
+    omm_render_collectibles();
 
 #if OMM_CODE_SPARKLY
     // Sparkly Stars timer
@@ -1793,7 +1820,7 @@ static void omm_render_pause_castle() {
 #if OMM_CODE_TIME_TRIALS
     gDialogTextAlpha = sOmmDialogTextAlpha;
     omm_render_create_dl_ortho_matrix();
-    if (!time_trials_render_time_table(&gDialogLineNum)) {
+    if (!time_trials_render_time_table(&gDialogLineIndex)) {
 #endif
 
     // Init scrollV with the index of the last level visited
@@ -1946,7 +1973,7 @@ static void omm_render_pause_castle() {
 #endif
 
     // Collectibles
-    omm_render_hud_collectibles();
+    omm_render_collectibles();
 
 #if defined(SM74)
     // Display "Super Mario 74" and current mode
@@ -2032,7 +2059,7 @@ s32 omm_render_course_complete() {
         play_sound(SOUND_MENU_YOSHI_GAIN_LIVES, gGlobalSoundArgs);
         if (sOmmCourseCompleteCoins == gHudDisplay.coins) {
             sOmmCourseCompleteTimer = 0;
-            play_star_fanfare();
+            audio_play_star_fanfare();
             if (gGotFileCoinHiScore) {
                 play_sound(SOUND_MENU_MARIO_CASTLE_WARP2, gGlobalSoundArgs);
             }
@@ -2136,15 +2163,15 @@ enum OmmDialogBoxPageState {
 static void omm_handle_dialog_text_and_pages(s8 colorMode, struct DialogEntry *dialog, s8 lowerBound) {
     u8 *str = omm_text_replace_names((u8 *) dialog->str, false);
     s8 linesPerBox = dialog->linesPerBox;
-    s8 totalLines = 1 + linesPerBox * (gDialogBoxState == OMM_DIALOG_STATE_HORIZONTAL ? 2 : 1);
+    s8 totalLines = 1 + linesPerBox * (gDialogState == OMM_DIALOG_STATE_HORIZONTAL ? 2 : 1);
     s8 lineNum = 1;
     s16 linePos = 0;
-    s16 strIdx = gDialogTextPos;
+    s16 strIdx = gDialogPageStart;
     s8 xMatrix = 1;
 
     // Init text drawing
     gSPDisplayList(gDisplayListHead++, dl_ia_text_begin);
-    if (gDialogBoxState == OMM_DIALOG_STATE_HORIZONTAL) {
+    if (gDialogState == OMM_DIALOG_STATE_HORIZONTAL) {
         create_dl_translation_matrix(MENU_MTX_NOPUSH, 0, (f32) gDialogScrollOffsetY, 0);
     }
     create_dl_translation_matrix(MENU_MTX_PUSH, 0, -14, 0);
@@ -2214,11 +2241,11 @@ static void omm_handle_dialog_text_and_pages(s8 colorMode, struct DialogEntry *d
 
     // Update line num and cursor pos
     gLastDialogLineNum = lineNum;
-    if (gDialogBoxState == OMM_DIALOG_STATE_VERTICAL) {
+    if (gDialogState == OMM_DIALOG_STATE_VERTICAL) {
         if (pageState == OMM_DIALOG_PAGE_STATE_END) {
-            gLastDialogPageStrPos = -1;
+            gDialogPageStartNext = -1;
         } else {
-            gLastDialogPageStrPos = strIdx;
+            gDialogPageStartNext = strIdx;
         }
     }
 }
@@ -2228,8 +2255,10 @@ static void omm_render_dialog_entry() {
     struct DialogEntry *dialog = omm_get_dialog_entry((sm74_mode__omm_render_dialog_entry == 2 ?
                                                       (void **) seg2_dialog_table_EE :
                                                       (void **) seg2_dialog_table), gDialogID);
-#else
+#elif !defined(R96A)
     struct DialogEntry *dialog = omm_get_dialog_entry((void **) seg2_dialog_table, gDialogID);
+#else
+    struct DialogEntry *dialog = omm_get_dialog_entry(NULL, gDialogID);
 #endif
 
     if (!dialog) {
@@ -2239,38 +2268,38 @@ static void omm_render_dialog_entry() {
 
     // Updating dialog box state
     s8 lowerBound;
-    switch (gDialogBoxState) {
+    switch (gDialogState) {
 
         // Opening the dialog box
         case OMM_DIALOG_STATE_OPENING: {
-            if (gDialogBoxOpenTimer == 90.f) {
+            if (gDialogAngle == 90.f) {
                 play_dialog_sound(gDialogID);
                 play_sound(SOUND_MENU_MESSAGE_APPEAR, gGlobalSoundArgs);
             }
-            if (gDialogBoxType == 0) {
-                gDialogBoxOpenTimer -= 7.5f;
-                gDialogBoxScale -= 1.5f;
+            if (gDialogType == 0) {
+                gDialogAngle -= 7.5f;
+                gDialogScale -= 1.5f;
             } else {
-                gDialogBoxOpenTimer -= 10.f;
-                gDialogBoxScale -= 2.f;
+                gDialogAngle -= 10.f;
+                gDialogScale -= 2.f;
             }
-            if (gDialogBoxOpenTimer == 0.f) {
-                gDialogBoxState = OMM_DIALOG_STATE_VERTICAL;
-                gDialogLineNum = 1;
+            if (gDialogAngle == 0.f) {
+                gDialogState = OMM_DIALOG_STATE_VERTICAL;
+                gDialogLineIndex = 1;
             }
             lowerBound = 1;
         } break;
 
         // Waiting for next page
         case OMM_DIALOG_STATE_VERTICAL: {
-            gDialogBoxOpenTimer = 0.f;
+            gDialogAngle = 0.f;
             if (gPlayer1Controller->buttonPressed & (A_BUTTON | B_BUTTON)) {
-                if (gLastDialogPageStrPos == -1) {
+                if (gDialogPageStartNext == -1) {
                     handle_special_dialog_text(gDialogID);
-                    gDialogBoxState = OMM_DIALOG_STATE_CLOSING;
+                    gDialogState = OMM_DIALOG_STATE_CLOSING;
                 } else {
                     play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundArgs);
-                    gDialogBoxState = OMM_DIALOG_STATE_HORIZONTAL;
+                    gDialogState = OMM_DIALOG_STATE_HORIZONTAL;
                 }
             }
             lowerBound = 1;
@@ -2280,8 +2309,8 @@ static void omm_render_dialog_entry() {
         case OMM_DIALOG_STATE_HORIZONTAL: {
             gDialogScrollOffsetY += dialog->linesPerBox * 2;
             if (gDialogScrollOffsetY >= dialog->linesPerBox * 16) {
-                gDialogTextPos = gLastDialogPageStrPos;
-                gDialogBoxState = OMM_DIALOG_STATE_VERTICAL;
+                gDialogPageStart = gDialogPageStartNext;
+                gDialogState = OMM_DIALOG_STATE_VERTICAL;
                 gDialogScrollOffsetY = 0;
             }
             lowerBound = (gDialogScrollOffsetY / 16) + 1;
@@ -2289,22 +2318,22 @@ static void omm_render_dialog_entry() {
 
         // Closing the dialog box
         case OMM_DIALOG_STATE_CLOSING: {
-            if (gDialogBoxOpenTimer == 20.f) {
+            if (gDialogAngle == 20.f) {
                 level_set_transition(0, 0);
                 play_sound(SOUND_MENU_MESSAGE_DISAPPEAR, gGlobalSoundArgs);
-                if (gDialogBoxType == 1) {
+                if (gDialogType == 1) {
                     trigger_cutscene_dialog(2);
                 }
-                gDialogResponse = gDialogLineNum;
+                gDialogResponse = gDialogLineIndex;
             }
-            gDialogBoxOpenTimer = gDialogBoxOpenTimer + 10.f;
-            gDialogBoxScale = gDialogBoxScale + 2.f;
-            if (gDialogBoxOpenTimer == 90.f) {
-                gDialogBoxState = OMM_DIALOG_STATE_OPENING;
+            gDialogAngle = gDialogAngle + 10.f;
+            gDialogScale = gDialogScale + 2.f;
+            if (gDialogAngle == 90.f) {
+                gDialogState = OMM_DIALOG_STATE_OPENING;
                 gDialogID = -1;
-                gDialogTextPos = 0;
-                gLastDialogResponse = 0;
-                gLastDialogPageStrPos = 0;
+                gDialogPageStart = 0;
+                gDialogChoice = 0;
+                gDialogPageStartNext = 0;
                 gDialogResponse = 0;
             }
             lowerBound = 1;
@@ -2315,11 +2344,11 @@ static void omm_render_dialog_entry() {
     render_dialog_box_type(dialog, dialog->linesPerBox);
     gDPSetScissor(gDisplayListHead++, G_SC_NON_INTERLACE, 0, omm_max_s(0, 240 - dialog->width), SCREEN_WIDTH, omm_max_s(0, 240 + ((dialog->linesPerBox * 80) / 5) - dialog->width));
     omm_handle_dialog_text_and_pages(0, dialog, lowerBound);
-    if (gLastDialogPageStrPos == -1 && gLastDialogResponse == 1) {
+    if (gDialogPageStartNext == -1 && gDialogChoice == 1) {
         render_dialog_triangle_choice();
     }
     gDPSetScissor(gDisplayListHead++, G_SC_NON_INTERLACE, 2, 2, SCREEN_WIDTH - BORDER_HEIGHT / 2, SCREEN_HEIGHT - BORDER_HEIGHT / 2);
-    if (gLastDialogPageStrPos != -1 && gDialogBoxState == OMM_DIALOG_STATE_VERTICAL) {
+    if (gDialogPageStartNext != -1 && gDialogState == OMM_DIALOG_STATE_VERTICAL) {
         render_dialog_triangle_page(dialog->linesPerBox);
     }
 }
@@ -2345,6 +2374,12 @@ OMM_ROUTINE_UPDATE(omm_menus_and_dialogs_update) {
 //
 // Star select
 //
+
+#if defined(R96A)
+s32 lvl_star_select() {
+    r96_play_menu_jingle(R96_EVENT_STAR_SELECT);
+}
+#endif
 
 static void omm_render_star_select_background_rect(s32 x0, s32 y0, u8 r0, u8 g0, u8 b0, u8 a0, s32 x1, s32 y1, u8 r1, u8 g1, u8 b1, u8 a1, bool vrt) {
     Vtx *vtx = alloc_display_list(sizeof(Vtx) * 4);
@@ -2837,18 +2872,22 @@ void omm_menu_update(f32 *cursorPos, s8 selectedButtonId, u8 alpha) {
     switch (selectedButtonId) {
         case MENU_BUTTON_PLAY_FILE_A: {
             omm_select_save_file(1);
+            omm_player_select(gOmmCharacter);
         } break;
 
         case MENU_BUTTON_PLAY_FILE_B: {
             omm_select_save_file(2);
+            omm_player_select(gOmmCharacter);
         } break;
 
         case MENU_BUTTON_PLAY_FILE_C: {
             omm_select_save_file(3);
+            omm_player_select(gOmmCharacter);
         } break;
 
         case MENU_BUTTON_PLAY_FILE_D: {
             omm_select_save_file(4);
+            omm_player_select(gOmmCharacter);
         } break;
 
         case MENU_BUTTON_NONE: {

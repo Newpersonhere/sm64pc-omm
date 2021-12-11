@@ -2,9 +2,77 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
+static void omm_update_hang_stationary(struct MarioState *m) {
+    m->vel[1] = 0.f;
+    m->pos[1] = m->ceilHeight - 160.f;
+    gOmmData->mario->state.peakHeight = m->pos[1];
+    mario_set_forward_vel(m, 0.f);
+    vec3f_copy(m->marioObj->header.gfx.pos, m->pos);
+    vec3s_set(m->marioObj->header.gfx.angle, 0, m->faceAngle[1], 0);
+}
+
 //
 // Actions
 //
+
+static s32 omm_act_start_hanging(struct MarioState *m) {
+    if (OMM_MOVESET_ODYSSEY) {
+        action_init(0.f, 0.f, 0, SOUND_MARIO_WHOA);
+        action_z_pressed(1, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+        action_a_pressed(1, ACT_FREEFALL, 0, RETURN_CANCEL);
+        action_b_pressed(1, ACT_FREEFALL, 0, RETURN_CANCEL);
+        action_condition(!m->ceil || m->ceil->type != SURFACE_HANGABLE, ACT_FREEFALL, 0, RETURN_CANCEL);
+        action_condition((m->input & INPUT_NONZERO_ANALOG) && m->actionTimer >= 15, ACT_HANG_MOVING, 0, RETURN_CANCEL);
+
+        omm_update_hang_stationary(m);
+        omm_mario_set_animation(m, MARIO_ANIM_HANG_ON_CEILING, 2.f, -1);
+        play_sound_if_no_flag(m, SOUND_ACTION_HANGING_STEP, MARIO_ACTION_SOUND_PLAYED);
+        action_condition(is_anim_at_end(m), ACT_HANGING, 0, RETURN_BREAK);
+        return OMM_MARIO_ACTION_RESULT_BREAK;
+    }
+    return OMM_MARIO_ACTION_RESULT_CONTINUE;
+}
+
+static s32 omm_act_hanging(struct MarioState *m) {
+    if (OMM_MOVESET_ODYSSEY) {
+        action_z_pressed(1, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+        action_a_pressed(1, ACT_FREEFALL, 0, RETURN_CANCEL);
+        action_b_pressed(1, ACT_FREEFALL, 0, RETURN_CANCEL);
+        action_condition(!m->ceil || m->ceil->type != SURFACE_HANGABLE, ACT_FREEFALL, 0, RETURN_CANCEL);
+        action_condition(m->input & INPUT_NONZERO_ANALOG, ACT_HANG_MOVING, m->actionArg, RETURN_CANCEL);
+
+        omm_update_hang_stationary(m);
+        omm_mario_set_animation(m, (m->actionArg ? MARIO_ANIM_HANDSTAND_LEFT : MARIO_ANIM_HANDSTAND_RIGHT), 1.f, -1);
+        return OMM_MARIO_ACTION_RESULT_BREAK;
+    }
+    return OMM_MARIO_ACTION_RESULT_CONTINUE;
+}
+
+static s32 omm_act_hang_moving(struct MarioState *m) {
+    if (OMM_MOVESET_ODYSSEY) {
+        action_z_pressed(1, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+        action_a_pressed(1, ACT_FREEFALL, 0, RETURN_CANCEL);
+        action_b_pressed(1, ACT_FREEFALL, 0, RETURN_CANCEL);
+        action_condition(!m->ceil || m->ceil->type != SURFACE_HANGABLE, ACT_FREEFALL, 0, RETURN_CANCEL);
+        
+        omm_mario_update_hanging_speed(m);
+        mario_set_forward_vel(m, m->forwardVel);
+        action_condition(perform_hang_step(m) == HANG_STEP_LEFT_CEIL, ACT_FREEFALL, 0, RETURN_BREAK);
+        
+        f32 animSpeed = omm_relerp_0_1_f(m->forwardVel, 0.f, OMM_MARIO_HANG_MAX_SPEED, 1.f, 2.f);
+        omm_mario_set_animation(m, (m->actionArg ? MARIO_ANIM_MOVE_ON_WIRE_NET_RIGHT : MARIO_ANIM_MOVE_ON_WIRE_NET_LEFT), animSpeed, -1);
+        if (omm_mario_is_anim_past_frame(m, 12)) {
+            play_sound_if_no_flag(m, SOUND_ACTION_HANGING_STEP, MARIO_ACTION_SOUND_PLAYED);
+        }
+        if (is_anim_past_end(m)) {
+            m->actionArg = !m->actionArg;
+            m->flags &= ~MARIO_ACTION_SOUND_PLAYED;
+            action_condition(!(m->input & INPUT_NONZERO_ANALOG), ACT_HANGING, m->actionArg, RETURN_BREAK);
+        }
+        return OMM_MARIO_ACTION_RESULT_BREAK;
+    }
+    return OMM_MARIO_ACTION_RESULT_CONTINUE;
+}
 
 static s32 omm_act_in_cannon(struct MarioState *m) {
     if (OMM_MOVESET_ODYSSEY && m->actionState == 2 && (m->controller->buttonPressed & B_BUTTON)) {
@@ -120,7 +188,7 @@ static s32 omm_act_hold_bowser(struct MarioState *m) {
                 m->actionArg = 1;
                 m->twirlYaw = m->intendedYaw;
             } else {
-                s16 angleAccel = omm_clamp_s((m->intendedYaw - m->twirlYaw) / 0x80, -0x80, +0x80);
+                s16 angleAccel = omm_clamp_s((s16) (m->intendedYaw - m->twirlYaw) / 100, -200, +200);
                 m->twirlYaw = m->intendedYaw;
                 m->angleVel[1] = omm_clamp_s(m->angleVel[1] + angleAccel, -0x1000, +0x1000);
             }
@@ -186,6 +254,9 @@ s32 omm_mario_execute_automatic_action(struct MarioState *m) {
 
     // Actions
     switch (m->action) {
+        case ACT_START_HANGING:         return omm_act_start_hanging(m);
+        case ACT_HANGING:               return omm_act_hanging(m);
+        case ACT_HANG_MOVING:           return omm_act_hang_moving(m);
         case ACT_IN_CANNON:             return omm_act_in_cannon(m);
         case ACT_HOLDING_POLE:          return omm_act_holding_pole(m);
         case ACT_CLIMBING_POLE:         return omm_act_climbing_pole(m);

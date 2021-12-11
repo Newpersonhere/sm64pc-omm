@@ -18,10 +18,14 @@
 #define POBJ_RESULT_HOP_SMALL                   3
 #define POBJ_RESULT_HOP_LARGE                   4
 
-#define POBJ_A_BUTTON_PRESSED                   (gOmmData->mario->capture.buttonPressed & A_BUTTON) 
-#define POBJ_A_BUTTON_DOWN                      (gOmmData->mario->capture.buttonDown & A_BUTTON)  
-#define POBJ_B_BUTTON_PRESSED                   (gOmmData->mario->capture.buttonPressed & B_BUTTON)  
-#define POBJ_B_BUTTON_DOWN                      (gOmmData->mario->capture.buttonDown & B_BUTTON) 
+#define POBJ_A_BUTTON_PRESSED                   (gOmmData->mario->capture.buttonPressed & A_BUTTON)
+#define POBJ_A_BUTTON_DOWN                      (gOmmData->mario->capture.buttonDown & A_BUTTON)
+#define POBJ_B_BUTTON_PRESSED                   (gOmmData->mario->capture.buttonPressed & B_BUTTON)
+#define POBJ_B_BUTTON_DOWN                      (gOmmData->mario->capture.buttonDown & B_BUTTON)
+
+#define POBJ_GROUND_SPEED_MULTIPLIER            (1.f / omm_player_get_selected_ground_speed_multiplier())
+#define POBJ_AIR_SPEED_MULTIPLIER               (1.f / omm_player_get_selected_air_speed_multiplier())
+#define POBJ_JUMP_MULTIPLIER                    (1.f / omm_player_get_selected_jump_multiplier())
 
 #define POBJ_SET_ABOVE_WATER                    gOmmData->object->state.properties |= (1 << 0)
 #define POBJ_SET_UNDER_WATER                    gOmmData->object->state.properties |= (1 << 1)

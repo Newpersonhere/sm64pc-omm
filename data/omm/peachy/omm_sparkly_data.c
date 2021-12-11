@@ -190,8 +190,8 @@ s32 omm_sparkly_get_star_area(s32 mode, s32 index) {
 
 u8 *omm_sparkly_get_star_name(s32 mode, s32 index) {
 #if OMM_CODE_SPARKLY
-    if (OMM_LIKELY(mode >= 1 && mode < OMM_SPARKLY_MODE_COUNT && index >= 0 && index < 29)) {
-        const u8 *starNames = omm_get_dialog_entry(NULL, OMM_SPARKLY_STAR_NAMES_DIALOG[mode])->str;
+    if (OMM_LIKELY(mode > OMM_SPARKLY_MODE_DISABLED && mode < OMM_SPARKLY_MODE_COUNT && index >= 0 && index < 29)) {
+        const u8 *starNames = omm_get_dialog_entry(NULL, OMM_DIALOG_SPARKLY_STAR_NAMES + mode)->str;
 
         // Name start
         const u8 *nameStart = starNames;

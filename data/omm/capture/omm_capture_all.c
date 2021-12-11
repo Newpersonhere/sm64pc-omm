@@ -240,12 +240,12 @@ s32 pobj_jump(struct Object *o, f32 hopDiv, s32 numMaxJumps) {
     if (hopDiv != 0.f) {
         if (obj_is_on_ground(o)) {
             if (POBJ_A_BUTTON_DOWN) {
-                o->oVelY = omm_max_f(o->oVelY, omm_capture_get_jump_velocity(o));
+                o->oVelY = omm_max_f(o->oVelY, omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER);
                 o->oFloor = NULL;
                 return POBJ_RESULT_HOP_LARGE;
             }
             if (o->oForwardVel > (omm_capture_get_walk_speed(o) / 8.f)) {
-                o->oVelY = omm_max_f(o->oVelY, omm_capture_get_jump_velocity(o) / hopDiv);
+                o->oVelY = omm_max_f(o->oVelY, omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER / hopDiv);
                 o->oFloor = NULL;
                 return POBJ_RESULT_HOP_SMALL;
             }
@@ -258,14 +258,14 @@ s32 pobj_jump(struct Object *o, f32 hopDiv, s32 numMaxJumps) {
             if (sJumps < numMaxJumps && (obj_is_on_ground(o) || numMaxJumps > 1)) {
                 sJumps++;
                 sFrames = 0;
-                o->oVelY = omm_max_f(o->oVelY, omm_capture_get_jump_velocity(o));
+                o->oVelY = omm_max_f(o->oVelY, omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER);
                 o->oFloor = NULL;
                 return POBJ_RESULT_JUMP_START;
             }
         }
         if (POBJ_A_BUTTON_DOWN) {
             if (++sFrames < 6) {
-                o->oVelY = omm_max_f(o->oVelY, omm_capture_get_jump_velocity(o));
+                o->oVelY = omm_max_f(o->oVelY, omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER);
                 o->oFloor = NULL;
                 return POBJ_RESULT_JUMP_HOLD;
             }
@@ -457,8 +457,7 @@ static bool pobj_interact_coin() {
 
 static bool pobj_interact_star_or_key() {
     if (sOverlapHitbox) {
-        omm_mario_interact_star_or_key(gMarioState, sObj);
-        return true;
+        return omm_mario_interact_star_or_key(gMarioState, sObj);
     }
     return false;
 }
@@ -492,7 +491,7 @@ static bool pobj_interact_bounce_top() {
         if (obj_is_object2_hit_from_above(sPObj, sObj)) {
             sObj->oInteractStatus = INT_STATUS_HIT_FROM_ABOVE;
             sPObj->oPosY = sObj->oPosY + sObj->hitboxHeight - sObj->hitboxDownOffset + 20.f;
-            sPObj->oVelY = omm_capture_get_jump_velocity(sPObj) * 1.2f;
+            sPObj->oVelY = omm_capture_get_jump_velocity(sPObj) * POBJ_JUMP_MULTIPLIER * 1.2f;
             play_sound(SOUND_ACTION_BOUNCE_OFF_OBJECT, sPObj->oCameraToObject);
             return true;
         }
@@ -818,7 +817,6 @@ bool pobj_process_interaction(struct Object *o, struct Object *obj, u32 interact
         case INTERACT_WHIRLPOOL:
         case INTERACT_BBH_ENTRANCE:
         case INTERACT_CANNON_BASE:
-        case INTERACT_UNKNOWN_31:
         default:
             break; // Do nothing
     }

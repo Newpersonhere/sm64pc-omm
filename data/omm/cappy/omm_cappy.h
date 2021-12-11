@@ -5,6 +5,7 @@
 #include "omm_cappy_data.h"
 
 struct Object *omm_cappy_get_object();
+struct Object *omm_cappy_get_object_play_as();
 struct Object *omm_cappy_spawn(struct MarioState *m);
 struct Object *omm_cappy_find_target(struct Object *cappy, struct MarioState *m, f32 distanceMax);
 void omm_cappy_update(struct MarioState *m);

@@ -8,7 +8,7 @@
 
 bool omm_sparkly_interact_star(struct MarioState *m, struct Object *o) {
 #if OMM_CODE_SPARKLY
-    if (m->health > OMM_HEALTH_DEAD && o->behavior == omm_bhv_sparkly_star) {
+    if (o->behavior == omm_bhv_sparkly_star && m->action != ACT_OMM_POSSESSION) {
         omm_sparkly_collect_star(omm_sparkly_get_current_mode(), omm_sparkly_get_star_index(omm_sparkly_get_current_mode(), gCurrLevelNum, gCurrAreaIndex));
         mario_stop_riding_and_holding(m);
         update_mario_sound_and_camera(m);
@@ -28,13 +28,13 @@ bool omm_sparkly_interact_star(struct MarioState *m, struct Object *o) {
 
 void omm_sparkly_interact_grand_star(struct MarioState *m, struct Object *o) {
 #if OMM_CODE_SPARKLY
-    if ((o != NULL) && (o->behavior == bhvGrandStar) && (o->oInteractionSubtype & INT_SUBTYPE_GRAND_STAR)) {
+    if (o->behavior == bhvGrandStar && (o->oInteractionSubtype & INT_SUBTYPE_GRAND_STAR)) {
 
         // Sparkly Grand Star
         // Collecting it unlocks the next mode
         // Triggers the secret Peach ending if Bowser 4 is defeated for the first time
         if (omm_sparkly_flags_get(OMM_SPARKLY_FLAG_GRAND_STAR)) {
-            omm_sparkly_ending = (!omm_peach_is_unlocked() ? OMM_SPARKLY_ENDING_PEACH : OMM_SPARKLY_ENDING_REGULAR);
+            omm_sparkly_ending = (!omm_player_is_unlocked(OMM_PLAYER_PEACH) ? OMM_SPARKLY_ENDING_PEACH : OMM_SPARKLY_ENDING_REGULAR);
             omm_sparkly_collect_grand_star(omm_sparkly_get_current_mode());
             return;
         }
@@ -43,7 +43,7 @@ void omm_sparkly_interact_grand_star(struct MarioState *m, struct Object *o) {
         // Triggers the bad ending if Bowser 3 is defeated for the first time after completing
         // a save file (120 stars + regular Bowser 3 flag), or if the Sparkly Stars mode
         // is enabled and Peach is not unlocked yet
-        if (m->numStars >= 120 && (!omm_sparkly_is_mode_unlocked(OMM_SPARKLY_MODE_NORMAL) || (omm_sparkly_is_enabled() && !omm_peach_is_unlocked()))) {
+        if (m->numStars >= 120 && (!omm_sparkly_is_mode_unlocked(OMM_SPARKLY_MODE_NORMAL) || (omm_sparkly_is_enabled() && !omm_player_is_unlocked(OMM_PLAYER_PEACH)))) {
             omm_sparkly_ending = OMM_SPARKLY_ENDING_BAD;
             omm_sparkly_unlock_mode(OMM_SPARKLY_MODE_NORMAL);
             return;
@@ -108,7 +108,7 @@ static bool omm_sparkly_star_dance_update(struct MarioState *m) {
         m->faceAngle[1] = m->area->camera->yaw;
         vec3s_set(m->marioObj->header.gfx.angle, 0, m->area->camera->yaw, 0);
         disable_background_sound();
-        gSequencePlayers[0].muted = true;
+        music_pause();
         omm_sound_play(OMM_SOUND_EVENT_SPARKLY_STAR_GET, gGlobalSoundArgs);
         celebStar = omm_spawn_sparkly_star_celebration(m->marioObj, omm_sparkly_get_current_mode());
         set_time_stop_flags(TIME_STOP_ENABLED | TIME_STOP_MARIO_AND_DOORS);
@@ -139,7 +139,7 @@ static bool omm_sparkly_star_dance_update(struct MarioState *m) {
         m->marioObj->activeFlags &= ~ACTIVE_FLAG_INITIATED_TIME_STOP;
         clear_time_stop_flags(TIME_STOP_ENABLED | TIME_STOP_MARIO_AND_DOORS);
         enable_background_sound();
-        gSequencePlayers[0].muted = false;
+        music_resume();
         omm_render_stop_you_got_a_star();
         omm_health_fully_heal_mario(m);
         m->healCounter = OMM_O2_REFILL;
@@ -201,6 +201,14 @@ static void update_end_toad_jump(EndToadStruct *toad) {
     }
 }
 
+static void set_end_toad_message(const char *msg, s16 duration) {
+    static u8 sOmmEndToadMessage[256];
+    const u8 *converted = omm_text_convert(msg, false);
+    OMM_MEMCPY(sOmmEndToadMessage, converted, omm_text_length(converted) + 1);
+    gEndCutsceneStringsEn[OMM_CUTSCENE_MSG_INDEX] = sOmmEndToadMessage;
+    set_cutscene_message(SCREEN_WIDTH / 2, 227, OMM_CUTSCENE_MSG_INDEX, duration);
+}
+
 static void set_visual_pos(struct Object *o, f32 *value) {
     Vec3s t; find_mario_anim_flags_and_translation(o, o->header.gfx.angle[1], t);
     f32 x = o->header.gfx.pos[0] + t[0];
@@ -218,8 +226,37 @@ static struct Object *get_grand_star_object() {
     }
     return NULL;
 }
+
+static void omm_sparkly_act_end_cutscene_1_update_music(struct MarioState *m) {
+#if defined(R96A)
+    if (m->actionArg == 3) {
+        static u32 sConfigMasterVolume = 0;
+        if (sConfigMasterVolume != 0 && configMasterVolume > 0) {
+            configMasterVolume -= MIN(configMasterVolume, 1 + (gGlobalTimer & 1));
+        }
+        if (m->actionTimer == 44) {
+            sConfigMasterVolume = configMasterVolume;
+        } else if (m->actionTimer == 276) {
+            r96_stop_jingle();
+            configMasterVolume = sConfigMasterVolume;
+            sConfigMasterVolume = 0;
+        }
+    } else if (m->actionArg == 6 && m->actionTimer == 460) {
+        r96_play_jingle(R96_EVENT_CREDITS);
+    }
+#else
+    if (m->actionArg == 3 && m->actionTimer == 44) {
+        music_fade_out(SEQ_PLAYER_LEVEL, 192);
+    } else if (m->actionArg == 6 && m->actionTimer == 460) {
+        play_cutscene_music(SEQUENCE_ARGS(15, SEQ_EVENT_CUTSCENE_CREDITS));
+    }
+#endif
+}
+
 #endif
 
+// Sparkly Stars bad ending (Normal only)
+// Toads are waiting for Mario, but Peach isn't here...
 s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
 #if OMM_CODE_SPARKLY
     static Vp sEndCutsceneVp = { { { 640, 480, 511, 0 }, { 640, 480, 511, 0 } } };
@@ -235,6 +272,7 @@ s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
 
     // Play a different cutscene during the 'bad' ending
     if (omm_sparkly_ending == OMM_SPARKLY_ENDING_BAD) {
+        omm_sparkly_act_end_cutscene_1_update_music(m);
         switch (m->actionArg) {
             case 0: {
                 return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -271,7 +309,6 @@ s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
                     } break;
 
                     case 44: {
-                        music_fade_out(SEQ_PLAYER_LEVEL, 192);
                         play_transition(WARP_TRANSITION_FADE_FROM_COLOR, 192, 255, 255, 255);
                     } break;
 
@@ -305,26 +342,26 @@ s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
                         set_mario_animation(m, MARIO_ANIM_FIRST_PERSON);
                         sEndToadL.jump = 8;
                         omm_sound_play(OMM_SOUND_TOAD_1, sEndToadL.obj->oCameraToObject);
-                        set_cutscene_message(SCREEN_WIDTH / 2, 227, 9, 30);
+                        set_end_toad_message(OMM_TEXT_BAD_ENDING_TOAD_1, 30);
                     } break;
 
                     // Toad message 2
                     case 120: {
                         sEndToadR.jump = 8;
                         omm_sound_play(OMM_SOUND_TOAD_2, sEndToadR.obj->oCameraToObject);
-                        set_cutscene_message(SCREEN_WIDTH / 2, 227, 10, 60);
+                        set_end_toad_message(OMM_TEXT_BAD_ENDING_TOAD_2, 60);
                     } break;
 
                     // Toad message 3
                     case 210: {
                         omm_sound_play(OMM_SOUND_TOAD_3, sEndToadL.obj->oCameraToObject);
-                        set_cutscene_message(SCREEN_WIDTH / 2, 227, 11, 60);
+                        set_end_toad_message(OMM_TEXT_BAD_ENDING_TOAD_3, 60);
                     } break;
 
                     // Toad message 4, Mario falls on his butt
                     case 300: {
                         omm_sound_play(OMM_SOUND_TOAD_4, sEndToadR.obj->oCameraToObject);
-                        set_cutscene_message(SCREEN_WIDTH / 2, 227, 12, 60);
+                        set_end_toad_message(OMM_TEXT_BAD_ENDING_TOAD_4, 60);
                         set_mario_animation(m, 50);
                     } break;
 
@@ -332,8 +369,7 @@ s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
                     case 460: {
                         sEndToadR.jump = 8;
                         omm_sound_play(OMM_SOUND_TOAD_5, sEndToadR.obj->oCameraToObject);
-                        play_cutscene_music(SEQUENCE_ARGS(15, SEQ_EVENT_CUTSCENE_CREDITS));
-                        set_cutscene_message(SCREEN_WIDTH / 2, 227, 13, 60);
+                        set_end_toad_message(OMM_TEXT_BAD_ENDING_TOAD_5, 60);
                         set_mario_animation(m, 200);
                     } break;
 
@@ -346,14 +382,14 @@ s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
                     case 540: {
                         sEndToadL.jump = 8;
                         omm_sound_play(OMM_SOUND_TOAD_6, sEndToadL.obj->oCameraToObject);
-                        set_cutscene_message(SCREEN_WIDTH / 2, 227, 14, 60);
+                        set_end_toad_message(OMM_TEXT_BAD_ENDING_TOAD_6, 60);
                     } break;
 
                     // Toad message 7
                     case 620: {
                         sEndToadR.jump = 8;
                         omm_sound_play(OMM_SOUND_TOAD_7, sEndToadR.obj->oCameraToObject);
-                        set_cutscene_message(SCREEN_WIDTH / 2, 227, 15, 60);
+                        set_end_toad_message(OMM_TEXT_BAD_ENDING_TOAD_7, 60);
                     } break;
 
                     // Right Toad double hop
@@ -365,7 +401,7 @@ s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
                     case 710: {
                         sEndToadL.jump = 8;
                         omm_sound_play(OMM_SOUND_TOAD_8, sEndToadL.obj->oCameraToObject);
-                        set_cutscene_message(SCREEN_WIDTH / 2, 227, 16, 60);
+                        set_end_toad_message(OMM_TEXT_BAD_ENDING_TOAD_8, 60);
                     } break;
 
                     // Left Toad double hop
@@ -376,7 +412,7 @@ s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
                     // Toad message 9
                     case 790: {
                         omm_sound_play(OMM_SOUND_TOAD_9, sEndToadL.obj->oCameraToObject);
-                        set_cutscene_message(SCREEN_WIDTH / 2, 227, 17, 60);
+                        set_end_toad_message(OMM_TEXT_BAD_ENDING_TOAD_9, 60);
                     } break;
 
                     // Toads move, Mario look at the sky
@@ -429,6 +465,8 @@ s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
+// Sparkly Stars bad ending (Normal only)
+// No one is waving at the camera. They're all looking for Peach...
 s32 omm_sparkly_act_end_cutscene_2(struct MarioState *m) {
 #if OMM_CODE_SPARKLY
     if (omm_sparkly_ending == OMM_SPARKLY_ENDING_BAD) {

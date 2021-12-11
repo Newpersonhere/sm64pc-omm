@@ -117,3 +117,17 @@ bool omm_mario_update_air_without_turn(struct MarioState *m) {
 bool omm_mario_update_air_with_turn(struct MarioState *m) {
     return update_air(m, true);
 }
+
+//
+// Mario's hang movement
+//
+
+bool omm_mario_update_hanging_speed(struct MarioState *m) {
+    if (OMM_LIKELY(OMM_MOVESET_ODYSSEY)) {
+        m->forwardVel = approach_f32(m->forwardVel, OMM_MARIO_HANG_MAX_SPEED * omm_min_f(m->intendedMag, 32.f) / 32.f, 2.f, 4.f);
+        s32 handling = omm_mario_get_handling(m, 4.f, OMM_MARIO_HANG_MAX_SPEED, 0x800, 0x2000);
+        m->faceAngle[1] = m->intendedYaw - approach_s32((s16) (m->intendedYaw - m->faceAngle[1]), 0, handling, handling);
+        return true;
+    }
+    return false;
+}

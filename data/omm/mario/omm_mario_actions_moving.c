@@ -82,7 +82,7 @@ static void anim_and_audio_for_walk(struct MarioState *m) {
             .condToRun = false,
             .tiltBody = true,
             .animIndex = MARIO_ANIM_RUNNING,
-            .animAccel = 0x4000,
+            .animAccel = (OMM_PLAYER_IS_WARIO ? 0x3000 : 0x4000),
             .soundStep1 = 9,
             .soundStep2 = 45,
         },
@@ -349,6 +349,15 @@ static s32 omm_act_move_punching(struct MarioState *m) {
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
+#if defined(R96A)
+static s32 omm_act_wario_charge(struct MarioState *m) {
+    extern s32 charge_count;
+    action_cappy(1, ACT_OMM_CAPPY_THROW_GROUND, 0, RETURN_CANCEL, charge_count = 0;);
+    action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_ROLL, 0, RETURN_CANCEL, charge_count = 0;);
+    return OMM_MARIO_ACTION_RESULT_CONTINUE;
+}
+#endif
+
 static s32 omm_act_roll(struct MarioState *m) {
     bool superRoll = (m->prevAction == ACT_GROUND_POUND_LAND) || (m->prevAction == ACT_OMM_SPIN_POUND_LAND) || ((m->prevAction == ACT_OMM_ROLL) && (m->forwardVel >= 45.f));
     action_init(omm_max_f(m->forwardVel, superRoll ? 75.f : 60.f), 0, superRoll ? PARTICLE_HORIZONTAL_STAR : PARTICLE_MIST_CIRCLE, 0, m->faceAngle[0] *= (m->prevAction == ACT_OMM_ROLL););
@@ -508,6 +517,9 @@ s32 omm_mario_execute_moving_action(struct MarioState *m) {
         case ACT_SOFT_FORWARD_GROUND_KB:    return omm_act_soft_forward_ground_kb(m);
         case ACT_GROUND_BONK:               return omm_act_ground_bonk(m);
         case ACT_MOVE_PUNCHING:             return omm_act_move_punching(m);
+#if defined(R96A)
+        case ACT_WARIO_CHARGE:              return omm_act_wario_charge(m);
+#endif
 
         // Odyssey
         case ACT_OMM_ROLL:                  return omm_act_roll(m);

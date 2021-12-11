@@ -164,6 +164,9 @@ static s32 omm_act_metal_water_walking(struct MarioState *m) {
     action_a_pressed(analog_stick_held_back(m) && m->forwardVel >= OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED / 2.f, ACT_OMM_METAL_WATER_SIDE_FLIP, 0, RETURN_CANCEL);
     action_a_pressed((m->forwardVel >= OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED / 2.f || gOmmData->mario->metalWater.jumpNext == ACT_OMM_METAL_WATER_LONG_JUMP) && (m->controller->buttonDown & Z_TRIG), ACT_OMM_METAL_WATER_LONG_JUMP, 0, RETURN_CANCEL);
     action_a_pressed(1, gOmmData->mario->metalWater.jumpNext, 0, RETURN_CANCEL);
+#if defined(R96A)
+    action_b_pressed(OMM_PLAYER_IS_WARIO && m->forwardVel >= OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED * 0.85f, ACT_OMM_METAL_WATER_WARIO_CHARGE, 0, RETURN_CANCEL);
+#endif
     action_b_pressed(1, ACT_OMM_METAL_WATER_PUNCHING, 0, RETURN_CANCEL);
     action_z_pressed(1, ACT_OMM_METAL_WATER_START_CROUCHING, 0, RETURN_CANCEL);
     action_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_METAL_WATER_SPIN_GROUND, 0, RETURN_CANCEL);
@@ -326,6 +329,9 @@ static s32 omm_act_metal_water_double_jump_land(struct MarioState *m) {
 }
 
 static s32 omm_act_metal_water_triple_jump(struct MarioState *m) {
+#if defined(R96A)
+    action_condition(OMM_PLAYER_IS_WARIO, ACT_OMM_METAL_WATER_WARIO_TRIPLE_JUMP, 0, RETURN_CANCEL);
+#endif
     action_init(m->forwardVel * 0.9f, 46.f, PARTICLE_MIST_CIRCLE, SOUND_ACTION_METAL_JUMP_WATER);
     action_cappy(1, ACT_OMM_METAL_WATER_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
     action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_METAL_WATER_DIVE, 0, RETURN_CANCEL);
@@ -841,6 +847,102 @@ static s32 omm_act_metal_water_spin_pound_land(struct MarioState *m) {
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
+#if defined(R96A)
+
+//
+// Wario moves
+//
+
+static void omm_update_wario_charge_speed(struct MarioState *m) {
+    f32 maxSpeed = OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED * 2.f;
+    f32 tgtSpeed = maxSpeed * MIN(MAX(m->intendedMag / 32.f, 0.5f), 1.f);
+
+    if (m->forwardVel <= 0.f) {
+        m->forwardVel += 1.5f;
+    } else if (m->forwardVel <= tgtSpeed) {
+        m->forwardVel += 1.5f - m->forwardVel / maxSpeed;
+    } else if (m->floor->normal.y >= 0.9f) {
+        m->forwardVel -= 1.f;
+    }
+
+    m->forwardVel = MIN(MAX(m->forwardVel, 0.f), maxSpeed);
+    m->faceAngle[1] = m->intendedYaw - approach_s32((s16) (m->intendedYaw - m->faceAngle[1]), 0, 0x800, 0x800);
+    apply_slope_accel(m);
+}
+
+static s32 omm_act_metal_water_wario_charge(struct MarioState *m) {
+    action_init(m->forwardVel, 0, 0, 0);
+    action_a_pressed(1, ACT_OMM_METAL_WATER_WARIO_TRIPLE_JUMP, 0, RETURN_CANCEL);
+
+    if (m->actionTimer++ < 60) {
+        omm_update_wario_charge_speed(m);
+        set_mario_anim_with_accel(m, MARIO_ANIM_RUNNING_UNUSED, 0xA0000);
+        omm_metal_water_play_step_sound(m, 9, 45);
+        adjust_sound_for_speed(m);
+    } else {
+        omm_mario_set_action(m, ACT_OMM_METAL_WATER_WALKING, 0, 0);
+    }
+
+    switch (perform_ground_step(m)) {
+        case GROUND_STEP_LEFT_GROUND: {
+            set_mario_animation(m, MARIO_ANIM_GENERAL_FALL);
+            omm_mario_set_action(m, ACT_OMM_METAL_WATER_FREEFALL, 0, 0);
+            return OMM_MARIO_ACTION_RESULT_BREAK;
+        } break;
+
+        case GROUND_STEP_HIT_WALL: {
+            play_sound(SOUND_ACTION_METAL_LAND_WATER, m->marioObj->header.gfx.cameraToObject);
+            m->particleFlags |= PARTICLE_VERTICAL_STAR;
+            omm_mario_set_action(m, ACT_OMM_METAL_WATER_BACKWARD_GROUND_KB, 0, 0);
+            return OMM_MARIO_ACTION_RESULT_BREAK;
+        } break;
+
+        case GROUND_STEP_NONE: {
+            m->flags |= MARIO_KICKING;
+            m->particleFlags |= (PARTICLE_DUST | PARTICLE_PLUNGE_BUBBLE);
+        } break;
+    }
+    return OMM_MARIO_ACTION_RESULT_CONTINUE;
+}
+
+static s32 omm_act_metal_water_wario_triple_jump(struct MarioState *m) {
+    action_init(m->forwardVel * 0.9f, 42.f, PARTICLE_MIST_CIRCLE, SOUND_ACTION_METAL_JUMP_WATER);
+    action_cappy(1, ACT_OMM_METAL_WATER_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
+    action_b_pressed(1, ACT_OMM_METAL_WATER_DIVE, 0, RETURN_CANCEL);
+    action_z_pressed(1, ACT_OMM_METAL_WATER_GROUND_POUND, 0, RETURN_CANCEL);
+    action_condition(omm_metal_water_check_water_jump(m), ACT_WATER_JUMP, 0, RETURN_CANCEL);
+    
+    omm_mario_update_air_without_turn(m);
+    mario_set_forward_vel(m, MIN(m->forwardVel, 20.f));
+    switch (perform_air_step(m, 0)) {
+        case AIR_STEP_LANDED: {
+            if (m->actionState++ == 1) {
+                m->vel[1] = 28.f;
+                m->particleFlags |= PARTICLE_MIST_CIRCLE;
+            } else {
+                omm_mario_set_action(m, ACT_OMM_METAL_WATER_FREEFALL_LAND, 0, 0);
+            }
+            play_sound(SOUND_ACTION_METAL_LAND_WATER, m->marioObj->header.gfx.cameraToObject);
+        } break;
+
+        case AIR_STEP_HIT_WALL: {
+            mario_bonk_reflection(m, true);
+        } break;
+    }
+
+    if (m->actionState < 2 || m->vel[1] > 0.f) {
+        if (set_mario_animation(m, MARIO_ANIM_FORWARD_SPINNING) == 0) {
+            play_sound(SOUND_ACTION_SPIN, m->marioObj->header.gfx.cameraToObject);
+        }
+    } else {
+        set_mario_animation(m, MARIO_ANIM_GENERAL_FALL);
+    }
+    
+    return OMM_MARIO_ACTION_RESULT_CONTINUE;
+}
+
+#endif
+
 //
 // Metal Water
 //
@@ -947,6 +1049,12 @@ s32 omm_mario_execute_metal_water_action(struct MarioState *m) {
         case ACT_OMM_METAL_WATER_SPIN_JUMP:                 return omm_act_metal_water_spin_jump(m);
         case ACT_OMM_METAL_WATER_SPIN_POUND:                return omm_act_metal_water_spin_pound(m);
         case ACT_OMM_METAL_WATER_SPIN_POUND_LAND:           return omm_act_metal_water_spin_pound_land(m);
+
+#if defined(R96A)
+        // Wario
+        case ACT_OMM_METAL_WATER_WARIO_CHARGE:              return omm_act_metal_water_wario_charge(m);
+        case ACT_OMM_METAL_WATER_WARIO_TRIPLE_JUMP:         return omm_act_metal_water_wario_triple_jump(m);
+#endif
     }
 
     return OMM_MARIO_ACTION_RESULT_CONTINUE;

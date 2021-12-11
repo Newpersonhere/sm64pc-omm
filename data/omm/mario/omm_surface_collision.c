@@ -189,6 +189,12 @@ s32 find_wall_collisions(struct WallCollisionData *data) {
     s32 collisions = 0;
     data->numWalls = 0;
 
+#if defined(R96A)
+    if (cheats_no_bounds(gMarioState)) {
+        return 0;
+    }
+#endif
+
     // CCM Racing penguin
     // His radius is bigger than 200, but not capping it at 200 breaks its path
 #if !defined(SMSR)
@@ -315,6 +321,12 @@ f32 find_ceil(f32 x, f32 y, f32 z, struct Surface **pCeil) {
     f32 sHeight = +20000.f;
     f32 dHeight = +20000.f;
     *pCeil = NULL;
+
+#if defined(R96A)
+    if (cheats_no_bounds(gMarioState)) {
+        return sHeight;
+    }
+#endif
 
     // Check PUs
     if (sCheckPUs) {
@@ -588,6 +600,15 @@ f32 find_floor(f32 x, f32 y, f32 z, struct Surface **pFloor) {
                 return floor->upperY;
             }
         }
+    }
+#endif
+
+#if defined(R96A)
+    // If out-of-bounds but NoBounds is enabled, place a fake death plane below Mario
+    if (!sFloor && !dFloor && cheats_no_bounds(gMarioState)) {
+        sFloor = get_pseudo_floor_at_pos(x, -11000.f, z);
+        sFloor->type = SURFACE_DEATH_PLANE;
+        sHeight = -11000.f;
     }
 #endif
 

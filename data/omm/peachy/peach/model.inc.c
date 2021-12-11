@@ -1,36 +1,30 @@
-#define OMM_ALL_HEADERS
-#include "data/omm/omm_includes.h"
-#undef OMM_ALL_HEADERS
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-
-//
-// Data
-//
-
-// 0 = Origin (torso)
-// 1 = Up
-// 2 = Forward
-// 3 = Lateral
-// 4 = Left leg
-// 5 = Left foot
-// 6 = Right leg
-// 7 = Right foot
-static Vec3f sBonePos[8];
-static f32   sLegLScale = 1.f;
-static f32   sLegRScale = 1.f;
-static s16   sDressPitch = 0;
-static Vec3s sHeadRot;
-
 //
 // Lights
 //
 
-static const Lights1 omm_peach_light = OMM_LIGHT(
+static const Lights1 omm_peach_light = gdSPDefLights1(
     0x7f, 0x7f, 0x7f,
-    0xff, 0xff, 0xff
+    0xff, 0xff, 0xff,
+    0x28, 0x28, 0x28
 );
+
+//
+// Textures
+//
+
+static const u8 OMM_TEXTURE_PEACH_BODY[] = "OMM_GFX/peach/omm_texture_peach_body";
+static const u8 OMM_TEXTURE_PEACH_OPEN[] = "OMM_GFX/peach/omm_texture_peach_open";
+static const u8 OMM_TEXTURE_PEACH_HALF[] = "OMM_GFX/peach/omm_texture_peach_half";
+static const u8 OMM_TEXTURE_PEACH_CLOSE[] = "OMM_GFX/peach/omm_texture_peach_close";
+static const u8 OMM_TEXTURE_PEACH_HURT[] = "OMM_GFX/peach/omm_texture_peach_hurt";
+static const u8 OMM_TEXTURE_PEACH_YEAH[] = "OMM_GFX/peach/omm_texture_peach_yeah";
+static const u8 OMM_TEXTURE_PEACH_JOY[] = "OMM_GFX/peach/omm_texture_peach_joy";
+static const u8 OMM_TEXTURE_PEACH_RAGE[] = "OMM_GFX/peach/omm_texture_peach_rage";
+static const u8 OMM_TEXTURE_PEACH_GLOOM[] = "OMM_GFX/peach/omm_texture_peach_gloom";
+static const u8 OMM_TEXTURE_PEACH_WINGS[] = "OMM_GFX/peach/omm_texture_peach_wings";
+static const u8 OMM_TEXTURE_PEACH_METAL[] = "OMM_GFX/peach/omm_texture_peach_metal";
+static const u8 OMM_TEXTURE_PEACH_TIARA[] = "OMM_GFX/peach/omm_texture_peach_tiara";
+static const u8 OMM_TEXTURE_PEACH_TIARA_METAL[] = "OMM_GFX/peach/omm_texture_peach_tiara_metal";
 
 //
 // Vertices
@@ -10048,15 +10042,10 @@ static const Gfx omm_peach_wing_triangles[] = {
 };
 
 //
-// Display lists
+// Display lists (normal)
 //
 
-static const Gfx omm_peach_revert_gfx[] = {
-    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
-    gsSPEndDisplayList(),
-};
-
-static const Gfx omm_peach_arm1_left_gfx[] = {
+static const Gfx omm_peach_normal_arm1_left_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10064,11 +10053,11 @@ static const Gfx omm_peach_arm1_left_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_arm1_left_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_arm1_right_gfx[] = {
+static const Gfx omm_peach_normal_arm1_right_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10076,11 +10065,11 @@ static const Gfx omm_peach_arm1_right_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_arm1_right_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_arm2_left_gfx[] = {
+static const Gfx omm_peach_normal_arm2_left_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10088,11 +10077,11 @@ static const Gfx omm_peach_arm2_left_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_arm2_left_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_arm2_right_gfx[] = {
+static const Gfx omm_peach_normal_arm2_right_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10100,11 +10089,11 @@ static const Gfx omm_peach_arm2_right_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_arm2_right_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_chest_gfx[] = {
+static const Gfx omm_peach_normal_chest_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10112,11 +10101,11 @@ static const Gfx omm_peach_chest_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_chest_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_crown_gfx[] = {
+static const Gfx omm_peach_normal_crown_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10124,11 +10113,11 @@ static const Gfx omm_peach_crown_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_crown_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_tiara_gfx[] = {
+static const Gfx omm_peach_normal_tiara_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_TIARA, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10137,11 +10126,11 @@ static const Gfx omm_peach_tiara_gfx[] = {
     gsSPDisplayList(omm_peach_tiara_triangles),
     gsSPDisplayList(omm_peach_tiara_eyes_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_dress_gfx[] = {
+static const Gfx omm_peach_normal_dress_gfx[] = {
     gsSPClearGeometryMode(G_CULL_BACK),
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
@@ -10151,11 +10140,11 @@ static const Gfx omm_peach_dress_gfx[] = {
     gsSPDisplayList(omm_peach_dress_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
     gsSPSetGeometryMode(G_CULL_BACK),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_face_open_gfx[] = {
+static const Gfx omm_peach_normal_face_open_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_OPEN, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10163,11 +10152,11 @@ static const Gfx omm_peach_face_open_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_face_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_face_half_gfx[] = {
+static const Gfx omm_peach_normal_face_half_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_HALF, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10175,11 +10164,11 @@ static const Gfx omm_peach_face_half_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_face_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_face_close_gfx[] = {
+static const Gfx omm_peach_normal_face_close_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_CLOSE, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10187,11 +10176,11 @@ static const Gfx omm_peach_face_close_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_face_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_face_hurt_gfx[] = {
+static const Gfx omm_peach_normal_face_hurt_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_HURT, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10199,11 +10188,11 @@ static const Gfx omm_peach_face_hurt_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_face_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_face_yeah_gfx[] = {
+static const Gfx omm_peach_normal_face_yeah_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_YEAH, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10211,11 +10200,11 @@ static const Gfx omm_peach_face_yeah_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_face_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_face_joy_gfx[] = {
+static const Gfx omm_peach_normal_face_joy_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_JOY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10223,11 +10212,11 @@ static const Gfx omm_peach_face_joy_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_face_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_face_rage_gfx[] = {
+static const Gfx omm_peach_normal_face_rage_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_RAGE, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10235,11 +10224,11 @@ static const Gfx omm_peach_face_rage_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_face_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_face_gloom_gfx[] = {
+static const Gfx omm_peach_normal_face_gloom_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_GLOOM, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10247,11 +10236,11 @@ static const Gfx omm_peach_face_gloom_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_face_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_foot_left_gfx[] = {
+static const Gfx omm_peach_normal_foot_left_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10259,11 +10248,11 @@ static const Gfx omm_peach_foot_left_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_foot_left_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_foot_right_gfx[] = {
+static const Gfx omm_peach_normal_foot_right_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10271,11 +10260,11 @@ static const Gfx omm_peach_foot_right_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_foot_right_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_hair_gfx[] = {
+static const Gfx omm_peach_normal_hair_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10283,11 +10272,11 @@ static const Gfx omm_peach_hair_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_hair_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_hand_left_gfx[] = {
+static const Gfx omm_peach_normal_hand_left_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10295,11 +10284,11 @@ static const Gfx omm_peach_hand_left_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_hand_left_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_hand_right_gfx[] = {
+static const Gfx omm_peach_normal_hand_right_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10307,11 +10296,11 @@ static const Gfx omm_peach_hand_right_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_hand_right_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_fist_left_gfx[] = {
+static const Gfx omm_peach_normal_fist_left_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10319,11 +10308,11 @@ static const Gfx omm_peach_fist_left_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_fist_left_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_fist_right_gfx[] = {
+static const Gfx omm_peach_normal_fist_right_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10331,11 +10320,11 @@ static const Gfx omm_peach_fist_right_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_fist_right_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_fist_right_crown_gfx[] = {
+static const Gfx omm_peach_normal_fist_right_crown_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10343,11 +10332,11 @@ static const Gfx omm_peach_fist_right_crown_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_fist_right_crown_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_fist_right_tiara_gfx[] = {
+static const Gfx omm_peach_normal_fist_right_tiara_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10360,11 +10349,11 @@ static const Gfx omm_peach_fist_right_tiara_gfx[] = {
     gsSPDisplayList(omm_peach_fist_right_tiara_triangles),
     gsSPDisplayList(omm_peach_fist_right_tiara_eyes_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_peace_right_gfx[] = {
+static const Gfx omm_peach_normal_peace_right_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10372,11 +10361,11 @@ static const Gfx omm_peach_peace_right_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_peace_right_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_head_gfx[] = {
+static const Gfx omm_peach_normal_head_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10384,11 +10373,11 @@ static const Gfx omm_peach_head_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_head_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_hips_gfx[] = {
+static const Gfx omm_peach_normal_hips_gfx[] = {
     gsSPClearGeometryMode(G_CULL_BACK),
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
@@ -10398,11 +10387,11 @@ static const Gfx omm_peach_hips_gfx[] = {
     gsSPDisplayList(omm_peach_hips_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
     gsSPSetGeometryMode(G_CULL_BACK),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_leg1_left_gfx[] = {
+static const Gfx omm_peach_normal_leg1_left_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10410,11 +10399,11 @@ static const Gfx omm_peach_leg1_left_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_leg1_left_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_leg1_right_gfx[] = {
+static const Gfx omm_peach_normal_leg1_right_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10422,11 +10411,11 @@ static const Gfx omm_peach_leg1_right_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_leg1_right_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_leg2_left_gfx[] = {
+static const Gfx omm_peach_normal_leg2_left_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10434,11 +10423,11 @@ static const Gfx omm_peach_leg2_left_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_leg2_left_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_leg2_right_gfx[] = {
+static const Gfx omm_peach_normal_leg2_right_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10446,11 +10435,11 @@ static const Gfx omm_peach_leg2_right_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_leg2_right_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_torso_gfx[] = {
+static const Gfx omm_peach_normal_torso_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_BODY, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
@@ -10458,11 +10447,11 @@ static const Gfx omm_peach_torso_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_torso_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_revert_gfx),
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_wing_gfx[] = {
+static const Gfx omm_peach_normal_wing_gfx[] = {
     gsSPClearGeometryMode(G_CULL_BACK),
     gsDPSetCombineLERP(0, 0, 0, TEXEL0, 0, 0, 0, TEXEL0, 0, 0, 0, TEXEL0, 0, 0, 0, TEXEL0),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
@@ -10472,22 +10461,15 @@ static const Gfx omm_peach_wing_gfx[] = {
     gsSPDisplayList(omm_peach_wing_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
     gsSPSetGeometryMode(G_CULL_BACK),
-    gsSPDisplayList(omm_peach_revert_gfx),
-    gsSPEndDisplayList(),
-};
-
-static const Gfx omm_peach_end_gfx[] = {
     gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
-    gsDPSetAlphaCompare(G_AC_NONE),
-    gsDPSetEnvColor(255, 255, 255, 255),
     gsSPEndDisplayList(),
 };
 
 //
-// Metal
+// Display lists (metal)
 //
 
-static const Gfx omm_peach_metal_begin_gfx[] = {
+static const Gfx omm_peach_metal_gfx_begin[] = {
     gsSPSetGeometryMode(G_TEXTURE_GEN),
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT, TEXEL0, 0, SHADE, 0, 0, 0, 0, ENVIRONMENT),
     gsDPLoadTextureBlock(OMM_TEXTURE_PEACH_METAL, G_IM_FMT_RGBA, G_IM_SIZ_32b, 32, 32, 0, 0, 0, 0, 0, 0, 0),
@@ -10497,53 +10479,52 @@ static const Gfx omm_peach_metal_begin_gfx[] = {
     gsSPEndDisplayList(),
 };
 
-static const Gfx omm_peach_metal_end_gfx[] = {
+static const Gfx omm_peach_metal_gfx_end[] = {
     gsSPClearGeometryMode(G_TEXTURE_GEN),
     gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPTexture(0x07C0, 0x07C0, 0, G_TX_RENDERTILE, G_OFF),
-    gsDPSetEnvColor(255, 255, 255, 255),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_arm1_left_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_arm1_left_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_arm1_right_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_arm1_right_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_arm2_left_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_arm2_left_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_arm2_right_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_arm2_right_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_chest_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_chest_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_crown_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_crown_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
@@ -10555,81 +10536,81 @@ static const Gfx omm_peach_metal_tiara_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_tiara_eyes_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_tiara_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_dress_gfx[] = {
     gsSPClearGeometryMode(G_CULL_BACK),
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_dress_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPSetGeometryMode(G_CULL_BACK),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_face_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_face_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_foot_left_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_foot_left_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_foot_right_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_foot_right_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_hair_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_hair_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_hand_left_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_hand_left_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_hand_right_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_hand_right_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_fist_left_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_fist_left_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_fist_right_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_fist_right_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_fist_right_crown_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_fist_right_crown_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
@@ -10641,1425 +10622,77 @@ static const Gfx omm_peach_metal_fist_right_tiara_gfx[] = {
     gsSPLight(&omm_peach_light.a, 2),
     gsSPDisplayList(omm_peach_fist_right_tiara_eyes_triangles),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_fist_right_triangles),
     gsSPDisplayList(omm_peach_fist_right_tiara_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_peace_right_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_peace_right_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_head_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_head_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_hips_gfx[] = {
     gsSPClearGeometryMode(G_CULL_BACK),
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_hips_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPSetGeometryMode(G_CULL_BACK),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_leg1_left_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_leg1_left_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_leg1_right_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_leg1_right_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_leg2_left_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_leg2_left_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_leg2_right_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_leg2_right_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 static const Gfx omm_peach_metal_torso_gfx[] = {
-    gsSPDisplayList(omm_peach_metal_begin_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_begin),
     gsSPDisplayList(omm_peach_torso_triangles),
-    gsSPDisplayList(omm_peach_metal_end_gfx),
+    gsSPDisplayList(omm_peach_metal_gfx_end),
     gsSPEndDisplayList(),
 };
 
 //
-// Geo functions
+// Revert
 //
 
-static Gfx *omm_geo_peach_get_hair_rot(s32 callContext, struct GraphNode *node, void *context) {
-    if (gCurrentAnimType == ANIM_TYPE_ROTATION) {
-        u16 *animAttributes = gCurrAnimAttribute;
-        sHeadRot[0] = gCurrentAnimData[retrieve_animation_index(gCurrAnimFrame, &animAttributes)];
-        sHeadRot[1] = gCurrentAnimData[retrieve_animation_index(gCurrAnimFrame, &animAttributes)];
-        sHeadRot[2] = gCurrentAnimData[retrieve_animation_index(gCurrAnimFrame, &animAttributes)];
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_set_hair_rot(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        struct GraphNodeRotation *rotNode = (struct GraphNodeRotation *) node->next;
-        rotNode->rotation[0] = 0;
-        rotNode->rotation[1] = -sHeadRot[1] / 2;
-        rotNode->rotation[2] = -sHeadRot[2] / (1 + (sHeadRot[2] > 0));
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_move_part_from_parent(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        struct Object *obj = (struct Object *) gCurGraphNodeObject;
-        if (obj == gMarioState->marioObj && obj->prevObj != NULL) {
-            Mat4 transform;
-            create_transformation_from_matrices(transform, context, *gCurGraphNodeCamera->matrixPtr);
-            obj_update_pos_from_parent_transformation(transform, obj->prevObj);
-            obj_set_gfx_pos_from_pos(obj->prevObj);
-        }
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_tilt_torso(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        if (gMarioState->action != ACT_BUTT_SLIDE      &&
-            gMarioState->action != ACT_HOLD_BUTT_SLIDE &&
-            gMarioState->action != ACT_WALKING         &&
-            gMarioState->action != ACT_RIDING_SHELL_GROUND) {
-            vec3s_copy(gMarioState->marioBodyState->torsoAngle, gVec3sZero);
-        }
-        struct GraphNodeRotation *rotNode = (struct GraphNodeRotation *) node->next;
-        rotNode->rotation[0] = gMarioState->marioBodyState->torsoAngle[1];
-        rotNode->rotation[1] = gMarioState->marioBodyState->torsoAngle[2] / 2;
-        rotNode->rotation[2] = 0;
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_head_rotation(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        struct GraphNodeRotation *rotNode = (struct GraphNodeRotation *) node->next;
-        if (gCurGraphNodeCamera->config.camera->mode == CAMERA_MODE_C_UP) {
-            rotNode->rotation[0] = gPlayerCameraState->headRotation[1];
-            rotNode->rotation[2] = gPlayerCameraState->headRotation[0];
-        } else if (gMarioState->marioBodyState->action & ACT_FLAG_WATER_OR_TEXT) {
-            rotNode->rotation[0] = gMarioState->marioBodyState->headAngle[1];
-            rotNode->rotation[1] = gMarioState->marioBodyState->headAngle[2];
-            rotNode->rotation[2] = gMarioState->marioBodyState->headAngle[0];
-        } else if (gMarioState->action == ACT_IDLE && omm_peach_vibe_is_gloom()) {
-            rotNode->rotation[0] = 0;
-            rotNode->rotation[1] = 0;
-            rotNode->rotation[2] = omm_relerp_f(sins((gMarioObject->header.gfx.mAnimInfo.animFrame * 0x30000) / gMarioObject->header.gfx.mAnimInfo.curAnim->mLoopEnd), -1.f, +1.f, -0x1000, -0x1800);
-        } else {
-            vec3s_set(gMarioState->marioBodyState->headAngle, 0, 0, 0);
-            vec3s_set(rotNode->rotation, 0, 0, 0);
-        }
-        sHeadRot[0] += rotNode->rotation[0];
-        sHeadRot[1] += rotNode->rotation[1];
-        sHeadRot[2] += rotNode->rotation[2];
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_set_crown_scale(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        ((struct GraphNodeScale *) node->next)->scale = 1.f * !(gMarioState->marioBodyState->capState & 1);
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_switch_crown_model(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        bool tiara = !OMM_CAP_CLASSIC && gOmmExtrasCappyEyesOnMariosCap;
-        ((struct GraphNodeSwitchCase *) node)->selectedCase = tiara;
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_switch_crown_model_and_layer(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        bool tiara = !OMM_CAP_CLASSIC && gOmmExtrasCappyEyesOnMariosCap;
-        bool alpha = (((struct Object *) gCurGraphNodeObject)->oOpacity < 255);
-        ((struct GraphNodeSwitchCase *) node)->selectedCase = (alpha << 1) | (tiara << 0);
-    }
-    return NULL;
-}
-
-// 0 = Open
-// 1 = Half
-// 2 = Close
-// 3 = Hurt
-// 4 = Yeah (peace sign)
-// 5 = Joy
-// 6 = Rage
-// 7 = Gloom
-static Gfx *omm_geo_peach_switch_eyes(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        struct GraphNodeSwitchCase *switchCase = (struct GraphNodeSwitchCase *) node;
-        switch (gOmmData->mario->peach.vibeType) {
-        case OMM_PEACH_VIBE_TYPE_JOY:   switchCase->selectedCase = 5; break;
-        case OMM_PEACH_VIBE_TYPE_RAGE:  switchCase->selectedCase = 6; break;
-        case OMM_PEACH_VIBE_TYPE_GLOOM: switchCase->selectedCase = 7; break;
-        default: {
-        switch (gMarioState->marioBodyState->handState) {
-        case MARIO_HAND_PEACE_SIGN:     switchCase->selectedCase = 4; break;
-        default: {
-        switch (gMarioState->marioBodyState->eyeState) {
-        case MARIO_EYES_BLINK:          switchCase->selectedCase = (OMM_ARRAY_OF(const s8) { 1, 2, 1, 0, 1, 2, 1, 0 })[omm_min_s((gAreaUpdateCounter >> 1) & 0x1F, 7)]; break;
-        case MARIO_EYES_OPEN:           switchCase->selectedCase = 0; break;
-        case MARIO_EYES_HALF_CLOSED:    switchCase->selectedCase = 1; break;
-        case MARIO_EYES_CLOSED:         switchCase->selectedCase = 2; break;
-        case MARIO_EYES_DEAD:           switchCase->selectedCase = 3; break;
-        }
-        } break;
-        }
-        } break;
-        }
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_set_wings_scale(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        ((struct GraphNodeScale *) node->next)->scale = 1.5f * ((gMarioState->flags & MARIO_WING_CAP) != 0) * !gOmmExtrasInvisibleMode;
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_rotate_wing(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        struct GraphNodeRotation *rotNode = (struct GraphNodeRotation *) node->next;
-        rotNode->rotation[0] = (coss(gAreaUpdateCounter * 0x1000 * (gMarioState->marioBodyState->wingFlutter ? 2 : 1)) + 1.0f) * (gMarioState->marioBodyState->wingFlutter ? 0x1800 : 0x1000) * (((struct GraphNodeGenerated *) node)->parameter ? 1 : -1);
-    }
-    return NULL;
-}
-
-// Left / Right
-// 0 = Fist / Fist
-// 1 = Open / Open
-// 2 = Fist / Peace
-// 3 = Fist / Holding crown
-// 4 = Fist / Holding Tiara
-// 5 = Fist / Open
-static Gfx *omm_geo_peach_switch_hand(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        bool tiara = !OMM_CAP_CLASSIC && gOmmExtrasCappyEyesOnMariosCap;
-        struct GraphNodeSwitchCase *switchCase = (struct GraphNodeSwitchCase *) node;
-        switch (gMarioState->marioBodyState->handState) {
-            case MARIO_HAND_FISTS:            switchCase->selectedCase = ((gMarioState->action & ACT_FLAG_SWIMMING_OR_FLYING) != 0); break;
-            case MARIO_HAND_OPEN:             switchCase->selectedCase = 1; break;
-            case MARIO_HAND_PEACE_SIGN:       switchCase->selectedCase = 2; break;
-            case MARIO_HAND_HOLDING_CAP:      switchCase->selectedCase = 3 + tiara; break;
-            case MARIO_HAND_HOLDING_WING_CAP: switchCase->selectedCase = 3 + tiara; break;
-            case MARIO_HAND_RIGHT_OPEN:       switchCase->selectedCase = 5; break;
-        }
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_switch_hand_grab_pos(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        struct GraphNodeHeldObject *asHeldObj = (struct GraphNodeHeldObject *) node;
-        asHeldObj->objNode = gMarioState->heldObj;
-        if (asHeldObj->objNode) {
-            switch (gMarioState->marioBodyState->grabPos) {
-                case GRAB_POS_LIGHT_OBJ: vec3s_set(asHeldObj->translation,  50,    0,  110 * !(gMarioState->action & ACT_FLAG_THROWING)); break;
-                case GRAB_POS_HEAVY_OBJ: vec3s_set(asHeldObj->translation, 145, -173,  180); break;
-                case GRAB_POS_BOWSER:    vec3s_set(asHeldObj->translation,  80, -270, 1260); break;
-            }
-        }
-    } else if (callContext == GEO_CONTEXT_HELD_OBJ) {
-        get_pos_from_transform_mtx(gMarioState->marioBodyState->heldObjLastPosition, context, *gCurGraphNodeCamera->matrixPtr);
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_mirror_room_disable_culling(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER && gCurGraphNodeObject == &gMirrorMario) {
-        static Gfx sGfx[3];
-        struct GraphNodeGenerated *asGenerated = (struct GraphNodeGenerated *) node;
-        asGenerated->fnNode.node.flags = (asGenerated->fnNode.node.flags & 0xFF) | (LAYER_OPAQUE << 8);
-        gSPClearGeometryMode (&sGfx[0], G_CULL_BOTH);
-        gSPSetGeometryMode   (&sGfx[1], 0);
-        gSPEndDisplayList    (&sGfx[2]);
-        return sGfx;
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_set_layer_and_alpha(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        static Gfx sGfx[3];
-        struct GraphNodeGenerated *asGenerated = (struct GraphNodeGenerated *) node;
-        if (gMarioState->marioBodyState->modelState & 0x100) {
-            asGenerated->fnNode.node.flags = (asGenerated->fnNode.node.flags & 0xFF) | (LAYER_TRANSPARENT << 8);
-            gDPSetAlphaCompare (&sGfx[0], G_AC_DITHER);
-            gDPSetEnvColor     (&sGfx[1], 255, 255, 255, gMarioState->marioBodyState->modelState & 0xFF);
-            gSPEndDisplayList  (&sGfx[2]);
-        } else {
-            asGenerated->fnNode.node.flags = (asGenerated->fnNode.node.flags & 0xFF) | (LAYER_OPAQUE << 8);
-            gDPSetEnvColor     (&sGfx[0], 255, 255, 255, 255);
-            gSPEndDisplayList  (&sGfx[1]);
-        }
-        return sGfx;
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_switch_cap_model(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        if (gOmmExtrasInvisibleMode) {
-            ((struct GraphNodeSwitchCase *) node)->selectedCase = 1; // Force the Vanish model to enable alpha transparency
-        } else {
-            ((struct GraphNodeSwitchCase *) node)->selectedCase = (gMarioState->marioBodyState->modelState >> 8);
-        }
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_get_pos(s32 callContext, struct GraphNode *node, void *context) {
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_set_hips_pitch(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        struct GraphNodeRotation *rotNode = (struct GraphNodeRotation *) node->next;
-        rotNode->rotation[0] = 0;
-        rotNode->rotation[1] = 0;
-        rotNode->rotation[2] = -(sDressPitch * 4) / 3;
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_set_dress_pitch(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        struct GraphNodeRotation *rotNode = (struct GraphNodeRotation *) node->next;
-        rotNode->rotation[0] = 0;
-        rotNode->rotation[1] = 0;
-        rotNode->rotation[2] = -(sDressPitch * 2) / 3;
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_set_left_leg_scale(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        ((struct GraphNodeScale *) node->next)->scale = sLegLScale;
-    }
-    return NULL;
-}
-
-static Gfx *omm_geo_peach_set_right_leg_scale(s32 callContext, struct GraphNode *node, void *context) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        ((struct GraphNodeScale *) node->next)->scale = sLegRScale;
-    }
-    return NULL;
-}
-
-//
-// Preprocess
-//
-
-void omm_geo_peach_preprocess(void *caller, struct Object *obj, struct GraphNode *node, f32 x, f32 y, f32 z) {
-
-    // omm_geo_peach_get_pos
-    if (caller == (void *) omm_geo_peach_get_pos) {
-        struct GraphNodeGenerated *asGenerated = (struct GraphNodeGenerated *) node;
-        sBonePos[asGenerated->parameter][0] = x - obj->header.gfx.pos[0];
-        sBonePos[asGenerated->parameter][1] = y - obj->header.gfx.pos[1];
-        sBonePos[asGenerated->parameter][2] = z - obj->header.gfx.pos[2];
-    }
-
-    // omm_geo_peach_set_hips_pitch
-    if (caller == (void *) omm_geo_peach_set_hips_pitch) {
-
-        // 0 = Origin (torso)
-        Vec3f o = {
-            sBonePos[0][0],
-            sBonePos[0][1],
-            sBonePos[0][2]
-        };
-
-        // 1 = Up
-        Vec3f u = {
-            sBonePos[1][0] - o[0],
-            sBonePos[1][1] - o[1],
-            sBonePos[1][2] - o[2],
-        };
-        vec3f_normalize(u);
-
-        // Down
-        Vec3f d = {
-            o[0] - sBonePos[1][0],
-            o[1] - sBonePos[1][1],
-            o[2] - sBonePos[1][2],
-        };
-        vec3f_normalize(d);
-
-        // 2 = Forward
-        Vec3f v = {
-            sBonePos[2][0] - o[0],
-            sBonePos[2][1] - o[1],
-            sBonePos[2][2] - o[2],
-        };
-        vec3f_normalize(v);
-
-        // 3 = Lateral
-        Vec3f n = {
-            sBonePos[3][0] - o[0],
-            sBonePos[3][1] - o[1],
-            sBonePos[3][2] - o[2],
-        };
-        vec3f_normalize(n);
-
-        // 4 = Left leg
-        Vec3f ll = {
-            sBonePos[4][0],
-            sBonePos[4][1],
-            sBonePos[4][2],
-        };
-        vec3f_project_point(ll, ll, o, n);
-
-        // 5 = Left foot
-        Vec3f lf = {
-            sBonePos[5][0],
-            sBonePos[5][1],
-            sBonePos[5][2],
-        };
-        vec3f_project_point(lf, lf, o, n);
-
-        // 6 = Right leg
-        Vec3f rl = {
-            sBonePos[6][0],
-            sBonePos[6][1],
-            sBonePos[6][2],
-        };
-        vec3f_project_point(rl, rl, o, n);
-
-        // 7 = Right foot
-        Vec3f rf = {
-            sBonePos[7][0],
-            sBonePos[7][1],
-            sBonePos[7][2],
-        };
-        vec3f_project_point(rf, rf, o, n);
-
-        // Left leg vector
-        Vec3f l = {
-            lf[0] - ll[0],
-            lf[1] - ll[1],
-            lf[2] - ll[2]
-        };
-        vec3f_normalize(l);
-
-        // Right leg vector
-        Vec3f r = {
-            rf[0] - rl[0],
-            rf[1] - rl[1],
-            rf[2] - rl[2]
-        };
-        vec3f_normalize(r);
-
-        // Angle left
-        f32 ldot = l[0] * d[0] + l[1] * d[1] + l[2] * d[2];
-        s16 la = (s16) ((acosf(ldot) / M_PI) * 0x8000);
-        Vec3f ldcross; vec3f_cross(ldcross, l, d);
-        if (vec3f_dot(n, ldcross) < 0) {
-            la = -la;
-        }
-
-        // Angle right
-        f32 rdot = r[0] * d[0] + r[1] * d[1] + r[2] * d[2];
-        s16 ra = (s16) ((acosf(rdot) / M_PI) * 0x8000);
-        Vec3f rdcross; vec3f_cross(rdcross, r, d);
-        if (vec3f_dot(n, rdcross) < 0) {
-            ra = -ra;
-        }
-
-        // Dress pitch
-        s16 ua = omm_min_s(la, ra);
-        s16 va = omm_max_s(la, ra);
-        f32 da = (f32) ((u16) (va - ua));
-        f32 ta = (0.50f * (1.f - omm_clamp_0_1_f((da - 0x2000) / 0x4000)));
-        f32 pa = ((ua + da * ta) / 3.f);
-        sDressPitch = ((s16) pa - 0x0800);
-
-        // Legs visibility
-        u16 dlp = (u16) omm_abs_s(la - (sDressPitch * 2));
-        u16 drp = (u16) omm_abs_s(ra - (sDressPitch * 2));
-        s32 animId = obj->header.gfx.mAnimInfo.animID;
-        if (animId == MARIO_ANIM_WALKING || animId == MARIO_ANIM_RUNNING) {
-            sLegLScale = 1.f * (dlp < 0x2800);
-            sLegRScale = 1.f * (drp < 0x2800);
-        } else {
-            sLegLScale = 1.f * (dlp < 0x3000);
-            sLegRScale = 1.f * (drp < 0x3000);
-        }
-    }
-
-    // omm_geo_peach_set_left_leg_scale
-    if (caller == (void *) omm_geo_peach_set_left_leg_scale) {
-        ((struct GraphNodeScale *) node->next)->scale = 1.f;
-    }
-
-    // omm_geo_peach_set_right_leg_scale
-    if (caller == (void *) omm_geo_peach_set_right_leg_scale) {
-        ((struct GraphNodeScale *) node->next)->scale = 1.f;
-    }
-}
-
-//
-// Geo sub-layouts
-//
-
-static const GeoLayout omm_geo_peach_default[] = {
-    GEO_ANIMATED_PART(LAYER_OPAQUE, 0, 140, 0, NULL),
-    GEO_OPEN_NODE(),
-        GEO_ASM(0, omm_geo_peach_get_pos),
-        GEO_ANIMATED_PART(LAYER_OPAQUE, 0, 0, 0, omm_peach_torso_gfx),
-        GEO_OPEN_NODE(),
-            GEO_ASM(0, omm_geo_peach_move_part_from_parent),
-            GEO_ASM(0, omm_geo_peach_tilt_torso),
-            GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, 0),
-            GEO_OPEN_NODE(),
-                GEO_OPEN_NODE(),
-                    GEO_TRANSLATE_NODE(LAYER_OPAQUE, 10, 0, 0),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(1, omm_geo_peach_get_pos),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-                GEO_OPEN_NODE(),
-                    GEO_TRANSLATE_NODE(LAYER_OPAQUE, 0, 10, 0),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(2, omm_geo_peach_get_pos),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-                GEO_OPEN_NODE(),
-                    GEO_TRANSLATE_NODE(LAYER_OPAQUE, 0, 0, 10),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(3, omm_geo_peach_get_pos),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-                GEO_ANIMATED_PART(LAYER_OPAQUE, 29, 0, 0, omm_peach_chest_gfx),
-                GEO_OPEN_NODE(),
-                    GEO_ASM(0, omm_geo_peach_get_hair_rot),
-                    GEO_ANIMATED_PART(LAYER_OPAQUE, 101, 0, 0, NULL),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(0, omm_geo_peach_head_rotation),
-                        GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, 0),
-                        GEO_OPEN_NODE(),
-                            GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_head_gfx),
-                            GEO_OPEN_NODE(),
-                                GEO_OPEN_NODE(),
-                                    GEO_SWITCH_CASE(0, geo_switch_mario_cap_on_off),
-                                GEO_CLOSE_NODE(),
-                                GEO_SWITCH_CASE(8, omm_geo_peach_switch_eyes),
-                                GEO_OPEN_NODE(),
-                                    GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_face_open_gfx),
-                                    GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_face_half_gfx),
-                                    GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_face_close_gfx),
-                                    GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_face_hurt_gfx),
-                                    GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_face_yeah_gfx),
-                                    GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_face_joy_gfx),
-                                    GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_face_rage_gfx),
-                                    GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_face_gloom_gfx),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                            GEO_OPEN_NODE(),
-                                GEO_TRANSLATE_NODE(LAYER_OPAQUE, 145, -11, 0),
-                                GEO_OPEN_NODE(),
-                                    GEO_ASM(0, omm_geo_peach_set_crown_scale),
-                                    GEO_SCALE(LAYER_OPAQUE, 0x10000),
-                                    GEO_OPEN_NODE(),
-                                        GEO_SWITCH_CASE(2, omm_geo_peach_switch_crown_model),
-                                        GEO_OPEN_NODE(),
-                                            GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_crown_gfx),
-                                            GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_tiara_gfx),
-                                        GEO_CLOSE_NODE(),
-                                    GEO_CLOSE_NODE(),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                            GEO_ASM(0, omm_geo_peach_set_hair_rot),
-                            GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_hair_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                    GEO_ANIMATED_PART(LAYER_OPAQUE, 40, -7, 47, NULL),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_OPAQUE, 0, 0, 0, omm_peach_arm1_left_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ANIMATED_PART(LAYER_OPAQUE, 88, 0, -1, omm_peach_arm2_left_gfx),
-                            GEO_OPEN_NODE(),
-                                GEO_SWITCH_CASE(0, geo_switch_mario_hand), // Mario hand position calculation
-                                GEO_OPEN_NODE(),
-                                GEO_CLOSE_NODE(),
-                                GEO_ANIMATED_PART(LAYER_OPAQUE, 82, 0, 0, NULL),
-                                GEO_OPEN_NODE(),
-                                    GEO_SWITCH_CASE(6, omm_geo_peach_switch_hand),
-                                    GEO_OPEN_NODE(),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_hand_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_fist_left_gfx),
-                                    GEO_CLOSE_NODE(),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                    GEO_ANIMATED_PART(LAYER_OPAQUE, 40, -7, -47, NULL),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_OPAQUE, 0, 0, 0, omm_peach_arm1_right_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ANIMATED_PART(LAYER_OPAQUE, 88, 0, 1, omm_peach_arm2_right_gfx),
-                            GEO_OPEN_NODE(),
-                                GEO_SWITCH_CASE(0, geo_switch_mario_hand), // Mario hand position calculation
-                                GEO_OPEN_NODE(),
-                                GEO_CLOSE_NODE(),
-                                GEO_ANIMATED_PART(LAYER_OPAQUE, 82, 0, 0, NULL),
-                                GEO_OPEN_NODE(),
-                                    GEO_HELD_OBJECT(0, 0, 0, 0, omm_geo_peach_switch_hand_grab_pos),
-                                GEO_CLOSE_NODE(),
-                                GEO_OPEN_NODE(),
-                                    GEO_SWITCH_CASE(6, omm_geo_peach_switch_hand),
-                                    GEO_OPEN_NODE(),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_fist_right_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_hand_right_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_peace_right_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_fist_right_crown_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_fist_right_tiara_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_hand_right_gfx),
-                                    GEO_CLOSE_NODE(),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                    GEO_ASM(0, omm_geo_peach_set_wings_scale),
-                    GEO_SCALE(LAYER_OPAQUE, 0),
-                    GEO_OPEN_NODE(),
-                        GEO_TRANSLATE_ROTATE(LAYER_OPAQUE, -48, -90, -40, 22, 0, -135),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(0, omm_geo_peach_rotate_wing),
-                            GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_ALPHA, omm_peach_wing_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                        GEO_TRANSLATE_ROTATE(LAYER_OPAQUE, -48, -90, 40, -22, 0, -135),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(1, omm_geo_peach_rotate_wing),
-                            GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_ALPHA, omm_peach_wing_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-            GEO_ANIMATED_PART(LAYER_OPAQUE, -103, -8, 32, NULL),
-            GEO_OPEN_NODE(),
-                GEO_ASM(4, omm_geo_peach_get_pos),
-                GEO_ASM(0, omm_geo_peach_set_left_leg_scale),
-                GEO_SCALE(LAYER_OPAQUE, 0x10000),
-                GEO_OPEN_NODE(),
-                    GEO_ANIMATED_PART(LAYER_OPAQUE, 0, 0, 0, omm_peach_leg1_left_gfx),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_OPAQUE, 68, -4, 0, omm_peach_leg2_left_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(5, omm_geo_peach_get_pos),
-                            GEO_ANIMATED_PART(LAYER_OPAQUE, 90, 1, 0, NULL),
-                            GEO_OPEN_NODE(),
-                                GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, -20),
-                                GEO_OPEN_NODE(),
-                                    GEO_SCALE_WITH_DL(LAYER_OPAQUE, 0x14000, omm_peach_foot_left_gfx),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-            GEO_ANIMATED_PART(LAYER_OPAQUE, -103, -8, -32, NULL),
-            GEO_OPEN_NODE(),
-                GEO_ASM(6, omm_geo_peach_get_pos),
-                GEO_ASM(0, omm_geo_peach_set_right_leg_scale),
-                GEO_SCALE(LAYER_OPAQUE, 0x10000),
-                GEO_OPEN_NODE(),
-                    GEO_ANIMATED_PART(LAYER_OPAQUE, 0, 0, 0, omm_peach_leg1_right_gfx),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_OPAQUE, 68, -4, 0, omm_peach_leg2_right_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(7, omm_geo_peach_get_pos),
-                            GEO_ANIMATED_PART(LAYER_OPAQUE, 90, 1, 0, NULL),
-                            GEO_OPEN_NODE(),
-                                GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, -20),
-                                GEO_OPEN_NODE(),
-                                    GEO_SCALE_WITH_DL(LAYER_OPAQUE, 0x14000, omm_peach_foot_right_gfx),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-            GEO_TRANSLATE_NODE(LAYER_OPAQUE, -15, 0, 0),
-            GEO_OPEN_NODE(),
-                GEO_ASM(0, omm_geo_peach_set_hips_pitch),
-                GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, 0),
-                GEO_OPEN_NODE(),
-                    GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_hips_gfx),
-                    GEO_OPEN_NODE(),
-                        GEO_TRANSLATE_NODE(LAYER_OPAQUE, -96, -4, 0),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(0, omm_geo_peach_set_dress_pitch),
-                            GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_dress_gfx),
-                                GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_end_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-        GEO_CLOSE_NODE(),
-    GEO_CLOSE_NODE(),
-    GEO_RETURN(),
+static const Gfx omm_peach_revert_gfx[] = {
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
+    gsDPSetAlphaCompare(G_AC_NONE),
+    gsSPEndDisplayList(),
 };
-
-static const GeoLayout omm_geo_peach_vanish[] = {
-    GEO_ANIMATED_PART(LAYER_TRANSPARENT, 0, 140, 0, NULL),
-    GEO_OPEN_NODE(),
-        GEO_ASM(0, omm_geo_peach_get_pos),
-        GEO_ANIMATED_PART(LAYER_TRANSPARENT, 0, 0, 0, omm_peach_torso_gfx),
-        GEO_OPEN_NODE(),
-            GEO_ASM(0, omm_geo_peach_move_part_from_parent),
-            GEO_ASM(0, omm_geo_peach_tilt_torso),
-            GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, 0),
-            GEO_OPEN_NODE(),
-                GEO_OPEN_NODE(),
-                    GEO_TRANSLATE_NODE(LAYER_TRANSPARENT, 10, 0, 0),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(1, omm_geo_peach_get_pos),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-                GEO_OPEN_NODE(),
-                    GEO_TRANSLATE_NODE(LAYER_TRANSPARENT, 0, 10, 0),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(2, omm_geo_peach_get_pos),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-                GEO_OPEN_NODE(),
-                    GEO_TRANSLATE_NODE(LAYER_TRANSPARENT, 0, 0, 10),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(3, omm_geo_peach_get_pos),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-                GEO_ANIMATED_PART(LAYER_TRANSPARENT, 29, 0, 0, omm_peach_chest_gfx),
-                GEO_OPEN_NODE(),
-                    GEO_ASM(0, omm_geo_peach_get_hair_rot),
-                    GEO_ANIMATED_PART(LAYER_TRANSPARENT, 101, 0, 0, NULL),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(0, omm_geo_peach_head_rotation),
-                        GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, 0),
-                        GEO_OPEN_NODE(),
-                            GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_head_gfx),
-                            GEO_OPEN_NODE(),
-                                GEO_OPEN_NODE(),
-                                    GEO_SWITCH_CASE(0, geo_switch_mario_cap_on_off),
-                                GEO_CLOSE_NODE(),
-                                GEO_SWITCH_CASE(8, omm_geo_peach_switch_eyes),
-                                GEO_OPEN_NODE(),
-                                    GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_face_open_gfx),
-                                    GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_face_half_gfx),
-                                    GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_face_close_gfx),
-                                    GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_face_hurt_gfx),
-                                    GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_face_yeah_gfx),
-                                    GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_face_joy_gfx),
-                                    GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_face_rage_gfx),
-                                    GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_face_gloom_gfx),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                            GEO_OPEN_NODE(),
-                                GEO_TRANSLATE_NODE(LAYER_TRANSPARENT, 145, -11, 0),
-                                GEO_OPEN_NODE(),
-                                    GEO_ASM(0, omm_geo_peach_set_crown_scale),
-                                    GEO_SCALE(LAYER_TRANSPARENT, 0x10000),
-                                    GEO_OPEN_NODE(),
-                                        GEO_SWITCH_CASE(2, omm_geo_peach_switch_crown_model),
-                                        GEO_OPEN_NODE(),
-                                            GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_crown_gfx),
-                                            GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_tiara_gfx),
-                                        GEO_CLOSE_NODE(),
-                                    GEO_CLOSE_NODE(),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                            GEO_ASM(0, omm_geo_peach_set_hair_rot),
-                            GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_hair_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                    GEO_ANIMATED_PART(LAYER_TRANSPARENT, 40, -7, 47, NULL),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_TRANSPARENT, 0, 0, 0, omm_peach_arm1_left_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ANIMATED_PART(LAYER_TRANSPARENT, 88, 0, -1, omm_peach_arm2_left_gfx),
-                            GEO_OPEN_NODE(),
-                                GEO_SWITCH_CASE(0, geo_switch_mario_hand), // Mario hand position calculation
-                                GEO_OPEN_NODE(),
-                                GEO_CLOSE_NODE(),
-                                GEO_ANIMATED_PART(LAYER_TRANSPARENT, 82, 0, 0, NULL),
-                                GEO_OPEN_NODE(),
-                                    GEO_SWITCH_CASE(6, omm_geo_peach_switch_hand),
-                                    GEO_OPEN_NODE(),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_hand_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_fist_left_gfx),
-                                    GEO_CLOSE_NODE(),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                    GEO_ANIMATED_PART(LAYER_TRANSPARENT, 40, -7, -47, NULL),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_TRANSPARENT, 0, 0, 0, omm_peach_arm1_right_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ANIMATED_PART(LAYER_TRANSPARENT, 88, 0, 1, omm_peach_arm2_right_gfx),
-                            GEO_OPEN_NODE(),
-                                GEO_SWITCH_CASE(0, geo_switch_mario_hand), // Mario hand position calculation
-                                GEO_OPEN_NODE(),
-                                GEO_CLOSE_NODE(),
-                                GEO_ANIMATED_PART(LAYER_TRANSPARENT, 82, 0, 0, NULL),
-                                GEO_OPEN_NODE(),
-                                    GEO_HELD_OBJECT(0, 0, 0, 0, omm_geo_peach_switch_hand_grab_pos),
-                                GEO_CLOSE_NODE(),
-                                GEO_OPEN_NODE(),
-                                    GEO_SWITCH_CASE(6, omm_geo_peach_switch_hand),
-                                    GEO_OPEN_NODE(),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_fist_right_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_hand_right_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_peace_right_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_fist_right_crown_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_fist_right_tiara_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_hand_right_gfx),
-                                    GEO_CLOSE_NODE(),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                    GEO_ASM(0, omm_geo_peach_set_wings_scale),
-                    GEO_SCALE(LAYER_TRANSPARENT, 0),
-                    GEO_OPEN_NODE(),
-                        GEO_TRANSLATE_ROTATE(LAYER_TRANSPARENT, -48, -90, -40, 22, 0, -135),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(0, omm_geo_peach_rotate_wing),
-                            GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_wing_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                        GEO_TRANSLATE_ROTATE(LAYER_TRANSPARENT, -48, -90, 40, -22, 0, -135),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(1, omm_geo_peach_rotate_wing),
-                            GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_wing_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-            GEO_ANIMATED_PART(LAYER_TRANSPARENT, -103, -8, 32, NULL),
-            GEO_OPEN_NODE(),
-                GEO_ASM(4, omm_geo_peach_get_pos),
-                GEO_ASM(0, omm_geo_peach_set_left_leg_scale),
-                GEO_SCALE(LAYER_TRANSPARENT, 0x10000),
-                GEO_OPEN_NODE(),
-                    GEO_ANIMATED_PART(LAYER_TRANSPARENT, 0, 0, 0, omm_peach_leg1_left_gfx),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_TRANSPARENT, 68, -4, 0, omm_peach_leg2_left_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(5, omm_geo_peach_get_pos),
-                            GEO_ANIMATED_PART(LAYER_TRANSPARENT, 90, 1, 0, NULL),
-                            GEO_OPEN_NODE(),
-                                GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, -20),
-                                GEO_OPEN_NODE(),
-                                    GEO_SCALE_WITH_DL(LAYER_TRANSPARENT, 0x14000, omm_peach_foot_left_gfx),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-            GEO_ANIMATED_PART(LAYER_TRANSPARENT, -103, -8, -32, NULL),
-            GEO_OPEN_NODE(),
-                GEO_ASM(6, omm_geo_peach_get_pos),
-                GEO_ASM(0, omm_geo_peach_set_right_leg_scale),
-                GEO_SCALE(LAYER_TRANSPARENT, 0x10000),
-                GEO_OPEN_NODE(),
-                    GEO_ANIMATED_PART(LAYER_TRANSPARENT, 0, 0, 0, omm_peach_leg1_right_gfx),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_TRANSPARENT, 68, -4, 0, omm_peach_leg2_right_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(7, omm_geo_peach_get_pos),
-                            GEO_ANIMATED_PART(LAYER_TRANSPARENT, 90, 1, 0, NULL),
-                            GEO_OPEN_NODE(),
-                                GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, -20),
-                                GEO_OPEN_NODE(),
-                                    GEO_SCALE_WITH_DL(LAYER_TRANSPARENT, 0x14000, omm_peach_foot_right_gfx),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-            GEO_TRANSLATE_NODE(LAYER_TRANSPARENT, -15, 0, 0),
-            GEO_OPEN_NODE(),
-                GEO_ASM(0, omm_geo_peach_set_hips_pitch),
-                GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, 0),
-                GEO_OPEN_NODE(),
-                    GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_hips_gfx),
-                    GEO_OPEN_NODE(),
-                        GEO_TRANSLATE_NODE(LAYER_TRANSPARENT, -96, -4, 0),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(0, omm_geo_peach_set_dress_pitch),
-                            GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_dress_gfx),
-                                GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_end_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-        GEO_CLOSE_NODE(),
-    GEO_CLOSE_NODE(),
-    GEO_RETURN(),
-};
-
-static const GeoLayout omm_geo_peach_metal[] = {
-    GEO_ANIMATED_PART(LAYER_OPAQUE, 0, 140, 0, NULL),
-    GEO_OPEN_NODE(),
-        GEO_ASM(0, omm_geo_peach_get_pos),
-        GEO_ANIMATED_PART(LAYER_OPAQUE, 0, 0, 0, omm_peach_metal_torso_gfx),
-        GEO_OPEN_NODE(),
-            GEO_ASM(0, omm_geo_peach_move_part_from_parent),
-            GEO_ASM(0, omm_geo_peach_tilt_torso),
-            GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, 0),
-            GEO_OPEN_NODE(),
-                GEO_OPEN_NODE(),
-                    GEO_TRANSLATE_NODE(LAYER_OPAQUE, 10, 0, 0),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(1, omm_geo_peach_get_pos),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-                GEO_OPEN_NODE(),
-                    GEO_TRANSLATE_NODE(LAYER_OPAQUE, 0, 10, 0),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(2, omm_geo_peach_get_pos),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-                GEO_OPEN_NODE(),
-                    GEO_TRANSLATE_NODE(LAYER_OPAQUE, 0, 0, 10),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(3, omm_geo_peach_get_pos),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-                GEO_ANIMATED_PART(LAYER_OPAQUE, 29, 0, 0, omm_peach_metal_chest_gfx),
-                GEO_OPEN_NODE(),
-                    GEO_ASM(0, omm_geo_peach_get_hair_rot),
-                    GEO_ANIMATED_PART(LAYER_OPAQUE, 101, 0, 0, NULL),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(0, omm_geo_peach_head_rotation),
-                        GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, 0),
-                        GEO_OPEN_NODE(),
-                            GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_head_gfx),
-                            GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_face_gfx),
-                            GEO_OPEN_NODE(),
-                                GEO_SWITCH_CASE(0, geo_switch_mario_cap_on_off),
-                            GEO_CLOSE_NODE(),
-                            GEO_OPEN_NODE(),
-                                GEO_TRANSLATE_NODE(LAYER_OPAQUE, 145, -11, 0),
-                                GEO_OPEN_NODE(),
-                                    GEO_ASM(0, omm_geo_peach_set_crown_scale),
-                                    GEO_SCALE(LAYER_OPAQUE, 0x10000),
-                                    GEO_OPEN_NODE(),
-                                        GEO_SWITCH_CASE(2, omm_geo_peach_switch_crown_model),
-                                        GEO_OPEN_NODE(),
-                                            GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_crown_gfx),
-                                            GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_tiara_gfx),
-                                        GEO_CLOSE_NODE(),
-                                    GEO_CLOSE_NODE(),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                            GEO_ASM(0, omm_geo_peach_set_hair_rot),
-                            GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_hair_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                    GEO_ANIMATED_PART(LAYER_OPAQUE, 40, -7, 47, NULL),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_OPAQUE, 0, 0, 0, omm_peach_metal_arm1_left_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ANIMATED_PART(LAYER_OPAQUE, 88, 0, -1, omm_peach_metal_arm2_left_gfx),
-                            GEO_OPEN_NODE(),
-                                GEO_SWITCH_CASE(0, geo_switch_mario_hand), // Mario hand position calculation
-                                GEO_OPEN_NODE(),
-                                GEO_CLOSE_NODE(),
-                                GEO_ANIMATED_PART(LAYER_OPAQUE, 82, 0, 0, NULL),
-                                GEO_OPEN_NODE(),
-                                    GEO_SWITCH_CASE(6, omm_geo_peach_switch_hand),
-                                    GEO_OPEN_NODE(),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_hand_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_fist_left_gfx),
-                                    GEO_CLOSE_NODE(),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                    GEO_ANIMATED_PART(LAYER_OPAQUE, 40, -7, -47, NULL),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_OPAQUE, 0, 0, 0, omm_peach_metal_arm1_right_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ANIMATED_PART(LAYER_OPAQUE, 88, 0, 1, omm_peach_metal_arm2_right_gfx),
-                            GEO_OPEN_NODE(),
-                                GEO_SWITCH_CASE(0, geo_switch_mario_hand), // Mario hand position calculation
-                                GEO_OPEN_NODE(),
-                                GEO_CLOSE_NODE(),
-                                GEO_ANIMATED_PART(LAYER_OPAQUE, 82, 0, 0, NULL),
-                                GEO_OPEN_NODE(),
-                                    GEO_HELD_OBJECT(0, 0, 0, 0, omm_geo_peach_switch_hand_grab_pos),
-                                GEO_CLOSE_NODE(),
-                                GEO_OPEN_NODE(),
-                                    GEO_SWITCH_CASE(6, omm_geo_peach_switch_hand),
-                                    GEO_OPEN_NODE(),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_fist_right_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_hand_right_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_peace_right_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_fist_right_crown_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_fist_right_tiara_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_hand_right_gfx),
-                                    GEO_CLOSE_NODE(),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                    GEO_ASM(0, omm_geo_peach_set_wings_scale),
-                    GEO_SCALE(LAYER_OPAQUE, 0),
-                    GEO_OPEN_NODE(),
-                        GEO_TRANSLATE_ROTATE(LAYER_OPAQUE, -48, -90, -40, 22, 0, -135),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(0, omm_geo_peach_rotate_wing),
-                            GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_ALPHA, omm_peach_wing_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                        GEO_TRANSLATE_ROTATE(LAYER_OPAQUE, -48, -90, 40, -22, 0, -135),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(1, omm_geo_peach_rotate_wing),
-                            GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_ALPHA, omm_peach_wing_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-            GEO_ANIMATED_PART(LAYER_OPAQUE, -103, -8, 32, NULL),
-            GEO_OPEN_NODE(),
-                GEO_ASM(4, omm_geo_peach_get_pos),
-                GEO_ASM(0, omm_geo_peach_set_left_leg_scale),
-                GEO_SCALE(LAYER_OPAQUE, 0x10000),
-                GEO_OPEN_NODE(),
-                    GEO_ANIMATED_PART(LAYER_OPAQUE, 0, 0, 0, omm_peach_metal_leg1_left_gfx),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_OPAQUE, 68, -4, 0, omm_peach_metal_leg2_left_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(5, omm_geo_peach_get_pos),
-                            GEO_ANIMATED_PART(LAYER_OPAQUE, 90, 1, 0, NULL),
-                            GEO_OPEN_NODE(),
-                                GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, -20),
-                                GEO_OPEN_NODE(),
-                                    GEO_SCALE_WITH_DL(LAYER_OPAQUE, 0x14000, omm_peach_metal_foot_left_gfx),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-            GEO_ANIMATED_PART(LAYER_OPAQUE, -103, -8, -32, NULL),
-            GEO_OPEN_NODE(),
-                GEO_ASM(6, omm_geo_peach_get_pos),
-                GEO_ASM(0, omm_geo_peach_set_right_leg_scale),
-                GEO_SCALE(LAYER_OPAQUE, 0x10000),
-                GEO_OPEN_NODE(),
-                    GEO_ANIMATED_PART(LAYER_OPAQUE, 0, 0, 0, omm_peach_metal_leg1_right_gfx),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_OPAQUE, 68, -4, 0, omm_peach_metal_leg2_right_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(7, omm_geo_peach_get_pos),
-                            GEO_ANIMATED_PART(LAYER_OPAQUE, 90, 1, 0, NULL),
-                            GEO_OPEN_NODE(),
-                                GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, -20),
-                                GEO_OPEN_NODE(),
-                                    GEO_SCALE_WITH_DL(LAYER_OPAQUE, 0x14000, omm_peach_metal_foot_right_gfx),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-            GEO_TRANSLATE_NODE(LAYER_OPAQUE, -15, 0, 0),
-            GEO_OPEN_NODE(),
-                GEO_ASM(0, omm_geo_peach_set_hips_pitch),
-                GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, 0),
-                GEO_OPEN_NODE(),
-                    GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_hips_gfx),
-                    GEO_OPEN_NODE(),
-                        GEO_TRANSLATE_NODE(LAYER_OPAQUE, -96, -4, 0),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(0, omm_geo_peach_set_dress_pitch),
-                            GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_dress_gfx),
-                                GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_end_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-        GEO_CLOSE_NODE(),
-    GEO_CLOSE_NODE(),
-    GEO_RETURN(),
-};
-
-static const GeoLayout omm_geo_peach_metal_vanish[] = {
-    GEO_ANIMATED_PART(LAYER_TRANSPARENT, 0, 140, 0, NULL),
-    GEO_OPEN_NODE(),
-        GEO_ASM(0, omm_geo_peach_get_pos),
-        GEO_ANIMATED_PART(LAYER_TRANSPARENT, 0, 0, 0, omm_peach_metal_torso_gfx),
-        GEO_OPEN_NODE(),
-            GEO_ASM(0, omm_geo_peach_move_part_from_parent),
-            GEO_ASM(0, omm_geo_peach_tilt_torso),
-            GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, 0),
-            GEO_OPEN_NODE(),
-                GEO_OPEN_NODE(),
-                    GEO_TRANSLATE_NODE(LAYER_TRANSPARENT, 10, 0, 0),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(1, omm_geo_peach_get_pos),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-                GEO_OPEN_NODE(),
-                    GEO_TRANSLATE_NODE(LAYER_TRANSPARENT, 0, 10, 0),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(2, omm_geo_peach_get_pos),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-                GEO_OPEN_NODE(),
-                    GEO_TRANSLATE_NODE(LAYER_TRANSPARENT, 0, 0, 10),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(3, omm_geo_peach_get_pos),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-                GEO_ANIMATED_PART(LAYER_TRANSPARENT, 29, 0, 0, omm_peach_metal_chest_gfx),
-                GEO_OPEN_NODE(),
-                    GEO_ASM(0, omm_geo_peach_get_hair_rot),
-                    GEO_ANIMATED_PART(LAYER_TRANSPARENT, 101, 0, 0, NULL),
-                    GEO_OPEN_NODE(),
-                        GEO_ASM(0, omm_geo_peach_head_rotation),
-                        GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, 0),
-                        GEO_OPEN_NODE(),
-                            GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_head_gfx),
-                            GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_face_gfx),
-                            GEO_OPEN_NODE(),
-                                GEO_SWITCH_CASE(0, geo_switch_mario_cap_on_off),
-                            GEO_CLOSE_NODE(),
-                            GEO_OPEN_NODE(),
-                                GEO_TRANSLATE_NODE(LAYER_TRANSPARENT, 145, -11, 0),
-                                GEO_OPEN_NODE(),
-                                    GEO_ASM(0, omm_geo_peach_set_crown_scale),
-                                    GEO_SCALE(LAYER_TRANSPARENT, 0x10000),
-                                    GEO_OPEN_NODE(),
-                                        GEO_SWITCH_CASE(2, omm_geo_peach_switch_crown_model),
-                                        GEO_OPEN_NODE(),
-                                            GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_crown_gfx),
-                                            GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_tiara_gfx),
-                                        GEO_CLOSE_NODE(),
-                                    GEO_CLOSE_NODE(),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                            GEO_ASM(0, omm_geo_peach_set_hair_rot),
-                            GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_hair_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                    GEO_ANIMATED_PART(LAYER_TRANSPARENT, 40, -7, 47, NULL),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_TRANSPARENT, 0, 0, 0, omm_peach_metal_arm1_left_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ANIMATED_PART(LAYER_TRANSPARENT, 88, 0, -1, omm_peach_metal_arm2_left_gfx),
-                            GEO_OPEN_NODE(),
-                                GEO_SWITCH_CASE(0, geo_switch_mario_hand), // Mario hand position calculation
-                                GEO_OPEN_NODE(),
-                                GEO_CLOSE_NODE(),
-                                GEO_ANIMATED_PART(LAYER_TRANSPARENT, 82, 0, 0, NULL),
-                                GEO_OPEN_NODE(),
-                                    GEO_SWITCH_CASE(6, omm_geo_peach_switch_hand),
-                                    GEO_OPEN_NODE(),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_hand_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_fist_left_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_fist_left_gfx),
-                                    GEO_CLOSE_NODE(),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                    GEO_ANIMATED_PART(LAYER_TRANSPARENT, 40, -7, -47, NULL),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_TRANSPARENT, 0, 0, 0, omm_peach_metal_arm1_right_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ANIMATED_PART(LAYER_TRANSPARENT, 88, 0, 1, omm_peach_metal_arm2_right_gfx),
-                            GEO_OPEN_NODE(),
-                                GEO_SWITCH_CASE(0, geo_switch_mario_hand), // Mario hand position calculation
-                                GEO_OPEN_NODE(),
-                                GEO_CLOSE_NODE(),
-                                GEO_ANIMATED_PART(LAYER_TRANSPARENT, 82, 0, 0, NULL),
-                                GEO_OPEN_NODE(),
-                                    GEO_HELD_OBJECT(0, 0, 0, 0, omm_geo_peach_switch_hand_grab_pos),
-                                GEO_CLOSE_NODE(),
-                                GEO_OPEN_NODE(),
-                                    GEO_SWITCH_CASE(6, omm_geo_peach_switch_hand),
-                                    GEO_OPEN_NODE(),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_fist_right_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_hand_right_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_peace_right_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_fist_right_crown_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_fist_right_tiara_gfx),
-                                        GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_hand_right_gfx),
-                                    GEO_CLOSE_NODE(),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                    GEO_ASM(0, omm_geo_peach_set_wings_scale),
-                    GEO_SCALE(LAYER_TRANSPARENT, 0),
-                    GEO_OPEN_NODE(),
-                        GEO_TRANSLATE_ROTATE(LAYER_TRANSPARENT, -48, -90, -40, 22, 0, -135),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(0, omm_geo_peach_rotate_wing),
-                            GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_wing_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                        GEO_TRANSLATE_ROTATE(LAYER_TRANSPARENT, -48, -90, 40, -22, 0, -135),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(1, omm_geo_peach_rotate_wing),
-                            GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_wing_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-            GEO_ANIMATED_PART(LAYER_TRANSPARENT, -103, -8, 32, NULL),
-            GEO_OPEN_NODE(),
-                GEO_ASM(4, omm_geo_peach_get_pos),
-                GEO_ASM(0, omm_geo_peach_set_left_leg_scale),
-                GEO_SCALE(LAYER_TRANSPARENT, 0x10000),
-                GEO_OPEN_NODE(),
-                    GEO_ANIMATED_PART(LAYER_TRANSPARENT, 0, 0, 0, omm_peach_metal_leg1_left_gfx),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_TRANSPARENT, 68, -4, 0, omm_peach_metal_leg2_left_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(5, omm_geo_peach_get_pos),
-                            GEO_ANIMATED_PART(LAYER_TRANSPARENT, 90, 1, 0, NULL),
-                            GEO_OPEN_NODE(),
-                                GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, -20),
-                                GEO_OPEN_NODE(),
-                                    GEO_SCALE_WITH_DL(LAYER_TRANSPARENT, 0x14000, omm_peach_metal_foot_left_gfx),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-            GEO_ANIMATED_PART(LAYER_TRANSPARENT, -103, -8, -32, NULL),
-            GEO_OPEN_NODE(),
-                GEO_ASM(6, omm_geo_peach_get_pos),
-                GEO_ASM(0, omm_geo_peach_set_right_leg_scale),
-                GEO_SCALE(LAYER_TRANSPARENT, 0x10000),
-                GEO_OPEN_NODE(),
-                    GEO_ANIMATED_PART(LAYER_TRANSPARENT, 0, 0, 0, omm_peach_metal_leg1_right_gfx),
-                    GEO_OPEN_NODE(),
-                        GEO_ANIMATED_PART(LAYER_TRANSPARENT, 68, -4, 0, omm_peach_metal_leg2_right_gfx),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(7, omm_geo_peach_get_pos),
-                            GEO_ANIMATED_PART(LAYER_TRANSPARENT, 90, 1, 0, NULL),
-                            GEO_OPEN_NODE(),
-                                GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, -20),
-                                GEO_OPEN_NODE(),
-                                    GEO_SCALE_WITH_DL(LAYER_TRANSPARENT, 0x14000, omm_peach_metal_foot_right_gfx),
-                                GEO_CLOSE_NODE(),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-            GEO_TRANSLATE_NODE(LAYER_TRANSPARENT, -15, 0, 0),
-            GEO_OPEN_NODE(),
-                GEO_ASM(0, omm_geo_peach_set_hips_pitch),
-                GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, 0),
-                GEO_OPEN_NODE(),
-                    GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_hips_gfx),
-                    GEO_OPEN_NODE(),
-                        GEO_TRANSLATE_NODE(LAYER_TRANSPARENT, -96, -4, 0),
-                        GEO_OPEN_NODE(),
-                            GEO_ASM(0, omm_geo_peach_set_dress_pitch),
-                            GEO_ROTATION_NODE(LAYER_TRANSPARENT, 0, 0, 0),
-                            GEO_OPEN_NODE(),
-                                GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_dress_gfx),
-                                GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_end_gfx),
-                            GEO_CLOSE_NODE(),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-        GEO_CLOSE_NODE(),
-    GEO_CLOSE_NODE(),
-    GEO_RETURN(),
-};
-
-//
-// Geo layouts
-//
-
-const GeoLayout omm_geo_peach[] = {
-    GEO_SHADOW(SHADOW_CIRCLE_PLAYER, 0xB4, 100),
-    GEO_OPEN_NODE(),
-        GEO_SCALE(0, 0x4000),
-        GEO_OPEN_NODE(),
-            GEO_ASM(0, omm_geo_peach_mirror_room_disable_culling),
-            GEO_ASM(0, omm_geo_peach_set_layer_and_alpha),
-            GEO_OPEN_NODE(),
-                GEO_NODE_START(),
-                GEO_OPEN_NODE(),
-                    GEO_RENDER_RANGE(-2048, 32767),
-                    GEO_OPEN_NODE(),
-                        GEO_SWITCH_CASE(0, omm_geo_peach_switch_cap_model),
-                        GEO_OPEN_NODE(),
-                            GEO_BRANCH(1, omm_geo_peach_default),
-                            GEO_BRANCH(1, omm_geo_peach_vanish),
-                            GEO_BRANCH(1, omm_geo_peach_metal),
-                            GEO_BRANCH(1, omm_geo_peach_metal_vanish),
-                        GEO_CLOSE_NODE(),
-                    GEO_CLOSE_NODE(),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-        GEO_CLOSE_NODE(),
-    GEO_CLOSE_NODE(),
-    GEO_END(),
-};
-
-const GeoLayout omm_geo_peach_crown[] = {
-    GEO_SHADOW(SHADOW_CIRCLE_9_VERTS, 0xB4, 60),
-    GEO_OPEN_NODE(),
-        GEO_SCALE(0, 0x6800),
-        GEO_OPEN_NODE(),
-            GEO_ROTATION_NODE(0, 0, 90, 90),
-            GEO_OPEN_NODE(),
-                GEO_ASM(0, geo_update_layer_transparency),
-                GEO_SWITCH_CASE(4, omm_geo_peach_switch_crown_model_and_layer),
-                GEO_OPEN_NODE(),
-                    GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_crown_gfx),
-                    GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_tiara_gfx),
-                    GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_crown_gfx),
-                    GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_tiara_gfx),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-        GEO_CLOSE_NODE(),
-    GEO_CLOSE_NODE(),
-    GEO_END(),
-};
-
-const GeoLayout omm_geo_peach_crown_metal[] = {
-    GEO_SHADOW(SHADOW_CIRCLE_9_VERTS, 0xB4, 60),
-    GEO_OPEN_NODE(),
-        GEO_SCALE(0, 0x6800),
-        GEO_OPEN_NODE(),
-            GEO_ROTATION_NODE(0, 0, 90, 90),
-            GEO_OPEN_NODE(),
-                GEO_ASM(0, geo_update_layer_transparency),
-                GEO_SWITCH_CASE(4, omm_geo_peach_switch_crown_model_and_layer),
-                GEO_OPEN_NODE(),
-                    GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_crown_gfx),
-                    GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_metal_tiara_gfx),
-                    GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_crown_gfx),
-                    GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_peach_metal_tiara_gfx),
-                GEO_CLOSE_NODE(),
-            GEO_CLOSE_NODE(),
-        GEO_CLOSE_NODE(),
-    GEO_CLOSE_NODE(),
-    GEO_END(),
-};
-
-#pragma GCC diagnostic pop
-
-//
-// Update
-//
-
-OMM_ROUTINE_GFX(omm_geo_peach_update) {
-    if (gLoadedGraphNodes && gMarioObject) {
-        if (OMM_PLAYER_IS_PEACH) {
-            gLoadedGraphNodes[MODEL_PEACH_OMM] = omm_geo_get_graph_node(omm_geo_peach, true);
-            gLoadedGraphNodes[MODEL_PEACHS_CAP_OMM] = omm_geo_get_graph_node(omm_geo_peach_crown, true);
-            gLoadedGraphNodes[MODEL_PEACHS_WING_CAP_OMM] = omm_geo_get_graph_node(omm_geo_peach_crown, true);
-            gLoadedGraphNodes[MODEL_PEACHS_METAL_CAP_OMM] = omm_geo_get_graph_node(omm_geo_peach_crown_metal, true);
-            gLoadedGraphNodes[MODEL_PEACHS_WINGED_METAL_CAP_OMM] = omm_geo_get_graph_node(omm_geo_peach_crown_metal, true);
-            gMarioObject->oGraphNode = gLoadedGraphNodes[MODEL_PEACH_OMM];
-        } else {
-            gMarioObject->oGraphNode = gLoadedGraphNodes[MODEL_MARIO];
-        }
-    }
-}

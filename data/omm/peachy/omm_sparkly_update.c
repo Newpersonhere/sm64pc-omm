@@ -232,7 +232,7 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update) {
         (m->action == ACT_IDLE || m->action == ACT_PANTING || m->action == ACT_WALKING)) {
         omm_mario_set_action(m, ACT_READING_AUTOMATIC_DIALOG, OMM_SPARKLY_BOWSER_4_DIALOG_UNLOCKED[omm_sparkly_get_current_mode()], 0);
         omm_sparkly_unlock_bowser_4(omm_sparkly_get_current_mode());
-        play_puzzle_jingle();
+        audio_play_puzzle_jingle();
         return;
     }
 

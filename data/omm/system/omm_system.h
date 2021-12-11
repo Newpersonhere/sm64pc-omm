@@ -21,6 +21,7 @@ bool omm_is_ending_cake_screen();
 bool omm_sanity_check_graph_node(struct GraphNode *node);
 void omm_debug_start_counter();
 void omm_debug_end_counter();
+void omm_speedrun_split(s32 numStars);
 
 #if defined(SM74)
 void omm_opt_sm74_change_mode(UNUSED void *opt, s32 arg);
@@ -56,9 +57,9 @@ f32 omm_player_get_air_speed_multiplier(s32 index);
 f32 omm_player_get_jump_multiplier(s32 index);
 
 #define OMM_PLAYER_SEL_GFX_INDEX                            omm_player_get_selected_index()
-#define OMM_PLAYER_SEL_PHY_INDEX                            omm_player_get_selected_index() + (omm_peach_vibe_is_active() ? (gOmmData->mario->peach.vibeType + 2) : (0))
+#define OMM_PLAYER_SEL_PHY_INDEX                            omm_player_get_selected_index() + (omm_peach_vibe_is_active() ? (gOmmData->mario->peach.vibeType + OMM_NUM_PLAYABLE_CHARACTERS - 2) : (0))
 
-#define omm_player_get_selected_selected_name()             omm_player_get_name(OMM_PLAYER_SEL_GFX_INDEX)
+#define omm_player_get_selected_name()                      omm_player_get_name(OMM_PLAYER_SEL_GFX_INDEX)
 #define omm_player_get_selected_color()                     omm_player_get_color(OMM_PLAYER_SEL_GFX_INDEX)
 #define omm_player_get_selected_model()                     omm_player_get_model(OMM_PLAYER_SEL_GFX_INDEX)
 #define omm_player_get_selected_normal_cap()                omm_player_get_normal_cap(OMM_PLAYER_SEL_GFX_INDEX)
@@ -135,6 +136,13 @@ bool omm_camera_is_available(struct MarioState *m);
 //
 // Audio
 //
+
+u8  *omm_audio_mix(u8 *output, const u8 *input, s32 length, s32 volume, s32 distance);
+s32  omm_audio_resize(u8 **output, const u8 *input, s32 inputLength, s32 desiredLength);
+s32  omm_audio_resample(u8 **output, const u8 *input, s32 inputLength, f32 outputScale);
+s32  omm_audio_resample_fast(u8 **output, const u8 *input, s32 inputLength, f32 outputScale);
+s32  omm_audio_time_stretch(u8 **output, const u8 *input, s32 inputLength, s32 audioFreq, f32 timeStretch);
+s32  omm_audio_pitch_shift(u8 **output, const u8 *input, s32 inputLength, s32 audioFreq, f32 pitchScale);
 
 void omm_sound_play(s32 id, f32 *pos);
 void omm_sound_stop(s32 id);
@@ -245,6 +253,8 @@ DECLARE_TOGGLE(gOmmCheatUnlimitedCappyBounces);
 DECLARE_TOGGLE(gOmmCheatCappyStaysForever);
 DECLARE_TOGGLE(gOmmCheatHomingAttackGlobalRange);
 DECLARE_TOGGLE(gOmmCheatMarioTeleportsToCappy);
+DECLARE_TOGGLE(gOmmCheatCappyCanCollectStars);
+DECLARE_TOGGLE(gOmmCheatPlayAsCappy);
 DECLARE_TOGGLE(gOmmCheatPeachEndlessVibeGauge);
 DECLARE_TOGGLE_SC(gOmmExtrasCappyEyesOnMariosCap);
 DECLARE_TOGGLE_SC(gOmmExtrasColoredStars);
@@ -262,8 +272,8 @@ DECLARE_TOGGLE_SC(gOmmDebugMario);
 DECLARE_TOGGLE_SC(gOmmDebugCappy);
 DECLARE_TOGGLE_SC(gOmmDebugProfiler);
 #if OMM_CODE_DEV_DEBUG
-DECLARE_TOGGLE_SC(gOmmDebugGameSpeedEnabler);
-DECLARE_CHOICE_SC(gOmmDebugGameSpeedModifier);
+DECLARE_TOGGLE_SC(gOmmDebugGameSpeedEnable);
+DECLARE_CHOICE_SC(gOmmDebugGameSpeedFps);
 #endif
 #endif
 

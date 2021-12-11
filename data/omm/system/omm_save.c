@@ -73,6 +73,15 @@ static const OmmNameValue sOmmCourses[] = {
 #define OMM_COURSES_COUNT OMM_ARRAY_SIZE(sOmmCourses)
 
 //
+// Collectibles
+//
+
+#define OMM_COLLECTIBLE_GET_B(collectibles, start, index)           (((collectibles) >> (start + index)) & 1)
+#define OMM_COLLECTIBLE_SET_B(collectibles, start, index, value)    collectibles &= ~(1llu << ((start) + (index))); collectibles |= (((u64) (value)) << ((start) + (index)))
+#define OMM_COLLECTIBLE_GET_I(collectibles, start, length)          (((collectibles) >> (start)) & ((1llu << (length)) - 1llu))
+#define OMM_COLLECTIBLE_SET_I(collectibles, start, length, value)   collectibles &= ~(((1llu << (length)) - 1llu) << (start)); collectibles |= ((((u64) (value)) & ((1llu << (length)) - 1llu)) << (start))
+
+//
 // Data
 //
 
@@ -99,7 +108,11 @@ typedef struct {
 static OmmSaveBuffer sOmmSaveBuffers[] = {
     { "smex", 1, 7, NULL, { { { 0 } } } },
     { "smms", 1, 7, NULL, { { { 0 } } } },
-    { "r96a", 1, 7, "i0002b0210b1206", { { { 0 } } } },
+#if defined(R96A)
+    { "r96a", 1, 7, "b00" STRINGIFY(NUM_KEYS) "b" STRINGIFY(NUM_KEYS) STRINGIFY(NUM_WARIO_COINS), { { { 0 } } } },
+#else
+    { "r96a", 1, 7, "b0016b1616", { { { 0 } } } },
+#endif
     { "xalo", 1, 7, NULL, { { { 0 } } } },
     { "sm74", 2, 7, NULL, { { { 0 } } } },
     { "smsr", 1, 7, NULL, { { { 0 } } } },
@@ -250,8 +263,8 @@ void save_file_load_all() {
                         READ_TOGGLE_SC(gOmmDebugCappy, token.args);
                         READ_TOGGLE_SC(gOmmDebugProfiler, token.args);
 #if OMM_CODE_DEV_DEBUG
-                        READ_TOGGLE_SC(gOmmDebugGameSpeedEnabler, token.args);
-                        READ_TOGGLE_SC(gOmmDebugGameSpeedModifier, token.args);
+                        READ_TOGGLE_SC(gOmmDebugGameSpeedEnable, token.args);
+                        READ_TOGGLE_SC(gOmmDebugGameSpeedFps, token.args);
 #endif
 #endif
                 
@@ -267,19 +280,19 @@ void save_file_load_all() {
                                 s32 numFields = strlen(saveBuffer->collectibles) / 5;
                                 for (s32 i = 0; i != numFields; ++i) {
                                     char fieldType = saveBuffer->collectibles[5 * i + 0];
-                                    s32 fieldIndex = (((saveBuffer->collectibles[5 * i + 1] - '0') * 10) + (saveBuffer->collectibles[5 * i + 2] - '0'));
+                                    s32 fieldStart = (((saveBuffer->collectibles[5 * i + 1] - '0') * 10) + (saveBuffer->collectibles[5 * i + 2] - '0'));
                                     s32 fieldLength = (((saveBuffer->collectibles[5 * i + 3] - '0') * 10) + (saveBuffer->collectibles[5 * i + 4] - '0'));
                                     const char *field = token.args[1 + i];
                                     switch (fieldType) {
                                         case 'i': {
                                             u64 x = 0;
                                             sscanf(field, "%llu", &x);
-                                            saveFile->collectibles |= ((x & ((1llu << fieldLength) - 1llu)) << fieldIndex);
+                                            OMM_COLLECTIBLE_SET_I(saveFile->collectibles, fieldStart, fieldLength, x);
                                         } break;
 
                                         case 'b': {
                                             for (s32 j = 0; j != fieldLength; ++j) {
-                                                saveFile->collectibles |= (((field[j] == '1') << j) << fieldIndex);
+                                                OMM_COLLECTIBLE_SET_B(saveFile->collectibles, fieldStart, j, field[j] == '1');
                                             }
                                         } break;
                                     }
@@ -439,18 +452,19 @@ static void save_file_write() {
                         s32 numFields = strlen(saveBuffer->collectibles) / 5;
                         for (s32 i = 0; i != numFields; ++i) {
                             char fieldType = saveBuffer->collectibles[5 * i + 0];
-                            s32 fieldIndex = (((saveBuffer->collectibles[5 * i + 1] - '0') * 10) + (saveBuffer->collectibles[5 * i + 2] - '0'));
+                            s32 fieldStart = (((saveBuffer->collectibles[5 * i + 1] - '0') * 10) + (saveBuffer->collectibles[5 * i + 2] - '0'));
                             s32 fieldLength = (((saveBuffer->collectibles[5 * i + 3] - '0') * 10) + (saveBuffer->collectibles[5 * i + 4] - '0'));
                             switch (fieldType) {
                                 case 'i': {
-                                    u64 x = ((saveFile->collectibles >> fieldIndex) & ((1llu << fieldLength) - 1llu));
+                                    u64 x = OMM_COLLECTIBLE_GET_I(saveFile->collectibles, fieldStart, fieldLength);
                                     write(" %llu", x);
                                 } break;
 
                                 case 'b': {
                                     write(" ");
                                     for (s32 j = 0; j != fieldLength; ++j) {
-                                        write("%d", (s32) (((saveFile->collectibles >> fieldIndex) >> j) & 1));
+                                        s32 bit = (s32) OMM_COLLECTIBLE_GET_B(saveFile->collectibles, fieldStart, j);
+                                        write("%d", bit);
                                     }
                                 } break;
                             }
@@ -511,8 +525,8 @@ static void save_file_write() {
     WRITE_TOGGLE_SC(gOmmDebugCappy);
     WRITE_TOGGLE_SC(gOmmDebugProfiler);
 #if OMM_CODE_DEV_DEBUG
-    WRITE_TOGGLE_SC(gOmmDebugGameSpeedEnabler);
-    WRITE_TOGGLE_SC(gOmmDebugGameSpeedModifier);
+    WRITE_TOGGLE_SC(gOmmDebugGameSpeedEnable);
+    WRITE_TOGGLE_SC(gOmmDebugGameSpeedFps);
 #endif
 #endif
     write("\n");
@@ -675,10 +689,25 @@ void save_file_collect_star_or_key(s16 coinScore, s16 starIndex) {
     s32 starFlag = (1 << starIndex);
     omm_stars_set_bits(starFlag);
     switch (gCurrLevelNum) {
-        case LEVEL_BOWSER_1: save_file_set_flags(SAVE_FLAG_HAVE_KEY_1); break;
-        case LEVEL_BOWSER_2: save_file_set_flags(SAVE_FLAG_HAVE_KEY_2); break;
-        case LEVEL_BOWSER_3: save_file_set_flags(0); break; // Beating Bowser 3 grants nothing...
-        default:             save_file_set_star_flags(sOmmCurrSaveFileIndex, sOmmCurrCourseIndex, starFlag); break;
+        case LEVEL_BOWSER_1: {
+            save_file_set_flags(SAVE_FLAG_HAVE_KEY_1);
+            omm_speedrun_split(-1);
+        } break;
+
+        case LEVEL_BOWSER_2: {
+            save_file_set_flags(SAVE_FLAG_HAVE_KEY_2);
+            omm_speedrun_split(-1);
+        } break;
+
+        case LEVEL_BOWSER_3: {
+            save_file_set_flags(0);
+            omm_speedrun_split(-1);
+        } break;
+
+        default: {
+            save_file_set_star_flags(sOmmCurrSaveFileIndex, sOmmCurrCourseIndex, starFlag);
+            omm_speedrun_split(save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1));
+        } break;
     }
 
     // New high score
@@ -701,6 +730,61 @@ void save_file_set_sound_mode(UNUSED u16 mode) {
 
 void save_file_move_cap_to_default_location() {
 }
+
+#if defined(R96A)
+
+//
+// Luigi keys and Wario coins
+//
+
+s32 save_file_taken_key(s32 fileIndex, s32 keyId) {
+    CHECK_FILE_INDEX(fileIndex, return FALSE);
+    return OMM_COLLECTIBLE_GET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].collectibles, 0, keyId);
+}
+
+void save_file_register_key(s32 fileIndex, s32 keyId) {
+    CHECK_FILE_INDEX(fileIndex, return);
+    OMM_COLLECTIBLE_SET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].collectibles, 0, keyId, TRUE);
+    gSaveFileModified = true;
+}
+
+s32 save_file_get_keys(s32 fileIndex) {
+    CHECK_FILE_INDEX(fileIndex, return 0);
+    s32 keys = 0;
+    for (s32 i = 0; i != NUM_KEYS; ++i) {
+        keys += OMM_COLLECTIBLE_GET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].collectibles, 0, i);
+    }
+    return keys;
+}
+
+s32 save_file_taken_wario_coin(s32 fileIndex, s32 coinId) {
+    CHECK_FILE_INDEX(fileIndex, return FALSE);
+    return OMM_COLLECTIBLE_GET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].collectibles, NUM_KEYS, coinId);
+}
+
+void save_file_register_wario_coin(s32 fileIndex, s32 coinId) {
+    CHECK_FILE_INDEX(fileIndex, return);
+    OMM_COLLECTIBLE_SET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].collectibles, NUM_KEYS, coinId, TRUE);
+    gSaveFileModified = true;
+}
+
+s32 save_file_get_wario_coins(s32 fileIndex) {
+    CHECK_FILE_INDEX(fileIndex, return 0);
+    s32 coins = 0;
+    for (s32 i = 0; i != NUM_WARIO_COINS; ++i) {
+        coins += OMM_COLLECTIBLE_GET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].collectibles, NUM_KEYS, i);
+    }
+    return coins;
+}
+
+void save_file_update_player_model(UNUSED s32 fileIndex, UNUSED s32 character) {
+}
+
+s32 save_file_get_player_model(UNUSED s32 fileIndex) {
+    return 0;
+}
+
+#endif
 
 //
 // Warp checkpoint
@@ -772,13 +856,23 @@ void omm_set_complete_save_file(s32 fileIndex) {
         for (gCurrCourseNum = COURSE_MIN; gCurrCourseNum != COURSE_MAX; ++gCurrCourseNum) {
             save_file_set_cannon_unlocked();
         }
+
+        // Collectibles
+#if defined(R96A)
+        for (s32 i = 0; i != NUM_KEYS; ++i) {
+            save_file_register_key(fileIndex, i);
+        }
+        for (s32 i = 0; i != NUM_WARIO_COINS; ++i) {
+            save_file_register_wario_coin(fileIndex, i);
+        }
+#endif
     }
     gCurrAreaIndex = 1;
     sWarpDest.areaIdx = 1;
 
     // Unlock Peach
     // That's the "unlock Peach" cheat code that only works with OMM save files :)
-    if (!omm_peach_is_unlocked()) {
+    if (!omm_player_is_unlocked(OMM_PLAYER_PEACH)) {
         omm_sparkly_read_save(OMM_ARRAY_OF(const char *) { "sparkly_stars", "XgU2yLgIIM1ihxJ8tC5qV35jzIrc5FoEXqezDLDUhBVCVF12sKsYkuPPgtoGfHk4UhwmwOF1d73inOZA" });
     }
 }

@@ -119,6 +119,7 @@ def do_delete_file(filename):
 if __name__ == "__main__":
 
     # File deletion
+    do_delete_file("r96_character_swap.c")
     do_delete_file("surface_collision.c")
     do_delete_file("surface_load.c")
     do_delete_file("mario_step.c")
@@ -133,6 +134,10 @@ if __name__ == "__main__":
     do_undef_code("mario_actions_submerged.c", "static f32 get_buoyancy", "static BAD_RETURN(u32) update_water_pitch")
 
     # Code patches
+    do_patch_file("r96_audio.c", "const char *r96_get_intended_level_music()", "if (gCurrLevelNum == LEVEL_CASTLE_GROUNDS) {", "\n        OMM_RETURN_IF_TRUE(omm_sparkly_is_bowser_4(), R96_LEVEL_BOWSER_3,);", +1)
+    do_patch_file("dynos_audio.cpp", "static SDL_AudioDeviceID DynOS_Music_GetDevice()", "static SDL_AudioDeviceID DynOS_Music_GetDevice()", "#include \"data/omm/peachy/omm_peach_vibes_r96.inl\"\n", -1)
+    do_patch_file("dynos_audio.cpp", "static SDL_AudioDeviceID DynOS_Jingle_GetDevice()", "static SDL_AudioDeviceID DynOS_Jingle_GetDevice()", "#include  \"data/omm/peachy/omm_peach_vibes_r96.inl\"\n", -1)
+    do_patch_file("dynos_c.cpp", "dynos_sound_play(const char *name, float *pos)", "{", "\n    OMM_RETURN_IF_TRUE(omm_sound_play_character_sound_r96(name, pos),,);", +1)
     do_patch_file("dynos_misc.cpp", "&__Actors()", "define_actor(yoshi_egg_geo),", "\nOMM_DYNOS_ACTORS,", +1)
     do_patch_file("ultra64.h", "_ULTRA64_H_", "#include <PR/libultra.h>", "\n#include \"data/omm/omm_macros.h\"", +1)
     do_patch_file("sm64.h", "SM64_H", "#include \"macros.h\"", "\n#include \"data/omm/omm_includes.h\"", +1)
@@ -156,7 +161,7 @@ if __name__ == "__main__":
     do_patch_file("mario_actions_airborne.c", "update_air_with_turn(struct MarioState *m)", "{", "\n    OMM_RETURN_IF_TRUE(OMM_LIKELY(omm_mario_update_air_with_turn(m)),,);", +1)
     do_patch_file("mario_actions_airborne.c", "update_air_without_turn(struct MarioState *m)", "{", "\n    OMM_RETURN_IF_TRUE(OMM_LIKELY(omm_mario_update_air_without_turn(m)),,);", +1)
     do_patch_file("mario_actions_airborne.c", "common_air_action_step(struct MarioState *m, u32 landAction, s32 animation, u32 stepArg)", "case AIR_STEP_HIT_WALL:", "\n            OMM_RETURN_IF_TRUE(omm_mario_try_to_perform_wall_slide(m), AIR_STEP_NONE, set_mario_animation(m, animation););", +1)
-    do_patch_file("mario_actions_cutscene.c", "check_for_instant_quicksand(struct MarioState *m)", "&& m->action != ACT_QUICKSAND_DEATH) {", "\n        if (OMM_MOVESET_ODYSSEY) { return (find_floor_height(m->pos[0], m->pos[1], m->pos[2]) >= m->pos[1]) && mario_update_quicksand(m, 0.f); }", +1)
+    do_patch_file("mario_actions_cutscene.c", "check_for_instant_quicksand(struct MarioState *m)", "&& m->action != ACT_QUICKSAND_DEATH) {", "\n        OMM_RETURN_IF_TRUE(OMM_MOVESET_ODYSSEY, (find_floor_height(m->pos[0], m->pos[1], m->pos[2]) >= m->pos[1]) && mario_update_quicksand(m, 0.f),);", +1)
     do_patch_file("mario_actions_moving.c", "apply_slope_accel(struct MarioState *m)", "} else ", "if (!omm_peach_vibe_is_gloom()) ", +1)
     do_patch_file("mario_actions_moving.c", "update_walking_speed(struct MarioState *m)", "{", "\n    OMM_RETURN_IF_TRUE(OMM_LIKELY(omm_mario_update_walking_speed(m)),,);", +1)
     do_patch_file("object_list_processor.h", "OBJECT_LIST_PROCESSOR_H", "#define OBJECT_POOL_CAPACITY 960", "#define OBJECT_POOL_CAPACITY 2048", 0)

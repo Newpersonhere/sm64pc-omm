@@ -333,19 +333,29 @@ static bool obj_process_surface_collisions(struct Object *o, bool moveThroughWal
 }
 #undef Y_START_OFFSET
 
-#define STEPS 8
+#define STEPS 16
 void obj_update_pos_and_vel(struct Object *o, bool updateHome, bool moveThroughWalls, bool stickyFeet, bool onGround, s32 *squishTimer) {
     o->oFloor = NULL;
     o->oWall = NULL;
+    bool isCapture = (o == gOmmData->mario->capture.obj);
 
     // Movement
-    for (s32 i = 0; i != STEPS; ++i) {
+#if defined(R96A)
+    s32 hSteps = (isCapture ? cheats_speed_modifier(gMarioState) : 1);
+    s32 ySteps = (isCapture && o->oVelY > 0.f ? cheats_jump_modifier(gMarioState) : 1);
+#else
+    s32 hSteps = 1;
+    s32 ySteps = 1;
+#endif
+    s32 subSteps = STEPS * hSteps * ySteps;
+    f32 velMultiplier = (isCapture ? (onGround ? POBJ_GROUND_SPEED_MULTIPLIER : POBJ_AIR_SPEED_MULTIPLIER) : 1.f);
+    for (s32 i = 0; i != subSteps; ++i) {
         f32 x = o->oPosX;
         f32 y = o->oPosY;
         f32 z = o->oPosZ;
-        o->oPosX += (o->oVelX / STEPS);
-        o->oPosY += (o->oVelY / STEPS);
-        o->oPosZ += (o->oVelZ / STEPS);
+        o->oPosX += (o->oVelX * velMultiplier) / (STEPS * ySteps);
+        o->oPosY += (o->oVelY                ) / (STEPS * hSteps);
+        o->oPosZ += (o->oVelZ * velMultiplier) / (STEPS * ySteps);
 
         if (!obj_process_surface_collisions(o, moveThroughWalls, stickyFeet, onGround)) {
             // Out of bounds, cancel out step
@@ -820,14 +830,12 @@ void obj_set_shadow_pos_to_object_pos(struct Object *o) {
 
 // Called only once, in rendering_graph_node.c
 void obj_fix_shadow_pos(struct GraphNodeObject *gfx, Vec3f shadowPos) {
-    omm_array_init(sShadowObjects, struct Object *);
-    for (s32 i = 0, n = omm_array_count(sShadowObjects); i != n; ++i) {
-        struct Object *o = omm_array_get(sShadowObjects, struct Object *, i);
-        if (&o->header.gfx == gfx) {
-            shadowPos[0] = o->oPosX;
-            shadowPos[1] = o->oPosY;
-            shadowPos[2] = o->oPosZ;
-            omm_array_remove(sShadowObjects, i);
+    omm_array_for_each(sShadowObjects, struct Object *, obj) {
+        if (&(*obj)->header.gfx == gfx) {
+            shadowPos[0] = (*obj)->oPosX;
+            shadowPos[1] = (*obj)->oPosY;
+            shadowPos[2] = (*obj)->oPosZ;
+            omm_array_remove(sShadowObjects, index_obj);
             return;
         }
     }

@@ -191,7 +191,12 @@ static void omm_sparkly_context_update_cap_course(struct MarioState *m, s32 cap,
         m->marioObj->oHomeX = m->pos[0];
         m->marioObj->oHomeY = m->pos[1];
         m->marioObj->oHomeZ = m->pos[2];
-        play_cap_music(SEQUENCE_ARGS(4, ((m->flags & MARIO_METAL_CAP) ? SEQ_EVENT_METAL_CAP : SEQ_EVENT_POWERUP)));
+        switch (cap) {
+            case MARIO_NORMAL_CAP: audio_stop_cap_music();        m->capTimer = 1; break;
+            case MARIO_WING_CAP:   audio_play_wing_cap_music();   m->capTimer = omm_max_s(m->capTimer, OMM_IMPROVED_WING_CAP_DURATION); break;
+            case MARIO_METAL_CAP:  audio_play_metal_cap_music();  m->capTimer = omm_max_s(m->capTimer, OMM_IMPROVED_METAL_CAP_DURATION); break;
+            case MARIO_VANISH_CAP: audio_play_vanish_cap_music(); m->capTimer = omm_max_s(m->capTimer, OMM_IMPROVED_VANISH_CAP_DURATION); break;
+        }
         gHudDisplay.timer = timer;
         gHudDisplay.flags |= HUD_DISPLAY_FLAG_TIMER;
         omm_sparkly_context_set_flag(OMM_SPARKLY_CONTEXT_FLAG_TIMER_STARTED, 1, 0);
