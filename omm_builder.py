@@ -214,13 +214,14 @@ if __name__ == "__main__":
         "clear"  : {},
     }
     ARGUMENTS = {
-        "DEBUG"   : ["debug"],
-        "60_FPS"  : ["60_fps", "60fps"],
-        "DYNOS"   : ["dynos"],
-        "PATCHES" : ["patches"],
-        "EXT_DATA": ["ext_data", "extdata", "external_data", "externaldata"],
-        "DIRECT_X": ["direct_x", "directx", "dx"],
-        "AUTO_RUN": ["auto_run", "autorun"],
+        "DEBUG"    : ["debug"],
+        "60_FPS"   : ["60_fps", "60fps"],
+        "DYNOS"    : ["dynos"],
+        "PATCHES"  : ["patches"],
+        "EXT_DATA" : ["ext_data", "extdata", "external_data", "externaldata"],
+        "DIRECT_X" : ["direct_x", "directx", "dx"],
+        "AUTO_RUN" : ["auto_run", "autorun"],
+        "NO_UPDATE": ["no_update", "noupdate"],
     }
     DIRECTORIES = {
         "repos"      : "repos",
@@ -318,23 +319,31 @@ if __name__ == "__main__":
 
     # Retrieve OMM version number
     versionLocal = get_omm_version(get_omm_patch() + "/omm.mk")
-    os.system("wget --no-check-certificate --no-cache --no-cookies https://raw.githubusercontent.com/PeachyPeachSM64/sm64pc-omm/nightly/omm.mk -O omm.version -q || rm -f omm.version")
-    if os.path.isfile("omm.version"):
-        versionRemote = get_omm_version("omm.version")
-        if versionRemote["OMM_VERSION_NUMBER"] == "":
-            raise_error("Cannot retrieve remote OMM version number.", False)
-        OMM_VERSION_NUMBER = versionRemote["OMM_VERSION_NUMBER"]
-        OMM_VERSION_REVISION = versionRemote["OMM_VERSION_REVISION"]
-        OMM_PATCH = "omm." + OMM_VERSION_NUMBER
-        os.remove("omm.version")
-    else:
-        print("Unable to retrieve remote OMM version number.")
-        print("Using local OMM patch...")
+    if args["NO_UPDATE"]:
+        print("NO_UPDATE specified. Using local OMM patch...")
         OMM_VERSION_NUMBER = versionLocal["OMM_VERSION_NUMBER"]
         OMM_VERSION_REVISION = versionLocal["OMM_VERSION_REVISION"]
         OMM_PATCH = get_omm_patch()
         if OMM_PATCH == "":
             raise_error("Cannot find any OMM patch.", False)
+    else:
+        os.system("wget --no-check-certificate --no-cache --no-cookies https://raw.githubusercontent.com/PeachyPeachSM64/sm64pc-omm/nightly/omm.mk -O omm.version -q || rm -f omm.version")
+        if os.path.isfile("omm.version"):
+            versionRemote = get_omm_version("omm.version")
+            if versionRemote["OMM_VERSION_NUMBER"] == "":
+                raise_error("Cannot retrieve remote OMM version number.", False)
+            OMM_VERSION_NUMBER = versionRemote["OMM_VERSION_NUMBER"]
+            OMM_VERSION_REVISION = versionRemote["OMM_VERSION_REVISION"]
+            OMM_PATCH = "omm." + OMM_VERSION_NUMBER
+            os.remove("omm.version")
+        else:
+            print("Unable to retrieve remote OMM version number.")
+            print("Using local OMM patch...")
+            OMM_VERSION_NUMBER = versionLocal["OMM_VERSION_NUMBER"]
+            OMM_VERSION_REVISION = versionLocal["OMM_VERSION_REVISION"]
+            OMM_PATCH = get_omm_patch()
+            if OMM_PATCH == "":
+                raise_error("Cannot find any OMM patch.", False)
 
     # Print some info before starting
     print("")

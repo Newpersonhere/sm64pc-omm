@@ -241,6 +241,13 @@ To install it and make it work, follow these steps:
 - See [Speedrunning](https://github.com/PeachyPeachSM64/sm64pc-omm/tree/master#speedrunning) for more details.
 
 ### Other changes:
+- New Cappy cheats:
+  - `Cappy Can Collect Stars`, and Bowser keys, and Sparkly stars.
+  - `Play As Cappy`:
+    - Press **(X)** to throw Cappy, and control him instead of Mario!
+    - Move with the left stick, hold **(A)** to go up, hold **(B)** to go down.
+    - The camera follows Cappy, but you can hold **(R)** to look at him from Mario's perspective.
+    - Press **(X)** again or wait a few seconds to return to Mario.
 - Better ceiling hanging:
   - Mario can hang on a ceiling with a jump, a double jump or a wall-jump.
   - The player no longer has to hold the **(A)** button, but has to press **(A)**, **(B)** or **(Z)** to leave the ceiling.

@@ -4,6 +4,9 @@
 omm.*/
 repos/
 moonshine/
+custom/dynos/audio/*/
+custom/dynos/packs/*/
+custom/res/*/
 *.patch
 *.z64
 *.version
