@@ -14,3 +14,4 @@ custom/res/*/
 *.zip
 *.rar
 *.wav
+!patch/omm.patch
