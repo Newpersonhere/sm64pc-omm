@@ -291,6 +291,7 @@ extern const Collision omm_thwomp_collision[];
 // Level scripts
 //
 
+extern const LevelScript omm_ttm_slide_script[];
 extern const LevelScript omm_bowser_4_level_script[];
 
 #endif // OMM_OBJECT_DATA_H
