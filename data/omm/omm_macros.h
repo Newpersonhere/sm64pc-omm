@@ -214,6 +214,8 @@
 #define CMD_COL_END                             0x0007
 #define CMD_COL_SPECIAL_INIT                    0x0008
 #define CMD_COL_WATER_BOX_INIT                  0x0009
+#define CMD_COL_TRANSLATE                       0x000A
+#define CMD_COL_JUMP                            0x000B
 #define CMD_COL_END_BYTE_SEQUENCE               0x8708, 0x9749, 0x6E13, 0xA3B6, 0x83F8, 0x7245, 0x575D, 0xB1AA
 #define COL_INIT()                              CMD_COL_INIT
 #define COL_VERTEX_INIT(vtxNum)                 CMD_COL_VERTEX_INIT, vtxNum
@@ -226,6 +228,14 @@
 #define COL_SPECIAL_INIT(num)                   CMD_COL_SPECIAL_INIT, num
 #define COL_WATER_BOX_INIT(num)                 CMD_COL_WATER_BOX_INIT, num
 #define COL_WATER_BOX(id, x1, z1, x2, z2, y)    id, x1, z1, x2, z2, y
+#define COL_TRANSLATE(x, y, z)                  CMD_COL_TRANSLATE, x, y, z
+#define COL_JUMP(index)                         CMD_COL_JUMP, index
+
+#define COL_JUMP_REGISTER_INDEX(index, ptr) \
+extern void omm_surface_register_collision_jump(s16, s16 *); \
+OMM_AT_STARTUP static void omm_surface_register_collision_jump_##index() { \
+    omm_surface_register_collision_jump(index, (s16 *) (ptr)); \
+}
 
 //
 // QoL redefines

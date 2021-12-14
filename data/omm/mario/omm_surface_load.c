@@ -10,10 +10,7 @@ static OmmArray sOmmSurfaces = NULL;
 typedef struct { s16 *start; s16 *vertices; s16 count; } OmmCollisionBuffer;
 static OmmArray sOmmCollisionBuffers = NULL;
 static OmmArray sOmmCollisionPointers = NULL;
-
-static s16 sVertexPool[0x20000]; // 0x8000 * 4
-static s16 *sVertexBuffer = NULL;
-static s16 sVertexCount = 0;
+static OmmArray sOmmCollisionJumps = NULL;
 
 //
 // Add
@@ -68,23 +65,28 @@ static void omm_surface_add(struct Surface *surface, bool dynamic) {
 // Read
 //
 
-static struct Surface *omm_surface_create(s16 v1, s16 v2, s16 v3) {
+void omm_surface_register_collision_jump(s16 index, s16 *ptr) {
+    omm_array_grow(sOmmCollisionJumps, index + 1, s16 *, NULL);
+    omm_array_set(sOmmCollisionJumps, ptr, index);
+}
+
+static struct Surface *omm_surface_create(s16 *vBuffer, s16 vCount, s16 *vTranslation, s16 v1, s16 v2, s16 v3) {
 
     // Check vertex indices
-    if (v1 < 0 || v1 >= sVertexCount) return NULL;
-    if (v2 < 0 || v2 >= sVertexCount) return NULL;
-    if (v3 < 0 || v3 >= sVertexCount) return NULL;
+    if (v1 < 0 || v1 >= vCount) return NULL;
+    if (v2 < 0 || v2 >= vCount) return NULL;
+    if (v3 < 0 || v3 >= vCount) return NULL;
 
     // Compute vertices and normal
-    f32 x1 = sVertexBuffer[4 * v1 + 1];
-    f32 y1 = sVertexBuffer[4 * v1 + 2];
-    f32 z1 = sVertexBuffer[4 * v1 + 3];
-    f32 x2 = sVertexBuffer[4 * v2 + 1];
-    f32 y2 = sVertexBuffer[4 * v2 + 2];
-    f32 z2 = sVertexBuffer[4 * v2 + 3];
-    f32 x3 = sVertexBuffer[4 * v3 + 1];
-    f32 y3 = sVertexBuffer[4 * v3 + 2];
-    f32 z3 = sVertexBuffer[4 * v3 + 3];
+    f32 x1 = vBuffer[4 * v1 + 1] + vTranslation[0];
+    f32 y1 = vBuffer[4 * v1 + 2] + vTranslation[1];
+    f32 z1 = vBuffer[4 * v1 + 3] + vTranslation[2];
+    f32 x2 = vBuffer[4 * v2 + 1] + vTranslation[0];
+    f32 y2 = vBuffer[4 * v2 + 2] + vTranslation[1];
+    f32 z2 = vBuffer[4 * v2 + 3] + vTranslation[2];
+    f32 x3 = vBuffer[4 * v3 + 1] + vTranslation[0];
+    f32 y3 = vBuffer[4 * v3 + 2] + vTranslation[1];
+    f32 z3 = vBuffer[4 * v3 + 3] + vTranslation[2];
     f32 nx = (y2 - y1) * (z3 - z2) - (z2 - z1) * (y3 - y2);
     f32 ny = (z2 - z1) * (x3 - x2) - (x2 - x1) * (z3 - z2);
     f32 nz = (x2 - x1) * (y3 - y2) - (y2 - y1) * (x3 - x2);
@@ -135,16 +137,31 @@ static bool omm_surface_has_no_cam_collision(s16 surfaceType) {
 }
 
 static void omm_surface_process_data(s16 areaIndex, s16 *data, struct Object *o, void *params) {
-    static const s32 sCmdColSize[] = { 1, 2, 4, 3, 4, 5, 1, 1, 0, 2 };
+    static const s32 sCmdColSize[] = { 1, 2, 4, 3, 4, 5, 1, 1, 0, 2, 4, 2 };
+
+    s16 vPool[0x20000]; // 0x8000 * 4
+    s16 *vBuffer = NULL;
+    s16 vCount = 0;
+    Vec3s vTranslation = { 0, 0, 0 };
     struct Surface properties;
+
+    // Optimization: for objects (dynamic surfaces), don't process the vertex data again, start directly with triangles
+    if (o && params) {
+        OmmCollisionBuffer *colBuffer = (OmmCollisionBuffer *) params;
+        vBuffer = colBuffer->vertices;
+        vCount = colBuffer->count;
+        data = colBuffer->start;
+    }
+
+    // Process every command, until a CMD_COL_END is found
     for (bool transformed = false;;) {
         s16 cmd = *data;
         switch (cmd) {
 
             // Initialize collision data
             case CMD_COL_INIT: {
-                sVertexBuffer = NULL;
-                sVertexCount = 0;
+                vBuffer = NULL;
+                vCount = 0;
                 properties.type = SURFACE_DEFAULT;
                 properties.flags = 0;
                 properties.force = false;
@@ -153,14 +170,14 @@ static void omm_surface_process_data(s16 areaIndex, s16 *data, struct Object *o,
 
             // Initialize vertex buffer
             case CMD_COL_VERTEX_INIT: {
-                sVertexBuffer = &data[2];
-                sVertexCount = 0;
+                vBuffer = &data[2];
+                vCount = 0;
                 transformed = false;
             } break;
 
             // Increment vertex counter
             case CMD_COL_VERTEX: {
-                sVertexCount++;
+                vCount++;
             } break;
 
             // Initialize surface data
@@ -175,7 +192,7 @@ static void omm_surface_process_data(s16 areaIndex, s16 *data, struct Object *o,
                         omm_array_init(sOmmCollisionPointers, void *);
                         omm_array_init(sOmmCollisionBuffers, OmmCollisionBuffer);
                         omm_array_add_inplace(sOmmCollisionPointers, void *, o->collisionData);
-                        omm_array_add_inplace(sOmmCollisionBuffers, OmmCollisionBuffer, { data, OMM_MEMDUP(sVertexBuffer, sVertexCount * 4 * sizeof(s16)), sVertexCount });
+                        omm_array_add_inplace(sOmmCollisionBuffers, OmmCollisionBuffer, { data, OMM_MEMDUP(vBuffer, vCount * 4 * sizeof(s16)), vCount });
                     }
 
                     // Compute the transform matrix
@@ -186,15 +203,15 @@ static void omm_surface_process_data(s16 areaIndex, s16 *data, struct Object *o,
                     Mat4 m; obj_apply_scale_to_matrix(o, m, o->transform);
 
                     // Transform and store in another buffer
-                    for (s32 i = 0; i != sVertexCount; ++i) {
-                        f32 vx = (f32) sVertexBuffer[4 * i + 1];
-                        f32 vy = (f32) sVertexBuffer[4 * i + 2];
-                        f32 vz = (f32) sVertexBuffer[4 * i + 3];
-                        sVertexPool[4 * i + 1] = (s16) (vx * m[0][0] + vy * m[1][0] + vz * m[2][0] + m[3][0]);
-                        sVertexPool[4 * i + 2] = (s16) (vx * m[0][1] + vy * m[1][1] + vz * m[2][1] + m[3][1]);
-                        sVertexPool[4 * i + 3] = (s16) (vx * m[0][2] + vy * m[1][2] + vz * m[2][2] + m[3][2]);
+                    for (s32 i = 0; i != vCount; ++i) {
+                        f32 vx = (f32) vBuffer[4 * i + 1];
+                        f32 vy = (f32) vBuffer[4 * i + 2];
+                        f32 vz = (f32) vBuffer[4 * i + 3];
+                        vPool[4 * i + 1] = (s16) (vx * m[0][0] + vy * m[1][0] + vz * m[2][0] + m[3][0]);
+                        vPool[4 * i + 2] = (s16) (vx * m[0][1] + vy * m[1][1] + vz * m[2][1] + m[3][1]);
+                        vPool[4 * i + 3] = (s16) (vx * m[0][2] + vy * m[1][2] + vz * m[2][2] + m[3][2]);
                     }
-                    sVertexBuffer = sVertexPool;
+                    vBuffer = vPool;
                     transformed = true;
                 }
             } break;
@@ -217,7 +234,7 @@ static void omm_surface_process_data(s16 areaIndex, s16 *data, struct Object *o,
                 s16 v1 = data[1];
                 s16 v2 = data[2];
                 s16 v3 = data[3];
-                struct Surface *surface = omm_surface_create(v1, v2, v3);
+                struct Surface *surface = omm_surface_create(vBuffer, vCount, vTranslation, v1, v2, v3);
                 if (surface != NULL) {
                     surface->object = o;
                     surface->room = room;
@@ -237,6 +254,7 @@ static void omm_surface_process_data(s16 areaIndex, s16 *data, struct Object *o,
 
             // End collision data
             case CMD_COL_END: {
+                vec3s_set(vTranslation, 0, 0, 0);
                 return;
             } break;
 
@@ -254,6 +272,23 @@ static void omm_surface_process_data(s16 areaIndex, s16 *data, struct Object *o,
                     if (OMM_LIKELY(i < 20)) {
                         gEnvironmentLevels[i] = data[7];
                     }
+                }
+            } break;
+
+            // Translate all vertices by a fixed amount (only works with static surfaces)
+            case CMD_COL_TRANSLATE: {
+                if (!o) {
+                    vTranslation[0] = data[1];
+                    vTranslation[1] = data[2];
+                    vTranslation[2] = data[3];
+                }
+            } break;
+
+            // Process another collision script (only works with static surfaces)
+            case CMD_COL_JUMP: {
+                if (!o) {
+                    s16 index = data[1];
+                    omm_surface_process_data(areaIndex, omm_array_get(sOmmCollisionJumps, s16 *, index), NULL, params);
                 }
             } break;
         }
@@ -327,9 +362,7 @@ void load_object_collision_model() {
         s32 i = omm_array_find(sOmmCollisionPointers, o->collisionData);
         if (i != -1) {
             OmmCollisionBuffer *colBuffer = omm_array_getp(sOmmCollisionBuffers, OmmCollisionBuffer, i);
-            sVertexBuffer = colBuffer->vertices;
-            sVertexCount = colBuffer->count;
-            omm_surface_process_data(gCurrAreaIndex, colBuffer->start, o, colBuffer);
+            omm_surface_process_data(gCurrAreaIndex, (s16 *) o->collisionData, o, colBuffer);
         } else {
             omm_surface_process_data(gCurrAreaIndex, (s16 *) o->collisionData, o, NULL);
         }

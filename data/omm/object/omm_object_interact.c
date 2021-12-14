@@ -2,35 +2,34 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
-#define BHV_TYPE_SET                (1 << 0) // 'Set' flag
-#define BHV_TYPE_COIN               (1 << 1) // Coin
-#define BHV_TYPE_WATER_RING         (1 << 2) // Water ring
-#define BHV_TYPE_MUSHROOM_1UP       (1 << 3) // Mushroom 1up
-#define BHV_TYPE_STAR_OR_KEY        (1 << 4) // Interactible Star or key
-#define BHV_TYPE_STAR_MODEL         (1 << 5) // Star or key
-#define BHV_TYPE_CAP                (1 << 6) // Cap object
-#define BHV_TYPE_SECRET             (1 << 7) // Secret
-#define BHV_TYPE_WEAK               (1 << 8) // Vulnerable to weak attacks
-#define BHV_TYPE_STRONG             (1 << 9) // Vulnerable to strong attacks (snowballs, beams)
-#define BHV_TYPE_DESTRUCTIBLE       (1 << 10) // Vulnerable to destructible attacks (explosions)
-#define BHV_TYPE_BREAKABLE          (1 << 11) // Fragile/Breakable
-#define BHV_TYPE_INVULNERABLE       (1 << 12) // Invulnerable enemies
-#define BHV_TYPE_GRABBABLE          (1 << 13) // Grabbable
-#define BHV_TYPE_KNOCKABLE_0        (1 << 14) // Knockback 0
-#define BHV_TYPE_KNOCKABLE_1        (1 << 15) // Knockback 1
-#define BHV_TYPE_GOOMBA             (1 << 16) // Goomba-like behavior
-#define BHV_TYPE_BULLY              (1 << 17) // Bully-type
-#define BHV_TYPE_FLAME              (1 << 18) // Flame-type objects
-#define BHV_TYPE_NO_CAPPY           (1 << 19) // Intangible to Cappy
-#define BHV_TYPE_KICKABLE_BOARD     (1 << 20) // Kickable board
-#define BHV_TYPE_WF_STAR_WALL       (1 << 21) // Whomp Fortress Star inside wall
-#define BHV_TYPE_EXCLAMATION_BOX    (1 << 22) // Yellow exclamation box
-#define BHV_TYPE_UNAGIS_TAIL        (1 << 23) // Unagi's tail
-#define BHV_TYPE_VIBE_SPARKLES_1    (1 << 24) // Drop 1 Vibe sparkle when defeated if attacked with Perry or a Vibe
-#define BHV_TYPE_VIBE_SPARKLES_2    (1 << 25) // Drop 2 Vibe sparkles when defeated if attacked with Perry or a Vibe
-#define BHV_TYPE_VIBE_SPARKLES_3    (1 << 26) // Drop 3 Vibe sparkles when defeated if attacked with Perry or a Vibe
-#define BHV_TYPE_VIBE_SPARKLES_4    (1 << 27) // Drop 4 Vibe sparkles when defeated if attacked with Perry or a Vibe
-#define BHV_TYPE_VIBE_SPARKLES_5    (1 << 28) // Drop 5 Vibe sparkles when defeated if attacked with Perry or a Vibe
+#define BHV_TYPE_COIN               (1 << 0) // Coin
+#define BHV_TYPE_WATER_RING         (1 << 1) // Water ring
+#define BHV_TYPE_MUSHROOM_1UP       (1 << 2) // Mushroom 1up
+#define BHV_TYPE_STAR_OR_KEY        (1 << 3) // Interactible Star or key
+#define BHV_TYPE_STAR_MODEL         (1 << 4) // Star or key
+#define BHV_TYPE_CAP                (1 << 5) // Cap object
+#define BHV_TYPE_SECRET             (1 << 6) // Secret
+#define BHV_TYPE_WEAK               (1 << 7) // Vulnerable to weak attacks
+#define BHV_TYPE_STRONG             (1 << 8) // Vulnerable to strong attacks (snowballs, beams)
+#define BHV_TYPE_DESTRUCTIBLE       (1 << 9) // Vulnerable to destructible attacks (explosions)
+#define BHV_TYPE_BREAKABLE          (1 << 10) // Fragile/Breakable
+#define BHV_TYPE_INVULNERABLE       (1 << 11) // Invulnerable enemies
+#define BHV_TYPE_GRABBABLE          (1 << 12) // Grabbable
+#define BHV_TYPE_KNOCKABLE_0        (1 << 13) // Knockback 0
+#define BHV_TYPE_KNOCKABLE_1        (1 << 14) // Knockback 1
+#define BHV_TYPE_GOOMBA             (1 << 15) // Goomba-like behavior
+#define BHV_TYPE_BULLY              (1 << 16) // Bully-type
+#define BHV_TYPE_FLAME              (1 << 17) // Flame-type objects
+#define BHV_TYPE_NO_CAPPY           (1 << 18) // Intangible to Cappy
+#define BHV_TYPE_KICKABLE_BOARD     (1 << 19) // Kickable board
+#define BHV_TYPE_WF_STAR_WALL       (1 << 20) // Whomp Fortress Star inside wall
+#define BHV_TYPE_EXCLAMATION_BOX    (1 << 21) // Yellow exclamation box
+#define BHV_TYPE_UNAGIS_TAIL        (1 << 22) // Unagi's tail
+#define BHV_TYPE_VIBE_SPARKLES_1    (1 << 23) // Drop 1 Vibe sparkle when defeated if attacked with Perry or a Vibe
+#define BHV_TYPE_VIBE_SPARKLES_2    (1 << 24) // Drop 2 Vibe sparkles when defeated if attacked with Perry or a Vibe
+#define BHV_TYPE_VIBE_SPARKLES_3    (1 << 25) // Drop 3 Vibe sparkles when defeated if attacked with Perry or a Vibe
+#define BHV_TYPE_VIBE_SPARKLES_4    (1 << 26) // Drop 4 Vibe sparkles when defeated if attacked with Perry or a Vibe
+#define BHV_TYPE_VIBE_SPARKLES_5    (1 << 27) // Drop 5 Vibe sparkles when defeated if attacked with Perry or a Vibe
 #define BHV_TYPE_COLLECTIBLE        (BHV_TYPE_COIN | BHV_TYPE_WATER_RING | BHV_TYPE_MUSHROOM_1UP | BHV_TYPE_STAR_OR_KEY | BHV_TYPE_CAP | BHV_TYPE_SECRET)
 #define BHV_TYPE_KNOCKABLE          (BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_KNOCKABLE_1)
 #define BHV_TYPE_VIBE_SPARKLES      (BHV_TYPE_VIBE_SPARKLES_1 | BHV_TYPE_VIBE_SPARKLES_2 | BHV_TYPE_VIBE_SPARKLES_3 | BHV_TYPE_VIBE_SPARKLES_4 | BHV_TYPE_VIBE_SPARKLES_5)
@@ -754,9 +753,10 @@ static u32 omm_obj_get_behavior_types(struct Object *o) {
             }
         }
     }
-    if (OMM_UNLIKELY(!(o->oBehaviorTypes & BHV_TYPE_SET))) {
+    if (o->oBehaviorRef != (u32) o->behavior) {
         s32 i = omm_array_find(sOmmBehaviorScripts, o->behavior);
-        o->oBehaviorTypes = BHV_TYPE_SET | (i != -1 ? omm_array_get(sOmmBehaviorTypes, s32, i) : 0);
+        o->oBehaviorTypes = (i != -1 ? omm_array_get(sOmmBehaviorTypes, s32, i) : 0);
+        o->oBehaviorRef = (u32) o->behavior;
     }
     return o->oBehaviorTypes;
 }
@@ -791,7 +791,7 @@ s32 gOmmInteractionObjectLists[] = {
 //
 
 bool omm_obj_is_interactible(struct Object *o) {
-    return (omm_obj_get_behavior_types(o) & ~BHV_TYPE_SET) != 0;
+    return omm_obj_get_behavior_types(o) != 0;
 }
 
 bool omm_obj_is_coin(struct Object *o) {
@@ -1090,6 +1090,19 @@ CAPPY_ONLY_CODE(
         if (omm_obj_is_interactible(target)) {
             interacted = true;
 
+            // Attackable objects
+            if (interactionFlags & (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG)) {
+
+                // Kickable board
+                if (omm_obj_is_kickable_board(target)) {
+                    target->oInteractStatus = INT_STATUS_INTERACTED;
+                    target->oAction = 2;
+CAPPY_ONLY_CODE(
+                    omm_cappy_bounce_back(o);
+);
+                }
+            }
+
             // Destructible objects
             if (interactionFlags & OBJ_INT_ATTACK_DESTRUCTIBLE) {
                                 
@@ -1098,15 +1111,6 @@ CAPPY_ONLY_CODE(
                     omm_obj_handle_perry_attack(target, interactionFlags);
                     target->oInteractStatus = INT_STATUS_INTERACTED;
                     obj_destroy(target);
-CAPPY_ONLY_CODE(
-                    omm_cappy_bounce_back(o);
-);
-                }
-
-                // Kickable board
-                if (omm_obj_is_kickable_board(target)) {
-                    target->oInteractStatus = INT_STATUS_INTERACTED;
-                    target->oAction = 2;
 CAPPY_ONLY_CODE(
                     omm_cappy_bounce_back(o);
 );
@@ -1344,30 +1348,29 @@ struct Object *omm_obj_process_interactions(struct Object *o, u32 interactionFla
     sStopAndReturn = false;
 
     // Surfaces
-    if (isCappy || (interactionFlags & OBJ_INT_ATTACK_DESTRUCTIBLE)) {
-            s32 rn = (isCappy ? 1 : omm_min_s(1 + ((o->hitboxRadius - 1.f) / (OMM_COLLISION_CELL_SIZE >> 1)), 16));
-            s32 yn = (isCappy ? 1 : omm_min_s(1 + ((o->hitboxHeight - 1.f) / (OMM_COLLISION_CELL_SIZE >> 4)), 16));
-            f32 dr = o->hitboxRadius / rn;
-            f32 dy = o->hitboxHeight / yn;
-            for (s32 yi = 0; yi <= yn; ++yi) {
-                for (s32 ri = 0; ri != rn; ++ri) {
-                    s32 an = ((ri == 0) ? 1 : ((ri + 1) * 4));
-                    s32 da = 0x10000 / an;
-                    for (s32 ai = 0; ai != an; ++ai) {
-                        struct WallCollisionData hitbox;
-                        hitbox.x = o->oPosX + (dr * ri) * sins(da * ai);
-                        hitbox.y = o->oPosY;
-                        hitbox.z = o->oPosZ + (dr * ri) * coss(da * ai);
-                        hitbox.offsetY = (dy * yi) - o->hitboxDownOffset;
-                        hitbox.radius = dr;
-                        if (find_wall_collisions(&hitbox) != 0) {
-                            for (s32 k = 0; k != hitbox.numWalls; ++k) {
-                                struct Object *obj = hitbox.walls[k]->object;
-                                if (obj && omm_obj_process_one_surface_interaction(o, obj, interactionFlags)) {
-                                    interacted = obj;
-                                    if (sStopAndReturn) {
-                                        return interacted;
-                                    }
+    if (isCappy || (interactionFlags & OBJ_INT_PRESET_ATTACK_SURFACE)) {
+        s32 rn = (isCappy ? 1 : omm_min_s(1 + ((o->hitboxRadius - 1.f) / (OMM_COLLISION_CELL_SIZE >> 1)), 16));
+        s32 yn = (isCappy ? 1 : omm_min_s(1 + ((o->hitboxHeight - 1.f) / (OMM_COLLISION_CELL_SIZE >> 4)), 16));
+        f32 dr = o->hitboxRadius / rn;
+        f32 dy = o->hitboxHeight / yn;
+        for (s32 yi = 0; yi <= yn; ++yi) {
+            for (s32 ri = 0; ri != rn; ++ri) {
+                s32 an = ((ri == 0) ? 1 : ((ri + 1) * 4));
+                s32 da = 0x10000 / an;
+                for (s32 ai = 0; ai != an; ++ai) {
+                    struct WallCollisionData hitbox;
+                    hitbox.x = o->oPosX + (dr * ri) * sins(da * ai);
+                    hitbox.y = o->oPosY;
+                    hitbox.z = o->oPosZ + (dr * ri) * coss(da * ai);
+                    hitbox.offsetY = (dy * yi) - o->hitboxDownOffset;
+                    hitbox.radius = dr;
+                    if (find_wall_collisions(&hitbox) != 0) {
+                        for (s32 k = 0; k != hitbox.numWalls; ++k) {
+                            struct Object *obj = hitbox.walls[k]->object;
+                            if (obj && omm_obj_process_one_surface_interaction(o, obj, interactionFlags)) {
+                                interacted = obj;
+                                if (sStopAndReturn) {
+                                    return interacted;
                                 }
                             }
                         }
@@ -1375,6 +1378,7 @@ struct Object *omm_obj_process_interactions(struct Object *o, u32 interactionFla
                 }
             }
         }
+    }
     
     // Objects
     if (obj_check_hitbox(o, OBJ_OVERLAP_FLAG_HITBOX)) {

@@ -428,7 +428,6 @@ OMM_ROUTINE_UPDATE(omm_bowser_4_level_entry) {
     }
 }
 
-
 //
 // Script
 //

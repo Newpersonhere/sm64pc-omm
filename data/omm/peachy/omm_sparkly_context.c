@@ -509,11 +509,11 @@ static void omm_sparkly_update_context_per_level(struct MarioState *m) {
         } break;
 
         // TTM
-        case LEVEL(OMM_SPARKLY_MODE_NORMAL, LEVEL_TTM, 3): {
-            coinArrow = COIN_ARROW(1200, -600, -5000, 0x5000);
+        case LEVEL(OMM_SPARKLY_MODE_NORMAL, LEVEL_TTM, 2): {
+            coinArrow = COIN_ARROW(-9040, 6250, -15240, 0x5000);
         } break;
-        case LEVEL(OMM_SPARKLY_MODE_HARD, LEVEL_TTM, 3): {
-            coinArrow = COIN_ARROW(4200, 6300, 4000, 0x6000);
+        case LEVEL(OMM_SPARKLY_MODE_HARD, LEVEL_TTM, 2): {
+            coinArrow = COIN_ARROW(-6040, 13150, -6240, 0x6000);
         } break;
 
         // THI

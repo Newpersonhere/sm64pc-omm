@@ -784,5 +784,6 @@ OMM_TEXTURE_(EFFECT_VIBE_CALM_SPARKLE,                  "effect/omm_texture_effe
 #define oMrIBeamPower                                   OBJECT_FIELD_F32(0x17)
 #define oMenuButtonCharacterIndex                       OBJECT_FIELD_S32(0x21)
 #define oBehaviorTypes                                  unused1
+#define oBehaviorRef                                    unused2
 
 #endif // OMM_DEFINES_H

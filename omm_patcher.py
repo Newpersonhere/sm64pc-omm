@@ -141,6 +141,7 @@ if __name__ == "__main__":
     do_patch_file("dynos_misc.cpp", "&__Actors()", "define_actor(yoshi_egg_geo),", "\nOMM_DYNOS_ACTORS,", +1)
     do_patch_file("ultra64.h", "_ULTRA64_H_", "#include <PR/libultra.h>", "\n#include \"data/omm/omm_macros.h\"", +1)
     do_patch_file("sm64.h", "SM64_H", "#include \"macros.h\"", "\n#include \"data/omm/omm_includes.h\"", +1)
+    do_patch_file("levels/ttm/script.c", "level_ttm_entry", "END_AREA(),", "\n    JUMP_LINK(omm_ttm_slide_script),", +1)
     do_patch_file("levels/castle_grounds/script.c", "level_castle_grounds_entry", "END_AREA(),", "\n    JUMP_LINK(omm_bowser_4_level_script),", +1)
     do_patch_file("audio/external.c", "play_sound(s32 soundBits, f32 *pos)", "{", "\n    OMM_RETURN_IF_TRUE(omm_sound_play_character_sound_n64(soundBits, pos),,);", +1)
     do_patch_file("audio/seqplayer.c", "sequence_channel_process_script(struct SequenceChannel *seqChannel)", "case 0x00: // chan_testlayerfinished", "\n                        if (loBits >= LAYERS_MAX) break;", +1)
