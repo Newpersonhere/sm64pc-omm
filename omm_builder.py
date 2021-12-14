@@ -127,7 +127,7 @@ def create_omm_patch_file():
                     file.write(data)
                     file.close()
                     os.system("git add .")
-                    os.system(f"git diff --diff-algorithm=minimal --unified=2 -p --staged --binary > ../{path}.patch")
+                    os.system("git diff --diff-algorithm=minimal --unified=2 -p --staged --binary > ../omm.patch")
             os.chdir("..")
             rm_rf("temp")
 
@@ -302,14 +302,14 @@ if __name__ == "__main__":
 
     # Clear build directory
     if speed == "clear":
-        print("--- Deleting " + version + " build directory...")
+        print("--- Clearing " + version + " build directory...")
         rm_rf(versionDir + "/build")
         print("Done.")
         sys.exit(0)
 
     # Reset target directory
     if speed == "reset":
-        print("--- Cleaning target repository...")
+        print("--- Resetting target repository...")
         if os.path.isdir(versionDir):
             os.chdir(versionDir)
             os.system("git reset -q --hard")
@@ -445,7 +445,7 @@ if __name__ == "__main__":
             if os.path.isfile(filepath) and is_bad_file(filepath):
                 os.remove(filepath)
 
-    # Fix typos in xalo and smsr
+    # Fix typos
     print("--- Fixing typos...")
 
     # Apply the 60 FPS patch
