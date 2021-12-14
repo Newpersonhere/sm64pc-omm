@@ -50,8 +50,9 @@
 |:-|:-|:-|
 | Build | Compile the game with the version specified. | `python3 omm_builder.py [version] [build_speed] [args...]` |
 | Run | Run the game with the version specified. An executable of the specified version must be compiled first. | `python3 omm_builder.py [version] run` |
+| Clear | Clear the build directory of the version specified. | `python3 omm_builder.py [version] clear` |
 | Reset | Reset the version directory without deleting it, but remove the compiled game. | `python3 omm_builder.py [version] reset` |
-| Delete | Delete the version directory, including all its content. | `python3 omm_builder.py [version] clear` |
+| Delete | Delete the version directory, including all its content. | `python3 omm_builder.py [version] delete` |
 
 The `[version]` parameter must be one of the following:
 
@@ -184,6 +185,18 @@ To install it and make it work, follow these steps:
 - [Sound packs](https://sm64pc.info/downloads/sound_pack/)
 
 -----
+
+## Version 6.1.2
+
+### OMM Builder:
+- The `clear` command now deletes only the `build` directory.
+- The `delete` command removes completely the version directory.
+
+### Changes and fixes:
+- Fixed a bug where the Boo blue coin couldn't be collected all the time with Cappy.
+- Fixed a bug where the loading time of Render96 was longer than intended.
+- Fixed a bug where the kickable board in WF couldn't be *attacked* by Cappy and Perry.
+- The three parts of the TTM slide are now in a single area (instead of 3).
 
 ## Version 6.1.0
 

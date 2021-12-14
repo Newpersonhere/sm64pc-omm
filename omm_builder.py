@@ -14,8 +14,9 @@ def usage_info():
     print("")
     print("python3 omm_builder.py [version] [build_speed] [args...] | Compile the game with the version specified.")
     print("python3 omm_builder.py [version] run                     | Run the game with the version specified.")
+    print("python3 omm_builder.py [version] clear                   | Clear the build directory of the selected version.")
     print("python3 omm_builder.py [version] reset                   | Reset the version directory without deleting it.")
-    print("python3 omm_builder.py [version] clear                   | Delete the version directory.")
+    print("python3 omm_builder.py [version] delete                  | Delete the version directory.")
     print("")
     print("[version] must be one of the following:")
     print("  smex  | Super Mario 64 ex-nightly")
@@ -210,8 +211,9 @@ if __name__ == "__main__":
         "faster" : { "name": "Faster",  "jobs": " -j8" },
         "fastest": { "name": "Fastest", "jobs": " -j" },
         "run"    : {},
-        "reset"  : {},
         "clear"  : {},
+        "reset"  : {},
+        "delete" : {},
     }
     ARGUMENTS = {
         "DEBUG"    : ["debug"],
@@ -264,7 +266,7 @@ if __name__ == "__main__":
             sys.exit(0)
 
         # Delete omm.* directories
-        if command == "clear":
+        if command == "delete":
             print("--- Deleting OMM patches...")
             rm_omm_patches()
             print("Done.")
@@ -298,6 +300,13 @@ if __name__ == "__main__":
         start_game(versionDir)
         sys.exit(0)
 
+    # Clear build directory
+    if speed == "clear":
+        print("--- Deleting " + version + " build directory...")
+        rm_rf(versionDir + "/build")
+        print("Done.")
+        sys.exit(0)
+
     # Reset target directory
     if speed == "reset":
         print("--- Cleaning target repository...")
@@ -311,7 +320,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     # Delete target directory
-    if speed == "clear":
+    if speed == "delete":
         print("--- Deleting target repository...")
         rm_rf(versionDir)
         print("Done.")
@@ -561,7 +570,7 @@ if __name__ == "__main__":
     if not check_executable("."):
         raise_error("Something went wrong. Aborting building process...", False)
 
-    # Copy external resources to the build res folder
+    # Copy external resources to the build res directory
     if args["EXT_DATA"] and os.path.isdir(DIRECTORIES["resources"]) and os.path.isdir("build/us_pc/res"):
         print("--- Installing external resources...")
         copy_tree(DIRECTORIES["resources"], "build/us_pc/res")
