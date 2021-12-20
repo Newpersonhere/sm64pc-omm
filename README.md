@@ -176,7 +176,7 @@ To install it and make it work, follow these steps:
 
 ## Useful resources
 
-- [Odyssey Mario's Moveset v6.1.0 patch file](https://raw.githubusercontent.com/PeachyPeachSM64/sm64pc-omm/master/patch/omm.patch)
+- [Odyssey Mario's Moveset patch file](https://raw.githubusercontent.com/PeachyPeachSM64/sm64pc-omm/master/patch/omm.patch)
 - [Super Mario 64 Moonshine archive](https://www.mediafire.com/file/khy40tbd1rcve2p/MOONSHINE_FINALUPDATE.rar/file)
 - [Super Mario Star Road HD Texture pack](https://github.com/aspieweeb759/Star-Road-HD)
 - [Custom patches](https://sm64pc.info/downloads/patches/)
