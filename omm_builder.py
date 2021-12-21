@@ -88,7 +88,7 @@ def vn2i(vn):
         i = i * 100 + int(s)
     return i
 
-def get_omm_patch():
+def get_omm_patch_dir():
     for path in os.listdir("."):
         if os.path.isdir(path) and "omm." in path:
             return path
@@ -110,7 +110,7 @@ def get_omm_version(filepath):
     return version
 
 def create_omm_patch_file():
-    path = get_omm_patch()
+    path = get_omm_patch_dir()
     if len(path) > 0:
         os.system("git clone https://github.com/sm64pc/sm64ex.git -b nightly temp -q")
         if os.path.isdir("temp"):
@@ -132,7 +132,7 @@ def create_omm_patch_file():
             rm_rf("temp")
 
 def rm_omm_patches():
-    while rm_rf(get_omm_patch()):
+    while rm_rf(get_omm_patch_dir()):
         continue
 
 def rm_files(root, condition):
@@ -327,13 +327,13 @@ if __name__ == "__main__":
         sys.exit(0)
 
     # Retrieve OMM version number
-    versionLocal = get_omm_version(get_omm_patch() + "/omm.mk")
+    versionLocal = get_omm_version(get_omm_patch_dir() + "/omm.mk")
     if args["NO_UPDATE"]:
         print("NO_UPDATE specified. Using local OMM patch...")
         OMM_VERSION_NUMBER = versionLocal["OMM_VERSION_NUMBER"]
         OMM_VERSION_REVISION = versionLocal["OMM_VERSION_REVISION"]
-        OMM_PATCH = get_omm_patch()
-        if OMM_PATCH == "":
+        OMM_PATCH_DIR = get_omm_patch_dir()
+        if OMM_PATCH_DIR == "":
             raise_error("Cannot find any OMM patch.", False)
     else:
         os.system("wget --no-check-certificate --no-cache --no-cookies https://raw.githubusercontent.com/PeachyPeachSM64/sm64pc-omm/nightly/omm.mk -O omm.version -q || rm -f omm.version")
@@ -343,16 +343,17 @@ if __name__ == "__main__":
                 raise_error("Cannot retrieve remote OMM version number.", False)
             OMM_VERSION_NUMBER = versionRemote["OMM_VERSION_NUMBER"]
             OMM_VERSION_REVISION = versionRemote["OMM_VERSION_REVISION"]
-            OMM_PATCH = "omm." + OMM_VERSION_NUMBER
+            OMM_PATCH_DIR = "omm." + OMM_VERSION_NUMBER
             os.remove("omm.version")
         else:
             print("Unable to retrieve remote OMM version number.")
             print("Using local OMM patch...")
             OMM_VERSION_NUMBER = versionLocal["OMM_VERSION_NUMBER"]
             OMM_VERSION_REVISION = versionLocal["OMM_VERSION_REVISION"]
-            OMM_PATCH = get_omm_patch()
-            if OMM_PATCH == "":
+            OMM_PATCH_DIR = get_omm_patch_dir()
+            if OMM_PATCH_DIR == "":
                 raise_error("Cannot find any OMM patch.", False)
+    OMM_PATCH_NAME = "omm." + OMM_VERSION_NUMBER
 
     # Print some info before starting
     print("")
@@ -379,26 +380,27 @@ if __name__ == "__main__":
     # Check OMM patch: Create it or update it to the latest version
     print("--- Checking OMM patch (1/3)...")
     upToDate = (versionLocal["OMM_VERSION_NUMBER"] == OMM_VERSION_NUMBER) and (versionLocal["OMM_VERSION_REVISION"] == OMM_VERSION_REVISION)
-    if not upToDate or not os.path.isdir(OMM_PATCH):
+    if not upToDate or not os.path.isdir(OMM_PATCH_DIR):
 
         # Delete all omm.* directories
         print("Removing old OMM patches...")
         rm_omm_patches()
 
         # Clone the OMM repository
-        print("Creating " + OMM_PATCH + " from the latest version...")
+        OMM_PATCH_DIR = OMM_PATCH_NAME
+        print("Creating " + OMM_PATCH_DIR + " from the latest version...")
         ommRepository = "https://github.com/PeachyPeachSM64/sm64pc-omm.git -b nightly"
-        os.system("git clone " + ommRepository + " " + OMM_PATCH)
-        if not os.path.isdir(OMM_PATCH):
+        os.system("git clone " + ommRepository + " " + OMM_PATCH_DIR)
+        if not os.path.isdir(OMM_PATCH_DIR):
             raise_error("Cannot clone the git repository: " + ommRepository, False)
 
     # Check OMM patch: Delete the .git, .github and .vscode directories and keep only the files that contain "omm/", "omm_" or "omm."
     print("--- Checking OMM patch (2/3)...")
-    rm_rf(OMM_PATCH + "/.git")
-    rm_rf(OMM_PATCH + "/.github")
-    rm_rf(OMM_PATCH + "/.vscode")
+    rm_rf(OMM_PATCH_DIR + "/.git")
+    rm_rf(OMM_PATCH_DIR + "/.github")
+    rm_rf(OMM_PATCH_DIR + "/.vscode")
     is_not_omm_file = lambda root, filepath : not any([ pattern in filepath[len(root):] for pattern in ["omm/", "omm_", "omm."] ])
-    rm_files(OMM_PATCH, is_not_omm_file)
+    rm_files(OMM_PATCH_DIR, is_not_omm_file)
 
     # Clone the target repository
     print("--- Cloning target repository...")
@@ -410,11 +412,11 @@ if __name__ == "__main__":
 
     # Check OMM patch: if a omm.*.patched file exists but is not the latest version, reset the directory
     print("--- Checking OMM patch (3/3)...")
-    if not upToDate or not check_patched(OMM_PATCH):
+    if not upToDate or not check_patched(OMM_PATCH_NAME):
         for path in os.listdir("enhancements"):
             if os.path.isfile("enhancements/" + path) and "omm." in path and ".patched" in path:
                 print("Old version of OMM detected!")
-                print("Cleaning " + version + "...")
+                print("Resetting " + version + "...")
                 os.system("git reset -q --hard")
                 os.system("git clean -f -d -x -q")
                 os.system("git checkout . -q")
@@ -482,10 +484,10 @@ if __name__ == "__main__":
 
     # Copy OMM contents, apply the Makefile patch and run the patcher
     print("--- Applying OMM patch...")
-    if not check_patched(OMM_PATCH):
+    if not check_patched(OMM_PATCH_NAME):
 
         # Copy patch contents
-        copy_tree(DIRECTORIES["root"] + OMM_PATCH, ".")
+        copy_tree(DIRECTORIES["root"] + OMM_PATCH_DIR, ".")
 
         # Patch Makefile
         if not os.path.isfile("Makefile"):
@@ -505,7 +507,7 @@ if __name__ == "__main__":
 
         # Run patcher
         os.system("python3 omm_patcher.py -p")
-        set_patched(OMM_PATCH)
+        set_patched(OMM_PATCH_NAME)
 
     # Copy the baserom and build the game
     print("--- Building game...")
