@@ -25,6 +25,7 @@ def usage_info():
     print("  sm74  | Super Mario 74")
     print("  smsr  | Super Mario Star Road")
     print("  r96a  | Render96 ex-alpha")
+    print("  rt64  | Render96 RT64")
     print("")
     print("[build_speed] must be one of the following:")
     print("  slow     | Build the game by compiling files one by one.")
@@ -42,6 +43,7 @@ def usage_info():
     print("")
     print("Requirements:")
     print("- To build Super Mario 64 Moonshine, you must extract the mod archive ('MOONSHINE_FINALUPDATE.rar') into a directory named 'moonshine'.")
+    print("- To run Render96 RT64, an NVIDIA GPU with DXR support (RTX or GTX > 1060) is required.")
     print("")
     print("Custom patches:")
     print("- To build the game with custom patches, place a copy of your '.patch' files inside the 'custom/patches' directory and run the command with the 'PATCHES' option.")
@@ -198,12 +200,13 @@ if __name__ == "__main__":
 
     # Constants
     VERSIONS = {
-        "smex": { "name": "Super Mario 64 ex-nightly", "repo": "https://github.com/sm64pc/sm64ex.git -b nightly",           "dependency": "",          "args": [] },
-        "smms": { "name": "Super Mario 64 Moonshine",  "repo": "https://github.com/sm64pc/sm64ex.git -b nightly",           "dependency": "moonshine", "args": ["EXT_DATA"] },
-        "xalo": { "name": "Super Mario 64 ex-alo",     "repo": "https://github.com/AloXado320/sm64ex-alo.git -b master",    "dependency": "",          "args": [] },
-        "sm74": { "name": "Super Mario 74",            "repo": "https://github.com/PeachyPeachSM64/sm64pc-omm.git -b sm74", "dependency": "",          "args": [] },
-        "smsr": { "name": "Super Mario Star Road",     "repo": "https://github.com/PeachyPeachSM64/sm64pc-omm.git -b smsr", "dependency": "",          "args": [] },
-        "r96a": { "name": "Render96 ex-alpha",         "repo": "https://github.com/Render96/Render96ex.git -b alpha",       "dependency": "",          "args": ["DYNOS"] },
+        "smex": { "name": "Super Mario 64 ex-nightly", "repo": "https://github.com/sm64pc/sm64ex.git -b nightly",                "dependency": "",          "args": [] },
+        "smms": { "name": "Super Mario 64 Moonshine",  "repo": "https://github.com/sm64pc/sm64ex.git -b nightly",                "dependency": "moonshine", "args": ["EXT_DATA"] },
+        "xalo": { "name": "Super Mario 64 ex-alo",     "repo": "https://github.com/AloXado320/sm64ex-alo.git -b master",         "dependency": "",          "args": [] },
+        "sm74": { "name": "Super Mario 74",            "repo": "https://github.com/PeachyPeachSM64/sm64pc-omm.git -b sm74",      "dependency": "",          "args": [] },
+        "smsr": { "name": "Super Mario Star Road",     "repo": "https://github.com/PeachyPeachSM64/sm64pc-omm.git -b smsr",      "dependency": "",          "args": [] },
+        "r96a": { "name": "Render96 ex-alpha",         "repo": "https://github.com/Render96/Render96ex.git -b alpha",            "dependency": "",          "args": ["DYNOS"] },
+        "rt64": { "name": "Render96 RT64",             "repo": "https://github.com/Render96/Render96ex.git -b tester_rt64alpha", "dependency": "",          "args": ["DYNOS"] },
     }
     BUILD_SPEEDS = {
         "slow"   : { "name": "Slow",    "jobs": "" },
@@ -367,7 +370,7 @@ if __name__ == "__main__":
 
     # Check compatibility
     print("--- Checking compatibility...")
-    if version in ["xalo", "smsr", "r96a"] and vn2i(OMM_VERSION_NUMBER) < vn2i("6.1.0"):
+    if version in ["xalo", "smsr", "r96a", "rt64"] and vn2i(OMM_VERSION_NUMBER) < vn2i("6.1.0"):
         raise_error("{} ({}) can be built only with OMM v6.1.0 and later.".format(VERSIONS[version]["name"], version), False)
     if version in ["xalo", "sm74", "smsr"] and args["DYNOS"]:
         raise_error("{} ({}) cannot be built with DynOS.".format(VERSIONS[version]["name"], version), False)
@@ -459,7 +462,7 @@ if __name__ == "__main__":
                 set_patched("60fps_ex.patch")
 
     # Download and apply the DynOS patch
-    if args["DYNOS"] and not version in ["r96a"]:
+    if args["DYNOS"] and not version in ["r96a", "rt64"]:
         print("--- Applying DynOS patch...")
         if not check_patched("dynos.patch"):
             os.system("wget --no-check-certificate --no-cache --no-cookies https://sm64pc.info/downloads/patches/DynOS.1.1.patch -O dynos.patch -q || rm -f dynos.patch")
@@ -518,8 +521,9 @@ if __name__ == "__main__":
     makeCmd = "make" + BUILD_SPEEDS[speed]["jobs"] + " OMM_BUILDER=1" + " VERSION=us"
 
     # APIs
-    makeCmd += " RENDER_API=D3D11 WINDOW_API=DXGI AUDIO_API=SDL2 CONTROLLER_API=SDL2" if args["DIRECT_X"] \
-          else " RENDER_API=GL WINDOW_API=SDL2 AUDIO_API=SDL2 CONTROLLER_API=SDL2"
+    if version in ["rt64"]: makeCmd += " RENDER_API=RT64 WINDOW_API=SDL2 AUDIO_API=SDL2 CONTROLLER_API=SDL2"
+    elif args["DIRECT_X"]:  makeCmd += " RENDER_API=D3D11 WINDOW_API=DXGI AUDIO_API=SDL2 CONTROLLER_API=SDL2"
+    else:                   makeCmd += " RENDER_API=GL WINDOW_API=SDL2 AUDIO_API=SDL2 CONTROLLER_API=SDL2"
 
     # 60 FPS
     makeCmd += " HIGH_FPS_PC=1" if args["60_FPS"] else ""
@@ -584,7 +588,7 @@ if __name__ == "__main__":
         copy_tree(DIRECTORIES["dynos_packs"], "build/us_pc/dynos/packs")
 
     # Copy Render96 custom audio data
-    if version in ["r96a"] and os.path.isdir(DIRECTORIES["dynos_audio"]) and os.path.isdir("build/us_pc/dynos"):
+    if version in ["r96a", "rt64"] and os.path.isdir(DIRECTORIES["dynos_audio"]) and os.path.isdir("build/us_pc/dynos"):
         print("--- Installing Render96 audio data...")
         os.makedirs("build/us_pc/dynos/audio", exist_ok=True)
         copy_tree(DIRECTORIES["dynos_audio"], "build/us_pc/dynos/audio")

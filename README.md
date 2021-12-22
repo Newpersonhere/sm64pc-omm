@@ -64,6 +64,7 @@ The `[version]` parameter must be one of the following:
 | `sm74` | Super Mario 74 |
 | `smsr` | Super Mario Star Road |
 | `r96a` | Render96 ex-alpha |
+| `rt64` | Render96 RT64 |
 
 The `[build_speed]` parameter must be one of the following:
 
@@ -92,6 +93,7 @@ For instance, if you want to build and play *Star Road* with 60 FPS and External
 ### Requirements
 
 - To build *Super Mario 64 Moonshine*, you must extract the mod archive (`MOONSHINE_FINALUPDATE.rar`) into a directory named `moonshine`.
+- To run *Render96 RT64*, an **NVIDIA GPU with DXR support (RTX or GTX > 1060) is required**. You can build the game without this requirement, but you won't be able to open it.
 
 ### Custom patches
 
