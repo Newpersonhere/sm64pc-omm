@@ -2,7 +2,7 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
-#if defined(RAPI_RT64)
+#if defined(RAPI_RT64) && !defined(R96A)
 #define NOT_COMPATIBLE
 #define MOD_NAME "Super Mario 64 RT"
 #elif defined(CHEATER) && !defined(R96A)

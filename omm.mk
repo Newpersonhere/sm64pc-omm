@@ -13,7 +13,7 @@ SRC_DIRS += data/omm data/omm/system data/omm/object data/omm/mario data/omm/cap
 # -------
 
 OMM_VERSION_NUMBER := 6.1.2
-OMM_VERSION_REVISION := 1
+OMM_VERSION_REVISION := 2
 OMM_DEVELOPER := PeachyPeach
 VERSION_CFLAGS += -DOMM_VERSION="$(OMM_VERSION_NUMBER)"
 VERSION_CFLAGS += -DOMM_DEVELOPER="$(OMM_DEVELOPER)"
