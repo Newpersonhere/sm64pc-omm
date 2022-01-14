@@ -445,7 +445,7 @@ define_actor(omm_geo_menu_button_mario), \
 define_actor(omm_geo_menu_button_peach), \
 define_actor(omm_geo_menu_button_luigi), \
 define_actor(omm_geo_menu_button_wario), \
-define_actor(omm_geo_problem),
+define_actor(omm_geo_problem)
 #endif
 
 //
