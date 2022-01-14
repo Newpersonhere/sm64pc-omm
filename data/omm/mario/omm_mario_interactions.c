@@ -122,12 +122,10 @@ u32 determine_interaction(struct MarioState *m, struct Object *o) {
 }
 
 bool omm_mario_interact_coin(struct MarioState *m, struct Object *o) {
-#if OMM_CODE_SPARKLY
     if (o->respawnInfoType == OMM_OBJECT_LOST_COIN) omm_sparkly_context_update(OMM_SPARKLY_CONTEXT_UPDATE_LOST_COIN);
     else if (o->oDamageOrCoinValue == 1) omm_sparkly_context_update(OMM_SPARKLY_CONTEXT_UPDATE_YELLOW_COIN);
     else if (o->oDamageOrCoinValue == 5) omm_sparkly_context_update(OMM_SPARKLY_CONTEXT_UPDATE_BLUE_COIN);
     else if (o->oDamageOrCoinValue == 2) omm_sparkly_context_update(OMM_SPARKLY_CONTEXT_UPDATE_RED_COIN);
-#endif
     interact_coin(m, INTERACT_COIN, o);
     return true;
 }
@@ -193,7 +191,7 @@ bool omm_mario_interact_star_or_key(struct MarioState *m, struct Object *o) {
 }
 
 bool omm_mario_interact_warp(struct MarioState *m, struct Object *o) {
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     if (!(o->oInteractionSubtype & INT_SUBTYPE_FADING_WARP) && (m->action != ACT_EMERGE_FROM_PIPE) && (o->oObjectID == 1)) {
         o->oInteractStatus = INT_STATUS_INTERACTED;
         m->interactObj = o;
@@ -252,7 +250,7 @@ static bool omm_mario_interact_flame(UNUSED struct MarioState *m, struct Object 
         obj_mark_for_deletion(o);
         return true;
     }
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     if (omm_sparkly_is_enabled() && omm_sparkly_is_bowser_4() && m->action == ACT_WARIO_CHARGE) {
         sInvulnerable = 0;
         interact_flame(m, INTERACT_FLAME, o);

@@ -6,6 +6,15 @@
 #include "omm_object_fields.h"
 
 //
+// Flags
+//
+
+#define GRAPH_RENDER_ALWAYS         (1 << 7)  // 0x0080
+#define ACTIVE_FLAG_DORMANT         (1 << 11) // 0x0800
+#define ACTIVE_FLAG_KNOCKED_BACK    (1 << 12) // 0x1000
+#define ACTIVE_FLAG_RED_COIN_STAR   (1 << 13) // 0x2000
+
+//
 // For loops
 //
 
@@ -138,6 +147,15 @@ bool omm_obj_process_one_object_interaction(struct Object *o, struct Object *tar
 struct Object *omm_obj_process_interactions(struct Object *o, u32 interactionFlags);
 
 //
+// Hold (possessed Motos/Chuckya)
+//
+
+bool omm_obj_is_holdable(struct Object *o);
+bool omm_obj_hold(struct Object *o);
+bool omm_obj_update_held_object(struct Object *o, struct Object *holder, f32 xOffset, f32 yOffset, f32 zOffset);
+bool omm_obj_throw(struct Object *o, f32 forwardVel, f32 yVel);
+
+//
 // Object behaviors
 //
 
@@ -148,6 +166,7 @@ const BehaviorScript **omm_obj_get_cap_behaviors();
 const BehaviorScript **omm_obj_get_goomba_behaviors();
 const BehaviorScript **omm_obj_get_player_behaviors();
 const BehaviorScript **omm_obj_get_bowser_behaviors();
+const BehaviorScript **omm_obj_get_holdable_behaviors();
 
 //
 // Spawners
@@ -165,7 +184,10 @@ struct Object *omm_spawn_vanish_mist(struct Object *o);
 struct Object *omm_spawn_break_particle(struct Object *o, u8 r, u8 g, u8 b, f32 offsetY, f32 velMin, f32 velMax, f32 velY, f32 scaleMin, f32 scaleMax);
 struct Object *omm_spawn_snowball(struct Object *o);
 struct Object *omm_spawn_mr_i_beam(struct Object *o, f32 power);
+struct Object *omm_spawn_snufit_ball(struct Object *o, s32 delay, bool strong);
+struct Object *omm_spawn_rock(struct Object *o);
 struct Object *omm_spawn_explosion(struct Object *o);
+struct Object *omm_spawn_blargg_fire_ball(struct Object *o);
 struct Object *omm_spawn_mips(struct Object *o, f32 x, f32 y, f32 z, f32 fVel);
 struct Object *omm_spawn_shockwave_whomp(struct Object *o, f32 x, f32 y, f32 z);
 struct Object *omm_spawn_shockwave_spindrift(struct Object *o);
@@ -217,6 +239,7 @@ void vec2f_and_dist_to_3d(Vec3f dest3d, Vec2f src2d, f32 dist2d, Vec3f o, Vec3f 
 void vec2f_to_3d_plane(Vec3f dest, Vec2f src, Vec3f o, Vec3f e1, Vec3f e1Scale, Vec3f e2, Vec3f e2Scale);
 void vec3f_rotate_zxy(Vec3f dest, Vec3f v, s16 pitch, s16 yaw, s16 roll);
 void vec3f_rotate_around_n(Vec3f dest, Vec3f v, Vec3f n, s16 r);
+void vec3f_transform(Vec3f dest, Vec3f v, Vec3f translation, Vec3s rotation, Vec3f scale);
 void vec3f_interpolate(Vec3f dest, f32 t, Vec3f p0, f32 t0, Vec3f p1, f32 t1, Vec3f p2, f32 t2);
 bool vec3f_is_inside_cylinder(Vec3f v, Vec3f pos, f32 radius, f32 height, f32 downOffset);
 void vec2f_get_projected_point_on_line(Vec2f dest, Vec2f p, Vec2f a, Vec2f b);

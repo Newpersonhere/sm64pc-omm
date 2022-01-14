@@ -387,6 +387,11 @@ bool omm_mario_possess_object(struct MarioState *m, struct Object *o, bool check
         return false;
     }
     
+    // Holding X prevents Cappy from capturing objects
+    if (m->controller->buttonDown & X_BUTTON) {
+        return false;
+    }
+    
     // Not tangible
     if (checkTangibility && (o->oIntangibleTimer != 0)) {
         return false;
@@ -399,6 +404,11 @@ bool omm_mario_possess_object(struct MarioState *m, struct Object *o, bool check
 
     // Mario can't possess an object if he's holding or riding something
     if (m->heldObj || m->riddenObj) {
+        return false;
+    }
+
+    // Mario can't possess the same object twice in a row
+    if (gOmmData->mario->capture.prev == o) {
         return false;
     }
 
@@ -538,8 +548,9 @@ bool omm_mario_unpossess_object(struct MarioState *m, u8 unpossessAct, bool isBa
     }
 
     // Unpossess action
+    bool onGround    = obj_is_on_ground(o);
     f32 objectTop    = omm_capture_get_top(o);
-    s32 terrainType  = (((o->oPosY + objectTop) < find_water_level(o->oPosX, o->oPosZ)) ? 2 : (obj_is_on_ground(o) ? 0 : 1));
+    s32 terrainType  = (((o->oPosY + objectTop) < find_water_level(o->oPosX, o->oPosZ)) ? 2 : (onGround ? 0 : 1));
     s32 actionIndex  = (unpossessAct * 6) + (terrainType * 2) + isBackwards;
     u32 action       = (u32)  sMarioUnpossessActions[actionIndex][0];
     u32 actionArg    = (u32)  sMarioUnpossessActions[actionIndex][1];
@@ -578,6 +589,7 @@ bool omm_mario_unpossess_object(struct MarioState *m, u8 unpossessAct, bool isBa
 
     // Clear fields, reset Cappy bounce
     gOmmData->mario->capture.obj       = NULL;
+    gOmmData->mario->capture.prev      = (onGround ? NULL : o);
     gOmmData->mario->capture.timer     = 0;
     gOmmData->mario->capture.lockTimer = 0;
     gOmmData->mario->cappy.bounced     = false;

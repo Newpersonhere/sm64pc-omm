@@ -41,7 +41,7 @@
 
 #define OMM_HEALTH_MAX                              (0x87F)
 #define OMM_HEALTH_DEAD                             (0xFF)
-#define OMM_HEALTH_HARD_MODE                        (OMM_HEALTH_DEAD + OMM_HEALTH_PER_SEGMENT)
+#define OMM_HEALTH_1_HP                             (OMM_HEALTH_DEAD + OMM_HEALTH_PER_SEGMENT)
 #define OMM_HEALTH_NUM_SEGMENTS                     (6)
 #define OMM_HEALTH_NUM_SEGMENTS_HALF                (OMM_HEALTH_NUM_SEGMENTS / 2)
 #define OMM_HEALTH_NUM_TICKS_PER_SEGMENT            (0xA)
@@ -304,9 +304,24 @@ if ((m->input & INPUT_NONZERO_ANALOG) && (cond)) { \
 #define ACT_OMM_METAL_WATER_SPIN_JUMP               (0x26 | ACT_GROUP_METAL_WATER | ACT_FLAG_OMM_ACTION | ACT_FLAG_METAL_WATER | ACT_FLAG_AIR | ACT_FLAG_ALLOW_VERTICAL_WIND_ACTION)
 #define ACT_OMM_METAL_WATER_SPIN_POUND              (0x27 | ACT_GROUP_METAL_WATER | ACT_FLAG_OMM_ACTION | ACT_FLAG_METAL_WATER | ACT_FLAG_AIR | ACT_FLAG_ATTACKING)
 #define ACT_OMM_METAL_WATER_SPIN_POUND_LAND         (0x28 | ACT_GROUP_METAL_WATER | ACT_FLAG_OMM_ACTION | ACT_FLAG_METAL_WATER | ACT_FLAG_STATIONARY)
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
 #define ACT_OMM_METAL_WATER_WARIO_CHARGE            (0x29 | ACT_GROUP_METAL_WATER | ACT_FLAG_OMM_ACTION | ACT_FLAG_METAL_WATER | ACT_FLAG_MOVING | ACT_FLAG_ATTACKING | ACT_FLAG_INVULNERABLE)
 #define ACT_OMM_METAL_WATER_WARIO_TRIPLE_JUMP       (0x2A | ACT_GROUP_METAL_WATER | ACT_FLAG_OMM_ACTION | ACT_FLAG_METAL_WATER | ACT_FLAG_AIR)
 #endif
+
+//
+// SMO Animations (credits: Sharen#1569)
+//
+
+#define MARIO_ANIM_OMM_CAPPY_VAULT                  0xD1
+#define MARIO_ANIM_OMM_CAPPY_UP_THROW               0xD2
+#define MARIO_ANIM_OMM_CAPPY_DOWN_THROW             0xD3
+#define MARIO_ANIM_OMM_CAPPY_SPIN_THROW             0xD4
+#define MARIO_ANIM_OMM_CAPPY_THROW                  0xD5
+#define MARIO_ANIM_OMM_CAPPY_RAINBOW_SPIN           0xD6 // Cappy Twirl but by it's actual SMO name
+#define MARIO_ANIM_OMM_DROWN                        0xD7
+#define MARIO_ANIM_OMM_DEATH                        0xD8
+#define MARIO_ANIM_OMM_FREEZE                       0xD9
+#define MARIO_ANIM_OMM_STARDANCE                    0xDA
 
 #endif // OMM_MARIO_ACTIONS_H

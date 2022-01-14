@@ -9,6 +9,7 @@
 bool cappy_bobomb_init(struct Object* o) {
     gOmmData->object->state.actionTimer = 0;
     gOmmData->object->state.actionState = 0;
+    gOmmData->object->state.actionFlag = false;
     gOmmData->object->state.initialPos[0] = o->oHomeX;
     gOmmData->object->state.initialPos[1] = o->oHomeY;
     gOmmData->object->state.initialPos[2] = o->oHomeZ;
@@ -31,7 +32,7 @@ void cappy_bobomb_end(struct Object *o) {
     struct Surface *floor = NULL;
     find_floor(o->oPosX, o->oPosY + 50.f, o->oPosZ, &floor);
     if (
-#if OMM_CODE_VANILLA
+#if OMM_GAME_IS_SM64
         (gCurrLevelNum == LEVEL_BITFS) ||
 #endif
         (floor && (
@@ -71,25 +72,20 @@ s32 cappy_bobomb_update(struct Object *o) {
         }
 
         // Explosion
-        if (POBJ_B_BUTTON_PRESSED && (gOmmData->object->state.actionTimer == 0)) {
+        if (POBJ_B_BUTTON_PRESSED && !gOmmData->object->state.actionFlag && gOmmData->object->state.actionTimer == 0) {
             omm_spawn_explosion(o);
 
             // Make the bob-omb bloat after each explosion
             o->oScaleX *= 1.2f;
             o->oScaleY *= 1.2f;
             o->oScaleZ *= 1.2f;
+            gOmmData->object->state.actionFlag = true;
             gOmmData->object->state.actionTimer = 30;
             gOmmData->object->state.actionState++;
 
             // If airborne, do a double jump
             if (!obj_is_on_ground(o)) {
                 o->oVelY = 1.6f * omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER;
-            }
-
-            // If used three times in a row, delete the bob-omb
-            if (gOmmData->object->state.actionState == 3) {
-                omm_mario_unpossess_object(gMarioState, OMM_MARIO_UNPOSSESS_ACT_JUMP_OUT, false, 0);
-                obj_destroy(o);
             }
         } else {
             gOmmData->object->state.actionTimer = omm_max_s(0, gOmmData->object->state.actionTimer - 1);
@@ -105,6 +101,16 @@ s32 cappy_bobomb_update(struct Object *o) {
     pobj_decelerate(o, 0.80f, 0.95f);
     pobj_apply_gravity(o, 1.f);
     pobj_handle_special_floors(o);
+    POBJ_STOP_IF_UNPOSSESSED;
+
+    // Landing after 3 booms makes the bob-omb explode and ejects Mario
+    if (obj_is_on_ground(o)) {
+        gOmmData->object->state.actionFlag = false;
+        if (gOmmData->object->state.actionState == 3) {
+            omm_mario_unpossess_object(gMarioState, OMM_MARIO_UNPOSSESS_ACT_JUMP_OUT, false, 0);
+            obj_destroy(o);
+        }
+    }
     POBJ_STOP_IF_UNPOSSESSED;
 
     // Interactions

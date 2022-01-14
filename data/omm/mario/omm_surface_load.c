@@ -374,3 +374,124 @@ void load_object_collision_model() {
     o->oDistanceToMario = dist_between_objects(o, gMarioObject);
     o->oNodeFlags |= GRAPH_RENDER_ACTIVE;
 }
+
+#if OMM_CODE_DEBUG
+
+//
+// Surface display
+//
+
+static Gfx *omm_debug_render_surfaces() {
+    static Lights1  sOmmDebugRenderSurfacesLightFloor1 = gdSPDefLights1(0x00, 0x80, 0xFF, 0x00, 0x40, 0x80, 0x28, 0x28, 0x28);
+    static Lights1  sOmmDebugRenderSurfacesLightFloor2 = gdSPDefLights1(0x00, 0x40, 0x80, 0x00, 0x20, 0x40, 0x28, 0x28, 0x28);
+    static Lights1  sOmmDebugRenderSurfacesLightCeil1  = gdSPDefLights1(0xFF, 0x00, 0x00, 0x80, 0x00, 0x00, 0x28, 0x28, 0x28);
+    static Lights1  sOmmDebugRenderSurfacesLightCeil2  = gdSPDefLights1(0x80, 0x00, 0x00, 0x40, 0x00, 0x00, 0x28, 0x28, 0x28);
+    static Lights1  sOmmDebugRenderSurfacesLightWall1  = gdSPDefLights1(0x00, 0xA0, 0x00, 0x00, 0x50, 0x00, 0x28, 0x28, 0x28);
+    static Lights1  sOmmDebugRenderSurfacesLightWall2  = gdSPDefLights1(0x00, 0x50, 0x00, 0x00, 0x28, 0x00, 0x28, 0x28, 0x28);
+    static OmmArray sOmmDebugRenderSurfacesDisplayList = NULL;
+    static OmmArray sOmmDebugRenderSurfacesVertices    = NULL;
+
+    // Init
+    omm_array_init(sOmmDebugRenderSurfacesDisplayList, Gfx);
+    omm_array_grow(sOmmDebugRenderSurfacesDisplayList, 4 + gSurfacesAllocated * 10, Gfx, { 0 });
+    Gfx *gfx = omm_array_getp(sOmmDebugRenderSurfacesDisplayList, Gfx, 0);
+    Gfx *head = gfx;
+
+    // Surfaces
+    gSPClearGeometryMode(head++, G_CULL_BOTH);
+    gSPSetGeometryMode(head++, G_CULL_BACK | G_LIGHTING);
+    gDPSetCombineLERP(head++, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE);
+    for (s32 i = 0; i != gSurfacesAllocated; ++i) {
+        omm_array_grow(sOmmDebugRenderSurfacesVertices, i + 1, Vtx *, OMM_MEMNEW(Vtx, 6));
+        Vtx *vertices = omm_array_get(sOmmDebugRenderSurfacesVertices, Vtx *, i);
+        struct Surface *surface = omm_array_get(sOmmSurfaces, struct Surface *, i);
+
+        // Vertices
+        vertices[0] = vertices[3] = (Vtx) { { { surface->vertex1[0], surface->vertex1[1], surface->vertex1[2] }, 0, { 0, 0 }, { surface->normal.x * 127.f, surface->normal.y * 127.f, surface->normal.z * 127.f, 0xFF } } };
+        vertices[1] = vertices[4] = (Vtx) { { { surface->vertex2[0], surface->vertex2[1], surface->vertex2[2] }, 0, { 0, 0 }, { surface->normal.x * 127.f, surface->normal.y * 127.f, surface->normal.z * 127.f, 0xFF } } };
+        vertices[2] = vertices[5] = (Vtx) { { { surface->vertex3[0], surface->vertex3[1], surface->vertex3[2] }, 0, { 0, 0 }, { surface->normal.x * 127.f, surface->normal.y * 127.f, surface->normal.z * 127.f, 0xFF } } };
+        Vec3f center = {
+            (vertices[0].v.ob[0] + vertices[1].v.ob[0] + vertices[2].v.ob[0]) / 3,
+            (vertices[0].v.ob[1] + vertices[1].v.ob[1] + vertices[2].v.ob[1]) / 3,
+            (vertices[0].v.ob[2] + vertices[1].v.ob[2] + vertices[2].v.ob[2]) / 3,
+        };
+        for (s32 k = 0; k != 3; ++k) {
+            Vec3f dv = {
+                vertices[k].v.ob[0] - center[0],
+                vertices[k].v.ob[1] - center[1],
+                vertices[k].v.ob[2] - center[2],
+            };
+            f32 border = 5.f;
+            f32 length = vec3f_length(dv);
+            f32 mult = omm_max_f(0.5f, 1.f - (border / length));
+            vertices[k].v.ob[0] = center[0] + mult * dv[0];
+            vertices[k].v.ob[1] = center[1] + mult * dv[1];
+            vertices[k].v.ob[2] = center[2] + mult * dv[2];
+        }
+        
+        // Floor
+        if (surface->normal.y > +0.01f) {
+            gSPLight(head++, &sOmmDebugRenderSurfacesLightFloor1.l, 1);
+            gSPLight(head++, &sOmmDebugRenderSurfacesLightFloor1.a, 2);
+            gSPVertex(head++, vertices, 3, 0);
+            gSP1Triangle(head++, 0, 1, 2, 0);
+            gSPLight(head++, &sOmmDebugRenderSurfacesLightFloor2.l, 1);
+            gSPLight(head++, &sOmmDebugRenderSurfacesLightFloor2.a, 2);
+            gSPVertex(head++, vertices, 6, 0);
+            gSP2Triangles(head++, 3, 4, 0, 0, 0, 4, 1, 0);
+            gSP2Triangles(head++, 4, 5, 1, 0, 1, 5, 2, 0);
+            gSP2Triangles(head++, 5, 3, 2, 0, 2, 3, 0, 0);
+        }
+        
+        // Ceiling
+        else if (surface->normal.y < -0.01f) {
+            gSPLight(head++, &sOmmDebugRenderSurfacesLightCeil1.l, 1);
+            gSPLight(head++, &sOmmDebugRenderSurfacesLightCeil1.a, 2);
+            gSPVertex(head++, vertices, 3, 0);
+            gSP1Triangle(head++, 0, 1, 2, 0);
+            gSPLight(head++, &sOmmDebugRenderSurfacesLightCeil2.l, 1);
+            gSPLight(head++, &sOmmDebugRenderSurfacesLightCeil2.a, 2);
+            gSPVertex(head++, vertices, 6, 0);
+            gSP2Triangles(head++, 3, 4, 0, 0, 0, 4, 1, 0);
+            gSP2Triangles(head++, 4, 5, 1, 0, 1, 5, 2, 0);
+            gSP2Triangles(head++, 5, 3, 2, 0, 2, 3, 0, 0);
+        }
+        
+        // Wall
+        else {
+            gSPLight(head++, &sOmmDebugRenderSurfacesLightWall1.l, 1);
+            gSPLight(head++, &sOmmDebugRenderSurfacesLightWall1.a, 2);
+            gSPVertex(head++, vertices, 3, 0);
+            gSP1Triangle(head++, 0, 1, 2, 0);
+            gSPLight(head++, &sOmmDebugRenderSurfacesLightWall2.l, 1);
+            gSPLight(head++, &sOmmDebugRenderSurfacesLightWall2.a, 2);
+            gSPVertex(head++, vertices, 6, 0);
+            gSP2Triangles(head++, 3, 4, 0, 0, 0, 4, 1, 0);
+            gSP2Triangles(head++, 4, 5, 1, 0, 1, 5, 2, 0);
+            gSP2Triangles(head++, 5, 3, 2, 0, 2, 3, 0, 0);
+        }
+    }
+    gSPEndDisplayList(head);
+    return gfx;
+}
+
+OMM_ROUTINE_UPDATE(omm_debug_render_surfaces_update) {
+    if (OMM_LIKELY(gObjectLists && gMarioObject)) {
+        static Gfx sOmmDebugRenderSurfacesGfx[] = { gsSPDisplayList(NULL), gsSPEndDisplayList() };
+        static const GeoLayout sOmmDebugRenderSurfacesGeo[] = { GEO_NODE_START(), GEO_OPEN_NODE(), GEO_DISPLAY_LIST(LAYER_OPAQUE, sOmmDebugRenderSurfacesGfx), GEO_CLOSE_NODE(), GEO_END() };
+        static const BehaviorScript sOmmDebugRenderSurfacesBhv[] = { OBJ_TYPE_UNIMPORTANT, 0x11010001, 0x08000000, 0x09000000 };
+        struct Object *o = obj_get_first_with_behavior(sOmmDebugRenderSurfacesBhv);
+        if (!o && gOmmDebugSurface) {
+            o = obj_spawn_from_geo(gMarioObject, sOmmDebugRenderSurfacesGeo, sOmmDebugRenderSurfacesBhv);
+            obj_set_pos(o, 0, 0, 0);
+            obj_set_angle(o, 0, 0, 0);
+            obj_scale(o, 1.f);
+            obj_set_always_rendered(o, true);
+        } else if (o && !gOmmDebugSurface) {
+            obj_mark_for_deletion(o);
+        }
+        sOmmDebugRenderSurfacesGfx->words.w1 = (uintptr_t) omm_debug_render_surfaces();
+    }
+}
+
+#endif

@@ -164,7 +164,7 @@ static s32 omm_act_metal_water_walking(struct MarioState *m) {
     action_a_pressed(analog_stick_held_back(m) && m->forwardVel >= OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED / 2.f, ACT_OMM_METAL_WATER_SIDE_FLIP, 0, RETURN_CANCEL);
     action_a_pressed((m->forwardVel >= OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED / 2.f || gOmmData->mario->metalWater.jumpNext == ACT_OMM_METAL_WATER_LONG_JUMP) && (m->controller->buttonDown & Z_TRIG), ACT_OMM_METAL_WATER_LONG_JUMP, 0, RETURN_CANCEL);
     action_a_pressed(1, gOmmData->mario->metalWater.jumpNext, 0, RETURN_CANCEL);
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     action_b_pressed(OMM_PLAYER_IS_WARIO && m->forwardVel >= OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED * 0.85f, ACT_OMM_METAL_WATER_WARIO_CHARGE, 0, RETURN_CANCEL);
 #endif
     action_b_pressed(1, ACT_OMM_METAL_WATER_PUNCHING, 0, RETURN_CANCEL);
@@ -329,7 +329,7 @@ static s32 omm_act_metal_water_double_jump_land(struct MarioState *m) {
 }
 
 static s32 omm_act_metal_water_triple_jump(struct MarioState *m) {
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     action_condition(OMM_PLAYER_IS_WARIO, ACT_OMM_METAL_WATER_WARIO_TRIPLE_JUMP, 0, RETURN_CANCEL);
 #endif
     action_init(m->forwardVel * 0.9f, 46.f, PARTICLE_MIST_CIRCLE, SOUND_ACTION_METAL_JUMP_WATER);
@@ -339,8 +339,13 @@ static s32 omm_act_metal_water_triple_jump(struct MarioState *m) {
     action_z_pressed(1, ACT_OMM_METAL_WATER_GROUND_POUND, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_METAL_WATER_SPIN_AIR, 0, RETURN_CANCEL);
     action_condition(omm_metal_water_check_water_jump(m), ACT_WATER_JUMP, 0, RETURN_CANCEL);
-    action_condition(omm_metal_water_common_air_action_step(m, ACT_OMM_METAL_WATER_TRIPLE_JUMP_LAND, MARIO_ANIM_TRIPLE_JUMP), 0, 0, RETURN_BREAK);
-    play_flip_sounds(m, 2, 8, 20);
+    if (OMM_EXTRAS_SMO_ANIMATIONS && m->actionArg == 1) {
+        action_condition(omm_metal_water_common_air_action_step(m, ACT_OMM_METAL_WATER_TRIPLE_JUMP_LAND, MARIO_ANIM_OMM_CAPPY_VAULT), 0, 0, RETURN_BREAK);
+        if (m->marioObj->header.gfx.mAnimInfo.animFrame == 6) play_sound(SOUND_ACTION_SIDE_FLIP_UNK, m->marioObj->oCameraToObject);
+    } else {
+        action_condition(omm_metal_water_common_air_action_step(m, ACT_OMM_METAL_WATER_TRIPLE_JUMP_LAND, MARIO_ANIM_TRIPLE_JUMP), 0, 0, RETURN_BREAK);
+        play_flip_sounds(m, 2, 8, 20);
+    }
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
@@ -547,9 +552,14 @@ static s32 omm_act_metal_water_jump_kick(struct MarioState *m) {
 
     // Twirl
     if (m->actionArg == 1) {
-        set_mario_anim_with_accel(m, MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN, 0x18000);
-        m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist = omm_clamp_s(m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist, (74 << 16), (94 << 16));
-        m->flags |= MARIO_KICKING * (m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist < (94 << 16));
+        if (OMM_EXTRAS_SMO_ANIMATIONS) {
+            set_mario_animation(m, MARIO_ANIM_OMM_CAPPY_RAINBOW_SPIN);
+            m->flags |= MARIO_KICKING * (m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist < (20 << 16));
+        } else {
+            set_mario_anim_with_accel(m, MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN, 0x18000);
+            m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist = omm_clamp_s(m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist, (74 << 16), (94 << 16));
+            m->flags |= MARIO_KICKING * (m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist < (94 << 16));
+        }
         m->marioBodyState->punchState = 0;
 
         omm_mario_update_air_without_turn(m);
@@ -847,7 +857,7 @@ static s32 omm_act_metal_water_spin_pound_land(struct MarioState *m) {
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
 
 //
 // Wario moves
@@ -1050,7 +1060,7 @@ s32 omm_mario_execute_metal_water_action(struct MarioState *m) {
         case ACT_OMM_METAL_WATER_SPIN_POUND:                return omm_act_metal_water_spin_pound(m);
         case ACT_OMM_METAL_WATER_SPIN_POUND_LAND:           return omm_act_metal_water_spin_pound_land(m);
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
         // Wario
         case ACT_OMM_METAL_WATER_WARIO_CHARGE:              return omm_act_metal_water_wario_charge(m);
         case ACT_OMM_METAL_WATER_WARIO_TRIPLE_JUMP:         return omm_act_metal_water_wario_triple_jump(m);

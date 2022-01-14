@@ -84,6 +84,7 @@ struct OmmData {
         struct {
             const void *data;
             struct Object *obj;
+            struct Object *prev;
             Vec3f animPos[3];
             s32 timer;
             s32 lockTimer;
@@ -101,7 +102,6 @@ struct OmmData {
 #endif
         } capture;
 
-#if OMM_CODE_SPARKLY
         // Sparkly stars data
         struct {
             s32 mode;
@@ -109,7 +109,6 @@ struct OmmData {
             s32 ending;
             s32 cheats[4];
         } sparkly;
-#endif
     } mario[1];
 
     // Object data
@@ -184,6 +183,28 @@ struct OmmData {
                 s32 interactedTimer;
                 bool interactedFire;
             } flaming_bobomb;
+
+            // Swoop
+            struct {
+                s32 ceilingType;
+                union {
+                    struct {
+                        struct Surface *s;
+                        f32 height;
+                    } surface;
+                    struct {
+                        struct Object *o;
+                        Vec3f pos;
+                        Vec3f angle;
+                        Vec3f scale;
+                    } object;
+                } ceiling;
+            } swoop;
+
+            // Motos
+            struct {
+                struct Object *heldObj;
+            } motos;
         };
     } object[1];
 };

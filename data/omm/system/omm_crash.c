@@ -309,7 +309,7 @@ static LONG omm_crash_handler(EXCEPTION_POINTERS *ExceptionInfo) {
     }
 
     // Game over sound effect
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     dynos_music_stop();
     dynos_jingle_stop();
     dynos_sound_stop(1);

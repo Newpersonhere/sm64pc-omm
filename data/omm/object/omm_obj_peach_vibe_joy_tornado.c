@@ -192,7 +192,7 @@ static void omm_bhv_peach_vibe_joy_tornado_update() {
 }
 
 const BehaviorScript omm_bhv_peach_vibe_joy_tornado[] = {
-    OBJ_TYPE_ONE_WAY_INTERACTION,
+    OBJ_TYPE_SPECIAL,
     0x08000000,
     0x0C000000, (uintptr_t) omm_bhv_peach_vibe_joy_tornado_update,
     0x09000000,

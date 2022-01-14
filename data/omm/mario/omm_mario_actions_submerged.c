@@ -219,6 +219,8 @@ static s32 omm_act_leave_object_water(struct MarioState *m) {
 static s32 omm_act_cappy_throw_water(struct MarioState *m) {
     action_condition(omm_mario_has_metal_cap(m), ACT_OMM_METAL_WATER_FREEFALL, 0, RETURN_CANCEL);
     action_condition(m->flags & MARIO_METAL_CAP, ACT_METAL_WATER_FALLING, 0, RETURN_CANCEL);
+    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_WATER_DASH, 0, RETURN_CANCEL);
+    action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_WATER_GROUND_POUND, 0, RETURN_CANCEL);
     action_init(m->forwardVel, m->vel[1], 0, SOUND_ACTION_SWIM);
 
     mario_set_forward_vel(m, m->forwardVel * 0.9f);

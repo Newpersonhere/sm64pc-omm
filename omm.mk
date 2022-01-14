@@ -12,8 +12,8 @@ SRC_DIRS += data/omm data/omm/system data/omm/object data/omm/mario data/omm/cap
 # Version
 # -------
 
-OMM_VERSION_NUMBER := 6.1.2
-OMM_VERSION_REVISION := 2
+OMM_VERSION_NUMBER := 7.0.0
+OMM_VERSION_REVISION := 1
 OMM_DEVELOPER := PeachyPeach
 VERSION_CFLAGS += -DOMM_VERSION="$(OMM_VERSION_NUMBER)"
 VERSION_CFLAGS += -DOMM_DEVELOPER="$(OMM_DEVELOPER)"
@@ -92,22 +92,10 @@ DEFINES += NO_SEGMENTED_MEMORY=1
 # Macros
 # ------
 
-OMM_VANILLA ?= -1
-ifneq ($(OMM_VANILLA),-1)
-VERSION_CFLAGS += -DOMM_VANILLA=$(OMM_VANILLA)
-DEFINES += OMM_VANILLA=$(OMM_VANILLA)
-endif
-
 OMM_BOWSER ?= -1
 ifneq ($(OMM_BOWSER),-1)
 VERSION_CFLAGS += -DOMM_BOWSER=$(OMM_BOWSER)
 DEFINES += OMM_BOWSER=$(OMM_BOWSER)
-endif
-
-OMM_SPARKLY ?= -1
-ifneq ($(OMM_SPARKLY),-1)
-VERSION_CFLAGS += -DOMM_SPARKLY=$(OMM_SPARKLY)
-DEFINES += OMM_SPARKLY=$(OMM_SPARKLY)
 endif
 
 OMM_DEBUG ?= -1
@@ -165,4 +153,5 @@ OMM_VERSION:
 	--------------------------------------------------------------------------------------------------------------------------------\n"
 
 OMM_EXE_MAP: $(EXE)
-	objdump -t $(EXE) > $(OMM_DIR_OUT)/omm.map
+	@objdump -t $(EXE) > $(OMM_DIR_OUT)/omm.map ;\
+	python3 omm_assets.py

@@ -44,7 +44,7 @@ s32 cappy_scuttlebug_update(struct Object *o) {
                 gOmmData->mario->capture.stickYaw = wallAngle + 0x8000 - diffAngle;
             }
             o->oFloor = o->oWall;
-            o->oFloorHeight = 0.f;
+            o->oFloorHeight = o->oPosY;
         }
         pobj_move(o, POBJ_B_BUTTON_DOWN, false, false);
         if (pobj_jump(o, 0, 1) == POBJ_RESULT_JUMP_START) {
@@ -64,7 +64,7 @@ s32 cappy_scuttlebug_update(struct Object *o) {
     };
     obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
     pobj_decelerate(o, 0.85f, 0.95f);
-    if (o->oWall && (o->oVelY <= 0.f) && (o->oFloorHeight > o->hitboxRadius) && POBJ_B_BUTTON_DOWN) {
+    if (o->oWall && (o->oVelY <= 0.f) && (o->oDistToFloor > o->hitboxRadius) && POBJ_B_BUTTON_DOWN) {
         o->oVelY = 0;
         if (!gOmmData->object->state.actionState) {
             s16 wallAngle = 0x8000 + atan2s(o->oWall->normal.z, o->oWall->normal.x);
@@ -108,7 +108,7 @@ s32 cappy_scuttlebug_update(struct Object *o) {
     }
 
     // Cappy values
-    gOmmData->object->cappy.copyGfx = true;
+    gOmmData->object->cappy.copyGfx   = true;
     gOmmData->object->cappy.offset[1] = 90.f;
     gOmmData->object->cappy.scale     = 0.8f;
 

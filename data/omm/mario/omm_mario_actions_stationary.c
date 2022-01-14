@@ -14,7 +14,7 @@ static s32 omm_act_idle(struct MarioState *m) {
     action_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_GROUND, 0, RETURN_CANCEL);
     action_condition(m->quicksandDepth > 30.f, ACT_IN_QUICKSAND, 0, RETURN_CANCEL);
     action_condition(!OMM_PEACH_VIBE_NO_COUGHING && (m->input & INPUT_IN_POISON_GAS), ACT_COUGHING, 0, RETURN_CANCEL);
-    action_condition(!gIsHardMode && !OMM_PEACH_VIBE_NO_PANTING && !(m->actionArg & 1) && (m->health < 0x300), ACT_PANTING, 0, RETURN_CANCEL);
+    action_condition(!g1HPMode && !OMM_PEACH_VIBE_NO_PANTING && !(m->actionArg & 1) && (m->health < 0x300), ACT_PANTING, 0, RETURN_CANCEL);
     action_condition(check_common_idle_cancels(m), 0, 0, RETURN_CANCEL);
     action_condition(m->actionState == 3 && !OMM_PEACH_VIBE_NO_SHIVERING && (m->area->terrainType & TERRAIN_MASK) == TERRAIN_SNOW, ACT_SHIVERING, 0, RETURN_CANCEL);
     action_condition(m->actionState == 3 && !OMM_PEACH_VIBE_NO_SLEEPING, ACT_START_SLEEPING, 0, RETURN_CANCEL);

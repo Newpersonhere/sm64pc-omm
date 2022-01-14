@@ -253,9 +253,14 @@ static s32 omm_act_jump_kick(struct MarioState *m) {
 
     // Cappy twirl
     if (m->actionArg) {
-        set_mario_anim_with_accel(m, MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN, 0x18000);
-        m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist = omm_clamp_s(m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist, (74 << 16), (94 << 16));
-        m->flags |= MARIO_KICKING * (m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist < (94 << 16));
+        if (OMM_EXTRAS_SMO_ANIMATIONS) {
+            set_mario_animation(m, MARIO_ANIM_OMM_CAPPY_RAINBOW_SPIN);
+            m->flags |= MARIO_KICKING * (m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist < (20 << 16));
+        } else {
+            set_mario_anim_with_accel(m, MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN, 0x18000);
+            m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist = omm_clamp_s(m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist, (74 << 16), (94 << 16));
+            m->flags |= MARIO_KICKING * (m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist < (94 << 16));
+        }
         m->marioBodyState->punchState = 0;
     }
 
@@ -447,7 +452,7 @@ static s32 omm_act_thrown_backward(struct MarioState *m) {
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
 static s32 omm_act_wario_triple_jump(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -517,8 +522,13 @@ static s32 omm_act_ground_cappy_bounce(struct MarioState *m) {
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
-    action_condition(common_air_action_step(m, ACT_DOUBLE_JUMP_LAND, MARIO_ANIM_TRIPLE_JUMP, AIR_STEP_CHECK_LEDGE_GRAB) != AIR_STEP_NONE, 0, 0, RETURN_BREAK);
-    play_flip_sounds(m, 2, 8, 20);
+    if (OMM_EXTRAS_SMO_ANIMATIONS) {
+        action_condition(common_air_action_step(m, ACT_DOUBLE_JUMP_LAND, MARIO_ANIM_OMM_CAPPY_VAULT, AIR_STEP_CHECK_LEDGE_GRAB) != AIR_STEP_NONE, 0, 0, RETURN_BREAK);
+        if (m->marioObj->header.gfx.mAnimInfo.animFrame == 6) play_sound(SOUND_ACTION_SIDE_FLIP_UNK, m->marioObj->oCameraToObject);
+    } else {
+        action_condition(common_air_action_step(m, ACT_DOUBLE_JUMP_LAND, MARIO_ANIM_TRIPLE_JUMP, AIR_STEP_CHECK_LEDGE_GRAB) != AIR_STEP_NONE, 0, 0, RETURN_BREAK);
+        play_flip_sounds(m, 2, 8, 20);
+    }
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
@@ -883,7 +893,7 @@ s32 omm_mario_execute_airborne_action(struct MarioState *m) {
         case ACT_GETTING_BLOWN:             return omm_act_getting_blown(m);
         case ACT_THROWN_FORWARD:            return omm_act_thrown_forward(m);
         case ACT_THROWN_BACKWARD:           return omm_act_thrown_backward(m);
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
         case ACT_WARIO_TRIPLE_JUMP:         return omm_act_wario_triple_jump(m);
 #endif
 

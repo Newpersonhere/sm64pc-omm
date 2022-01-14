@@ -127,6 +127,14 @@ void vec3f_rotate_around_n(Vec3f dest, Vec3f v, Vec3f n, s16 r) {
     dest[2] = v[2] * cosr + kCrossv[2] * sinr + n[2] * kDotv * (1.f - cosr);
 }
 
+// Scale, rotate, translate
+void vec3f_transform(Vec3f dest, Vec3f v, Vec3f translation, Vec3s rotation, Vec3f scale) {
+    vec3f_copy(dest, v);
+    vec3f_mult(dest, dest, scale);
+    vec3f_rotate_zxy(dest, dest, rotation[0], rotation[1], rotation[2]);
+    vec3f_sum(dest, dest, translation);
+}
+
 // Lagrange's polynoms
 //                t - t1      t - t2           t - t0      t - t2           t - t0      t - t1
 // L3(t) = p0 * --------- * --------- + p1 * --------- * --------- + p2 * --------- * ---------

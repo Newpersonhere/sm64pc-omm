@@ -63,7 +63,6 @@ s32 omm_sparkly_get_timer(s32 mode) {
     return 0;
 }
 
-#if OMM_CODE_SPARKLY
 void omm_sparkly_unlock_mode(s32 mode) {
     if (OMM_LIKELY(mode >= 1 && mode < OMM_SPARKLY_MODE_COUNT)) {
         sOmmSparklySaveDataFlags[mode][OMM_SPARKLY_SAVE_FLAG_MODE_UNLOCKED] = true;
@@ -107,7 +106,6 @@ void omm_sparkly_clear_mode(s32 mode) {
         gSaveFileModified = true;
     }
 }
-#endif
 
 //
 // Save data

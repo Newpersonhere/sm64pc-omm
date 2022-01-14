@@ -185,8 +185,8 @@ s32 cappy_boo_update(struct Object *o) {
     // Gfx
     obj_update_gfx(o);
     cappy_boo_update_opacity_and_scale(o);
-    if (o->oFloorHeight < 50.f) {
-        gOmmData->object->boo.gfxOffsetY = (50.f - o->oFloorHeight);
+    if (o->oDistToFloor < 50.f) {
+        gOmmData->object->boo.gfxOffsetY = (50.f - (o->oDistToFloor));
     } else {
         gOmmData->object->boo.gfxOffsetY = omm_max_f(0.f, gOmmData->object->boo.gfxOffsetY - 2.f);
     }

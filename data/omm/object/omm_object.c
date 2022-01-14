@@ -295,7 +295,7 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
         return false;
     }
 
-#if defined(SMSR)
+#if OMM_GAME_IS_SMSR
     // Kill the Big Chill Bully if he falls too low below his starting platform
     if (o->behavior == bhvBigChillBully) {
         if (o->oAction < BULLY_ACT_LAVA_DEATH && o->oPosY < o->oHomeY - 400.f) {
@@ -342,6 +342,29 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
 // Update functions
 // -------------------------------------------------------------------------------------------------------------------------------
 
+    // bhv_hidden_red_coin_star_init
+    // bhv_hidden_red_coin_star_loop
+    // bhv_bowser_course_red_coin_star_loop
+    // Flag the spawned star as a 'red coin star'
+    if (func == bhv_hidden_red_coin_star_init ||
+        func == bhv_hidden_red_coin_star_loop ||
+        func == bhv_bowser_course_red_coin_star_loop) {
+        if (!omm_stars_is_collected(o->oBehParams >> 24)) {
+            func();
+            if (o->activeFlags == ACTIVE_FLAG_DEACTIVATED) {
+                u8 starIndex = (o->oBehParams >> 24) & 0xFF;
+                for_each_until_null(const BehaviorScript *, bhv, OMM_ARRAY_OF(const BehaviorScript *) { bhvStar, bhvStarSpawnCoordinates, NULL }) {
+                    for_each_object_with_behavior(star, *bhv) {
+                        if (((star->oBehParams >> 24) & 0xFF) == starIndex) {
+                            star->activeFlags |= ACTIVE_FLAG_RED_COIN_STAR;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+    }
+
     // Stars
     // Don't spawn a star if already collected
     if (func == bhv_star_spawn_init ||
@@ -373,7 +396,7 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
         func == bhv_1up_hidden_in_pole_loop) {
         if ((o->oNodeFlags & GRAPH_RENDER_ACTIVE) && !(o->oNodeFlags & GRAPH_RENDER_INVISIBLE) && (o->oIntangibleTimer == 0)) {
             if (obj_check_if_collided_with_object(o, gMarioObject)) {
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
                 // Green Demon effect
                 if (Cheats.EnableCheats && Cheats.ChaosGreenDemon) {
                     play_sound(SOUND_MENU_CAMERA_BUZZ, gDefaultSoundArgs);
@@ -507,7 +530,7 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
     // bhv_hidden_star_trigger_loop
     // Reveal secrets if the option is enabled
     if (func == bhv_hidden_star_trigger_loop) {
-        if (gOmmExtrasRevealSecrets) {
+        if (OMM_EXTRAS_REVEAL_SECRETS) {
             o->oGraphNode = gLoadedGraphNodes[MODEL_PURPLE_MARBLE];
             o->oNodeFlags |= GRAPH_RENDER_BILLBOARD;
         } else {
@@ -564,7 +587,7 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
     // bhv_coin_inside_boo_loop
     // Boos always carry a Blue coin, except in Castle Courtyard
     if (func == bhv_coin_inside_boo_loop) {
-#if OMM_CODE_VANILLA
+#if OMM_GAME_IS_SM64
         if (gCurrLevelNum == LEVEL_COURT) {
             o->oGraphNode = gLoadedGraphNodes[MODEL_YELLOW_COIN];
             obj_scale(o, 1.f);
@@ -616,7 +639,7 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
         return false;
     }
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     // bhv_motos_loop
     // Gets mad if weak attacked, or knocked back if strong attacked
     if (func == bhv_motos_loop) {
@@ -665,7 +688,7 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
         return false;
     }
 
-#if OMM_CODE_VANILLA
+#if OMM_GAME_IS_SM64
     // bhv_yoshi_loop
     // Replaced the 100 lives by something more... surprising!
     if (func == bhv_yoshi_loop) {
@@ -886,7 +909,7 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
         return true;
     }
 
-#if !defined(SMSR)
+#if !OMM_GAME_IS_SMSR
     // bhv_mips_init
     // Spawns a faster Mips at 120 stars
     if (func == bhv_mips_init) {

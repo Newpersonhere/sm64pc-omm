@@ -5,34 +5,13 @@
 s32 gFindFloorForCutsceneStar = 0;
 u8 gInterpolatingSurfaces;
 
-/*
-Enhanced surface collision system
-Enabled by setting Moveset to Odyssey
-Adds several fixes and increases accuracy:
-- Treats PUs as out of bounds
-- Fixes unreferenced wall glitch, and returns the closest wall in the direction of Mario
-- Checks floor on a square instead of a point, to prevent objects to fall inside small gaps
-- Increases number of cells checked for more precise wall collisions
-*/
-
-static bool sCheckPUs;
-static bool sCheckFloorSquare;
-static bool sCheckNeighborCells;
-static bool sFixUnreferencedWalls;
-
-OMM_ROUTINE_UPDATE(surface_collision_update_values) {
-    if (OMM_MOVESET_ODYSSEY) {
-        sCheckPUs = true;
-        sCheckFloorSquare = true;
-        sCheckNeighborCells = true;
-        sFixUnreferencedWalls = true;
-    } else {
-        sCheckPUs = false;
-        sCheckFloorSquare = false;
-        sCheckNeighborCells = false;
-        sFixUnreferencedWalls = false;
-    }
-}
+// Enhanced surface collision system
+// Enabled by setting Moveset to Odyssey
+// Adds several fixes and increases accuracy:
+// - Treats PUs as out of bounds
+// - Fixes unreferenced wall glitch, and returns the closest wall in the direction of Mario
+// - Checks floor on a square instead of a point, to prevent objects to fall inside small gaps
+// - Increases number of cells checked for more precise wall collisions
 
 //
 // Walls
@@ -40,7 +19,7 @@ OMM_ROUTINE_UPDATE(surface_collision_update_values) {
 
 static bool check_wall_extension(struct Surface *surf, struct WallCollisionData *data) {
 
-#if OMM_CODE_VANILLA
+#if OMM_GAME_IS_SM64
     // Extended volcano walls
     // The purpose is to extend the volcano walls height from 5200 to 8000 to prevent
     // Mario from wall-jumping behind them when the rising lava object is spawned
@@ -160,7 +139,7 @@ static s32 find_wall_collisions_from_list(struct Surface **head, s32 count, stru
         data->z += surf->normal.z * (data->radius - offset);
         if (!isWallExtended) {
             if (data->numWalls < 4) {
-                if (sFixUnreferencedWalls) {
+                if (OMM_COLLISION_FIX_UNREFERENCED_WALLS) {
                     s16 sAngle = atan2s(surf->normal.z, surf->normal.x);
                     for (s16 i = 0; i <= data->numWalls; ++i) {
                         if (i == data->numWalls) {
@@ -189,7 +168,7 @@ s32 find_wall_collisions(struct WallCollisionData *data) {
     s32 collisions = 0;
     data->numWalls = 0;
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     if (cheats_no_bounds(gMarioState)) {
         return 0;
     }
@@ -197,14 +176,14 @@ s32 find_wall_collisions(struct WallCollisionData *data) {
 
     // CCM Racing penguin
     // His radius is bigger than 200, but not capping it at 200 breaks its path
-#if !defined(SMSR)
+#if !OMM_GAME_IS_SMSR
     if (gCurrentObject && gCurrentObject->behavior == bhvRacingPenguin) {
         data->radius = omm_min_f(data->radius, 200.f);
     }
 #endif
 
     // Check PUs
-    if (sCheckPUs) {
+    if (OMM_COLLISION_CHECK_PUS) {
         if (data->x < -OMM_COLLISION_LEVEL_BOUNDARY || data->x >= +OMM_COLLISION_LEVEL_BOUNDARY ||
             data->z < -OMM_COLLISION_LEVEL_BOUNDARY || data->z >= +OMM_COLLISION_LEVEL_BOUNDARY) {
             return 0;
@@ -214,8 +193,8 @@ s32 find_wall_collisions(struct WallCollisionData *data) {
     // Check cells
     s16 cx0 = ((s16) ((data->x + OMM_COLLISION_LEVEL_BOUNDARY) / OMM_COLLISION_CELL_SIZE)) & OMM_COLLISION_CELL_BITS;
     s16 cz0 = ((s16) ((data->z + OMM_COLLISION_LEVEL_BOUNDARY) / OMM_COLLISION_CELL_SIZE)) & OMM_COLLISION_CELL_BITS;
-    for (s16 dz = -(s16) sCheckNeighborCells; dz <= +(s16) sCheckNeighborCells; ++dz)
-    for (s16 dx = -(s16) sCheckNeighborCells; dx <= +(s16) sCheckNeighborCells; ++dx) {
+    for (s16 dz = -(s16) OMM_COLLISION_CHECK_NEIGHBOR_CELLS; dz <= +(s16) OMM_COLLISION_CHECK_NEIGHBOR_CELLS; ++dz)
+    for (s16 dx = -(s16) OMM_COLLISION_CHECK_NEIGHBOR_CELLS; dx <= +(s16) OMM_COLLISION_CHECK_NEIGHBOR_CELLS; ++dx) {
         s16 cx = cx0 + dx;
         s16 cz = cz0 + dz;
         if (cx < 0 || cx >= OMM_COLLISION_CELL_COUNT ||
@@ -238,7 +217,7 @@ struct Surface *resolve_and_return_wall_collisions(Vec3f pos, f32 offsetY, f32 r
 
     struct Surface *wRef = NULL;
     if (find_wall_collisions(&data)) {
-        if (sFixUnreferencedWalls) {
+        if (OMM_COLLISION_FIX_UNREFERENCED_WALLS) {
             s16 yaw = gMarioState->faceAngle[1];
             for (u16 i = 0, mAngle = 0xFFFF; i < (u16) data.numWalls; i++) {
                 struct Surface *w = data.walls[i];
@@ -322,14 +301,14 @@ f32 find_ceil(f32 x, f32 y, f32 z, struct Surface **pCeil) {
     f32 dHeight = +20000.f;
     *pCeil = NULL;
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     if (cheats_no_bounds(gMarioState)) {
         return sHeight;
     }
 #endif
 
     // Check PUs
-    if (sCheckPUs) {
+    if (OMM_COLLISION_CHECK_PUS) {
         if (x < -OMM_COLLISION_LEVEL_BOUNDARY || x >= +OMM_COLLISION_LEVEL_BOUNDARY ||
             z < -OMM_COLLISION_LEVEL_BOUNDARY || z >= +OMM_COLLISION_LEVEL_BOUNDARY) {
             return 0;
@@ -397,7 +376,7 @@ static struct Surface *find_floor_from_list(struct Surface **head, s32 count, f3
             // If not, checking if one of 4 surrounding points is in bounds
             // Prevent the object from going through gaps smaller than 20 units
             // Does not apply to steep floors, to prevent Mario from walking mid-air
-            if (!sCheckFloorSquare || surf->normal.y < 0.7f || (
+            if (!OMM_COLLISION_CHECK_FLOOR_SQUARE || surf->normal.y < 0.7f || (
                 !check_is_point_inside_floor_triangle(surf, x - 10.f, z) &&
                 !check_is_point_inside_floor_triangle(surf, x + 10.f, z) &&
                 !check_is_point_inside_floor_triangle(surf, x, z - 10.f) &&
@@ -438,7 +417,7 @@ struct Surface *get_pseudo_floor_at_pos(f32 x, f32 y, f32 z) {
     return sPseudoFloor;
 }
 
-#if !OMM_CODE_VANILLA
+#if !OMM_GAME_IS_SM64
 struct Surface *get_eyerock_boss_floor(f32 x, f32 z, f32 x0, f32 y0, f32 z0, f32 radius) {
     static struct Surface sEyerockBossFloor[2][1];
 
@@ -494,7 +473,7 @@ struct Surface *get_eyerock_boss_floor(f32 x, f32 z, f32 x0, f32 y0, f32 z0, f32
 }
 #endif
 
-#if !defined(SMSR)
+#if !OMM_GAME_IS_SMSR
 // floorGeo is always filled, even when there is no floor, to avoid NULL pointer deref crash
 // (most of the code calling it assumes that (*floorGeo) is never NULL...)
 f32 find_floor_height_and_data(f32 x, f32 y, f32 z, struct FloorGeometry **floorGeo) {
@@ -553,7 +532,7 @@ f32 find_floor(f32 x, f32 y, f32 z, struct Surface **pFloor) {
     }
 
     // Check PUs
-    if (sCheckPUs) {
+    if (OMM_COLLISION_CHECK_PUS) {
         if (x < -OMM_COLLISION_LEVEL_BOUNDARY || x >= +OMM_COLLISION_LEVEL_BOUNDARY ||
             z < -OMM_COLLISION_LEVEL_BOUNDARY || z >= +OMM_COLLISION_LEVEL_BOUNDARY) {
             return 0;
@@ -586,7 +565,7 @@ f32 find_floor(f32 x, f32 y, f32 z, struct Surface **pFloor) {
         }
     }
 
-#if !OMM_CODE_VANILLA
+#if !OMM_GAME_IS_SM64
     // Eyerock boss fake floor
     // Fix Eyerock boss fight in various rom-hacks
     // The vanilla behavior heavily depends on hard-coded coordinates, so it kinda breaks when used elsewhere...
@@ -603,7 +582,7 @@ f32 find_floor(f32 x, f32 y, f32 z, struct Surface **pFloor) {
     }
 #endif
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     // If out-of-bounds but NoBounds is enabled, place a fake death plane below Mario
     if (!sFloor && !dFloor && cheats_no_bounds(gMarioState)) {
         sFloor = get_pseudo_floor_at_pos(x, -11000.f, z);

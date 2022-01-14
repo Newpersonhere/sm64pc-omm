@@ -166,6 +166,7 @@ static void omm_bhv_sparkly_star_block_update() {
         } break;
 
         case 3: {
+            obj_scale(o, 0.f);
             if (o->oTimer == 20) {
                 audio_play_puzzle_jingle();
                 obj_mark_for_deletion(o);
@@ -218,6 +219,7 @@ struct Object *omm_spawn_sparkly_star_block(struct Object *o, s32 mode, f32 x, f
     obj_scale(block, 2.5f);
     obj_set_params(block, INTERACT_BREAKABLE, 0, 1, 0, true);
     obj_reset_hitbox(block, 30, 50, 30, 50, 0, 0);
+    obj_update_gfx(block);
     block->activeFlags |= ACTIVE_FLAG_INITIATED_TIME_STOP;
     block->oSparklyStarMode = mode;
     return block;

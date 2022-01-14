@@ -307,7 +307,6 @@ static Gfx *omm_cappy_gfx_get_display_list(u32 id, bool metal, bool mirror) {
     gDPPipeSync(gfxHead++);
     gSPClearGeometryMode(gfxHead++, G_TEXTURE_GEN | G_CULL_BOTH);
     gSPSetGeometryMode(gfxHead++, mirror ? G_CULL_FRONT : G_CULL_BACK);
-    //gDPSetCombineLERP(gfxHead++, 0, 0, 0, TEXEL0, TEXEL0, 0, ENVIRONMENT, 0, 0, 0, 0, TEXEL0, TEXEL0, 0, ENVIRONMENT, 0); // G_CC_DECALFADEA
     gDPSetCombineLERP(gfxHead++, TEXEL0, SHADE, TEXEL0_ALPHA, SHADE, 0, 0, 0, ENVIRONMENT, TEXEL0, SHADE, TEXEL0_ALPHA, SHADE, 0, 0, 0, ENVIRONMENT); // G_CC_BLENDRGBFADEA
     gSPTexture(gfxHead++, 0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON);
     gDPLoadTextureBlock(gfxHead++, texCappy, G_IM_FMT_RGBA, G_IM_SIZ_32b, 128, 128, 0, 0, 0, 0, 0, 0, 0);
@@ -355,7 +354,7 @@ static bool omm_cappy_gfx_draw(u32 id, u8 alpha, bool metal, bool mirror, void (
 }
 
 bool omm_cappy_gfx_draw_eyes(struct GraphNodeSwitchCase *node, void (*append)(void *, s16)) {
-    if (!OMM_CAP_CLASSIC && gOmmExtrasCappyEyesOnMariosCap && gCurGraphNodeObject) {
+    if (OMM_EXTRAS_CAPPY_AND_TIARA && gCurGraphNodeObject) {
 
         // Mario's cap
         if (node->fnNode.func == (GraphNodeFunc) geo_switch_mario_cap_on_off) {
@@ -472,8 +471,23 @@ static void omm_cappy_gfx_process_graph_node(struct GraphNode *node) {
 }
 
 u32 omm_cappy_gfx_get_graph_node_identifier(struct GraphNode *node) {
+    static OmmArray sGraphNodes = NULL;
+    static OmmArray sIdentifiers = NULL;
+
+    // Find the graph node and return its identifier
+    s32 index = omm_array_find(sGraphNodes, node);
+    if (index != -1) {
+        return omm_array_get(sIdentifiers, u32, index);
+    }
+    
+    // Compute the graph node identifier and add it to the look-up table
     sVtxCount = 0;
     sTriCount = 0;
     omm_cappy_gfx_process_graph_node(node);
-    return (u32) ((sVtxCount << 16u) | (sTriCount << 0u));
+    u32 identifier = (u32) ((sVtxCount << 16u) | (sTriCount << 0u));
+    omm_array_init(sGraphNodes, struct GraphNode *);
+    omm_array_add(sGraphNodes, node);
+    omm_array_init(sIdentifiers, u32);
+    omm_array_add(sIdentifiers, identifier);
+    return identifier;
 }

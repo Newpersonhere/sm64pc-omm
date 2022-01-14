@@ -198,7 +198,7 @@ const GeoLayout omm_geo_star_number[] = {
 static void omm_bhv_star_number_loop() {
     struct Object *o = gCurrentObject;
     struct Object *p = o->parentObj;
-    if (!gOmmExtrasShowStarNumber || !p || !p->activeFlags || !omm_obj_is_star_or_key(p) || obj_is_dormant(p) || omm_is_ending_cutscene()) {
+    if (!OMM_EXTRAS_SHOW_STAR_NUMBER || !p || !p->activeFlags || !omm_obj_is_star_or_key(p) || obj_is_dormant(p)) {
         obj_mark_for_deletion(o);
         return;
     }

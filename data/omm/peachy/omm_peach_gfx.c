@@ -4,8 +4,8 @@
 
 #if defined(DEBUG)
 // VSCode + GDB being shit
-Gfx *_geo_switch_anim_state(s32 callContext, struct GraphNode *node, void *context) { return geo_switch_anim_state(callContext, node, context); }
-Gfx *_geo_switch_mario_cap_on_off(s32 callContext, struct GraphNode *node, void *context) { return geo_switch_mario_cap_on_off(callContext, node, context); }
+static Gfx *_geo_switch_anim_state(s32 callContext, struct GraphNode *node, void *context) { return geo_switch_anim_state(callContext, node, context); }
+static Gfx *_geo_switch_mario_cap_on_off(s32 callContext, struct GraphNode *node, void *context) { return geo_switch_mario_cap_on_off(callContext, node, context); }
 #define geo_switch_anim_state _geo_switch_anim_state
 #define geo_switch_mario_cap_on_off _geo_switch_mario_cap_on_off
 #endif

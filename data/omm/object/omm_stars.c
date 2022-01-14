@@ -113,7 +113,7 @@ static s32 omm_stars_preprocess_level_cmd(u8 type, void *cmd) {
                 (behavior == bhvWigglerHead) ||
                 (behavior == bhvFirePiranhaPlant && (behaviorArg & 0x00FF0000)) ||
 
-#if defined(SMSR)
+#if OMM_GAME_IS_SMSR
                 (behavior == bhvCustomSMSRStarReplica) ||
                 (behavior == bhvCustomSMSRStarMoving) ||
 #endif        
@@ -265,7 +265,7 @@ u8 omm_stars_get_bits() {
 }
 
 u8 omm_stars_get_bits_total(s32 level) {
-#if defined(SM74)
+#if OMM_GAME_IS_SM74
     return omm_stars_get_bits_per_area(level, sm74_mode__omm_stars_get_bits_total);
 #else
     return omm_stars_get_bits_per_area(level, 0) |
@@ -298,7 +298,7 @@ bool omm_stars_all_collected(s32 level) {
     return (level != LEVEL_BITDW) &&
            (level != LEVEL_BITFS) &&
            (level != LEVEL_BITS ) && (
-#if defined(SMSR)            
+#if OMM_GAME_IS_SMSR            
            (level == LEVEL_ENDING) ||
 #endif
            (level == LEVEL_BOWSER_1) ||

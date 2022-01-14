@@ -6,7 +6,7 @@
 // String conversion (very basic)
 //
 
-#if !defined(R96A)
+#if !OMM_GAME_IS_R96A
 static const struct { const char *str; u8 c64; } sSm64CharMap[] = {
     { "0",   0x00 }, { "1",  0x01 }, { "2",   0x02 }, { "3",   0x03 }, { "4",   0x04 }, { "5",   0x05 },
     { "6",   0x06 }, { "7",  0x07 }, { "8",   0x08 }, { "9",   0x09 }, { "A",   0x0A }, { "B",   0x0B },
@@ -38,24 +38,30 @@ static const char *omm_text_add_char(u8 *str64, const char *str, s32 *i) {
 }
 #endif
 
+static u8 *omm_text_alloc(s32 length, bool heapAlloc) {
+    return omm_memory_new(heapAlloc ? NULL : gOmmMemoryPoolStrings, length + 1, NULL);
+}
+
 u8 *omm_text_convert(const char *str, bool heapAlloc) {
-    u8 *str64 = omm_memory_new(heapAlloc ? NULL : gOmmMemoryPoolStrings, 0x800, NULL);
-#if defined(R96A)
-    extern struct LanguageEntry *current_language;
+    u8 *str64 = NULL;
+#if OMM_GAME_IS_R96A
     u8 *translated = get_key_string(str);
-    if (translated == current_language->none) {
+    if (translated == get_language()->none) {
         translated = getTranslatedText((char *) str);
-        memcpy(str64, translated, omm_text_length(translated) + 1);
+        str64 = OMM_MEMCPY(omm_text_alloc(omm_text_length(translated) + 1, heapAlloc), translated, omm_text_length(translated) + 1);
         free(translated);
     } else {
-        memcpy(str64, translated, omm_text_length(translated) + 1);
+        str64 = OMM_MEMCPY(omm_text_alloc(omm_text_length(translated) + 1, heapAlloc), translated, omm_text_length(translated) + 1);
     }
 #else
-    s32 i = 0;
-    for (; *str != 0;) {
+    str64 = omm_text_alloc(strlen(str) + 1, heapAlloc);
+    for (s32 i = 0;;) {
         str = omm_text_add_char(str64, str, &i);
+        if (*str == 0) {
+            str64[i] = 0xFF;
+            break;
+        }
     }
-    str64[i] = 0xFF;
 #endif
     return str64;
 }
@@ -97,16 +103,41 @@ u8 *omm_text_replace_char(u8 *str64, u8 from, u8 to) {
     return str64;
 }
 
+static s32 omm_text_length_to_skip(const u8 *str64) {
+    static struct { const char *str; const u8 *str64; s32 length; } sTextToSkip[] = {
+        { "Mario 64", NULL, 0 },
+        { "Super Mario", NULL, 0 },
+        { "Mario is red", NULL, 0 },
+    };
+    for (s32 i = 0; i != (s32) OMM_ARRAY_SIZE(sTextToSkip); ++i) {
+        if (!sTextToSkip[i].str64) {
+            sTextToSkip[i].str64 = omm_text_convert(sTextToSkip[i].str, true);
+            sTextToSkip[i].length = omm_text_length(sTextToSkip[i].str64);
+        }
+        if (OMM_MEMCMP(str64, sTextToSkip[i].str64, sTextToSkip[i].length)) {
+            return sTextToSkip[i].length;
+        }
+    }
+    return 0;
+}
+
 static void omm_text_replace(u8 *str64, const char *from, const char *to) {
     const u8 *from64 = omm_text_convert(from, false);
     const u8 *to64 = omm_text_convert(to, false);
-    s32 length = omm_text_length(from64);
-    for (; *str64 != 0xFF;) {
-        if (OMM_MEMCMP(str64, from64, length)) {
-            OMM_MEMCPY(str64, to64, length);
-            str64 += length;
+    s32 lenFrom = omm_text_length(from64);
+    s32 lenCurr = omm_text_length(str64);
+    for (; lenCurr >= lenFrom;) {
+        s32 lenToSkip = omm_text_length_to_skip(str64);
+        if (lenToSkip != 0) {
+            str64 += lenToSkip;
+            lenCurr -= lenToSkip;
+        } else if (OMM_MEMCMP(str64, from64, lenFrom)) {
+            OMM_MEMCPY(str64, to64, lenFrom);
+            str64 += lenFrom;
+            lenCurr -= lenFrom;
         } else {
             str64++;
+            lenCurr--;
         }
     }
 }
@@ -160,33 +191,127 @@ s32 omm_text_length(const u8 *str64) {
 _Static_assert(OMM_DIALOG_END_INDEX <= 256, "Last dialog ID is over 255");
 _Static_assert(OMM_ARRAY_SIZE(sOmmDialogEntriesRaw) == OMM_DIALOG_COUNT, "Missing dialogs");
 
-struct DialogEntry *omm_get_dialog_entry(void **dialogTable, s16 dialogId) {
-#if !defined(R96A)
-    static struct DialogEntry *sOmmDialogEntries = NULL;
-    if (!sOmmDialogEntries) {
-        sOmmDialogEntries = (struct DialogEntry *) OMM_MEMNEW(struct DialogEntry, OMM_DIALOG_COUNT);
-        for (s32 i = 0; i != OMM_DIALOG_COUNT; ++i) {
-            struct OmmDialogEntry *raw = &sOmmDialogEntriesRaw[i];
-            sOmmDialogEntries[raw->id - OMM_DIALOG_START_INDEX].unused      = raw->soundBits;
-            sOmmDialogEntries[raw->id - OMM_DIALOG_START_INDEX].linesPerBox = raw->linesPerBox;
-            sOmmDialogEntries[raw->id - OMM_DIALOG_START_INDEX].leftOffset  = raw->leftOffset;
-            sOmmDialogEntries[raw->id - OMM_DIALOG_START_INDEX].width       = raw->downOffset;
-            sOmmDialogEntries[raw->id - OMM_DIALOG_START_INDEX].str         = omm_text_convert(raw->str, true);
-        }
-    }
-    struct DialogEntry *dialog = NULL;
-    if (dialogId >= OMM_DIALOG_START_INDEX && dialogId < OMM_DIALOG_END_INDEX) {
-        dialog = &sOmmDialogEntries[dialogId - OMM_DIALOG_START_INDEX];
+typedef struct {
+    s32 id;
+    bool isMulti;
+    struct DialogEntry *dialog[OMM_SPARKLY_MODE_COUNT - 1];
+} OmmDialogEntry;
+static OmmArray sOmmDialogEntries = NULL;
+
+OMM_ROUTINE_UPDATE(omm_load_dialog_entries) {
+#if OMM_GAME_IS_R96A
+    static OmmArray sLanguageEntries = NULL;
+    static OmmArray sOmmDialogEntriesPerLanguage = NULL;
+    omm_array_init(sLanguageEntries, struct LanguageEntry *);
+    omm_array_init(sOmmDialogEntriesPerLanguage, OmmArray);
+
+    // Update sOmmDialogEntries to the corresponding language
+    // If the language exists, assign the corresponding dialog entries to the global var
+    // Otherwise, create a new entry, and return to load the entries next frame
+    struct LanguageEntry *language = get_language();
+    s32 languageIndex = omm_array_find(sLanguageEntries, language);
+    if (languageIndex != -1) {
+        sOmmDialogEntries = omm_array_get(sOmmDialogEntriesPerLanguage, OmmArray, languageIndex);
     } else {
-        dialog = (struct DialogEntry *) dialogTable[dialogId];
+        omm_array_add_inplace(sLanguageEntries, struct LanguageEntry *, language);
+        omm_array_add_inplace(sOmmDialogEntriesPerLanguage, OmmArray, NULL);
+        return;
     }
-#else
-    OMM_UNUSED(dialogTable);
-    struct DialogEntry *dialog = dialogPool[dialogId];
+
+    // Wait for the dialog pool to be fully loaded
+    if (!dialogPool) {
+        return;
+    }
 #endif
-    if (dialog->unused > 1 && gDialogAngle == 90.f) {
+    if (!sOmmDialogEntries) {
+        sOmmDialogEntries = omm_array_new(OmmDialogEntry *);
+        for (s32 i = 0; i != OMM_DIALOG_COUNT; ++i) {
+            OmmDialogEntry *entry = OMM_MEMNEW(OmmDialogEntry, 1);
+#if OMM_GAME_IS_R96A
+            entry->id = OMM_DIALOG_START_INDEX + i;
+            entry->isMulti = (dialogPool[entry->id]->linesPerBox == 0);
+            entry->dialog[0] = dialogPool[entry->id];
+#else
+            struct OmmDialogEntryRaw *raw = &sOmmDialogEntriesRaw[i];
+            entry->id = raw->id;
+            entry->isMulti = (raw->linesPerBox == 0);
+            entry->dialog[0] = OMM_MEMNEW(struct DialogEntry, 1);
+            entry->dialog[0]->unused = raw->soundBits;
+            entry->dialog[0]->linesPerBox = raw->linesPerBox;
+            entry->dialog[0]->leftOffset = raw->leftOffset;
+            entry->dialog[0]->width = raw->downOffset;
+            entry->dialog[0]->str = omm_text_convert(raw->str, true);
+#endif
+
+            // Multi dialog entries (Sparkly Stars)
+            if (entry->isMulti) {
+
+                // Dialog data
+                s32 allLinesPerBox = entry->dialog[0]->width;
+                s32 leftOffset = (entry->dialog[0]->unused ? 30 : 95);
+                s32 downOffset = 200;
+                u32 soundBits = entry->dialog[0]->unused;
+                u8 *strPtr = (u8 *) entry->dialog[0]->str;
+
+                // Create a dialog entry for each mode if not empty (linesPerBox > 0)
+                for (s32 j = 0, k = 1; j != OMM_SPARKLY_MODE_COUNT - 1; ++j, k *= 10) {
+                    s32 linesPerBox = ((allLinesPerBox / k) % 10);
+                    if (linesPerBox > 0) {
+                        entry->dialog[j] = OMM_MEMNEW(struct DialogEntry, 1);
+                        entry->dialog[j]->linesPerBox = linesPerBox;
+                        entry->dialog[j]->leftOffset = leftOffset;
+                        entry->dialog[j]->width = downOffset;
+                        entry->dialog[j]->unused = soundBits;
+                        entry->dialog[j]->str = strPtr;
+                    } else {
+                        entry->dialog[j] = NULL;
+                    }
+                }
+                
+                // Then, edit the str pointers to point exactly when the dialog should start for each Sparkly Stars mode
+                for (s32 j = 1; *strPtr != 0xFF; ++strPtr) {
+                    if (*strPtr == 0xE4) { // '+' symbol
+                        *strPtr = 0xFF;
+                        if (j < OMM_SPARKLY_MODE_COUNT - 1 && entry->dialog[j]) {
+                            entry->dialog[j++]->str = strPtr + 2; // +2, because the '+' is followed by a '\n'
+                        }
+                    }
+                }
+            }
+            
+            omm_array_add(sOmmDialogEntries, entry);
+        }
+#if OMM_GAME_IS_R96A
+        omm_array_set(sOmmDialogEntriesPerLanguage, sOmmDialogEntries, languageIndex);
+#endif
+    }
+}
+
+static void omm_play_dialog_sound(struct DialogEntry *dialog) {
+    if (dialog && dialog->unused > 1 && gDialogAngle == 90.f) {
         play_sound(dialog->unused, gGlobalSoundArgs);
     }
+}
+
+struct DialogEntry *omm_get_dialog_entry(void **dialogTable, s16 dialogId) {
+
+    // OMM dialog entry
+    omm_array_for_each(sOmmDialogEntries, OmmDialogEntry *, entry) {
+        if ((*entry)->id == dialogId) {
+            struct DialogEntry *dialog = (*entry)->dialog[(*entry)->isMulti ? (omm_sparkly_get_current_mode() - 1) : 0];
+            omm_play_dialog_sound(dialog);
+            return dialog;
+        }
+    }
+    
+    // Regular dialog entry
+#if OMM_GAME_IS_R96A
+    OMM_UNUSED(dialogTable);
+    struct DialogEntry *dialog = dialogPool[dialogId];
+#else
+    struct DialogEntry *dialog = (struct DialogEntry *) (dialogTable ? dialogTable[dialogId] : NULL);
+#endif
+    omm_play_dialog_sound(dialog);
     return dialog;
 }
 
@@ -197,7 +322,7 @@ static s16 omm_get_bowser_dialog(bool isIntro, s16 defaultDialog) {
             case LEVEL_BOWSER_1: return (isIntro ? OMM_DIALOG_BOWSER_1_INTRO : defaultDialog);
             case LEVEL_BOWSER_2: return (isIntro ? OMM_DIALOG_BOWSER_2_INTRO : defaultDialog);
             case LEVEL_BOWSER_3: return (isIntro ? OMM_DIALOG_BOWSER_3_INTRO : OMM_DIALOG_BOWSER_3_DEFEAT);
-            case LEVEL_GROUNDS:  return (isIntro ? OMM_SPARKLY_BOWSER_4_DIALOG_INTRO[omm_sparkly_get_current_mode()] : OMM_SPARKLY_BOWSER_4_DIALOG_DEFEAT[omm_sparkly_get_current_mode()]);
+            case LEVEL_GROUNDS:  return (isIntro ? OMM_DIALOG_SPARKLY_BOWSER_4_INTRO : OMM_DIALOG_SPARKLY_BOWSER_4_DEFEAT);
         }
     }
     return defaultDialog;
@@ -224,7 +349,7 @@ OMM_ROUTINE_GFX(omm_update_dialogs) {
     }
 }
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
 
 //
 // For Render96: Auto-generates AM_us.omm.json at execution time
@@ -283,195 +408,11 @@ OMM_AT_STARTUP static void omm_r96a_generate_json() {
         
         // Strings
         fprintf(f, "  \"strings\": {\n");
-        #undef OMM_TEXT_
-        #define OMM_TEXT_(id, str) { "OMM_TEXT_" #id, str },
         static const char *sOmmStrings[][2] = {
-OMM_TEXT_(BLANK,                                        "")
-OMM_TEXT_(SELECT_CHARACTER,                             "SELECT CHARACTER")
-OMM_TEXT_(MARIO,                                        "Mario")
-OMM_TEXT_(LUIGI,                                        "Luigi")
-OMM_TEXT_(WARIO,                                        "Wario")
-OMM_TEXT_(PEACH,                                        "Peach")
-OMM_TEXT_(CAPPY,                                        "Cappy")
-OMM_TEXT_(TIARA,                                        "Tiara")
-OMM_TEXT_(MARIO_UPPER,                                  "MARIO")
-OMM_TEXT_(LUIGI_UPPER,                                  "LUIGI")
-OMM_TEXT_(WARIO_UPPER,                                  "WARIO")
-OMM_TEXT_(PEACH_UPPER,                                  "PEACH")
-OMM_TEXT_(CAPPY_UPPER,                                  "CAPPY")
-OMM_TEXT_(TIARA_UPPER,                                  "TIARA")
-OMM_TEXT_(MARIO_LOWER,                                  "mario")
-OMM_TEXT_(LUIGI_LOWER,                                  "luigi")
-OMM_TEXT_(WARIO_LOWER,                                  "wario")
-OMM_TEXT_(PEACH_LOWER,                                  "peach")
-OMM_TEXT_(CAPPY_LOWER,                                  "cappy")
-OMM_TEXT_(TIARA_LOWER,                                  "tiara")
-OMM_TEXT_(LOCKED,                                       "?????")
-OMM_TEXT_(PAUSE,                                        "PAUSE")
-OMM_TEXT_(COURSE,                                       "COURSE")
-OMM_TEXT_(ACT,                                          "ACT")
-OMM_TEXT_(MY_STARS,                                     STAR "S")
-OMM_TEXT_(MY_SCORE,                                     "SCORE")
-OMM_TEXT_(CONTINUE,                                     "CONTINUE")
-OMM_TEXT_(RESTART_LEVEL,                                "RESTART LEVEL")
-OMM_TEXT_(EXIT_LEVEL,                                   "EXIT LEVEL")
-OMM_TEXT_(RETURN_TO_CASTLE,                             "RETURN TO CASTLE")
-OMM_TEXT_(COURSE_COMPLETE_GOT_A_STAR,                   "YOU GOT A " STAR)
-OMM_TEXT_(COURSE_COMPLETE_CONGRATULATIONS,              "CONGRATULATIONS")
-OMM_TEXT_(COURSE_COMPLETE_HI_SCORE,                     "HI SCORE!")
-OMM_TEXT_(YOU_GOT_A_STAR,                               "YOU GOT A " STAR)
-OMM_TEXT_(SPARKLY_STAR_1,                               "PINK GOLD " STAR)
-OMM_TEXT_(SPARKLY_STAR_2,                               "CRYSTAL " STAR)
-OMM_TEXT_(SPARKLY_STAR_3,                               "NEBULA " STAR)
-OMM_TEXT_(SPARKLY_STARS_1,                              "PINK GOLD " STAR "S")
-OMM_TEXT_(SPARKLY_STARS_2,                              "CRYSTAL " STAR "S")
-OMM_TEXT_(SPARKLY_STARS_3,                              "NEBULA " STAR "S")
-OMM_TEXT_(LEVEL_CASTLE_INSIDE,                          "CASTLE INSIDE")
-OMM_TEXT_(LEVEL_CASTLE_UPSTAIRS,                        "CASTLE UPSTAIRS")
-OMM_TEXT_(LEVEL_CASTLE_BASEMENT,                        "CASTLE BASEMENT")
-OMM_TEXT_(LEVEL_CASTLE_GROUNDS,                         "CASTLE GROUNDS")
-OMM_TEXT_(LEVEL_CASTLE_COURTYARD,                       "CASTLE COURTYARD")
-OMM_TEXT_(LEVEL_BOWSER_4,                               "BOWSER 4")
-OMM_TEXT_(LEVEL_UNKNOWN,                                "???")
-OMM_TEXT_(LEVEL_EMPTY,                                  "")
-OMM_TEXT_(LEVEL_CASTLE,                                 "CASTLE")
-OMM_TEXT_(LEVEL_BOWSER_1,                               "BOWSER 1")
-OMM_TEXT_(LEVEL_BOWSER_2,                               "BOWSER 2")
-OMM_TEXT_(LEVEL_BOWSER_3,                               "BOWSER 3")
-OMM_TEXT_(LEVEL_100_COINS_STAR,                         "100 COINS " STAR)
-OMM_TEXT_(LEVEL_RED_COINS_STAR,                         "RED COINS " STAR)
-OMM_TEXT_(LEVEL_ONE_SECRET_STAR,                        "ONE OF THE CASTLE'S SECRET " STAR "S!")
-OMM_TEXT_(LEVEL_STAR__,                                 STAR "  ")
-#if defined(SMSR)
-OMM_TEXT_(LEVEL_STAR_REPLICA,                           "STAR REPLICA")
-#endif
-OMM_TEXT_(LEVEL_SECRET_STARS,                           "SECRET " STAR "S")
-OMM_TEXT_(BAD_ENDING_TOAD_1,                            "Mario!")
-OMM_TEXT_(BAD_ENDING_TOAD_2,                            "The Princess... where is she?")
-OMM_TEXT_(BAD_ENDING_TOAD_3,                            "The Grand " Star " didn't free her... Why?")
-OMM_TEXT_(BAD_ENDING_TOAD_4,                            "Is there... nothing we can do?")
-OMM_TEXT_(BAD_ENDING_TOAD_5,                            "No... we can't give up now!")
-OMM_TEXT_(BAD_ENDING_TOAD_6,                            "Yeah! We won't let Bowser win, right?")
-OMM_TEXT_(BAD_ENDING_TOAD_7,                            "Mario! We'll help you to save her... again!")
-OMM_TEXT_(BAD_ENDING_TOAD_8,                            "Sure! I want to eat her delicious cake!")
-OMM_TEXT_(BAD_ENDING_TOAD_9,                            "Come on, Mario! Let's find Princess Peach!")
-OMM_TEXT_(OPT_MENU_TITLE,                               "ODYSSEY MARIO MOUESET") // There is no 'V' in the HUD font, but the 'U' looks close enough
-OMM_TEXT_(OPT_MENU_LABEL,                               "ODYSSEY MARIO'S MOVESET")
-OMM_TEXT_(OPT_CHARACTER_LABEL,                          "Character")
-OMM_TEXT_(OPT_MOVESET_LABEL,                            "Moveset")
-OMM_TEXT_(OPT_MOVESET_CLASSIC,                          "Classic")
-OMM_TEXT_(OPT_MOVESET_ODYSSEY_3H,                       "Odyssey - 3-Health")
-OMM_TEXT_(OPT_MOVESET_ODYSSEY_6H,                       "Odyssey - 6-Health")
-OMM_TEXT_(OPT_CAP_LABEL,                                "Cap")
-OMM_TEXT_(OPT_CAP_CLASSIC,                              "Classic")
-OMM_TEXT_(OPT_CAP_NO_CAPTURE,                           "Cappy - No Capture")
-OMM_TEXT_(OPT_CAP_CAPTURE,                              "Cappy - Capture")
-OMM_TEXT_(OPT_STARS_LABEL,                              Star "s")
-OMM_TEXT_(OPT_STARS_CLASSIC,                            "Classic")
-OMM_TEXT_(OPT_STARS_NON_STOP,                           "Non-Stop")
-OMM_TEXT_(OPT_POWER_UPS_LABEL,                          "Power-ups")
-OMM_TEXT_(OPT_POWER_UPS_CLASSIC,                        "Classic")
-OMM_TEXT_(OPT_POWER_UPS_IMPROVED,                       "Improved")
-OMM_TEXT_(OPT_CAMERA_LABEL,                             "Camera")
-OMM_TEXT_(OPT_CAMERA_CLASSIC,                           "Classic")
-OMM_TEXT_(OPT_CAMERA_8_DIR,                             "8-Directions")
-OMM_TEXT_(OPT_CAMERA_16_DIR,                            "16-Directions")
-OMM_TEXT_(OPT_SPARKLY_STARS_LABEL,                      "Sparkly " Star "s")
-OMM_TEXT_(OPT_SPARKLY_STARS_MODE_0,                     "Disabled")
-OMM_TEXT_(OPT_SPARKLY_STARS_MODE_1,                     "Normal Mode")
-OMM_TEXT_(OPT_SPARKLY_STARS_MODE_2,                     "Hard Mode")
-OMM_TEXT_(OPT_SPARKLY_STARS_MODE_3,                     "Lunatic Mode")
-OMM_TEXT_(OPT_CHEATS_TITLE,                             "CHEATS")
-OMM_TEXT_(OPT_CHEATS_LABEL,                             "Cheats")
-OMM_TEXT_(OPT_CHEAT_UNLIMITED_CAPPY_BOUNCES,            "Unlimited Cappy Bounces")
-OMM_TEXT_(OPT_CHEAT_CAPPY_STAYS_FOREVER,                "Cappy Stays Forever")
-OMM_TEXT_(OPT_CHEAT_GLOBAL_HOMING_ATTACK_RANGE,         "Homing Attack Global Range")
-OMM_TEXT_(OPT_CHEAT_MARIO_TELEPORTS_TO_CAPPY,           "Mario Teleports to Cappy")
-OMM_TEXT_(OPT_CHEAT_CAPPY_CAN_COLLECT_STARS,            "Cappy Can Collect Stars")
-OMM_TEXT_(OPT_CHEAT_PLAY_AS_CAPPY,                      "Play As Cappy")
-OMM_TEXT_(OPT_CHEAT_PEACH_ENDLESS_VIBE_GAUGE,           "Peach Endless Vibe Gauge")
-OMM_TEXT_(OPT_EXTRAS_TITLE,                             "EoTRAS") // Not a typo, the 'o' character is the 'X' glyph of the HUD font
-OMM_TEXT_(OPT_EXTRAS_LABEL,                             "Extras")
-OMM_TEXT_(OPT_CAPPY_EYES_ON_MARIOS_CAP,                 "Cappy Eyes on Mario's Cap")
-OMM_TEXT_(OPT_COLORED_STARS,                            "Colored " Star "s")
-OMM_TEXT_(OPT_3D_COINS,                                 "3D Coins")
-OMM_TEXT_(OPT_VANISHING_HUD,                            "Vanishing HUD")
-OMM_TEXT_(OPT_REVEAL_SECRETS,                           "Reveal Secrets")
-OMM_TEXT_(OPT_RED_COINS_RADAR,                          "Red Coins Radar")
-OMM_TEXT_(OPT_SHOW_STAR_NUMBER,                         "Show Star Number")
-OMM_TEXT_(OPT_INVISIBLE_MODE,                           "Invisible Mode")
-OMM_TEXT_(OPT_CRYSTAL_STARS_REWARD,                     "Crystal Stars Reward")
-OMM_TEXT_(OPT_SHORTCUTS_TITLE,                          "SHORTCUTS")
-OMM_TEXT_(OPT_SHORTCUTS_LABEL,                          "Shortcuts")
-OMM_TEXT_(OPT_SHORTCUTS_OPTION,                         "Option ")
-OMM_TEXT_(OPT_SHORTCUTS_SET_TO,                         " set to ")
-OMM_TEXT_(OPT_CONTROLS_TITLE,                           "CONTROLS")
-OMM_TEXT_(OPT_CONTROLS_LABEL,                           "CONTROLS")
-OMM_TEXT_(OPT_CONTROLS_A_BUTTON,                        "A Button")
-OMM_TEXT_(OPT_CONTROLS_B_BUTTON,                        "B Button")
-OMM_TEXT_(OPT_CONTROLS_X_BUTTON,                        "X Button")
-OMM_TEXT_(OPT_CONTROLS_Y_BUTTON,                        "Y Button")
-OMM_TEXT_(OPT_CONTROLS_START_BUTTON,                    "Start Button")
-OMM_TEXT_(OPT_CONTROLS_L_TRIGGER,                       "L Trigger")
-OMM_TEXT_(OPT_CONTROLS_R_TRIGGER,                       "R Trigger")
-OMM_TEXT_(OPT_CONTROLS_Z_TRIGGER,                       "Z Trigger")
-OMM_TEXT_(OPT_CONTROLS_C_UP,                            "C-Up")
-OMM_TEXT_(OPT_CONTROLS_C_DOWN,                          "C-Down")
-OMM_TEXT_(OPT_CONTROLS_C_LEFT,                          "C-Left")
-OMM_TEXT_(OPT_CONTROLS_C_RIGHT,                         "C-Right")
-OMM_TEXT_(OPT_CONTROLS_D_UP,                            "D-Up")
-OMM_TEXT_(OPT_CONTROLS_D_DOWN,                          "D-Down")
-OMM_TEXT_(OPT_CONTROLS_D_LEFT,                          "D-Left")
-OMM_TEXT_(OPT_CONTROLS_D_RIGHT,                         "D-Right")
-OMM_TEXT_(OPT_CONTROLS_STICK_UP,                        "Stick Up")
-OMM_TEXT_(OPT_CONTROLS_STICK_DOWN,                      "Stick Down")
-OMM_TEXT_(OPT_CONTROLS_STICK_LEFT,                      "Stick Left")
-OMM_TEXT_(OPT_CONTROLS_STICK_RIGHT,                     "Stick Right")
-OMM_TEXT_(OPT_CONTROLS_STICK_DEADZONE,                  "Stick Deadzone")
-OMM_TEXT_(OPT_CONTROLS_RESET,                           "Reset Controls")
-OMM_TEXT_(OPT_WARP_TO_LEVEL_TITLE,                      "WARP TO LEUEL") // There is no 'V' in the HUD font, but the 'U' looks close enough
-OMM_TEXT_(OPT_WARP_TO_LEVEL_LABEL,                      "WARP TO LEVEL")
-OMM_TEXT_(OPT_WARP_TO_LEVEL_LEVEL,                      "Level")
-OMM_TEXT_(OPT_WARP_TO_LEVEL_AREA,                       "Area")
-OMM_TEXT_(OPT_WARP_TO_LEVEL_ACT,                        Star)
-OMM_TEXT_(OPT_WARP_TO_LEVEL_WARP,                       "Warp")
-OMM_TEXT_(OPT_RETURN_TO_MAIN_MENU_LABEL,                "RETURN TO MAIN MENU")
-OMM_TEXT_(OPT_PRESS_A,                                  "([A])>")
-OMM_TEXT_(OPT_DISABLED,                                 "Disabled")
-OMM_TEXT_(OPT_ENABLED,                                  "Enabled")
-OMM_TEXT_(OPT_NONE,                                     "NONE")
-OMM_TEXT_(OPT_DOT_DOT_DOT,                              "...")
-#if defined(SM74)
-OMM_TEXT_(SM74_SUPER_MARIO_74,                          "Super Mario 74")
-OMM_TEXT_(SM74_NORMAL_EDITION,                          "Normal Edition")
-OMM_TEXT_(SM74_EXTREME_EDITION,                         "Extreme Edition")
-OMM_TEXT_(SM74_SWAP_VERSION,                            "SWAP VERSION")
-OMM_TEXT_(SM74_OPT_WARP_EDITION,                        "Edition")
-OMM_TEXT_(SM74_OPT_WARP_NORMAL,                         "Normal")
-OMM_TEXT_(SM74_OPT_WARP_EXTREME,                        "Extreme")
-#endif
-#if !defined(SMSR)
-OMM_TEXT_(MENU_HARD_MODE_ON,                            "Hard Mode ON")
-OMM_TEXT_(MENU_HARD_MODE_OFF,                           "Hard Mode OFF")
-#endif
-#if OMM_CODE_DEBUG
-OMM_TEXT_(OPT_DEBUG_TITLE,                              "DEBUG")
-OMM_TEXT_(OPT_DEBUG_LABEL,                              "Debug")
-OMM_TEXT_(OPT_DEBUG_HITBOX,                             "Display Hitboxes")
-OMM_TEXT_(OPT_DEBUG_HURTBOX,                            "Display Hurtboxes")
-OMM_TEXT_(OPT_DEBUG_WALLBOX,                            "Display Wallboxes")
-OMM_TEXT_(OPT_DEBUG_MARIO,                              "Display Mario Values")
-OMM_TEXT_(OPT_DEBUG_CAPPY,                              "Display Cappy Values")
-OMM_TEXT_(OPT_DEBUG_PROFILER,                           "Display Execution Time")
-#if OMM_CODE_DEV_DEBUG
-OMM_TEXT_(OPT_DEBUG_GAME_SPEED,                         "Game Speed")
-OMM_TEXT_(OPT_DEBUG_GAME_SPEED_30_FPS,                  "30 FPS")
-OMM_TEXT_(OPT_DEBUG_GAME_SPEED_20_FPS,                  "20 FPS")
-OMM_TEXT_(OPT_DEBUG_GAME_SPEED_15_FPS,                  "15 FPS")
-OMM_TEXT_(OPT_DEBUG_GAME_SPEED_10_FPS,                  "10 FPS")
-OMM_TEXT_(OPT_DEBUG_GAME_SPEED_5_FPS,                   "5 FPS")
-#endif
-#endif
+#undef OMM_TEXT_
+#define OMM_TEXT_(id, str) { "OMM_TEXT_" #id, str },
+#include "data/omm/omm_defines_texts.inl"
+#undef OMM_TEXT_
         };
         for (s32 i = 0; i != OMM_ARRAY_SIZE(sOmmStrings); ++i) {
             fprintf(f, "    \"%s\": \"%s\"", sOmmStrings[i][0], sOmmStrings[i][1]);

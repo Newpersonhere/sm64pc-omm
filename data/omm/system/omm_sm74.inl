@@ -1,4 +1,4 @@
-#if defined(SM74)
+#if OMM_GAME_IS_SM74
 #if !defined(OMM_OPTIONS_MENU_INL)
 // File included from omm_options.c
 

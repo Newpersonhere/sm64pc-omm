@@ -349,7 +349,7 @@ static s32 omm_act_move_punching(struct MarioState *m) {
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
 static s32 omm_act_wario_charge(struct MarioState *m) {
     extern s32 charge_count;
     action_cappy(1, ACT_OMM_CAPPY_THROW_GROUND, 0, RETURN_CANCEL, charge_count = 0;);
@@ -517,7 +517,7 @@ s32 omm_mario_execute_moving_action(struct MarioState *m) {
         case ACT_SOFT_FORWARD_GROUND_KB:    return omm_act_soft_forward_ground_kb(m);
         case ACT_GROUND_BONK:               return omm_act_ground_bonk(m);
         case ACT_MOVE_PUNCHING:             return omm_act_move_punching(m);
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
         case ACT_WARIO_CHARGE:              return omm_act_wario_charge(m);
 #endif
 

@@ -130,14 +130,14 @@ static void omm_update_warp_pipes(struct MarioState *m) {
     static s32 sWarpPipeTimer = 20;
 
     // Load
-#if defined(SMSR)
+#if OMM_GAME_IS_SMSR
     if (OMM_STARS_NON_STOP) {
     load_warp_pipe(LEVEL_RR,
         _WarpPipeInfo(1, 0x32,  3000, -2380,   383, 0x0000, 0x0000, 0x8000, false),
         _WarpPipeInfo(1, 0x33,   408, -2800, -4125, 0x0000, 0x0000, 0x8000, false)
     );
     }
-#elif OMM_CODE_VANILLA
+#elif OMM_GAME_IS_SM64
     if (OMM_STARS_NON_STOP) {
     load_warp_pipe(LEVEL_JRB,
         _WarpPipeInfo(1, 0x32,  4900,  1440,  2500, 0x0000, 0x0000, 0x0000, false),
@@ -221,7 +221,7 @@ static void omm_update_power_ups() {
         return;
     }
     
-#if OMM_CODE_VANILLA
+#if OMM_GAME_IS_SM64
     // BOB
     load_power_up_box(LEVEL_BOB, 1, 0, -5300, 428, 5600, 0x0000);
     load_power_up_box(LEVEL_BOB, 1, 1, -5700, 428, 5200, 0x0000);
@@ -326,7 +326,7 @@ static bool sOmmWorldFlooded = false;
 
 static void omm_update_worlds(struct MarioState *m) {
     switch (sOmmWorldCurrent) {
-#if defined(SMSR)
+#if OMM_GAME_IS_SMSR
 
         // Bob-omb Islands
         // Non-Stop mode:
@@ -440,7 +440,7 @@ static void omm_update_worlds(struct MarioState *m) {
             }
         } break;
 
-#elif OMM_CODE_VANILLA
+#elif OMM_GAME_IS_SM64
 
         // Bob-omb Battlefield
         // Non-Stop mode:
@@ -608,7 +608,7 @@ static void omm_update_worlds(struct MarioState *m) {
 #endif
     }
 
-#if !defined(R96A)
+#if !OMM_GAME_IS_R96A
     // Disable Bowser objects outside of Bowser fights
     if (gCurrLevelNum != LEVEL_BOWSER_1 &&
         gCurrLevelNum != LEVEL_BOWSER_2 &&
@@ -622,9 +622,9 @@ static void omm_update_worlds(struct MarioState *m) {
     }
 #endif
     
-#if !defined(SMMS)
+#if !OMM_GAME_IS_SMMS
     // Hide red coins star markers if Colored Stars
-    omm_world_behavior_set_dormant(bhvRedCoinStarMarker, gOmmExtrasColoredStars);
+    omm_world_behavior_set_dormant(bhvRedCoinStarMarker, OMM_EXTRAS_COLORED_STARS);
 #endif
 }
 

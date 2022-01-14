@@ -21,7 +21,7 @@ const BehaviorScript omm_bhv_dummy[] = {
 };
 
 const BehaviorScript omm_bhv_cappy[] = {
-    OBJ_TYPE_ONE_WAY_INTERACTION,
+    OBJ_TYPE_SPECIAL,
     0x08000000,
     0x09000000
 };

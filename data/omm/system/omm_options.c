@@ -90,18 +90,23 @@ DEFINE_TOGGLE(gOmmCheatMarioTeleportsToCappy, 0);    // Disabled
 DEFINE_TOGGLE(gOmmCheatCappyCanCollectStars, 0);     // Disabled
 DEFINE_TOGGLE(gOmmCheatPlayAsCappy, 0);              // Disabled
 DEFINE_TOGGLE(gOmmCheatPeachEndlessVibeGauge, 0);    // Disabled
-DEFINE_TOGGLE_SC(gOmmExtrasCappyEyesOnMariosCap, 1); // Enabled
+DEFINE_TOGGLE_SC(gOmmExtrasSMOAnimations, 1);        // Enabled
+DEFINE_TOGGLE_SC(gOmmExtrasCappyAndTiara, 1);        // Enabled
 DEFINE_TOGGLE_SC(gOmmExtrasColoredStars, 1);         // Enabled
 DEFINE_TOGGLE_SC(gOmmExtrasVanishingHUD, 1);         // Enabled
 DEFINE_TOGGLE_SC(gOmmExtrasRevealSecrets, 0);        // Disabled
 DEFINE_TOGGLE_SC(gOmmExtrasRedCoinsRadar, 0);        // Disabled
 DEFINE_TOGGLE_SC(gOmmExtrasShowStarNumber, 0);       // Disabled
 DEFINE_TOGGLE_SC(gOmmExtrasInvisibleMode, 0);        // Disabled
+#if OMM_CODE_DEV
+DEFINE_TOGGLE_SC(gOmmExtrasRender96Peach, 0);        // Disabled
+#endif
 DEFINE_TOGGLE_SC(gOmmExtrasCrystalStarsReward, 0);   // Disabled
 #if OMM_CODE_DEBUG
 DEFINE_TOGGLE_SC(gOmmDebugHitbox, 0);                // Disabled
 DEFINE_TOGGLE_SC(gOmmDebugHurtbox, 0);               // Disabled
 DEFINE_TOGGLE_SC(gOmmDebugWallbox, 0);               // Disabled
+DEFINE_TOGGLE_SC(gOmmDebugSurface, 0);               // Disabled
 DEFINE_TOGGLE_SC(gOmmDebugMario, 0);                 // Disabled
 DEFINE_TOGGLE_SC(gOmmDebugCappy, 0);                 // Disabled
 DEFINE_TOGGLE_SC(gOmmDebugProfiler, 0);              // Disabled
@@ -141,20 +146,23 @@ DEFINE_SHORTCUT_CHOICE(gOmmCapType, OMM_TEXT_OPT_CAP_LABEL, 3, OMM_TEXT_OPT_CAP_
 DEFINE_SHORTCUT_CHOICE(gOmmStarsMode, OMM_TEXT_OPT_STARS_LABEL, 2, OMM_TEXT_OPT_STARS_CLASSIC, OMM_TEXT_OPT_STARS_NON_STOP),
 DEFINE_SHORTCUT_CHOICE(gOmmPowerUpsType, OMM_TEXT_OPT_POWER_UPS_LABEL, 2, OMM_TEXT_OPT_POWER_UPS_CLASSIC, OMM_TEXT_OPT_POWER_UPS_IMPROVED),
 DEFINE_SHORTCUT_CHOICE(gOmmCameraMode, OMM_TEXT_OPT_CAMERA_LABEL, 3, OMM_TEXT_OPT_CAMERA_CLASSIC, OMM_TEXT_OPT_CAMERA_8_DIR, OMM_TEXT_OPT_CAMERA_16_DIR),
-#if OMM_CODE_SPARKLY
 DEFINE_SHORTCUT_CHOICE(gOmmSparklyStarsMode, OMM_TEXT_OPT_SPARKLY_STARS_LABEL, 4, OMM_TEXT_OPT_SPARKLY_STARS_MODE_0, OMM_TEXT_OPT_SPARKLY_STARS_MODE_1, OMM_TEXT_OPT_SPARKLY_STARS_MODE_2, OMM_TEXT_OPT_SPARKLY_STARS_MODE_3),
-#endif
-DEFINE_SHORTCUT_TOGGLE(gOmmExtrasCappyEyesOnMariosCap, OMM_TEXT_OPT_CAPPY_EYES_ON_MARIOS_CAP),
+DEFINE_SHORTCUT_TOGGLE(gOmmExtrasSMOAnimations, OMM_TEXT_OPT_SMO_ANIMATIONS),
+DEFINE_SHORTCUT_TOGGLE(gOmmExtrasCappyAndTiara, OMM_TEXT_OPT_CAPPY_AND_TIARA),
 DEFINE_SHORTCUT_TOGGLE(gOmmExtrasColoredStars, OMM_TEXT_OPT_COLORED_STARS),
 DEFINE_SHORTCUT_TOGGLE(gOmmExtrasVanishingHUD, OMM_TEXT_OPT_VANISHING_HUD),
 DEFINE_SHORTCUT_TOGGLE(gOmmExtrasRevealSecrets, OMM_TEXT_OPT_REVEAL_SECRETS),
 DEFINE_SHORTCUT_TOGGLE(gOmmExtrasRedCoinsRadar, OMM_TEXT_OPT_RED_COINS_RADAR),
 DEFINE_SHORTCUT_TOGGLE(gOmmExtrasShowStarNumber, OMM_TEXT_OPT_SHOW_STAR_NUMBER),
 DEFINE_SHORTCUT_TOGGLE(gOmmExtrasInvisibleMode, OMM_TEXT_OPT_INVISIBLE_MODE),
+#if OMM_CODE_DEV
+DEFINE_SHORTCUT_TOGGLE(gOmmExtrasRender96Peach, OMM_TEXT_OPT_RENDER96_PEACH),
+#endif
 #if OMM_CODE_DEBUG
 DEFINE_SHORTCUT_TOGGLE(gOmmDebugHitbox, OMM_TEXT_OPT_DEBUG_HITBOX),
 DEFINE_SHORTCUT_TOGGLE(gOmmDebugHurtbox, OMM_TEXT_OPT_DEBUG_HURTBOX),
 DEFINE_SHORTCUT_TOGGLE(gOmmDebugWallbox, OMM_TEXT_OPT_DEBUG_WALLBOX),
+DEFINE_SHORTCUT_TOGGLE(gOmmDebugSurface, OMM_TEXT_OPT_DEBUG_SURFACE),
 DEFINE_SHORTCUT_TOGGLE(gOmmDebugMario, OMM_TEXT_OPT_DEBUG_MARIO),
 DEFINE_SHORTCUT_TOGGLE(gOmmDebugCappy, OMM_TEXT_OPT_DEBUG_CAPPY),
 DEFINE_SHORTCUT_TOGGLE(gOmmDebugProfiler, OMM_TEXT_OPT_DEBUG_PROFILER),
@@ -170,7 +178,7 @@ DEFINE_SHORTCUT_TOGGLE(gOmmExtrasCrystalStarsReward, OMM_TEXT_OPT_CRYSTAL_STARS_
 // Option wrappers
 //
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
 #define omm_opt_text(str, ...)      (const u8 *) str
 #define omm_opt_text_length(str)    (s32) strlen((const char *) str)
 #else
@@ -255,7 +263,7 @@ static struct Option omm_opt_make_shortcuts_submenu(const char *label, const cha
     return opt;
 }
 
-#if defined(SM74)
+#if OMM_GAME_IS_SM74
 
 //
 // Super Mario 74 code
@@ -507,14 +515,7 @@ void omm_opt_init() {
             omm_opt_make_choice(OMM_TEXT_OPT_STARS_LABEL, &gOmmStarsMode, choices(OMM_TEXT_OPT_STARS_CLASSIC, OMM_TEXT_OPT_STARS_NON_STOP), 2),
             omm_opt_make_choice(OMM_TEXT_OPT_POWER_UPS_LABEL, &gOmmPowerUpsType, choices(OMM_TEXT_OPT_POWER_UPS_CLASSIC, OMM_TEXT_OPT_POWER_UPS_IMPROVED), 2),
             omm_opt_make_choice(OMM_TEXT_OPT_CAMERA_LABEL, &gOmmCameraMode, choices(OMM_TEXT_OPT_CAMERA_CLASSIC, OMM_TEXT_OPT_CAMERA_8_DIR, OMM_TEXT_OPT_CAMERA_16_DIR), 3),
-#if OMM_CODE_SPARKLY
-            omm_opt_make_choice(OMM_TEXT_OPT_SPARKLY_STARS_LABEL, &gOmmSparklyStarsMode, choices(
-                OMM_TEXT_OPT_SPARKLY_STARS_MODE_0,
-                OMM_TEXT_OPT_SPARKLY_STARS_MODE_1,
-                OMM_TEXT_OPT_SPARKLY_STARS_MODE_2,
-                OMM_TEXT_OPT_SPARKLY_STARS_MODE_3),
-            4),
-#endif
+            omm_opt_make_choice(OMM_TEXT_OPT_SPARKLY_STARS_LABEL, &gOmmSparklyStarsMode, choices(OMM_TEXT_OPT_SPARKLY_STARS_MODE_0, OMM_TEXT_OPT_SPARKLY_STARS_MODE_1, OMM_TEXT_OPT_SPARKLY_STARS_MODE_2, OMM_TEXT_OPT_SPARKLY_STARS_MODE_3), OMM_SPARKLY_MODE_COUNT),
             omm_opt_make_submenu(OMM_TEXT_OPT_CHEATS_LABEL, OMM_TEXT_OPT_CHEATS_TITLE, options(
                 omm_opt_make_toggle(OMM_TEXT_OPT_CHEAT_UNLIMITED_CAPPY_BOUNCES, &gOmmCheatUnlimitedCappyBounces),
                 omm_opt_make_toggle(OMM_TEXT_OPT_CHEAT_CAPPY_STAYS_FOREVER, &gOmmCheatCappyStaysForever),
@@ -525,8 +526,9 @@ void omm_opt_init() {
                 omm_opt_make_toggle(OMM_TEXT_OPT_CHEAT_PEACH_ENDLESS_VIBE_GAUGE, &gOmmCheatPeachEndlessVibeGauge),
             ), 6 + omm_player_is_unlocked(OMM_PLAYER_PEACH)),
             omm_opt_make_submenu(OMM_TEXT_OPT_EXTRAS_LABEL, OMM_TEXT_OPT_EXTRAS_TITLE, options(
-                omm_opt_make_toggle(OMM_TEXT_OPT_CAPPY_EYES_ON_MARIOS_CAP, &gOmmExtrasCappyEyesOnMariosCap),
-#if !defined(SMMS)
+                omm_opt_make_toggle(OMM_TEXT_OPT_SMO_ANIMATIONS, &gOmmExtrasSMOAnimations),
+                omm_opt_make_toggle(OMM_TEXT_OPT_CAPPY_AND_TIARA, &gOmmExtrasCappyAndTiara),
+#if !OMM_GAME_IS_SMMS
                 omm_opt_make_toggle(OMM_TEXT_OPT_COLORED_STARS, &gOmmExtrasColoredStars),
 #endif
                 omm_opt_make_toggle(OMM_TEXT_OPT_VANISHING_HUD, &gOmmExtrasVanishingHUD),
@@ -534,11 +536,14 @@ void omm_opt_init() {
                 omm_opt_make_toggle(OMM_TEXT_OPT_RED_COINS_RADAR, &gOmmExtrasRedCoinsRadar),
                 omm_opt_make_toggle(OMM_TEXT_OPT_SHOW_STAR_NUMBER, &gOmmExtrasShowStarNumber),
                 omm_opt_make_toggle(OMM_TEXT_OPT_INVISIBLE_MODE, &gOmmExtrasInvisibleMode),
+#if OMM_CODE_DEV
+                omm_opt_make_toggle(OMM_TEXT_OPT_RENDER96_PEACH, &gOmmExtrasRender96Peach),
+#endif
                 omm_opt_make_toggle(OMM_TEXT_OPT_CRYSTAL_STARS_REWARD, &gOmmExtrasCrystalStarsReward),
-#if defined(SMMS)
-            ), 6 + omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD)),
+#if OMM_GAME_IS_SMMS
+            ), 7 + OMM_CODE_DEV + omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD)),
 #else
-            ), 7 + omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD)),
+            ), 8 + OMM_CODE_DEV + omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD)),
 #endif
             omm_opt_make_shortcuts_submenu(OMM_TEXT_OPT_SHORTCUTS_LABEL, OMM_TEXT_OPT_SHORTCUTS_TITLE),
 #if OMM_CODE_DEBUG
@@ -546,6 +551,7 @@ void omm_opt_init() {
                 omm_opt_make_toggle(OMM_TEXT_OPT_DEBUG_HITBOX, &gOmmDebugHitbox),
                 omm_opt_make_toggle(OMM_TEXT_OPT_DEBUG_HURTBOX, &gOmmDebugHurtbox),
                 omm_opt_make_toggle(OMM_TEXT_OPT_DEBUG_WALLBOX, &gOmmDebugWallbox),
+                omm_opt_make_toggle(OMM_TEXT_OPT_DEBUG_SURFACE, &gOmmDebugSurface),
                 omm_opt_make_toggle(OMM_TEXT_OPT_DEBUG_MARIO, &gOmmDebugMario),
                 omm_opt_make_toggle(OMM_TEXT_OPT_DEBUG_CAPPY, &gOmmDebugCappy),
                 omm_opt_make_toggle(OMM_TEXT_OPT_DEBUG_PROFILER, &gOmmDebugProfiler),
@@ -559,9 +565,9 @@ void omm_opt_init() {
                     OMM_TEXT_OPT_DEBUG_GAME_SPEED_5_FPS),
                 5),
 #endif
-            ), 6 + 2 * OMM_CODE_DEV_DEBUG),
+            ), 7 + 2 * OMM_CODE_DEV_DEBUG),
 #endif
-        ), 9 + OMM_CODE_SPARKLY + OMM_CODE_DEBUG);
+        ), 10 + OMM_CODE_DEBUG);
     OMM_MEMCPY(gOmmOptMenu, optOmmMenu.label, omm_opt_text_length(optOmmMenu.label) + 1);
     OMM_MEMCPY(gOmmOptMenu + 0x100, optOmmMenu.nextMenu, sizeof(struct SubMenu));
 
@@ -634,7 +640,7 @@ OMM_ROUTINE_GFX(omm_opt_update_shortcuts) {
     // Check shortcuts and change the corresponding option if pressed
     if (!omm_is_main_menu() && !omm_is_game_paused() && gMarioObject) {
         bool changed = false;
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
         u32 keyPressed = gKeyPressed;
 #else
         u32 keyPressed = controller_get_raw_key();

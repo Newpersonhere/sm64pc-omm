@@ -31,7 +31,7 @@ bool omm_warp_to_level(s32 level, s32 area, s32 act) {
 }
 
 bool omm_restart_level() {
-#if defined(SM74)
+#if OMM_GAME_IS_SM74
     return omm_restart_area();
 #else
     return omm_warp_to_level(gCurrLevelNum, 1, gCurrActNum);
@@ -85,7 +85,7 @@ bool omm_exit_level() {
 
 bool omm_return_to_castle(bool fadeOut, bool force) {
     if (force || (!omm_is_game_paused() && !omm_is_transition_active() && !omm_is_warping())) {
-        initiate_warp(LEVEL_CASTLE, 1, 0x1F, 0);
+        initiate_warp(OMM_LEVEL_RETURN_TO_CASTLE);
         if (fadeOut) {
             fade_into_special_warp(0, 0);
         } else {

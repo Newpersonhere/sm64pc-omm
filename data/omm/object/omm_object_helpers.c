@@ -2,10 +2,6 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
-#define GRAPH_RENDER_ALWAYS         (1 << 7)  // 0x0080
-#define ACTIVE_FLAG_DORMANT         (1 << 11) // 0x0800
-#define ACTIVE_FLAG_KNOCKED_BACK    (1 << 12) // 0x1000
-
 f32 obj_get_horizontal_distance(struct Object *o1, struct Object *o2) {
     return sqrtf(omm_sqr_f(o1->oPosX - o2->oPosX) + omm_sqr_f(o1->oPosZ - o2->oPosZ));
 }
@@ -39,7 +35,7 @@ bool obj_is_surface(struct Object *o) {
 }
 
 bool obj_is_on_ground(struct Object *o) {
-    return (o->oFloor != NULL) && (o->oFloorHeight == 0);
+    return (o->oFloor != NULL) && (o->oDistToFloor <= 0.f);
 }
 
 // Goomba has to be handled separately due to the Goomba stack
@@ -299,7 +295,7 @@ static bool obj_process_surface_collisions(struct Object *o, bool moveThroughWal
             }
         }
         o->oFloor = floor;
-        o->oFloorHeight = o->oPosY - floorY;
+        o->oFloorHeight = floorY;
     }
     
     // Out of bounds
@@ -340,7 +336,7 @@ void obj_update_pos_and_vel(struct Object *o, bool updateHome, bool moveThroughW
     bool isCapture = (o == gOmmData->mario->capture.obj);
 
     // Movement
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     s32 hSteps = (isCapture ? cheats_speed_modifier(gMarioState) : 1);
     s32 ySteps = (isCapture && o->oVelY > 0.f ? cheats_jump_modifier(gMarioState) : 1);
 #else
@@ -640,6 +636,19 @@ static void obj_destroy_white_puff(struct Object *o, s32 numCoins, s32 soundBits
     obj_mark_for_deletion(o);
 }
 
+static void obj_destroy_piranha_plant(struct Object *o, s32 soundBits) {
+    for_each_object_with_behavior(obj, bhvPiranhaPlantBubble) {
+        if (obj->parentObj == o) {
+            obj_mark_for_deletion(obj);
+        }
+    }
+    if (o->oNumLootCoins) {
+        spawn_coins(o, -1);
+    }
+    obj_spawn_white_puff(o, soundBits);
+    obj_mark_for_deletion(o);
+}
+
 static void obj_destroy_triangle_particles(struct Object *o, s32 numCoins, s32 soundBits, s32 triCount, s32 triModel, f32 triSize, s32 triType) {
     spawn_coins(o, numCoins);
     obj_spawn_white_puff(o, soundBits);
@@ -683,7 +692,7 @@ static void obj_destroy_bullet_bill(struct Object *o, s32 numCoins) {
     obj_create_respawner(o, MODEL_BULLET_BILL, bhvBulletBill, 1000.f);
 }
 
-#if defined(SMSR)
+#if OMM_GAME_IS_SMSR
 static void obj_destroy_water_mine(struct Object *o, s32 numCoins) {
     obj_destroy_explosion(o, numCoins);
     obj_create_respawner(o, MODEL_WATER_MINE, bhvCustomSMSRBulletMine, 1000.f);
@@ -731,12 +740,16 @@ static void obj_destroy_eyerock_hand(struct Object *o, s32 soundBits, u8 r, u8 g
 void obj_destroy(struct Object *o) {
 
     // Presets
+    destroy_preset(bhvGoomba, o->oGoombaSize == GOOMBA_SIZE_TINY, obj_destroy_white_puff, 1, SOUND_OBJ_ENEMY_DEATH_HIGH);
+    destroy_preset(bhvGoomba, o->oGoombaSize == GOOMBA_SIZE_REGULAR, obj_destroy_white_puff, 1, SOUND_OBJ_ENEMY_DEATH_HIGH);
+    destroy_preset(bhvGoomba, o->oGoombaSize == GOOMBA_SIZE_HUGE, obj_destroy_white_puff, -1, SOUND_OBJ_ENEMY_DEATH_LOW);
     destroy_preset(bhvBobomb, 1, obj_destroy_bobomb, 0);
     destroy_preset(bhvChuckya, 1, obj_destroy_white_puff, 5, SOUND_OBJ_CHUCKYA_DEATH);
     destroy_preset(bhvBowlingBall, 1, obj_destroy_break_particles, 0, SOUND_GENERAL_WALL_EXPLOSION, 0x40, 0x40, 0x40);
     destroy_preset(bhvPitBowlingBall, 1, obj_destroy_break_particles, 0, SOUND_GENERAL_WALL_EXPLOSION, 0x40, 0x40, 0x40);
     destroy_preset(bhvFreeBowlingBall, 1, obj_destroy_break_particles, 0, SOUND_GENERAL_WALL_EXPLOSION, 0x40, 0x40, 0x40);
     destroy_preset(bhvMadPiano, 1, obj_destroy_break_particles, 5, SOUND_OBJ_MAD_PIANO_CHOMPING, 0x40, 0x40, 0x40);
+    destroy_preset(bhvBreakableBox, 1, obj_destroy_triangle_particles, o->oNumLootCoins, SOUND_GENERAL_BREAK_BOX, OBJ_SPAWN_TRI_BREAK_PRESET_TRIANGLES_30);
     destroy_preset(bhvBreakableBoxSmall, 1, obj_destroy_triangle_particles, 3, SOUND_GENERAL_BREAK_BOX, OBJ_SPAWN_TRI_BREAK_PRESET_DIRT);
     destroy_preset(bhvJumpingBox, 1, obj_destroy_triangle_particles, 5, SOUND_GENERAL_BREAK_BOX, OBJ_SPAWN_TRI_BREAK_PRESET_TRIANGLES_20);
     destroy_preset(bhvMrBlizzard, 1, obj_destroy_snow_particles, 3, SOUND_OBJ_DEFAULT_DEATH);
@@ -761,7 +774,17 @@ void obj_destroy(struct Object *o) {
     destroy_preset(bhvSpindel, 1, obj_destroy_break_particles, 5, SOUND_OBJ_THWOMP, 0xFF, 0xFF, 0xA0);
     destroy_preset(bhvEyerokHand, 1, obj_destroy_eyerock_hand, SOUND_OBJ2_EYEROK_SOUND_SHORT, 0xC8, 0x90, 0x30);
     destroy_preset(bhvBigBoulder, 1, obj_destroy_break_particles, 0, SOUND_GENERAL_WALL_EXPLOSION, 0xB0, 0xA0, 0x70);
-#if defined(SMSR)
+    destroy_preset(bhvHeaveHo, 1, obj_destroy_white_puff, -1, SOUND_OBJ_DEFAULT_DEATH);
+    destroy_preset(bhvPiranhaPlant, 1, obj_destroy_piranha_plant, SOUND_OBJ_DEFAULT_DEATH);
+#if OMM_GAME_IS_SMMS
+    destroy_preset(bhvgoombone, o->oGoombaSize == GOOMBA_SIZE_TINY, obj_destroy_white_puff, 1, SOUND_OBJ_ENEMY_DEATH_HIGH);
+    destroy_preset(bhvgoombone, o->oGoombaSize == GOOMBA_SIZE_REGULAR, obj_destroy_white_puff, 1, SOUND_OBJ_ENEMY_DEATH_HIGH);
+    destroy_preset(bhvgoombone, o->oGoombaSize == GOOMBA_SIZE_HUGE, obj_destroy_white_puff, -1, SOUND_OBJ_ENEMY_DEATH_LOW);
+#endif
+#if OMM_GAME_IS_SMSR
+    destroy_preset(bhvCustomSMSRShyGuy, o->oGoombaSize == GOOMBA_SIZE_TINY, obj_destroy_white_puff, 1, SOUND_OBJ_ENEMY_DEATH_HIGH);
+    destroy_preset(bhvCustomSMSRShyGuy, o->oGoombaSize == GOOMBA_SIZE_REGULAR, obj_destroy_white_puff, 1, SOUND_OBJ_ENEMY_DEATH_HIGH);
+    destroy_preset(bhvCustomSMSRShyGuy, o->oGoombaSize == GOOMBA_SIZE_HUGE, obj_destroy_white_puff, -1, SOUND_OBJ_ENEMY_DEATH_LOW);
     destroy_preset(bhvCustomSMSRBreakableWindow, 1, obj_destroy_break_particles, 0, SOUND_GENERAL_WALL_EXPLOSION, 0xFF, 0xFF, 0xFF);
     destroy_preset(bhvCustomSMSRFallingDomino, 1, obj_destroy_break_particles, 0, SOUND_GENERAL_WALL_EXPLOSION, 0x40, 0x40, 0x40);
     destroy_preset(bhvCustomSMSRFloatingThwomp, 1, obj_destroy_break_particles, 5, SOUND_OBJ_THWOMP, 0x40, 0x80, 0xFF);

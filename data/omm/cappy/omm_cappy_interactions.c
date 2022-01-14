@@ -68,7 +68,7 @@ bool omm_cappy_is_mario_available(struct MarioState *m, bool isCapture) {
         return true;
     }
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     // Wario's shoulder bash
     if (m->action == ACT_WARIO_CHARGE) {
         return true;
@@ -138,7 +138,7 @@ void omm_cappy_process_interactions(struct Object *cappy, struct MarioState *m) 
                     gOmmData->mario->cappy.bounced = !OMM_CHEAT_UNLIMITED_CAPPY_BOUNCES;
                     omm_mario_set_action(m, (m->action & ACT_FLAG_METAL_WATER) ? ACT_OMM_METAL_WATER_CAPPY_BOUNCE : ACT_OMM_CAPPY_BOUNCE, 0, 0);
                 } else {
-                    omm_mario_set_action(m, (m->action & ACT_FLAG_METAL_WATER) ? ACT_OMM_METAL_WATER_TRIPLE_JUMP : ACT_OMM_GROUND_CAPPY_BOUNCE, 0, 0);
+                    omm_mario_set_action(m, (m->action & ACT_FLAG_METAL_WATER) ? ACT_OMM_METAL_WATER_TRIPLE_JUMP : ACT_OMM_GROUND_CAPPY_BOUNCE, 1, 0);
                 }
                 spawn_object(m->marioObj, MODEL_NONE, bhvHorStarParticleSpawner);
                 play_sound(SOUND_GENERAL_BOING1, m->marioObj->oCameraToObject);

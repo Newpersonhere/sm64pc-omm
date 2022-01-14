@@ -2,7 +2,7 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
 #define cappy_mad_piano_play_song(...)
 #else
 

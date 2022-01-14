@@ -1,7 +1,7 @@
 #define OMM_ALL_HEADERS
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
-#if OMM_CODE_SPARKLY
+#if OMM_GAME_IS_SM64
 
 //
 // Gfx data

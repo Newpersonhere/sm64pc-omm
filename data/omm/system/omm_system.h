@@ -23,7 +23,7 @@ void omm_debug_start_counter();
 void omm_debug_end_counter();
 void omm_speedrun_split(s32 numStars);
 
-#if defined(SM74)
+#if OMM_GAME_IS_SM74
 void omm_opt_sm74_change_mode(UNUSED void *opt, s32 arg);
 #define sm74_mode__omm_save                     ((omm_is_main_menu() ? (s32) sWarpDest.areaIdx : (s32) gCurrAreaIndex) - 1)
 #define sm74_mode__omm_opt_init_warp_to_level   sWarpDest.areaIdx
@@ -256,18 +256,23 @@ DECLARE_TOGGLE(gOmmCheatMarioTeleportsToCappy);
 DECLARE_TOGGLE(gOmmCheatCappyCanCollectStars);
 DECLARE_TOGGLE(gOmmCheatPlayAsCappy);
 DECLARE_TOGGLE(gOmmCheatPeachEndlessVibeGauge);
-DECLARE_TOGGLE_SC(gOmmExtrasCappyEyesOnMariosCap);
+DECLARE_TOGGLE_SC(gOmmExtrasSMOAnimations);
+DECLARE_TOGGLE_SC(gOmmExtrasCappyAndTiara);
 DECLARE_TOGGLE_SC(gOmmExtrasColoredStars);
 DECLARE_TOGGLE_SC(gOmmExtrasVanishingHUD);
 DECLARE_TOGGLE_SC(gOmmExtrasRevealSecrets);
 DECLARE_TOGGLE_SC(gOmmExtrasRedCoinsRadar);
 DECLARE_TOGGLE_SC(gOmmExtrasShowStarNumber);
 DECLARE_TOGGLE_SC(gOmmExtrasInvisibleMode);
+#if OMM_CODE_DEV
+DECLARE_TOGGLE_SC(gOmmExtrasRender96Peach);
+#endif
 DECLARE_TOGGLE_SC(gOmmExtrasCrystalStarsReward);
 #if OMM_CODE_DEBUG
 DECLARE_TOGGLE_SC(gOmmDebugHitbox);
 DECLARE_TOGGLE_SC(gOmmDebugHurtbox);
 DECLARE_TOGGLE_SC(gOmmDebugWallbox);
+DECLARE_TOGGLE_SC(gOmmDebugSurface);
 DECLARE_TOGGLE_SC(gOmmDebugMario);
 DECLARE_TOGGLE_SC(gOmmDebugCappy);
 DECLARE_TOGGLE_SC(gOmmDebugProfiler);
@@ -279,5 +284,13 @@ DECLARE_CHOICE_SC(gOmmDebugGameSpeedFps);
 
 void omm_opt_return_to_main_menu(UNUSED void *opt, s32 arg);
 void omm_opt_reset_binds(u32 *binds);
+
+#define omm_opt_select_available(option, zero, count, cond) \
+{ static u32 s##option = (u32) (-1); \
+if (s##option == (u32) (-1)) { s##option = option; } \
+s32 d##option = omm_sign_0_s(option - s##option) * (omm_abs_s(option - s##option) > 1 ? -1 : +1); \
+if (d##option != 0) { while (!(cond)) { option = (option + d##option + (count)) % (count); } } \
+else if (!(cond)) { option = (zero); } \
+s##option = option; }
 
 #endif // OMM_SYSTEM_H

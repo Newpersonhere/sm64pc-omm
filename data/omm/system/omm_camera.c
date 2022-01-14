@@ -61,7 +61,7 @@ bool omm_camera_is_available(struct MarioState *m) {
         (m->action != ACT_IN_CANNON);
 }
 
-#if OMM_CODE_VANILLA
+#if OMM_GAME_IS_SM64
 // Level, Area, Pitch, Yaw, Distance
 static const s16 sOmmCameraInitPresets[][5] = {
     { LEVEL_BITDW,   1, 0x1000, 0x0000, OMM_CAM_DIST_MODE_HIGH },
@@ -96,7 +96,7 @@ void omm_camera_init() {
         sOmmCamYaw = gMarioState->faceAngle[1] + 0x8000;
         sOmmCamDistMode = OMM_CAM_DIST_MODE_MEDIUM;
 
-#if OMM_CODE_VANILLA
+#if OMM_GAME_IS_SM64
         // Per level
         for (s32 i = 0; i != sOmmCameraInitPresetCount; ++i) {
             if (sOmmCameraInitPresets[i][0] == gCurrLevelNum &&
@@ -211,7 +211,7 @@ static bool omm_camera_intersect_ray_surface(vec3 origin, vec3 dirNormalized, f3
 }
 
 static bool omm_camera_check_point_in_no_col_box(vec3 pos) {
-#if OMM_CODE_VANILLA
+#if OMM_GAME_IS_SM64
     for (s32 i = 0; i != sOmmCameraNoColBoxCount; ++i) {
         if (sOmmCameraNoColBoxes[i][0] == gCurrLevelNum &&
             sOmmCameraNoColBoxes[i][1] == gCurrAreaIndex &&
@@ -527,7 +527,7 @@ static bool omm_camera_is_bowser_fight() {
     for_each(const BehaviorScript *, bhv, 2, OMM_ARRAY_OF(const BehaviorScript *) { bhvBowser, omm_bhv_bowser }) {
         for_each_object_with_behavior(obj, *bhv) {
             if (!obj_is_dormant(obj)) {
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
                 // Spamba Bowser
                 if (*bhv == bhvBowser && obj->oInteractType == INTERACT_DAMAGE) {
                     continue;

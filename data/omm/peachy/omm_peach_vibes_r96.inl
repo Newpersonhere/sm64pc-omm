@@ -1,4 +1,4 @@
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
 
 extern "C" {
 #include "data/omm/omm_defines.h"

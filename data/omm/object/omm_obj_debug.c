@@ -297,7 +297,6 @@ static void omm_bhv_debug_box_update() {
         } break;
     }
     obj_set_angle(o, 0, 0, 0);
-    o->parentObj = NULL;
 }
 
 static const BehaviorScript omm_bhv_debug_box[] = {
@@ -372,7 +371,7 @@ static void omm_debug_update_counters() {
             sCounters[i][1] = sCounters[i][0] / 30;
             sCounters[i][0] = 0;
         }
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
         sFPSCounters[1] = (s32) ((config60FPS ? OMM_60 : OMM_30) * (1000000.0 / omm_max_s(1, sFPSCounters[0])));
 #else
         sFPSCounters[1] = (s32) ((OMM_IS_60_FPS ? OMM_60 : OMM_30) * (1000000.0 / omm_max_s(1, sFPSCounters[0])));
@@ -403,8 +402,26 @@ OMM_ROUTINE_UPDATE(omm_debug_update) {
     struct MarioState *m = gMarioState;
 
     // Debug boxes
-    if (gObjectLists && !omm_is_game_paused()) {
-        obj_unload_all_with_behavior(omm_bhv_debug_box);
+    if (gObjectLists && !omm_is_main_menu()) {
+
+        // Register existing boxes and unload unused ones
+        bool objHasBox[OBJECT_POOL_CAPACITY][3] = { false };
+        for_each_object_with_behavior(box, omm_bhv_debug_box) {
+            struct Object *p = box->parentObj;
+            s32 boxType = box->oAnimState;
+            if (p && p->activeFlags != ACTIVE_FLAG_DEACTIVATED && (
+                (boxType == 0 && gOmmDebugHitbox) ||
+                (boxType == 1 && gOmmDebugHurtbox) ||
+                (boxType == 2 && gOmmDebugWallbox))
+            ) {
+                s32 objIndex = (s32) (((uintptr_t) p - (uintptr_t) gObjectPool) / sizeof(struct Object));
+                objHasBox[objIndex][boxType] = true;
+            } else {
+                obj_mark_for_deletion(box);
+            }
+        }
+        
+        // Create boxes for each object
         static const s32 sObjTypes[] = {
             OBJ_LIST_PLAYER,
             OBJ_LIST_DESTRUCTIVE,
@@ -422,24 +439,25 @@ OMM_ROUTINE_UPDATE(omm_debug_update) {
             struct Object *next = (struct Object *) head->header.next; 
             while (next != head) {
                 if (next->oIntangibleTimer == 0) {
-                    struct Object *o = next;
-                    if (o == gMarioObject && m->action == ACT_OMM_POSSESSION) {
-                        o = gOmmData->mario->capture.obj;
+                    struct Object *obj = next;
+                    if (obj == gMarioObject && m->action == ACT_OMM_POSSESSION) {
+                        obj = gOmmData->mario->capture.obj;
                     }
+                    s32 objIndex = (s32) (((uintptr_t) obj - (uintptr_t) gObjectPool) / sizeof(struct Object));
 
                     // Hitbox
-                    if (gOmmDebugHitbox) {
-                        omm_spawn_debug_box(o, 0);
+                    if (gOmmDebugHitbox && !objHasBox[objIndex][0]) {
+                        omm_spawn_debug_box(obj, 0);
                     }
 
                     // Hurtbox
-                    if (gOmmDebugHurtbox) {
-                        omm_spawn_debug_box(o, 1);
+                    if (gOmmDebugHurtbox && !objHasBox[objIndex][1]) {
+                        omm_spawn_debug_box(obj, 1);
                     }
 
                     // Wallbox
-                    if (gOmmDebugWallbox) {
-                        omm_spawn_debug_box(o, 2);
+                    if (gOmmDebugWallbox && !objHasBox[objIndex][2]) {
+                        omm_spawn_debug_box(obj, 2);
                     }
                 }
                 next = (struct Object *) next->header.next; 

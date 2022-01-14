@@ -138,21 +138,21 @@ CAPTURE_BEHAVIOR(crazy_box);            // bhvJumpingBox
 CAPTURE_BEHAVIOR(mr_i);                 // bhvMrI
 
 // Hazy Maze Cave
-CAPTURE_BEHAVIOR(monty_mole);           // bhvMontyMole
 CAPTURE_BEHAVIOR(swoop);                // bhvSwoop
 CAPTURE_BEHAVIOR(snufit);               // bhvSnufit
-CAPTURE_BEHAVIOR(dorrie);               // bhvDorrie
+CAPTURE_BEHAVIOR(monty_mole);           // bhvMontyMole
 
 // Lethal Lava Land
 CAPTURE_BEHAVIOR(bully);                // bhvSmallBully
-CAPTURE_BEHAVIOR(big_bully);            // bhvBigBully, bhvBigBullyWithMinions
+CAPTURE_BEHAVIOR(motos);                // bhvMotos
+CAPTURE_BEHAVIOR(blargg);               // bhvBlargg
+CAPTURE_BEHAVIOR(friendly_blargg);      // bhvFriendlyBlargg
 
 // Shifting Sand Land
 CAPTURE_BEHAVIOR(fly_guy);              // bhvFlyGuy
 CAPTURE_BEHAVIOR(pokey);                // bhvPokey, bhvPokeyBodyPart
 CAPTURE_BEHAVIOR(amp);                  // bhvHomingAmp, bhvCirclingAmp
 CAPTURE_BEHAVIOR(klepto);               // bhvKlepto
-CAPTURE_BEHAVIOR(eyerock);              // bhvEyerokBoss, bhvEyerokHand
 
 // Dire, Dire Docks
 CAPTURE_BEHAVIOR(fire_spitter);         // bhvFireSpitter
@@ -160,7 +160,6 @@ CAPTURE_BEHAVIOR(sushi_shark);          // bhvSushiShark
 
 // Snowman's Land
 CAPTURE_BEHAVIOR(moneybag);             // bhvMoneybag, bhvMoneybagHidden
-CAPTURE_BEHAVIOR(big_chill_bully);      // bhvBigChillBully
 CAPTURE_BEHAVIOR(sl_walking_penguin);   // bhvSLWalkingPenguin
 
 // Wet-Dry World
@@ -176,7 +175,6 @@ CAPTURE_BEHAVIOR(ukiki);                // bhvUkiki, bhvMacroUkiki
 // Tiny-Huge Island
 CAPTURE_BEHAVIOR(enemy_lakitu);         // bhvEnemyLakitu
 CAPTURE_BEHAVIOR(spiny);                // bhvSpiny
-CAPTURE_BEHAVIOR(wiggler);              // bhvWigglerHead, bhvWigglerBody
 
 // Tick Tock Clock
 

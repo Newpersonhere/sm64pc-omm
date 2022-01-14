@@ -1,19 +1,14 @@
 #define OMM_ALL_HEADERS
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
-s16 gOmmHardMode = FALSE;
+s16 gOmm1HPMode = FALSE;
 
 //
 // Data
 //
 
-typedef struct OmmRoutine {
-    s32 type;
-    void (*func)(void);
-    struct OmmRoutine *next;
-} OmmRoutine;
-
-static OmmRoutine sOmmRoutines = { 0, NULL, NULL };
+typedef void (*OmmRoutine)(void);
+static OmmArray sOmmRoutines[OMM_ROUTINE_TYPES] = { NULL, NULL, NULL };
 static bool sOmmIsMainMenu = true;
 static bool sOmmIsLevelEntry = false;
 static bool sOmmIsEndingCutscene = false;
@@ -36,31 +31,17 @@ extern void omm_stars_init_bits();
 //
 
 void omm_add_routine(s32 type, void (*func)(void)) {
-    for (OmmRoutine *routine = &sOmmRoutines;; routine = routine->next) {
-
-        // Existing routine
-        if (routine->type == type &&
-            routine->func == func) {
-            return;
-        }
-
-        // New routine
-        if (routine->next == NULL) {
-            routine->next = OMM_MEMNEW(OmmRoutine, 1);
-            routine->next->type = type;
-            routine->next->func = func;
-            routine->next->next = NULL;
-            return;
+    if (OMM_LIKELY(type >= 0 && type < OMM_ROUTINE_TYPES && func)) {
+        omm_array_init(sOmmRoutines[type], OmmRoutine);
+        if (omm_array_find(sOmmRoutines[type], func) == -1) {
+            omm_array_add(sOmmRoutines[type], func);
         }
     }
 }
 
 static void omm_execute_routines(s32 type) {
-    for (OmmRoutine *routine = &sOmmRoutines; routine != NULL; routine = routine->next) {
-        if (routine->type == type &&
-            routine->func != NULL) {
-            routine->func();
-        }
+    omm_array_for_each(sOmmRoutines[type], OmmRoutine, routine) {
+        (*routine)();
     }
 }
 
@@ -111,7 +92,7 @@ void omm_update() {
             if ((buttonPressed & buttonRequired) == buttonRequired) {
                 sOmmCompleteSaveSequenceIndex++;
                 if (sOmmCompleteSaveButtons[sOmmCompleteSaveSequenceIndex] == A_BUTTON) {
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
                     play_sound(SOUND_MENU_STAR_SOUND | 0xFF00, gGlobalSoundArgs); // For some reason the 'right answer' sound effect doesn't play
 #else
                     play_sound(SOUND_GENERAL2_RIGHT_ANSWER | 0xFF00, gGlobalSoundArgs);
@@ -152,11 +133,8 @@ void omm_update() {
 static void omm_gfx_update_stars_models() {
 
     // Stars number
-    if (gOmmExtrasShowStarNumber && !omm_is_ending_cutscene()
-#if defined(SMSR)
-        && gCurrLevelNum != LEVEL_ENDING
-#endif
-    ) { for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_star_or_key_behaviors()) {
+    if (OMM_EXTRAS_SHOW_STAR_NUMBER) {
+        for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_star_or_key_behaviors()) {
             for_each_object_with_behavior(star, *bhv) {
                 if (!obj_is_dormant(star) &&
                     star->behavior != bhvBowserKey &&
@@ -177,7 +155,7 @@ static void omm_gfx_update_stars_models() {
         }
     }
 
-#if !defined(SMMS)
+#if !OMM_GAME_IS_SMMS
     // Colored Stars
     static struct GraphNode *sOmmStarGraphNodes[34] = { NULL };
     if (OMM_UNLIKELY(!sOmmStarGraphNodes[0])) {
@@ -220,7 +198,7 @@ static void omm_gfx_update_stars_models() {
     s32 starColor = omm_clamp_s(gCurrCourseNum, 0, 16);
     for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_star_model_behaviors()) {
         for_each_object_with_behavior(obj, *bhv) {
-            if (gOmmExtrasColoredStars) {
+            if (OMM_EXTRAS_COLORED_STARS) {
                 if (obj_check_model(obj, MODEL_STAR) || (obj->behavior == bhvCelebrationStar && !obj_check_model(obj, MODEL_BOWSER_KEY))) {
                     obj->oGraphNode = sOmmStarGraphNodes[starColor];
                 } else if (obj_check_model(obj, MODEL_TRANSPARENT_STAR)) {
@@ -271,15 +249,16 @@ void omm_update_gfx() {
     omm_execute_routines(OMM_ROUTINE_TYPE_GFX);
 
     // Mario
-    if (gMarioState->marioBodyState && gOmmExtrasInvisibleMode) {
+    if (gMarioState->marioBodyState && OMM_EXTRAS_INVISIBLE_MODE) {
         gMarioState->marioBodyState->modelState &= ~0xFF;
         gMarioState->marioBodyState->modelState |= 0x100;
     }
 
     // Crystal sparkles
-    if ((gOmmExtrasCrystalStarsReward &= omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD)) && gMarioObject && !omm_is_game_paused() &&
-        ((gGlobalTimer & 1) || vec3f_dist(gMarioState->pos, gOmmData->mario->state.previous.pos) > 20.f)) {
-        omm_spawn_sparkly_star_sparkle_mario(gMarioObject, OMM_SPARKLY_MODE_HARD, 60.f, 10.f, 0.5f, 30.f);
+    if (gMarioObject && OMM_EXTRAS_CRYSTAL_STARS_REWARD) {
+        if (!omm_is_game_paused() && ((gGlobalTimer & 1) || vec3f_dist(gMarioState->pos, gOmmData->mario->state.previous.pos) > 20.f)) {
+            omm_spawn_sparkly_star_sparkle_mario(gMarioObject, OMM_SPARKLY_MODE_HARD, 60.f, 10.f, 0.5f, 30.f);
+        }
     }
 
     // Object models
@@ -289,7 +268,7 @@ void omm_update_gfx() {
     // Invisible mode
     for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_player_behaviors()) {
         for_each_object_with_behavior(obj, *bhv) {
-            if (gOmmExtrasInvisibleMode) {
+            if (OMM_EXTRAS_INVISIBLE_MODE) {
                 obj->header.gfx.node.flags |= GRAPH_RENDER_INVISIBLE;
             } else {
                 obj->header.gfx.node.flags &= ~GRAPH_RENDER_INVISIBLE;
@@ -341,7 +320,7 @@ void *omm_update_cmd(void *cmd, s32 reg) {
         gCurrLevelNum = reg;
         gCurrCourseNum = omm_level_get_course(reg);
         gCurrActNum = 1;
-#if !defined(SM74)
+#if !OMM_GAME_IS_SM74
         gCurrAreaIndex = 1;
 #endif
         gDialogCourseActNum = gCurrActNum;

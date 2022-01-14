@@ -543,7 +543,7 @@ static const OmmCharacterSound sOmmCharacterSoundsPeachOMM[] = {
     SOUND_OMM(OMM_SOUND_PEACH_SO_LONGA_BOWSER),         // So long-a Bowser
     SOUND_NUL,                                          // I'm-a tired
     SOUND_OMM(OMM_SOUND_PEACH_LETS_A_GO),               // Let's-a go (+ star sound)
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     SOUND_R96(R96_MARIO_OKEY_DOKEY),                    // Okey dokey
     SOUND_R96(R96_MARIO_GAME_OVER),                     // Game Over
     SOUND_R96(R96_MARIO_HELLO),                         // Hello
@@ -579,7 +579,7 @@ static const OmmCharacterSound sOmmCharacterSoundsPeachOMM[] = {
     SOUND_OMM(OMM_SOUND_EVENT_DEATH_PEACH_FALL),        // OMM sound: Falling
 };
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
 static const OmmCharacterSound sOmmCharacterSoundsMarioR96[] = {
     SOUND_R96(R96_MARIO_YAH),                           // Jump Yah
     SOUND_R96(R96_MARIO_WAH),                           // Jump Wah
@@ -788,7 +788,7 @@ static const OmmCharacterSound sOmmCharacterSoundsWarioR96[] = {
 static const OmmCharacterSound *sOmmCharacterSounds[] = {
     sOmmCharacterSoundsMarioN64,
     sOmmCharacterSoundsPeachOMM,
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     sOmmCharacterSoundsMarioR96,
     sOmmCharacterSoundsLuigiR96,
     sOmmCharacterSoundsWarioR96,
@@ -796,7 +796,7 @@ static const OmmCharacterSound *sOmmCharacterSounds[] = {
 };
 
 static const OmmCharacterSound *sOmmCharacterSoundBanks[] = {
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     sOmmCharacterSoundsMarioR96,
     sOmmCharacterSoundsPeachOMM,
     sOmmCharacterSoundsLuigiR96,
@@ -818,7 +818,7 @@ static void omm_sound_process_character_sound_from_index(s32 index, f32 *pos, bo
         case SOUND_TYPE_N64 | 1: play_sound(sound->idNum, pos ? pos : gGlobalSoundArgs); break;
         case SOUND_TYPE_OMM | 0: omm_sound_stop(sound->idNum); break;
         case SOUND_TYPE_OMM | 1: omm_sound_play(sound->idNum, pos ? pos : gGlobalSoundArgs); break;
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
         case SOUND_TYPE_R96 | 0: if (dynos_sound_is_playing(*sound->idStr)) { dynos_sound_stop(1); } break;
         case SOUND_TYPE_R96 | 1: dynos_sound_play(*sound->idStr, pos ? pos : gGlobalSoundArgs); break;
 #endif

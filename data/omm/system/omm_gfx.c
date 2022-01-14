@@ -74,13 +74,27 @@ static struct OmmTexture *omm_gfx_get_texture(const char *id) {
 // Texture import
 //
 
-bool omm_gfx_import_texture(struct GfxRenderingAPI *rapi, void *cache, int tile, void **node, const void *addr, int fmt, int siz) {
+static bool __omm_gfx_import_texture(struct GfxRenderingAPI *rapi, void *cache, int tile, void **node, const void *addr, int fmt, int siz) {
     struct OmmTexture *tex = omm_gfx_get_texture((const char *) addr);
     if (tex) {
-        if (!((bool (*)(int, void **, const void *, int, int)) cache)(tile, node, addr, fmt, siz)) {
+        if (!((bool (*)(int, void **, const void *, int, int)) cache)(tile, node, tex->id, fmt, siz)) {
             rapi->upload_texture(tex->data, tex->width, tex->height);
         }
         return true;
     }
     return false;
+}
+
+bool omm_gfx_import_texture(struct GfxRenderingAPI *rapi, void *cache, int tile, void **node, const void *addr, int fmt, int siz) {
+#if defined(EXTERNAL_DATA) || OMM_GAME_IS_R96A
+    static bool precached = false;
+    if (!precached && configPrecacheRes) {
+#undef OMM_TEXTURE_
+#define OMM_TEXTURE_(id, name) __omm_gfx_import_texture(rapi, cache, tile, node, OMM_TEXTURE_##id, fmt, siz);
+#include "data/omm/omm_defines_textures.inl"
+#undef OMM_TEXTURE_
+        precached = true;
+    }
+#endif
+    return __omm_gfx_import_texture(rapi, cache, tile, node, addr, fmt, siz);
 }

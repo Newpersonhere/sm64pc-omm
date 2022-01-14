@@ -63,6 +63,7 @@ static void omm_data_reset_mario_fields() {
     // Capture data
     gOmmData->mario->capture.data = NULL;
     gOmmData->mario->capture.obj = NULL;
+    gOmmData->mario->capture.prev = NULL;
     gOmmData->mario->capture.animPos[0][0] = 0.f;
     gOmmData->mario->capture.animPos[0][1] = 0.f;
     gOmmData->mario->capture.animPos[0][2] = 0.f;
@@ -143,6 +144,9 @@ static void omm_data_update_mario_fields() {
     if (gMarioState->action != ACT_OMM_POSSESSION) {
         gOmmData->mario->capture.data = NULL;
         gOmmData->mario->capture.obj = NULL;
+        if (!(gMarioState->action & ACT_FLAG_AIR)) {
+            gOmmData->mario->capture.prev = NULL;
+        }
     }
 }
 

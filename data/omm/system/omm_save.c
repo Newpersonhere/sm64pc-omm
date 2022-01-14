@@ -108,7 +108,7 @@ typedef struct {
 static OmmSaveBuffer sOmmSaveBuffers[] = {
     { "smex", 1, 7, NULL, { { { 0 } } } },
     { "smms", 1, 7, NULL, { { { 0 } } } },
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     { "r96a", 1, 7, "b00" STRINGIFY(NUM_KEYS) "b" STRINGIFY(NUM_KEYS) STRINGIFY(NUM_WARIO_COINS), { { { 0 } } } },
 #else
     { "r96a", 1, 7, "b0016b1616", { { { 0 } } } },
@@ -117,7 +117,6 @@ static OmmSaveBuffer sOmmSaveBuffers[] = {
     { "sm74", 2, 7, NULL, { { { 0 } } } },
     { "smsr", 1, 7, NULL, { { { 0 } } } },
 };
-#define OMM_SAVE_VERSION_INDEX DEF(0, 1, 2, 3, 4, 5)
 #define OMM_SAVE_MODE_INDEX DEF(0, 0, 0, 0, sm74_mode__omm_save, 0)
 
 //
@@ -126,8 +125,8 @@ static OmmSaveBuffer sOmmSaveBuffers[] = {
 
 #define sOmmCurrSaveFileIndex               (gCurrSaveFileNum - 1)
 #define sOmmCurrCourseIndex                 (gCurrCourseNum - 1)
-#define sOmmCurrSaveBuffer                  (&sOmmSaveBuffers[OMM_SAVE_VERSION_INDEX])
-#define sOmmCurrSaveFile                    (&sOmmSaveBuffers[OMM_SAVE_VERSION_INDEX].files[sOmmCurrSaveFileIndex][OMM_SAVE_MODE_INDEX])
+#define sOmmCurrSaveBuffer                  (&sOmmSaveBuffers[OMM_GAME_VERSION])
+#define sOmmCurrSaveFile                    (&sOmmSaveBuffers[OMM_GAME_VERSION].files[sOmmCurrSaveFileIndex][OMM_SAVE_MODE_INDEX])
 
 #define COURSE_CASTLE                       (COURSE_COUNT - 1)
 #define CHECK_FILE_INDEX(i, fail)           if (i < 0 || i >= NUM_SAVE_FILES) { fail; }
@@ -247,18 +246,23 @@ void save_file_load_all() {
                         READ_CHOICE_SC(gOmmPowerUpsType, token.args);
                         READ_CHOICE_SC(gOmmCameraMode, token.args);
                         READ_CHOICE_SC(gOmmSparklyStarsMode, token.args);
-                        READ_TOGGLE_SC(gOmmExtrasCappyEyesOnMariosCap, token.args);
+                        READ_TOGGLE_SC(gOmmExtrasSMOAnimations, token.args);
+                        READ_TOGGLE_SC(gOmmExtrasCappyAndTiara, token.args);
                         READ_TOGGLE_SC(gOmmExtrasColoredStars, token.args);
                         READ_TOGGLE_SC(gOmmExtrasVanishingHUD, token.args);
                         READ_TOGGLE_SC(gOmmExtrasRevealSecrets, token.args);
                         READ_TOGGLE_SC(gOmmExtrasRedCoinsRadar, token.args);
                         READ_TOGGLE_SC(gOmmExtrasShowStarNumber, token.args);
                         READ_TOGGLE_SC(gOmmExtrasInvisibleMode, token.args);
+#if OMM_CODE_DEV
+                        READ_TOGGLE_SC(gOmmExtrasRender96Peach, token.args);
+#endif
                         READ_TOGGLE_SC(gOmmExtrasCrystalStarsReward, token.args);
 #if OMM_CODE_DEBUG
                         READ_TOGGLE_SC(gOmmDebugHitbox, token.args);
                         READ_TOGGLE_SC(gOmmDebugHurtbox, token.args);
                         READ_TOGGLE_SC(gOmmDebugWallbox, token.args);
+                        READ_TOGGLE_SC(gOmmDebugSurface, token.args);
                         READ_TOGGLE_SC(gOmmDebugMario, token.args);
                         READ_TOGGLE_SC(gOmmDebugCappy, token.args);
                         READ_TOGGLE_SC(gOmmDebugProfiler, token.args);
@@ -509,18 +513,23 @@ static void save_file_write() {
     WRITE_CHOICE_SC(gOmmPowerUpsType);
     WRITE_CHOICE_SC(gOmmCameraMode);
     WRITE_CHOICE_SC(gOmmSparklyStarsMode);
-    WRITE_TOGGLE_SC(gOmmExtrasCappyEyesOnMariosCap);
+    WRITE_TOGGLE_SC(gOmmExtrasSMOAnimations);
+    WRITE_TOGGLE_SC(gOmmExtrasCappyAndTiara);
     WRITE_TOGGLE_SC(gOmmExtrasColoredStars);
     WRITE_TOGGLE_SC(gOmmExtrasVanishingHUD);
     WRITE_TOGGLE_SC(gOmmExtrasRevealSecrets);
     WRITE_TOGGLE_SC(gOmmExtrasRedCoinsRadar);
     WRITE_TOGGLE_SC(gOmmExtrasShowStarNumber);
     WRITE_TOGGLE_SC(gOmmExtrasInvisibleMode);
+#if OMM_CODE_DEV
+    WRITE_TOGGLE_SC(gOmmExtrasRender96Peach);
+#endif
     WRITE_TOGGLE_SC(gOmmExtrasCrystalStarsReward);
 #if OMM_CODE_DEBUG
     WRITE_TOGGLE_SC(gOmmDebugHitbox);
     WRITE_TOGGLE_SC(gOmmDebugHurtbox);
     WRITE_TOGGLE_SC(gOmmDebugWallbox);
+    WRITE_TOGGLE_SC(gOmmDebugSurface);
     WRITE_TOGGLE_SC(gOmmDebugMario);
     WRITE_TOGGLE_SC(gOmmDebugCappy);
     WRITE_TOGGLE_SC(gOmmDebugProfiler);
@@ -731,7 +740,7 @@ void save_file_set_sound_mode(UNUSED u16 mode) {
 void save_file_move_cap_to_default_location() {
 }
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
 
 //
 // Luigi keys and Wario coins
@@ -858,7 +867,7 @@ void omm_set_complete_save_file(s32 fileIndex) {
         }
 
         // Collectibles
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
         for (s32 i = 0; i != NUM_KEYS; ++i) {
             save_file_register_key(fileIndex, i);
         }

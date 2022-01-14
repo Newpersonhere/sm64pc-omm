@@ -1,7 +1,6 @@
 #define OMM_ALL_HEADERS
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
-#if OMM_CODE_SPARKLY
 
 bool omm_sparkly_check_cheats(struct MarioState *m) {
 
@@ -28,6 +27,7 @@ bool omm_sparkly_check_cheats(struct MarioState *m) {
         return true;
     }
 
+#if OMM_GAME_IS_SM64
     // Castle grounds cheese (thanks, Petch)
     if (gCurrLevelNum == LEVEL_GROUNDS && gCurrAreaIndex == 1 && m->pos[1] > 6000.f) {
         if (m->action == ACT_OMM_POSSESSION && gOmmData->mario->capture.timer >= 20) {
@@ -46,6 +46,7 @@ bool omm_sparkly_check_cheats(struct MarioState *m) {
             return true;
         }
     }
+#endif
 
     // Nothing to report
     return false;
@@ -74,5 +75,3 @@ void omm_sparkly_set_opt_mode(s32 mode) {
 void omm_sparkly_disable() {
     gOmmData->mario->sparkly.mode = OMM_SPARKLY_MODE_DISABLED;
 }
-
-#endif

@@ -44,7 +44,7 @@ static const OmmPlayerProperties sOmmPlayerProperties[] = {
     { MODEL_PEACHS_WINGED_METAL_CAP_OMM, omm_geo_peachs_metal_cap },
     &gMarioAnimsData },
     
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     /* Luigi */ {
     OMM_TEXT_LUIGI_UPPER, 0x00C000FF,
     { 1.10f, 0.90f, 1.05f },
@@ -107,7 +107,7 @@ static const OmmPlayerProperties sOmmPlayerProperties[] = {
     &gMarioAnimsData },
 };
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
 
 //
 // Render96 characters functions
@@ -185,7 +185,7 @@ bool omm_player_is_unlocked(s32 index) {
     switch (index) {
         case OMM_PLAYER_MARIO: return true;
         case OMM_PLAYER_PEACH: return omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_NORMAL);
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
         case OMM_PLAYER_LUIGI: return is_unlocked(save_file_get_keys, NUM_KEYS);
         case OMM_PLAYER_WARIO: return is_unlocked(save_file_get_wario_coins, NUM_WARIO_COINS);
 #endif
@@ -273,14 +273,12 @@ OMM_ROUTINE_LEVEL_ENTRY(omm_player_init) {
 }
 
 OMM_ROUTINE_UPDATE(omm_player_update) {
-    static u32 sOmmCharacter = OMM_PLAYER_MARIO;
-    if (gOmmCharacter != sOmmCharacter) {
-        s32 dir = omm_sign_s(gOmmCharacter - sOmmCharacter) * (omm_abs_s(gOmmCharacter - sOmmCharacter) > 1 ? -1 : +1);
-        while (!omm_player_is_unlocked(gOmmCharacter)) {
-            gOmmCharacter = (gOmmCharacter + dir + OMM_NUM_PLAYABLE_CHARACTERS) % OMM_NUM_PLAYABLE_CHARACTERS;
-        }
-        sOmmCharacter = gOmmCharacter;
-    }
+    omm_opt_select_available(
+        gOmmCharacter,
+        OMM_PLAYER_MARIO,
+        OMM_NUM_PLAYABLE_CHARACTERS,
+        omm_player_is_unlocked(gOmmCharacter)
+    );
 }
 
 OMM_ROUTINE_GFX(omm_player_update_gfx) {
@@ -292,79 +290,10 @@ OMM_ROUTINE_GFX(omm_player_update_gfx) {
         gLoadedGraphNodes[pp->mcap.id]  = omm_geo_get_graph_node(pp->mcap.geo, true);
         gLoadedGraphNodes[pp->wmcap.id] = omm_geo_get_graph_node(pp->wmcap.geo, true);
         gMarioObject->oGraphNode        = omm_geo_get_graph_node(pp->body.geo, true);
-        gMarioState->mMarioAnimations    = (MarioAnimationsStruct *) pp->anims;
-#if defined(R96A)
+        gMarioState->mMarioAnimations   = (MarioAnimationsStruct *) pp->anims;
+#if OMM_GAME_IS_R96A
         Cheats.ChaosPlayAs = 0;
         Cheats.PlayAs = 0;
 #endif
     }
 }
-
-//
-// One of the sickiest combo with Peach
-// With frame-perfect inputs, she can reach 10000+ units with a full Vibe gauge
-// (for comparison, it's "only" 7000 units with only Joy + some air moves)
-//
-// Here's how it's done:
-// - Start with a Gloom spin jump
-// - At the top, deactivate Gloom, up-throw, kick, gp, dive
-// - When the gauge is back at 100, start the Gloom/Joy combo
-// - Activate Gloom, gp, and at the peak, dive
-// - Activate Joy as soon as possible, and spam A instead of holding it to maintain your height without draining the gauge too much
-// - Then reactivate Gloom, and repeat
-// - When the gauge is < 15, activate Joy one last time, and hold A
-// - At 0, Joy deactivates itself, end the combo with a spin throw, a kick and a gp dive
-//
-/*OMM_ROUTINE_UPDATE(__joy_gloom_combo) {
-    static f32 dir = +1.f;
-    struct MarioState *m = gMarioState;
-    
-    // Hold L to perform the combo
-    if (gPlayer1Controller->buttonDown & L_TRIG) {
-        gPlayer1Controller->buttonDown &= ~L_TRIG;
-        gPlayer1Controller->stickX = 64.f * dir;
-        gPlayer1Controller->stickY = 0.f;
-        gPlayer1Controller->stickMag = 64.f;
-        u16 buttons = 0;
-
-        // Gloom part
-        if (omm_peach_vibe_is_gloom()) {
-
-            // If not gping or diving, trigger a gp
-            if (m->action != ACT_GROUND_POUND && m->action != ACT_DIVE) {
-                buttons |= Z_TRIG;
-            }
-            
-            // At the peak of the gp, dive
-            else if (m->action == ACT_GROUND_POUND && m->actionTimer >= 10) {
-                buttons |= B_BUTTON;
-            }
-            
-            // When diving, try to activate Joy
-            else if (m->action == ACT_DIVE) {
-                buttons |= (Y_BUTTON | U_JPAD);
-            }
-        }
-        
-        // Joy part
-        else if (omm_peach_vibe_is_joy()) {
-            if (gOmmData->mario->peach.vibeTimer == 0) {
-                dir *= -1.f;
-            }
-
-            // Every 2 frames, press A to not lose height without draining the Vibe gauge too much
-            buttons |= (A_BUTTON * ((gGlobalTimer % 2) == 0));
-
-            // Try to activate Gloom as soon as possible
-            buttons |= (Y_BUTTON | L_JPAD);
-        }
-        
-        // Start the combo with Gloom
-        else {
-            buttons |= (Y_BUTTON | L_JPAD);
-        }
-
-        gPlayer1Controller->buttonPressed = buttons;
-        gPlayer1Controller->buttonDown |= buttons;
-    }
-}*/

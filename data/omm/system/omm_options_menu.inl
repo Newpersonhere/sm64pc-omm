@@ -7,7 +7,7 @@ void omm_opt_init_main_menu() {
 #if !OMM_CODE_DYNOS
     sNumOpts += 2;
 #endif
-#if defined(SM74)
+#if OMM_GAME_IS_SM74
     sNumOpts += 1;
 #endif
     struct Option *opts = (struct Option *) OMM_MEMNEW(struct Option, sNumOpts);
@@ -39,7 +39,7 @@ void omm_opt_init_main_menu() {
             continue;
         }
 
-#if defined(SM74)
+#if OMM_GAME_IS_SM74
         // Change SM74 mode button
         if (menuMain.opts[i].type == OPT_BUTTON && menuMain.opts[i].actionFn == optmenu_act_exit) {
             head->type = OPT_BUTTON;
@@ -311,7 +311,7 @@ void optmenu_draw(void) {
 
 #endif
 
-#if defined(SM74)
+#if OMM_GAME_IS_SM74
 #define OMM_OPTIONS_MENU_INL
 #include "data/omm/system/omm_sm74.inl"
 #undef OMM_OPTIONS_MENU_INL

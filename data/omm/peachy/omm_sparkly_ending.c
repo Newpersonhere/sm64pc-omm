@@ -6,7 +6,7 @@
 // Ending cutscene
 //
 
-#if OMM_CODE_SPARKLY
+#if OMM_GAME_IS_SM64
 static BAD_RETURN(s32) cutscene_ending_mario_and_toads(struct Camera *c) {
     cutscene_event(cutscene_ending_reset_spline, c, 0, 0);
     cutscene_event(cutscene_ending_look_at_sky, c, 0, 0);
@@ -29,7 +29,7 @@ struct Cutscene sCutsceneBadEnding[] = {
 #endif
 
 void omm_sparkly_ending_update_cutscene() {
-#if OMM_CODE_SPARKLY
+#if OMM_GAME_IS_SM64
     static struct Cutscene *sCutsceneGoodEnding = NULL;
     extern struct Cutscene sCutsceneEnding[];
     switch (omm_sparkly_ending) {
@@ -56,7 +56,7 @@ void omm_sparkly_ending_update_cutscene() {
 // Ending screen
 //
 
-#if OMM_CODE_SPARKLY
+#if OMM_GAME_IS_SM64
 static const Gfx sEndScreenMario[] = {
     gsSPDisplayList(dl_proj_mtx_fullscreen),
     gsSPDisplayList(dl_hud_img_begin),
@@ -107,7 +107,7 @@ static const s32 sOmmEndingSounds[3] = {
 #endif
 
 void omm_sparkly_ending_render_screen() {
-#if OMM_CODE_SPARKLY
+#if OMM_GAME_IS_SM64
     const Gfx *gfx = sOmmEndingScreens[omm_sparkly_ending][omm_player_get_selected_index()];
     if (gfx) {
         gSPDisplayList(gDisplayListHead++, gfx);
@@ -117,7 +117,7 @@ void omm_sparkly_ending_render_screen() {
         sLastTick = gGlobalTimer;
         switch (sSoundTimer) {
             case 001: sound_banks_disable(SEQ_PLAYER_SFX, 0xFFFF); break;
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
             case 120: dynos_sound_stop(1); break;
 #endif
             case 121: sound_banks_enable(SEQ_PLAYER_SFX, 0xFFFF); break;

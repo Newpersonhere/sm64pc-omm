@@ -27,53 +27,65 @@ typedef struct {
 
 #define ID(id) cappy_##id##_init, cappy_##id##_update, cappy_##id##_end, cappy_##id##_get_top
 const OmmCaptureData sOmmCaptureData[] = {
-                                                     /* walk,   run,  dash,  jump,   fall,   grav,   rad,   hgt,  down,  wall */
-    { bhvGoomba,                    ID(goomba),         14.f,  28.f,  28.f,  20.f,  -40.f, -2.65f,  50.f,  65.f,   0.f,  30.f },
-#if defined(SMMS)
-    { bhvgoombone,                  ID(goomba),         14.f,  28.f,  28.f,  20.f,  -40.f, -2.65f,  50.f,  65.f,   0.f,  30.f },
+    /*                                                           walk,   run,  dash,  jump,   fall,   grav,   rad,   hgt,  down,  wall */
+    { bhvGoomba,                    ID(goomba),                  14.f,  28.f,  28.f,  20.f,  -40.f, -2.65f,  50.f,  65.f,   0.f,  30.f },
+#if OMM_GAME_IS_SMMS
+    { bhvgoombone,                  ID(goomba),                  14.f,  28.f,  28.f,  20.f,  -40.f, -2.65f,  50.f,  65.f,   0.f,  30.f },
 #endif
-#if defined(SMSR)
-    { bhvCustomSMSRShyGuy,          ID(goomba),         14.f,  28.f,  28.f,  20.f,  -40.f, -2.65f,  50.f,  65.f,   0.f,  30.f },
+#if OMM_GAME_IS_SMSR
+    { bhvCustomSMSRShyGuy,          ID(goomba),                  14.f,  28.f,  28.f,  20.f,  -40.f, -2.65f,  50.f,  65.f,   0.f,  30.f },
 #endif
-    { bhvKoopa,                     ID(koopa),          18.f,  27.f,  36.f,  25.f,  -48.f, -2.65f,  60.f,  40.f,   0.f,  40.f },
-    { bhvKoopaShell,                ID(koopa_shell),    40.f,  60.f,  60.f,  42.f,  -75.f, -4.00f,  90.f, 100.f,   0.f,  60.f },
-    { bhvBobomb,                    ID(bobomb),         24.f,  24.f,  24.f,  32.f,  -60.f, -4.00f,  60.f, 100.f,   0.f,  40.f },
-    { bhvBobombBuddyOpensCannon,    ID(bobomb_buddy),    0.f,   0.f,   0.f,   0.f,    0.f,  0.00f,  60.f, 100.f,   0.f,  40.f },
-    { bhvChainChomp,                ID(chain_chomp),    16.f,  16.f,  64.f,  24.f,  -36.f, -2.00f, 100.f, 160.f,   0.f,  80.f },
-    { omm_bhv_chain_chomp_free,     ID(chain_chomp),    16.f,  16.f,  64.f,  24.f,  -36.f, -2.00f, 100.f, 160.f,   0.f,  80.f },
+    { bhvKoopa,                     ID(koopa),                   18.f,  27.f,  36.f,  25.f,  -48.f, -2.65f,  60.f,  40.f,   0.f,  40.f },
+    { bhvKoopaShell,                ID(koopa_shell),             40.f,  60.f,  60.f,  42.f,  -75.f, -4.00f,  90.f, 100.f,   0.f,  60.f },
+    { bhvBobomb,                    ID(bobomb),                  24.f,  24.f,  24.f,  32.f,  -60.f, -4.00f,  60.f, 100.f,   0.f,  40.f },
+    { bhvBobombBuddyOpensCannon,    ID(bobomb_buddy),             0.f,   0.f,   0.f,   0.f,    0.f,  0.00f,  60.f, 100.f,   0.f,  40.f },
+    { bhvChainChomp,                ID(chain_chomp),             16.f,  16.f,  64.f,  24.f,  -36.f, -2.00f, 100.f, 160.f,   0.f,  80.f },
+    { omm_bhv_chain_chomp_free,     ID(chain_chomp),             16.f,  16.f,  64.f,  24.f,  -36.f, -2.00f, 100.f, 160.f,   0.f,  80.f },
 
-    { bhvBulletBill,                ID(bullet_bill),   100.f, 100.f, 200.f,   0.f,    0.f,  0.00f, 200.f, 400.f, 200.f, 200.f },
-    { bhvHoot,                      ID(hoot),           24.f,  24.f,  20.f,  20.f,  -16.f, -2.00f,  60.f, 100.f,   0.f,  40.f },
-    { bhvSmallWhomp,                ID(whomp),          16.f,  16.f,  16.f,  28.f,  -80.f, -4.00f, 100.f, 400.f,   0.f, 150.f },
+    { bhvBulletBill,                ID(bullet_bill),            100.f, 100.f, 200.f,   0.f,    0.f,  0.00f, 200.f, 400.f, 200.f, 200.f },
+    { bhvHoot,                      ID(hoot),                    24.f,  24.f,  20.f,  20.f,  -16.f, -2.00f,  60.f, 100.f,   0.f,  40.f },
+    { bhvSmallWhomp,                ID(whomp),                   16.f,  16.f,  16.f,  28.f,  -80.f, -4.00f, 100.f, 400.f,   0.f, 150.f },
 
-    { bhvPenguinBaby,               ID(penguin_small),  16.f,  16.f,  48.f,  25.f,  -60.f, -3.60f,  40.f,  60.f,   0.f,  30.f },
-    { bhvSmallPenguin,              ID(penguin_small),  16.f,  16.f,  48.f,  25.f,  -60.f, -3.60f,  40.f,  60.f,   0.f,  30.f },
-    { bhvUnused20E0,                ID(penguin_small),  16.f,  16.f,  48.f,  25.f,  -60.f, -3.60f,  40.f,  60.f,   0.f,  30.f },
-    { bhvSpindrift,                 ID(spindrift),      24.f,  24.f,  24.f,  36.f,  -60.f, -4.00f,  80.f, 160.f,   0.f,  40.f },
-    { bhvMrBlizzard,                ID(mr_blizzard),    20.f,  20.f,  20.f,  50.f,  -75.f, -4.00f,  80.f, 200.f,   0.f,  60.f },
-    { bhvSnowmansBottom,            ID(snowmans_body),  80.f,  80.f,  80.f,   0.f,  -90.f, -6.00f, 200.f, 400.f,   0.f, 200.f },
+    { bhvPenguinBaby,               ID(penguin_small),           16.f,  16.f,  48.f,  25.f,  -60.f, -3.60f,  40.f,  60.f,   0.f,  30.f },
+    { bhvSmallPenguin,              ID(penguin_small),           16.f,  16.f,  48.f,  25.f,  -60.f, -3.60f,  40.f,  60.f,   0.f,  30.f },
+    { bhvUnused20E0,                ID(penguin_small),           16.f,  16.f,  48.f,  25.f,  -60.f, -3.60f,  40.f,  60.f,   0.f,  30.f },
+    { bhvSpindrift,                 ID(spindrift),               24.f,  24.f,  24.f,  36.f,  -60.f, -4.00f,  80.f, 160.f,   0.f,  40.f },
+    { bhvMrBlizzard,                ID(mr_blizzard),             20.f,  20.f,  20.f,  50.f,  -75.f, -4.00f,  80.f, 200.f,   0.f,  60.f },
+    { bhvSnowmansBottom,            ID(snowmans_body),           80.f,  80.f,  80.f,   0.f,  -90.f, -6.00f, 200.f, 400.f,   0.f, 200.f },
 
-    { bhvBoo,                       ID(boo),            24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f },
-    { bhvGhostHuntBoo,              ID(boo),            24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f },
-    { bhvMerryGoRoundBoo,           ID(boo),            24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f },
-    { bhvBooWithCage,               ID(boo),            24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f },
-    { bhvScuttlebug,                ID(scuttlebug),     20.f,  40.f,  40.f,  30.f,  -60.f, -4.00f,  80.f,  90.f,   0.f,  60.f },
-    { bhvMadPiano,                  ID(mad_piano),      20.f,  20.f,  20.f,  14.f,  -80.f, -2.00f, 200.f, 150.f,   0.f, 200.f },
-    { bhvJumpingBox,                ID(crazy_box),      64.f,  64.f,  64.f, 120.f, -150.f, -8.00f, 150.f, 200.f,   0.f, 120.f },
-    { bhvMrI,                       ID(mr_i),           28.f,  28.f,  28.f,  28.f,  -40.f, -2.00f,  90.f, 180.f,   0.f,  65.f },
+    { bhvBoo,                       ID(boo),                     24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f },
+    { bhvGhostHuntBoo,              ID(boo),                     24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f },
+    { bhvMerryGoRoundBoo,           ID(boo),                     24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f },
+    { bhvBooWithCage,               ID(boo),                     24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f },
+    { bhvScuttlebug,                ID(scuttlebug),              20.f,  40.f,  40.f,  30.f,  -60.f, -4.00f,  80.f,  90.f,   0.f,  60.f },
+    { bhvMadPiano,                  ID(mad_piano),               20.f,  20.f,  20.f,  14.f,  -80.f, -2.00f, 200.f, 150.f,   0.f, 200.f },
+    { bhvJumpingBox,                ID(crazy_box),               64.f,  64.f,  64.f, 120.f, -150.f, -8.00f, 150.f, 200.f,   0.f, 120.f },
+    { bhvMrI,                       ID(mr_i),                    28.f,  28.f,  28.f,  28.f,  -40.f, -2.00f,  90.f, 180.f,   0.f,  65.f },
     
-    { bhvToadMessage,               ID(toad),           16.f,  32.f,  32.f,  25.f,  -60.f, -3.60f,  60.f, 100.f,   0.f,  30.f },
-
-    { omm_bhv_flaming_bobomb,       ID(flaming_bobomb), 24.f,  24.f,  24.f,  30.f,  -60.f, -3.60f,  50.f,  90.f,   0.f,  40.f },
+    { bhvSwoop,                     ID(swoop),                   20.f,  40.f,  40.f,  20.f,  -20.f, -2.00f,  50.f,  60.f,   0.f,  30.f },
+    { bhvSnufit,                    ID(snufit),                  25.f,  25.f,  25.f,  36.f,  -60.f, -3.00f,  60.f, 100.f,   0.f,  35.f },
+    { bhvMontyMole,                 ID(monty_mole),              15.f,  15.f,  15.f,   0.f,    0.f,  0.00f,  50.f,  50.f,   0.f,  30.f },
     
-                                                        /*                                  scale,   fwd,   top,              */
-    { bhvBobombBuddy,               ID(npc_message),     0.f,   0.f,   0.f,   0.f,    0.f,  1.20f,   0.f,  94.f,   0.f,   0.f },
-#if defined(SMSR)
-    { bhvYoshi,                     ID(npc_message),     0.f,   0.f,   0.f,   0.f,    0.f,  1.00f,  60.f, 200.f,   0.f,   0.f },
-    { bhvCustomSMSRPeachMessage,    ID(npc_message),     0.f,   0.f,   0.f,   0.f,    0.f,  0.60f, -10.f, 180.f,   0.f,   0.f },
-    { bhvCustomSMSRYoshiMessage,    ID(npc_message),     0.f,   0.f,   0.f,   0.f,    0.f,  1.00f,  60.f, 200.f,   0.f,   0.f },
-    { bhvCustomSMSRStaticMessage,   ID(npc_message),     0.f,   0.f,   0.f,   0.f,    0.f,  1.25f,   8.f,  50.f,   0.f,   0.f },
-    { bhvCustomSMSRMipsMessage,     ID(npc_message),     0.f,   0.f,   0.f,   0.f,    0.f,  0.50f, -12.f,  65.f,   0.f,   0.f },
+    { bhvSmallBully,                ID(bully),                   28.f,  28.f,  56.f,  36.f,  -75.f, -4.00f,  75.f, 120.f,   0.f,  50.f },
+    { bhvSmallChillBully,           ID(bully),                   28.f,  28.f,  56.f,  36.f,  -75.f, -4.00f,  75.f, 120.f,   0.f,  50.f },
+#if OMM_GAME_IS_R96A
+    { bhvBlargg,                    ID(blargg),                  15.f,  15.f,  15.f,   0.f,    0.f,  0.00f, 120.f, 100.f,   0.f,  70.f },
+    { bhvFriendlyBlargg,            ID(friendly_blargg),         20.f,  30.f,  30.f,   0.f,    0.f,  0.00f,  60.f,  50.f,   0.f,  35.f },
+    { bhvMotos,                     ID(motos),                    8.f,   8.f,   8.f,  10.f,  -75.f, -1.50f,  50.f, 110.f,   0.f,  30.f },
+#endif
+    
+    { bhvToadMessage,               ID(toad),                    16.f,  32.f,  32.f,  25.f,  -60.f, -3.60f,  60.f, 100.f,   0.f,  30.f },
+
+    { omm_bhv_flaming_bobomb,       ID(flaming_bobomb),          24.f,  24.f,  24.f,  30.f,  -60.f, -3.60f,  50.f,  90.f,   0.f,  40.f },
+    
+    /*                                                                                               scale,   fwd,   top,              */
+    { bhvBobombBuddy,               ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  1.20f,   0.f,  94.f,   0.f,   0.f },
+#if OMM_GAME_IS_SMSR
+    { bhvYoshi,                     ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  1.00f,  60.f, 200.f,   0.f,   0.f },
+    { bhvCustomSMSRPeachMessage,    ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  0.60f, -10.f, 180.f,   0.f,   0.f },
+    { bhvCustomSMSRYoshiMessage,    ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  1.00f,  60.f, 200.f,   0.f,   0.f },
+    { bhvCustomSMSRStaticMessage,   ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  1.25f,   8.f,  50.f,   0.f,   0.f },
+    { bhvCustomSMSRMipsMessage,     ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  0.50f, -12.f,  65.f,   0.f,   0.f },
 #endif
 };
 static const s32 sOmmCaptureDataCount = sizeof(sOmmCaptureData) / sizeof(sOmmCaptureData[0]);
@@ -335,7 +347,7 @@ void pobj_handle_special_floors(struct Object *o) {
     if (o->oPosY <= waterLevel && POBJ_IS_ABLE_TO_MOVE_ON_WATER) {
         o->oPosY = waterLevel;
         o->oVelY = omm_max_f(o->oVelY, 0.f);
-        o->oFloorHeight = 0.f;
+        o->oFloorHeight = waterLevel;
         o->oFloorType = OBJ_FLOOR_TYPE_WATER;
     }
 
@@ -351,7 +363,7 @@ void pobj_handle_special_floors(struct Object *o) {
     switch (o->oFloor->type) {
         case SURFACE_DEATH_PLANE:
         case SURFACE_VERTICAL_WIND:
-            if (o->oFloorHeight <= 2048.f) {
+            if (o->oDistToFloor <= 2048.f) {
                 omm_mario_unpossess_object(gMarioState, OMM_MARIO_UNPOSSESS_ACT_JUMP_OUT, false, 6);
                 obj_destroy(o);
             }
@@ -359,14 +371,14 @@ void pobj_handle_special_floors(struct Object *o) {
 
         case SURFACE_INSTANT_QUICKSAND:
         case SURFACE_INSTANT_MOVING_QUICKSAND:
-            if (o->oFloorHeight <= 10.f && !POBJ_IS_IMMUNE_TO_SAND) {
+            if (o->oDistToFloor <= 10.f && !POBJ_IS_IMMUNE_TO_SAND) {
                 omm_mario_unpossess_object(gMarioState, OMM_MARIO_UNPOSSESS_ACT_JUMP_OUT, false, 6);
                 obj_destroy(o);
             }
             break;
 
         case SURFACE_BURNING:
-            if (o->oFloorHeight <= 10.f && !POBJ_IS_IMMUNE_TO_LAVA) {
+            if (o->oDistToFloor <= 10.f && !POBJ_IS_IMMUNE_TO_LAVA) {
                 omm_mario_unpossess_object(gMarioState, OMM_MARIO_UNPOSSESS_ACT_JUMP_OUT, false, 6);
                 obj_destroy(o);
             } else if (isOnGround) {

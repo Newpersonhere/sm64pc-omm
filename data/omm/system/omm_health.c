@@ -8,7 +8,7 @@
 
 static s32 omm_fix_health(s32 health) {
     s32 fixed = omm_clamp_s((((health - OMM_HEALTH_DEAD + OMM_HEALTH_PER_SEGMENT / 2) / OMM_HEALTH_PER_SEGMENT) * OMM_HEALTH_PER_SEGMENT) + OMM_HEALTH_DEAD, OMM_HEALTH_DEAD, OMM_HEALTH_MAX);
-    return omm_max_s(fixed, ((gIsHardMode && health > OMM_HEALTH_DEAD) ? OMM_HEALTH_HARD_MODE : OMM_HEALTH_DEAD));
+    return omm_max_s(fixed, ((g1HPMode && health > OMM_HEALTH_DEAD) ? OMM_HEALTH_1_HP : OMM_HEALTH_DEAD));
 }
 
 static s32 omm_hp_to_health(s32 hp) {
@@ -175,7 +175,7 @@ static void omm_update_O2_level(struct MarioState *m) {
                 }
 
                 // Insta-kill if out of breath in Hard mode
-                if (gIsHardMode && gOmmData->mario->state.o2 >= OMM_O2_MAX_DURATION) {
+                if (g1HPMode && gOmmData->mario->state.o2 >= OMM_O2_MAX_DURATION) {
                     m->health = OMM_HEALTH_DEAD;
                     m->healCounter = 0;
                     m->hurtCounter = 0;
@@ -205,7 +205,7 @@ static void omm_health_update_classic(struct MarioState *m) {
     // by setting both heal counter and hurt counter to non-zero values.
     // If the hurt counter is non-zero, prevent damage cancelation by
     // setting the heal counter to 0.
-    if (gIsHardMode) {
+    if (g1HPMode) {
         if (m->healCounter == 0 && m->hurtCounter == 0) {
             m->healCounter = 1;
             m->hurtCounter = 1;
@@ -228,10 +228,10 @@ static void omm_health_update_classic(struct MarioState *m) {
 
     // Don't play the beeping sound underwater if Metal or Hard mode
     u32 action = m->action;
-    m->action &= ~(ACT_GROUP_MASK * ((m->flags & MARIO_METAL_CAP) || gIsHardMode));
+    m->action &= ~(ACT_GROUP_MASK * ((m->flags & MARIO_METAL_CAP) || g1HPMode));
     update_mario_health(m);
     m->action = action;
-    m->health = omm_clamp_s(m->health, 0xFF, gIsHardMode ? 0x180 : 0x880);
+    m->health = omm_clamp_s(m->health, 0xFF, g1HPMode ? 0x180 : 0x880);
 }
 
 void omm_health_update(struct MarioState *m) {
@@ -241,8 +241,8 @@ void omm_health_update(struct MarioState *m) {
     }
 
     // Hard mode: only 1 health point
-    if (gIsHardMode && m->health > OMM_HEALTH_HARD_MODE) {
-        m->health = OMM_HEALTH_HARD_MODE;
+    if (g1HPMode && m->health > OMM_HEALTH_1_HP) {
+        m->health = OMM_HEALTH_1_HP;
         gOmmData->mario->state.hp = omm_health_to_hp(m->health);
     }
 
@@ -291,7 +291,7 @@ void omm_health_update(struct MarioState *m) {
     s32 counter = omm_health_to_hp(m->health);
     if (gOmmData->mario->state.hp < counter) {
         gOmmData->mario->state.hp++;
-        if (!gIsHardMode && !isLifeUpCutscene && (gOmmData->mario->state.hp % OMM_HEALTH_NUM_TICKS_PER_SEGMENT) == (OMM_HEALTH_NUM_TICKS_PER_SEGMENT / 2)) {
+        if (!g1HPMode && !isLifeUpCutscene && (gOmmData->mario->state.hp % OMM_HEALTH_NUM_TICKS_PER_SEGMENT) == (OMM_HEALTH_NUM_TICKS_PER_SEGMENT / 2)) {
             omm_sound_play(OMM_SOUND_EFFECT_HEAL, NULL);
         }
     } else if (gOmmData->mario->state.hp > counter) {
@@ -320,11 +320,9 @@ void omm_health_fully_heal_mario(struct MarioState *m) {
 }
 
 void omm_health_life_up(struct MarioState *m) {
-#if OMM_CODE_SPARKLY
     omm_sparkly_context_update(OMM_SPARKLY_CONTEXT_UPDATE_1UP_MUSHROOM);
-#endif
     if (OMM_MOVESET_ODYSSEY) {
-        if (!gIsHardMode) {
+        if (!g1HPMode) {
             if (OMM_MOVESET_ODYSSEY_3H && (m->health <= omm_health_get_max(0))) {
                 m->hurtCounter = 0;
                 gOmmData->mario->state.hp = omm_health_to_hp(omm_health_get_max(0));
@@ -333,7 +331,7 @@ void omm_health_life_up(struct MarioState *m) {
             m->health = OMM_HEALTH_MAX;
         }
         m->healCounter = OMM_O2_REFILL;
-    } else if (!gIsHardMode) {
+    } else if (!g1HPMode) {
         play_sound(SOUND_GENERAL_COLLECT_1UP, gGlobalSoundArgs);
         m->healCounter = 31;
     }

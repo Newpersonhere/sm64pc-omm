@@ -26,7 +26,7 @@ static void omm_bhv_mr_i_beam_delete(struct Object *o) {
 static void omm_bhv_mr_i_beam_loop() {
     struct Object *o = gCurrentObject;
     obj_update_pos_and_vel(o, true, false, false, false, NULL);
-    if (o->oTimer > 60 || o->oWall || o->oFloorHeight == 0.f) {
+    if (o->oTimer > 60 || o->oWall || o->oDistToFloor <= 0.f) {
         omm_bhv_mr_i_beam_delete(o);
         return;
     }

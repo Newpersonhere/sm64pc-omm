@@ -30,12 +30,15 @@ void omm_sparkly_write_save(char **buffer);
 
 bool omm_sparkly_is_enabled();
 bool omm_sparkly_is_bowser_4();
+bool omm_sparkly_is_mode_available(s32 mode);
+bool omm_sparkly_is_mode_selectible(s32 mode);
 bool omm_sparkly_is_mode_selected(s32 mode);
 s32  omm_sparkly_get_current_mode();
 s32  omm_sparkly_get_star_index(s32 mode, s32 level, s32 area);
 s32  omm_sparkly_get_star_level(s32 mode, s32 index);
 s32  omm_sparkly_get_star_area(s32 mode, s32 index);
 u8  *omm_sparkly_get_star_name(s32 mode, s32 index);
+u8  *omm_sparkly_get_star_level_name(s32 mode, s32 index);
 s32  omm_sparkly_get_star_count(s32 mode);
 
 //
@@ -58,6 +61,7 @@ void omm_sparkly_context_update(s32 flag);
 void omm_sparkly_context_update_state(struct MarioState *m);
 void omm_sparkly_context_spawn_star(struct MarioState *m);
 void omm_sparkly_context_spawn_sign(struct MarioState *m);
+s32  omm_sparkly_context_get_data_flags(u64 flags);
 s32  omm_sparkly_context_get_remaining_flames();
 s32  omm_sparkly_context_get_remaining_boxes();
 

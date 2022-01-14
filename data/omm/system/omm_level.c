@@ -265,7 +265,7 @@ u8 *omm_level_get_name(s32 level, bool decaps, bool num) {
     } else if (course >= COURSE_CAKE_END) {
         convert_text_and_set_buffer(sBuffer, OMM_TEXT_LEVEL_CASTLE);
     } else {
-#if defined(SM74)
+#if OMM_GAME_IS_SM74
         const u8 *courseName = (sm74_mode__omm_level_get_name == 2 ?
                                 (const u8 **) seg2_course_name_table_EE :
                                 (const u8 **) seg2_course_name_table)[course - COURSE_BOB] + 3;
@@ -302,7 +302,7 @@ u8 *omm_level_get_act_name(s32 level, s32 act, bool decaps, bool num) {
     // Star name
     if (course < COURSE_BOB) {
         convert_text_and_set_buffer(sBuffer, OMM_TEXT_LEVEL_ONE_SECRET_STAR);
-#if OMM_CODE_VANILLA
+#if OMM_GAME_IS_SM64
     } else if (level == LEVEL_BITDW) {
         convert_text_and_set_buffer(sBuffer, OMM_TEXT_LEVEL_RED_COINS_STAR);
     } else if (level == LEVEL_BITFS) {
@@ -312,7 +312,7 @@ u8 *omm_level_get_act_name(s32 level, s32 act, bool decaps, bool num) {
     } else if (course > COURSE_STAGES_MAX) {
         convert_text_and_set_buffer(sBuffer, OMM_TEXT_LEVEL_EMPTY);
 #else
-#if defined(SMSR)
+#if OMM_GAME_IS_SMSR
     } else if ((const BehaviorScript *) gMarioState->riddenObj == bhvCustomSMSRStarReplica) {
         convert_text_and_set_buffer(sBuffer, OMM_TEXT_LEVEL_STAR_REPLICA);
 #endif
@@ -323,7 +323,7 @@ u8 *omm_level_get_act_name(s32 level, s32 act, bool decaps, bool num) {
     } else if (act >= 7) {
         convert_text_and_set_buffer(sBuffer, OMM_TEXT_LEVEL_100_COINS_STAR);
     } else {
-#if defined(SM74)
+#if OMM_GAME_IS_SM74
         const u8 *actName = (sm74_mode__omm_level_get_act_name == 2 ?
                              (const u8 **) seg2_act_name_table_EE :
                              (const u8 **) seg2_act_name_table)[(course - COURSE_BOB) * 6 + (act - 1)];
@@ -779,7 +779,7 @@ s16 *omm_level_get_warp(s32 level, s32 area, u8 id) {
 
 s16 *omm_level_get_entry_warp(s32 level, s32 area) {
     omm_level_init();
-#if OMM_CODE_VANILLA
+#if OMM_GAME_IS_SM64
     if (level == LEVEL_TTM && area > 2) return NULL;
 #endif
     return omm_level_get_warp(level, area, OMM_LEVEL_ENTRY_WARP(level));

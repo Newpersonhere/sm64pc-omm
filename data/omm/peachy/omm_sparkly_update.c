@@ -1,25 +1,69 @@
 #define OMM_ALL_HEADERS
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
-#if OMM_CODE_SPARKLY
+
+static void omm_sparkly_spawn_star_blocks(struct MarioState *m) {
+    if (m->numStars >= OMM_SPARKLY_REQUIRED_STARS &&
+        gCurrLevelNum == OMM_SPARKLY_STAR_BLOCKS_LEVEL &&
+        gCurrAreaIndex == OMM_SPARKLY_STAR_BLOCKS_AREA) {
+        for (s32 i = 0, mode = OMM_SPARKLY_MODE_NORMAL; mode != OMM_SPARKLY_MODE_COUNT; ++mode) {
+            if (omm_sparkly_is_mode_available(mode)) {
+                if (omm_sparkly_is_mode_unlocked(mode) && !omm_sparkly_is_mode_selected(mode)) {
+                    struct Object *block = obj_get_first_with_behavior(OMM_SPARKLY_STAR_BLOCK_BHV[mode]);
+
+                    // If the block is not already spawned, spawn it
+                    if (!block) {
+                        f32 d = (f32) i - (OMM_SPARKLY_STAR_BLOCKS_COUNT - 1) / 2.f;
+                        f32 x = OMM_SPARKLY_STAR_BLOCKS_X + 360.f * d * sins(OMM_SPARKLY_STAR_BLOCKS_ANGLE);
+                        f32 y = OMM_SPARKLY_STAR_BLOCKS_Y + 300.f;
+                        f32 z = OMM_SPARKLY_STAR_BLOCKS_Z + 360.f * d * coss(OMM_SPARKLY_STAR_BLOCKS_ANGLE);
+                        block = omm_spawn_sparkly_star_block(m->marioObj, mode, x, y, z);
+                    }
+                    
+                    // If the block has been hit, change the current Sparkly Star mode
+                    if (block->oAction == 2) {
+                        omm_sparkly_flags_set(OMM_SPARKLY_FLAG_STAR_BLOCK, 1);
+                        obj_deactivate_all_with_behavior(omm_bhv_sparkly_star);
+                        obj_deactivate_all_with_behavior(omm_bhv_sparkly_star_hint);
+                        omm_sparkly_set_opt_mode(mode);
+                        omm_sparkly_context_restart();
+                        omm_sparkly_turn_off_cheats();
+                        block->oAction = 3;
+                        block->oTimer = 0;
+
+                        // Extreme mode: Select Peach and enable 1 HP mode
+                        if (mode == OMM_SPARKLY_MODE_EXTREME) {
+                            g1HPMode = true;
+                            if (!OMM_PLAYER_IS_PEACH) {
+                                omm_player_select(OMM_PLAYER_PEACH);
+                                obj_spawn_white_puff(m->marioObj, -1);
+                                obj_spawn_white_puff(m->marioObj, -1);
+                                obj_spawn_white_puff(m->marioObj, -1);
+                            }
+                        }
+                    }
+                }
+                i++;
+            }
+        }
+    }
+}
 
 OMM_ROUTINE_UPDATE(omm_sparkly_update) {
+#if OMM_GAME_IS_SM64
     sAcousticReachPerLevel[LEVEL_GROUNDS] = 25000 + 35000 * (gCurrAreaIndex == 2);
-    struct MarioState *m = gMarioState;
     omm_sparkly_ending_update_cutscene();
+#endif
+    struct MarioState *m = gMarioState;
 
     // Check Sparkly Stars mode option
-    static u32 sOmmSparklyStarsMode = 0;
-    if (gOmmSparklyStarsMode != OMM_SPARKLY_MODE_DISABLED && !omm_sparkly_is_mode_unlocked(gOmmSparklyStarsMode)) {
-        gOmmSparklyStarsMode = OMM_SPARKLY_MODE_DISABLED;
-    } else if (gOmmSparklyStarsMode != sOmmSparklyStarsMode) {
-        s32 dir = omm_sign_s(gOmmSparklyStarsMode - sOmmSparklyStarsMode) * (omm_abs_s(gOmmSparklyStarsMode - sOmmSparklyStarsMode) > 1 ? -1 : +1);
-        while (gOmmSparklyStarsMode != OMM_SPARKLY_MODE_DISABLED && !omm_sparkly_is_mode_unlocked(gOmmSparklyStarsMode)) {
-            gOmmSparklyStarsMode = (gOmmSparklyStarsMode + dir + OMM_SPARKLY_MODE_COUNT) % OMM_SPARKLY_MODE_COUNT;
-        }
-        sOmmSparklyStarsMode = gOmmSparklyStarsMode;
-    }
-
+    omm_opt_select_available(
+        gOmmSparklyStarsMode,
+        OMM_SPARKLY_MODE_DISABLED,
+        OMM_SPARKLY_MODE_COUNT,
+        omm_sparkly_is_mode_selectible(gOmmSparklyStarsMode)
+    );
+    
     // Reset the Sparkly Stars mode in the main menu, and return
     if (omm_is_main_menu()) {
         omm_sparkly_disable();
@@ -37,8 +81,14 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update) {
         return;
     }
 
-    // If a save file with less than 120 stars is selected, disable the Sparkly Stars mode and return
-    if (m->numStars < 120) {
+    // Disable the Sparkly Stars Extreme mode if Peach is not selected or the 1 HP mode is not enabled
+    if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_EXTREME) && (!g1HPMode || !OMM_PLAYER_IS_PEACH)) {
+        omm_sparkly_set_opt_mode(OMM_SPARKLY_MODE_DISABLED);
+        omm_sparkly_disable();
+    }
+
+    // If a save file with less than the minimum number of stars required is selected, disable the Sparkly Stars mode and return
+    if (m->numStars < OMM_SPARKLY_REQUIRED_STARS) {
         omm_sparkly_disable();
         return;
     }
@@ -77,31 +127,9 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update) {
     }
 
     // Sparkly Stars blocks
-    // Appears on Castle Grounds if >= 120 stars and at least 1 Sparkly Star mode is available
+    // Appears if >= the minimum number of stars required and at least 1 Sparkly Star mode is available
     // Break it to enable the corresponding Sparkly Stars mode
-    if (m->numStars >= 120 && gCurrLevelNum == LEVEL_GROUNDS && gCurrAreaIndex == 1) {
-        for (s32 mode = OMM_SPARKLY_MODE_NORMAL; mode != OMM_SPARKLY_MODE_COUNT; ++mode) {
-            if (omm_sparkly_is_mode_unlocked(mode) && !omm_sparkly_is_mode_selected(mode)) {
-                struct Object *block = obj_get_first_with_behavior(OMM_SPARKLY_STAR_BLOCK_BHV[mode]);
-                if (!block) {
-                    omm_spawn_sparkly_star_block(m->marioObj, mode,
-                        OMM_SPARKLY_STAR_BLOCK_POS[mode][0], 
-                        OMM_SPARKLY_STAR_BLOCK_POS[mode][1], 
-                        OMM_SPARKLY_STAR_BLOCK_POS[mode][2]
-                    );
-                } else if (block->oAction == 2) {
-                    omm_sparkly_flags_set(OMM_SPARKLY_FLAG_STAR_BLOCK, 1);
-                    obj_deactivate_all_with_behavior(omm_bhv_sparkly_star);
-                    obj_deactivate_all_with_behavior(omm_bhv_sparkly_star_hint);
-                    omm_sparkly_set_opt_mode(mode);
-                    omm_sparkly_context_restart();
-                    omm_sparkly_turn_off_cheats();
-                    block->oAction = 3;
-                    block->oTimer = 0;
-                }
-            }
-        }
-    }
+    omm_sparkly_spawn_star_blocks(m);
 
     // Unload everything if not Sparkly Stars mode, then return
     // Also ejects Mario from the Bowser 4 fight
@@ -135,25 +163,35 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update) {
     gPlayer3Controller->buttonPressed &= ~(omm_sparkly_flags_get(OMM_SPARKLY_FLAG_CHEAT_DETECTED) * START_BUTTON);
 
     // Broken Sparkly Stars block
-    // Display the Castle grounds hint message if the player has not started the timer yet
-    if (!omm_sparkly_is_timer_started(omm_sparkly_get_current_mode()) &&
-         omm_sparkly_flags_get(OMM_SPARKLY_FLAG_STAR_BLOCK) &&
-        !omm_sparkly_flags_get(OMM_SPARKLY_FLAG_GAME_PAUSED) &&
-        !omm_sparkly_flags_get(OMM_SPARKLY_FLAG_TRANSITION) &&
-         omm_sparkly_flags_get(OMM_SPARKLY_FLAG_MARIO_UPDATED) &&
-        (m->action == ACT_IDLE || m->action == ACT_PANTING || m->action == ACT_WALKING)) {
-        struct Object *sign = obj_get_first_with_behavior(omm_bhv_sparkly_star_hint);
-        if (sign) {
-            m->marioObj->oMarioReadingSignDYaw  = (s16) (0x8000 - m->faceAngle[1]);
-            m->marioObj->oMarioReadingSignDPosX = 0;
-            m->marioObj->oMarioReadingSignDPosZ = 0;
-            m->interactObj = sign;
-            m->usedObj = sign;
-            omm_mario_set_action(m, ACT_READING_SIGN, 0, 0);
-            omm_sparkly_flags_set(OMM_SPARKLY_FLAG_STAR_BLOCK, 0);
+    // Start the timer if not started
+    // Display the Castle grounds hint message if Sparkly Star count is 0 (Vanilla only)
+    if (omm_sparkly_flags_get(OMM_SPARKLY_FLAG_STAR_BLOCK)) {
+        if (!omm_sparkly_is_timer_started(omm_sparkly_get_current_mode())) {
             omm_sparkly_start_timer(omm_sparkly_get_current_mode());
-            return;
         }
+#if OMM_GAME_IS_SM64
+        if (gCurrLevelNum == LEVEL_GROUNDS) {
+            if (!omm_sparkly_flags_get(OMM_SPARKLY_FLAG_GAME_PAUSED) &&
+                !omm_sparkly_flags_get(OMM_SPARKLY_FLAG_TRANSITION) &&
+                 omm_sparkly_flags_get(OMM_SPARKLY_FLAG_MARIO_UPDATED) &&
+                (omm_sparkly_get_star_count(omm_sparkly_get_current_mode()) == 0) &&
+                (m->action == ACT_IDLE || m->action == ACT_PANTING || m->action == ACT_WALKING))
+            {
+                struct Object *sign = obj_get_first_with_behavior(omm_bhv_sparkly_star_hint);
+                if (sign) {
+                    m->marioObj->oMarioReadingSignDYaw  = (s16) (0x8000 - m->faceAngle[1]);
+                    m->marioObj->oMarioReadingSignDPosX = 0;
+                    m->marioObj->oMarioReadingSignDPosZ = 0;
+                    m->interactObj = sign;
+                    m->usedObj = sign;
+                    omm_mario_set_action(m, ACT_READING_SIGN, 0, 0);
+                    omm_sparkly_flags_set(OMM_SPARKLY_FLAG_STAR_BLOCK, 0);
+                    return;
+                }
+            }
+        } else
+#endif
+        omm_sparkly_flags_set(OMM_SPARKLY_FLAG_STAR_BLOCK, 0);
     }
 
     // Anti-cheat message
@@ -208,7 +246,8 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update) {
            !omm_sparkly_flags_get(OMM_SPARKLY_FLAG_GAME_PAUSED) &&
            !omm_sparkly_flags_get(OMM_SPARKLY_FLAG_TRANSITION) &&
             omm_sparkly_flags_get(OMM_SPARKLY_FLAG_MARIO_UPDATED) &&
-            (m->action == ACT_IDLE || m->action == ACT_PANTING || m->action == ACT_WALKING)) {
+            (m->action == ACT_IDLE || m->action == ACT_PANTING || m->action == ACT_WALKING))
+        {
             play_sound(SOUND_OBJ_BOWSER_INTRO_LAUGH, gGlobalSoundArgs);
             play_sequence(SEQ_PLAYER_ENV, SEQ_EVENT_KOOPA_MESSAGE, 0);
             omm_sparkly_cheats[0] = 1;
@@ -223,20 +262,26 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update) {
     }
     sDeathState = false;
 
+#if OMM_GAME_IS_SM64
     // Unlock Bowser 4
-    // Display the "unlocked Bowser 4" message if the player has met the requirements to unlock the final fight
-    if (!omm_sparkly_is_bowser_4_unlocked(omm_sparkly_get_current_mode()) &&
-         omm_sparkly_get_star_count(omm_sparkly_get_current_mode()) == 29 &&
+    // Display the "unlocked Bowser 4" message if the player has met the requirements to unlock the final fight (Vanilla only)
+    // The player also needs the 30 Pink Gold and Crystal Stars for the Extreme difficulty
+    if (!omm_is_game_paused() &&
+        !omm_is_transition_active() &&
+        !omm_sparkly_is_bowser_4_unlocked(omm_sparkly_get_current_mode()) &&
         !omm_sparkly_is_grand_star_collected(omm_sparkly_get_current_mode()) &&
-         OMM_SPARKLY_BOWSER_4_SHOULD_UNLOCK[omm_sparkly_get_current_mode()] &&
-        (m->action == ACT_IDLE || m->action == ACT_PANTING || m->action == ACT_WALKING)) {
-        omm_mario_set_action(m, ACT_READING_AUTOMATIC_DIALOG, OMM_SPARKLY_BOWSER_4_DIALOG_UNLOCKED[omm_sparkly_get_current_mode()], 0);
+         omm_sparkly_get_star_count(omm_sparkly_get_current_mode()) == 29 &&
+        (m->action == ACT_IDLE || m->action == ACT_PANTING || m->action == ACT_WALKING))
+    {
+        omm_mario_set_action(m, ACT_READING_AUTOMATIC_DIALOG, OMM_DIALOG_SPARKLY_BOWSER_4_UNLOCKED, 0);
         omm_sparkly_unlock_bowser_4(omm_sparkly_get_current_mode());
         audio_play_puzzle_jingle();
         return;
     }
+#endif
 
-    // Handle the Bowser 4 fight separately
+#if OMM_GAME_IS_SM64
+    // Handle the Bowser 4 fight separately (Vanilla only)
     static s32 sBowser4WarpTimer = 0;
     sBowser4WarpTimer--;
     if (omm_sparkly_is_bowser_4()) {
@@ -272,12 +317,16 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update) {
             (gCurrLevelNum == LEVEL_GROUNDS) &&
             (gCurrAreaIndex == 1)) {
 
+            // Bowser 4 warp
+            static const Vec3f sBowser4WarpCenter = { 0, 2500, -2000 };
+            static const Vec3f sBowser4WarpHitbox = { 250, 300, 50 };
+
             // Spawn sparkles from the window
             struct Object *sparkle = obj_spawn_from_geo(m->marioObj, OMM_SPARKLY_STAR_SPARKLE_GEO[omm_sparkly_get_current_mode()], omm_bhv_sparkly_star_sparkle);
             sparkle->activeFlags |= ACTIVE_FLAG_INITIATED_TIME_STOP;
-            sparkle->oPosX = OMM_SPARKLY_BOWSER_4_WARP_CENTER_X + OMM_SPARKLY_BOWSER_4_WARP_HITBOX_X * ((2.f * random_float()) - 1.f);
-            sparkle->oPosY = OMM_SPARKLY_BOWSER_4_WARP_CENTER_Y + OMM_SPARKLY_BOWSER_4_WARP_HITBOX_Y * ((2.f * random_float()) - 1.f);
-            sparkle->oPosZ = OMM_SPARKLY_BOWSER_4_WARP_CENTER_Z;
+            sparkle->oPosX = sBowser4WarpCenter[0] + sBowser4WarpHitbox[0] * ((2.f * random_float()) - 1.f);
+            sparkle->oPosY = sBowser4WarpCenter[1] + sBowser4WarpHitbox[1] * ((2.f * random_float()) - 1.f);
+            sparkle->oPosZ = sBowser4WarpCenter[2];
             sparkle->oVelX = 0;
             sparkle->oVelY = 0;
             sparkle->oVelZ = 20.f * random_float();
@@ -286,9 +335,9 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update) {
             obj_scale_random(sparkle, 1.f, 0.5f);
 
             // Trigger the warp to Bowser 4 if Mario touches the window
-            if (omm_abs_f(m->pos[0] - OMM_SPARKLY_BOWSER_4_WARP_CENTER_X) < OMM_SPARKLY_BOWSER_4_WARP_HITBOX_X &&
-                omm_abs_f(m->pos[1] - OMM_SPARKLY_BOWSER_4_WARP_CENTER_Y) < OMM_SPARKLY_BOWSER_4_WARP_HITBOX_Y &&
-                omm_abs_f(m->pos[2] - OMM_SPARKLY_BOWSER_4_WARP_CENTER_Z) < OMM_SPARKLY_BOWSER_4_WARP_HITBOX_Z && m->vel[2] < 0.f) {
+            if (omm_abs_f(m->pos[0] - sBowser4WarpCenter[0]) < sBowser4WarpHitbox[0] &&
+                omm_abs_f(m->pos[1] - sBowser4WarpCenter[1]) < sBowser4WarpHitbox[1] &&
+                omm_abs_f(m->pos[2] - sBowser4WarpCenter[2]) < sBowser4WarpHitbox[2] && m->vel[2] < 0.f) {
                 sBowser4WarpTimer = 40;
                 omm_cappy_unload();
                 omm_mario_set_action(m, ACT_OMM_WARPING, 0, 0xFFFF);
@@ -300,6 +349,7 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update) {
             }
         }
     }
+#endif
 
     // Context update
     omm_sparkly_context_update_state(m);
@@ -307,5 +357,3 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update) {
     omm_sparkly_context_spawn_sign(m);
     omm_sparkly_context_set_flag(OMM_SPARKLY_CONTEXT_FLAG_INITED, 1, 0);
 }
-
-#endif

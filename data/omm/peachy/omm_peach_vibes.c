@@ -45,11 +45,11 @@ static bool omm_peach_vibe_check_type(struct MarioState *m, s32 vibeType) {
         case OMM_PEACH_VIBE_TYPE_CALM: {
             if (!omm_world_is_frozen() || (m->action & ACT_GROUP_MASK) != ACT_GROUP_SUBMERGED) {
                 if (OMM_MOVESET_ODYSSEY) {
-                    if ((gIsHardMode || omm_health_is_at_max(m)) && gOmmData->mario->state.o2 == 0) {
+                    if ((g1HPMode || omm_health_is_at_max(m)) && gOmmData->mario->state.o2 == 0) {
                         return false;
                     }
                 } else {
-                    if (gIsHardMode || m->health >= 0x880) {
+                    if (g1HPMode || m->health >= 0x880) {
                         return false;
                     }
                 }
@@ -149,7 +149,7 @@ static void omm_peach_vibe_update_gauge(struct MarioState *m) {
             if (OMM_MOVESET_ODYSSEY) {
 
                 // Health
-                if (!gIsHardMode && !omm_health_is_at_max(m)) {
+                if (!g1HPMode && !omm_health_is_at_max(m)) {
                     if ((gOmmData->mario->peach.vibeTimer % 60) == 0) {
                         omm_health_heal_mario(m);
                     }
@@ -168,7 +168,7 @@ static void omm_peach_vibe_update_gauge(struct MarioState *m) {
             } else {
 
                 // Health (if the value is near 0x880, set it to 0x880 without draining the Vibe gauge)
-                if (!gIsHardMode && m->health < 0x880) {
+                if (!g1HPMode && m->health < 0x880) {
                     if (m->health >= 0x878) {
                         m->health = 0x880;
                     } else {
@@ -344,7 +344,7 @@ void omm_peach_vibe_update(struct MarioState *m) {
 // Music variations caused by Vibes
 //
 
-#if !defined(R96A)
+#if !OMM_GAME_IS_R96A
 
 static void update_sequence_channel(struct SequenceChannel *channel) {
     static f32 sSeqChannelInfoBuffer[0x80][OMM_PEACH_VIBE_TYPE_COUNT][2];

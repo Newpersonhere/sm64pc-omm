@@ -212,8 +212,7 @@ void omm_render_create_dl_ortho_matrix() {
 
 // Coin sparkles (Vanishing HUD only)
 #define OMM_RENDER_HUD_COIN_SPARKLE_SIZE                    ((OMM_RENDER_GLYPH_SIZE * 3) / 2)
-#define OMM_RENDER_HUD_COIN_SPARKLE_SCALE                   (OMM_RENDER_HUD_COIN_SPARKLE_SIZE / 64.f)
-#define OMM_RENDER_HUD_COIN_SPARKLE_X                       (OMM_RENDER_VALUE_GLYPH_X + (OMM_RENDER_GLYPH_SIZE / 2))
+#define OMM_RENDER_HUD_COIN_SPARKLE_X                       (OMM_RENDER_VALUE_GLYPH_X - ((OMM_RENDER_HUD_COIN_SPARKLE_SIZE - OMM_RENDER_GLYPH_SIZE) / 2))
 #define OMM_RENDER_HUD_COIN_SPARKLE_Y                       (y - ((OMM_RENDER_HUD_COIN_SPARKLE_SIZE - OMM_RENDER_GLYPH_SIZE) / 2))
 #define OMM_RENDER_HUD_COIN_SPARKLE_FRAMES                  (6)
 #define OMM_RENDER_HUD_COIN_SPARKLE_DELAY                   (2)
@@ -294,6 +293,7 @@ void omm_render_create_dl_ortho_matrix() {
 #define OMM_RENDER_RADAR_X                                  (OMM_RENDER_LEFT_X + OMM_RENDER_RADAR_RADIUS + OMM_RENDER_RADAR_ARROW_SIZE / 2)
 #define OMM_RENDER_RADAR_Y                                  (19 + OMM_RENDER_RADAR_RADIUS)
 #define OMM_RENDER_RADAR_COIN_SIZE                          (OMM_RENDER_GLYPH_SIZE)
+#define OMM_RENDER_RADAR_STAR_SIZE                          ((OMM_RENDER_GLYPH_SIZE * 5) / 4)
 #define OMM_RENDER_RADAR_ARROW_SIZE                         ((OMM_RENDER_GLYPH_SIZE * 7) / 8)
 #define OMM_RENDER_RADAR_RADIUS                             (((OMM_RENDER_RADAR_COIN_SIZE + OMM_RENDER_RADAR_ARROW_SIZE) * 7) / 10)
 
@@ -481,7 +481,7 @@ static bool should_instant_fade_in(struct MarioState *m, OmmHudTimer *timer) {
 }
 
 static u8 omm_render_hud_update_timer_and_get_alpha(struct MarioState *m, OmmHudTimer *timer) {
-    if (gOmmExtrasVanishingHUD || timer->alwaysActive) {
+    if (OMM_EXTRAS_VANISHING_HUD || timer->alwaysActive) {
         
         // Pause
         if (gMenuMode == 0 || gMenuMode == 1) {
@@ -561,12 +561,11 @@ static void omm_render_freeze() {
 }
 
 //
-// Dark mode (JRB Crystal Star)
+// Dark mode
 //
 
 static void omm_render_dark_mode() {
-#if OMM_CODE_SPARKLY
-    if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_HARD) && omm_sparkly_context_is_state_ok() && gCurrLevelNum == LEVEL_JRB && gCurrAreaIndex == 1) {
+    if (omm_sparkly_context_get_data_flags(OMM_SPARKLY_DATA_FLAG_DARK_MODE) && omm_sparkly_context_is_state_ok()) {
         OMM_RENDER_ENABLE_ALPHA;
         omm_render_create_dl_ortho_matrix();
         gSPDisplayList(gDisplayListHead++, sOmmDarkModeDisplayList);
@@ -598,7 +597,6 @@ static void omm_render_dark_mode() {
         gSPSetGeometryMode(sOmmDarkModeDisplayListHead++, G_LIGHTING | G_CULL_BACK);
         gSPEndDisplayList(sOmmDarkModeDisplayListHead);
     }
-#endif
 }
 
 //
@@ -806,22 +804,17 @@ static bool omm_render_hud_stars(s16 x, s16 y, u8 alpha, s32 level, bool cond, b
         { 0xFF, 0xFF },
         { 0x00, 0x80 }
     };
-#if defined(SMMS)
-    bool coloredStars = false;
-#else
-    bool coloredStars = gOmmExtrasColoredStars;
-#endif
 
     // Star counter
     u8 t = omm_stars_get_bits_total(level);
     if (t == 0 || !cond ||
-#if defined(SMSR)
+#if OMM_GAME_IS_SMSR
         level == LEVEL_ENDING ||
 #endif
         level == LEVEL_BOWSER_1 ||
         level == LEVEL_BOWSER_2 ||
         level == LEVEL_BOWSER_3) {
-        omm_render_glyph_hud(x, y, 0xFF, 0xFF, 0xFF, alpha, omm_render_get_star_glyph(0, coloredStars), shadow);
+        omm_render_glyph_hud(x, y, 0xFF, 0xFF, 0xFF, alpha, omm_render_get_star_glyph(0, OMM_EXTRAS_COLORED_STARS), shadow);
         return false;
     }
 
@@ -834,27 +827,26 @@ static bool omm_render_hud_stars(s16 x, s16 y, u8 alpha, s32 level, bool cond, b
         if (bit & t) {
             u8 shading = sOmmStarShading[!(bit & f)][!(bit & s)];
             u8 opacity = sOmmStarOpacity[!(bit & f)][!(bit & s)];
-            omm_render_glyph_hud(x, y, shading, shading, shading, (alpha * opacity) / 0xFF, omm_render_get_star_glyph(omm_clamp_s(course, 0, 16), coloredStars), shadow);
+            omm_render_glyph_hud(x, y, shading, shading, shading, (alpha * opacity) / 0xFF, omm_render_get_star_glyph(omm_clamp_s(course, 0, 16), OMM_EXTRAS_COLORED_STARS), shadow);
             x += OMM_RENDER_STAR_OFFSET_X;
         }
     }
 
-#if OMM_CODE_SPARKLY
     // Sparkly Star
     if (omm_sparkly_is_enabled()) {
+        s32 mode = omm_sparkly_get_current_mode();
         for (s32 i = 0; i != 8; ++i) {
-            s32 index = omm_sparkly_get_star_index(omm_sparkly_get_current_mode(), level, i);
+            s32 index = omm_sparkly_get_star_index(mode, level, i);
             if (index != -1) {
-                bool collected = omm_sparkly_is_star_collected(omm_sparkly_get_current_mode(), index);
+                bool collected = omm_sparkly_is_star_collected(mode, index);
                 bool state = omm_sparkly_context_is_state_ok();
                 u8 shading = sOmmStarShading[!collected][state];
                 u8 opacity = sOmmStarOpacity[!collected][state];
-                omm_render_glyph_hud(x, y, shading, shading, shading, (alpha * opacity) / 0xFF, OMM_SPARKLY_STAR_HUD_GLYPH[omm_sparkly_get_current_mode()], shadow);
+                omm_render_glyph_hud(x, y, shading, shading, shading, (alpha * opacity) / 0xFF, OMM_SPARKLY_STAR_HUD_GLYPH[mode], shadow);
                 return true;
             }
         }
     }
-#endif
 
     return true;
 }
@@ -1065,7 +1057,7 @@ static void omm_render_hud_power_meter_health_gauge(f32 x, f32 y, u8 alpha, s32 
 }
 
 static void omm_render_hud_power_meter(struct MarioState *m) {
-    if ((gHudDisplay.flags & HUD_DISPLAY_FLAG_CAMERA_AND_POWER) && !gIsHardMode) {
+    if ((gHudDisplay.flags & HUD_DISPLAY_FLAG_CAMERA_AND_POWER) && !g1HPMode) {
         u8 alpha = omm_render_hud_update_timer_and_get_alpha(m, &sOmmHudHealthTimer);
         if (alpha) {
             OMM_RENDER_ENABLE_ALPHA;
@@ -1219,7 +1211,6 @@ static void omm_render_hud_timer() {
 //
 
 static void omm_render_sparkly_timer(s16 x, s16 y, s16 w, u8 alpha, s32 mode, s32 timer, bool blink, bool renderStarGlyph) {
-#if OMM_CODE_SPARKLY
     static const char *sOmmSparklyTimerGlyphs[] = {
         OMM_TEXTURE_HUD_0,
         OMM_TEXTURE_HUD_1,
@@ -1259,16 +1250,6 @@ static void omm_render_sparkly_timer(s16 x, s16 y, s16 w, u8 alpha, s32 mode, s3
             );
         }
     }
-#else
-    OMM_UNUSED(x);
-    OMM_UNUSED(y);
-    OMM_UNUSED(w);
-    OMM_UNUSED(alpha);
-    OMM_UNUSED(mode);
-    OMM_UNUSED(timer);
-    OMM_UNUSED(blink);
-    OMM_UNUSED(renderStarGlyph);
-#endif
 }
 
 //
@@ -1302,8 +1283,9 @@ static void omm_render_hud_values(struct MarioState *m) {
 
                 // Sparkly Star counter
                 if (omm_sparkly_is_enabled()) {
-                    omm_render_glyph_hud(OMM_RENDER_VALUE_GLYPH_X, y, 0xFF, 0xFF, 0xFF, alpha, OMM_SPARKLY_STAR_HUD_GLYPH[omm_sparkly_get_current_mode()], false);
-                    omm_render_number_hud(omm_sparkly_get_star_count(omm_sparkly_get_current_mode()), 3, OMM_RENDER_VALUE_NUMBER_X, y, alpha, true, false);
+                    s32 mode = omm_sparkly_get_current_mode();
+                    omm_render_glyph_hud(OMM_RENDER_VALUE_GLYPH_X, y, 0xFF, 0xFF, 0xFF, alpha, OMM_SPARKLY_STAR_HUD_GLYPH[mode], false);
+                    omm_render_number_hud(omm_sparkly_get_star_count(mode), 3, OMM_RENDER_VALUE_NUMBER_X, y, alpha, true, false);
                     y -= OMM_RENDER_OFFSET_Y;
                 }
             }
@@ -1319,7 +1301,7 @@ static void omm_render_hud_values(struct MarioState *m) {
             omm_render_hud_coins(OMM_RENDER_VALUE_GLYPH_X, y, alpha, gHudDisplay.coins, false);
 
             // Sparkles
-            if (gOmmExtrasVanishingHUD || sOmmHudCoinsTimer.alwaysActive) {
+            if (OMM_EXTRAS_VANISHING_HUD || sOmmHudCoinsTimer.alwaysActive) {
                 static s32 sOmmHudCoinSparkles[OMM_RENDER_HUD_COIN_SPARKLE_COUNT] = { 0 };
 
                 // New sparkle
@@ -1333,23 +1315,24 @@ static void omm_render_hud_values(struct MarioState *m) {
                 }
 
                 // Update
-                OMM_RENDER_ENABLE_ALPHA;
-                create_dl_translation_matrix(MENU_MTX_PUSH, OMM_RENDER_HUD_COIN_SPARKLE_X, OMM_RENDER_HUD_COIN_SPARKLE_Y, 0);
-                create_dl_scale_matrix(MENU_MTX_PUSH, OMM_RENDER_HUD_COIN_SPARKLE_SCALE, OMM_RENDER_HUD_COIN_SPARKLE_SCALE, OMM_RENDER_HUD_COIN_SPARKLE_SCALE);
                 for (s32 i = 0; i != OMM_RENDER_HUD_COIN_SPARKLE_COUNT; ++i) {
                     if (sOmmHudCoinSparkles[i]-- > 0) {
-                        switch (sOmmHudCoinSparkles[i] / OMM_RENDER_HUD_COIN_SPARKLE_DELAY) {
-                            case 5: gSPDisplayList(gDisplayListHead++, sparkles_seg4_dl_0402A4F8); break;
-                            case 4: gSPDisplayList(gDisplayListHead++, sparkles_seg4_dl_0402A510); break;
-                            case 3: gSPDisplayList(gDisplayListHead++, sparkles_seg4_dl_0402A528); break;
-                            case 2: gSPDisplayList(gDisplayListHead++, sparkles_seg4_dl_0402A540); break;
-                            case 1: gSPDisplayList(gDisplayListHead++, sparkles_seg4_dl_0402A558); break;
-                            case 0: gSPDisplayList(gDisplayListHead++, sparkles_seg4_dl_0402A570); break;
-                        }
+                        omm_render_texrect(
+                            OMM_RENDER_HUD_COIN_SPARKLE_X, OMM_RENDER_HUD_COIN_SPARKLE_Y,
+                            OMM_RENDER_HUD_COIN_SPARKLE_SIZE, OMM_RENDER_HUD_COIN_SPARKLE_SIZE,
+                            G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 32, 
+                            0xFF, 0xFF, 0xFF, 0xFF,
+                            (const void *) (OMM_ARRAY_OF(const char *) {
+                                OMM_ASSET_SPARKLE_5,
+                                OMM_ASSET_SPARKLE_4,
+                                OMM_ASSET_SPARKLE_3,
+                                OMM_ASSET_SPARKLE_2,
+                                OMM_ASSET_SPARKLE_1,
+                                OMM_ASSET_SPARKLE_0,
+                            })[sOmmHudCoinSparkles[i] / OMM_RENDER_HUD_COIN_SPARKLE_DELAY]
+                        );
                     }
                 }
-                gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
-                gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
             }
             y -= OMM_RENDER_OFFSET_Y;
         }
@@ -1381,77 +1364,66 @@ static void omm_render_hud_values(struct MarioState *m) {
         }
     }
 
-#if OMM_CODE_SPARKLY
     if (gHudDisplay.flags & OMM_HUD_DISPLAY_FLAG_SPARKLY_STARS_CONDITIONS) {
 
-        // Remaining flames (Sparkly Stars - HMC Hard / Basement Lunatic)
-        if ((omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_HARD) && gCurrLevelNum == LEVEL_HMC) ||
-            (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_LUNATIC) && gCurrLevelNum == LEVEL_CASTLE && gCurrAreaIndex == 3)) {
-            if (omm_sparkly_context_is_state_ok()) {
-                s32 flames = omm_sparkly_context_get_remaining_flames();
-                if (flames > 0) {
-                    s32 flameW = 20;
-                    s32 flameX = OMM_RENDER_VALUE_GLYPH_X - (flameW - OMM_RENDER_GLYPH_SIZE) / 2;
-                    s32 flameY = y - (flameW - OMM_RENDER_GLYPH_SIZE) / 2;
-                    s32 flameT = (gGlobalTimer / 2) % 8;
+        // Remaining flames
+        if (omm_sparkly_context_get_data_flags(OMM_SPARKLY_DATA_FLAG_FLAMES) && omm_sparkly_context_is_state_ok()) {
+            s32 flames = omm_sparkly_context_get_remaining_flames();
+            if (flames > 0) {
+                s32 flameW = 20;
+                s32 flameX = OMM_RENDER_VALUE_GLYPH_X - (flameW - OMM_RENDER_GLYPH_SIZE) / 2;
+                s32 flameY = y - (flameW - OMM_RENDER_GLYPH_SIZE) / 2;
+                s32 flameT = (gGlobalTimer / 2) % 8;
 
-                    // Render the animated flame
-                    omm_render_texrect(
-                        flameX, flameY, flameW, flameW,
-                        G_IM_FMT_IA, G_IM_SIZ_16b, 32, 32, 
-                        0xFF, 0x00, 0x00, 0xFF,
-                        (const void *) (OMM_ARRAY_OF(const Gfx *) {
-                            flame_seg3_dl_0301B3B0,
-                            flame_seg3_dl_0301B3C8,
-                            flame_seg3_dl_0301B3E0,
-                            flame_seg3_dl_0301B3F8,
-                            flame_seg3_dl_0301B410,
-                            flame_seg3_dl_0301B428,
-                            flame_seg3_dl_0301B440,
-                            flame_seg3_dl_0301B458
-                        })[flameT][1].words.w1
-                    );
+                // Render the animated flame
+                omm_render_texrect(
+                    flameX, flameY, flameW, flameW,
+                    G_IM_FMT_IA, G_IM_SIZ_16b, 32, 32, 
+                    0xFF, 0x00, 0x00, 0xFF,
+                    (const void *) (OMM_ARRAY_OF(const char *) {
+                        OMM_ASSET_FLAME_0,
+                        OMM_ASSET_FLAME_1,
+                        OMM_ASSET_FLAME_2,
+                        OMM_ASSET_FLAME_3,
+                        OMM_ASSET_FLAME_4,
+                        OMM_ASSET_FLAME_5,
+                        OMM_ASSET_FLAME_6,
+                        OMM_ASSET_FLAME_7,
+                    })[flameT]
+                );
 
-                    // Render the number
-                    omm_render_number_hud(flames, 3, OMM_RENDER_VALUE_NUMBER_X, y, 0xFF, true, false);
-                    y -= OMM_RENDER_OFFSET_Y;
-                }
+                // Render the number
+                omm_render_number_hud(flames, 3, OMM_RENDER_VALUE_NUMBER_X, y, 0xFF, true, false);
+                y -= OMM_RENDER_OFFSET_Y;
             }
         }
 
-        // Remaining boxes (Sparkly Stars - TTC Normal)
-        if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_NORMAL) && gCurrLevelNum == LEVEL_TTC) {
-            if (omm_sparkly_context_is_state_ok()) {
-                s32 boxes = omm_sparkly_context_get_remaining_boxes();
-                if (boxes > 0) {
-                    s32 boxW = OMM_RENDER_GLYPH_SIZE;
-                    s32 boxX = OMM_RENDER_VALUE_GLYPH_X - (boxW - OMM_RENDER_GLYPH_SIZE) / 2;
-                    s32 boxY = y - (boxW - OMM_RENDER_GLYPH_SIZE) / 2;
+        // Remaining boxes
+        if (omm_sparkly_context_get_data_flags(OMM_SPARKLY_DATA_FLAG_BOXES) && omm_sparkly_context_is_state_ok()) {
+            s32 boxes = omm_sparkly_context_get_remaining_boxes();
+            if (boxes > 0) {
+                s32 boxW = OMM_RENDER_GLYPH_SIZE;
+                s32 boxX = OMM_RENDER_VALUE_GLYPH_X - (boxW - OMM_RENDER_GLYPH_SIZE) / 2;
+                s32 boxY = y - (boxW - OMM_RENDER_GLYPH_SIZE) / 2;
 
-                    // Render the box icon
-                    omm_render_texrect(
-                        boxX, boxY, boxW, boxW,
-                        G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 32, 
-                        0xFF, 0xFF, 0xFF, 0xFF,
-                        (const void *) exclamation_box_seg8_dl_08019438[1].words.w1
-                    );
+                // Render the box icon
+                omm_render_texrect(
+                    boxX, boxY, boxW, boxW,
+                    G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 32, 
+                    0xFF, 0xFF, 0xFF, 0xFF,
+                    (const void *) OMM_ASSET_EXCLAMATION_BOX
+                );
 
-                    // Render the number
-                    omm_render_number_hud(boxes, 3, OMM_RENDER_VALUE_NUMBER_X, y, 0xFF, true, false);
-                    y -= OMM_RENDER_OFFSET_Y;
-                }
+                // Render the number
+                omm_render_number_hud(boxes, 3, OMM_RENDER_VALUE_NUMBER_X, y, 0xFF, true, false);
+                y -= OMM_RENDER_OFFSET_Y;
             }
         }
 
-        // Remaining 1-up mushrooms (Sparkly Stars - BITFS Normal / RR Hard)
-        s32 mushroomCount = 0;
-        if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_NORMAL) && gCurrLevelNum == LEVEL_BITFS) {
-            mushroomCount = OMM_SPARKLY_BITFS_1UP_MUSHROOM_COUNT;
-        } else if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_HARD) && gCurrLevelNum == LEVEL_RR) {
-            mushroomCount = OMM_SPARKLY_RR_1UP_MUSHROOM_COUNT;
-        }
-        if (mushroomCount > 0 && omm_sparkly_context_is_state_ok()) {
-            s32 mushrooms = mushroomCount - omm_sparkly_context_get_counter(OMM_SPARKLY_CONTEXT_COUNTER_1UP_MUSHROOMS);
+        // Remaining 1-up mushrooms
+        s32 numMushrooms = omm_sparkly_context_get_data_flags(OMM_SPARKLY_DATA_BITS_MUSHROOMS);
+        if (numMushrooms > 0 && omm_sparkly_context_is_state_ok()) {
+            s32 mushrooms = numMushrooms - omm_sparkly_context_get_counter(OMM_SPARKLY_CONTEXT_COUNTER_1UP_MUSHROOMS);
             if (mushrooms > 0) {
                 s32 mushroomW = OMM_RENDER_GLYPH_SIZE;
                 s32 mushroomX = OMM_RENDER_VALUE_GLYPH_X - (mushroomW - OMM_RENDER_GLYPH_SIZE) / 2;
@@ -1462,7 +1434,7 @@ static void omm_render_hud_values(struct MarioState *m) {
                     mushroomX, mushroomY, mushroomW, mushroomW,
                     G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 64, 
                     0xFF, 0xFF, 0xFF, 0xFF,
-                    (const void *) mushroom_1up_seg3_dl_0302A628[0].words.w1
+                    (const void *) OMM_ASSET_MUSHROOM_1UP
                 );
 
                 // Render the number
@@ -1471,48 +1443,109 @@ static void omm_render_hud_values(struct MarioState *m) {
             }
         }
     }
-#endif
 }
 
 //
 // Red coins radar
 //
 
+static struct Object *obj_get_red_coin_star() {
+
+    // Hidden red coin star
+    struct Object *hiddenRedCoinStar = obj_get_first_with_behavior(bhvHiddenRedCoinStar);
+    if (hiddenRedCoinStar) {
+        return hiddenRedCoinStar;
+    }
+
+    // Bowser red coin star
+    struct Object *bowserRedCoinStar = obj_get_first_with_behavior(bhvBowserCourseRedCoinStar);
+    if (bowserRedCoinStar) {
+        return bowserRedCoinStar;
+    }
+
+    // Actual red coin star
+    for_each_until_null(const BehaviorScript *, bhv, OMM_ARRAY_OF(const BehaviorScript *) { bhvStar, bhvStarSpawnCoordinates, NULL }) {
+        for_each_object_with_behavior(star, *bhv) {
+            if (star->activeFlags & ACTIVE_FLAG_RED_COIN_STAR) {
+                return star;
+            }
+        }
+    }
+
+    // No red coin star
+    return NULL;
+}
+
 static void omm_render_hud_red_coins_radar(struct MarioState *m) {
-    if (gOmmExtrasRedCoinsRadar && (gHudDisplay.flags & OMM_HUD_DISPLAY_FLAG_RED_COINS_RADAR) && obj_get_first_with_behavior(bhvHiddenRedCoinStar)) {
-        struct Object *redCoin = obj_get_nearest_with_behavior(m->marioObj, bhvRedCoin);
-        if (redCoin) {
-            s16 angle = atan2s(redCoin->oPosZ - m->pos[2], redCoin->oPosX - m->pos[0]) - atan2s(m->pos[2] - gCamera->pos[2], m->pos[0] - gCamera->pos[0]);
+    if (OMM_EXTRAS_RED_COINS_RADAR && (gHudDisplay.flags & OMM_HUD_DISPLAY_FLAG_RED_COINS_RADAR)) {
+        struct Object *radarTarget = obj_get_red_coin_star();
+        if (radarTarget) {
+
+            // Target and display the nearest red coin
+            struct Object *redCoin = obj_get_nearest_with_behavior(m->marioObj, bhvRedCoin);
+            if (redCoin) {
+                radarTarget = redCoin;
+                omm_render_create_dl_ortho_matrix();
+                omm_render_texrect(
+                    OMM_RENDER_RADAR_X - OMM_RENDER_RADAR_COIN_SIZE / 2,
+                    OMM_RENDER_RADAR_Y - OMM_RENDER_RADAR_COIN_SIZE / 2,
+                    OMM_RENDER_RADAR_COIN_SIZE,
+                    OMM_RENDER_RADAR_COIN_SIZE,
+                    G_IM_FMT_IA, G_IM_SIZ_16b, 32, 32, 
+                    0xFF, 0x00, 0x00, 0xFF,
+                    (const void *) (OMM_ARRAY_OF(const char *) {
+                    OMM_ASSET_COIN_0,
+                    OMM_ASSET_COIN_1,
+                    OMM_ASSET_COIN_2,
+                    OMM_ASSET_COIN_3,
+                    })[(gGlobalTimer >> 1) & 3]
+                );
+            }
+            
+            // Target and display the red coin star
+            else {
+                omm_render_create_dl_ortho_matrix();
+                omm_render_texrect(
+                    OMM_RENDER_RADAR_X - OMM_RENDER_RADAR_STAR_SIZE / 2,
+                    OMM_RENDER_RADAR_Y - OMM_RENDER_RADAR_STAR_SIZE / 2,
+                    OMM_RENDER_RADAR_STAR_SIZE,
+                    OMM_RENDER_RADAR_STAR_SIZE,
+                    G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 32, 
+                    0xFF, 0x80, 0x80, 0xFF,
+                    (const void *) (OMM_ARRAY_OF(const char *) {
+                    OMM_ASSET_RED_STAR_0,
+                    OMM_ASSET_RED_STAR_1,
+                    OMM_ASSET_RED_STAR_2,
+                    OMM_ASSET_RED_STAR_3,
+                    OMM_ASSET_RED_STAR_4,
+                    OMM_ASSET_RED_STAR_5,
+                    OMM_ASSET_RED_STAR_6,
+                    OMM_ASSET_RED_STAR_7,
+                    })[(gGlobalTimer >> 1) & 7]
+                );
+            }
+            
+            // Radar arrow vertex buffer
             static Vtx sRadarArrowVtx[4] = {
                 { { { 0, 0, 0 }, 0, { 0, 4096 }, { 0xFF, 0xFF, 0xFF, 0xFF } } },
                 { { { 0, 0, 0 }, 0, { 4096, 4096 }, { 0xFF, 0xFF, 0xFF, 0xFF } } },
                 { { { 0, 0, 0 }, 0, { 4096, 0 }, { 0xFF, 0xFF, 0xFF, 0xFF } } },
                 { { { 0, 0, 0 }, 0, { 0, 0 }, { 0xFF, 0xFF, 0xFF, 0xFF } } }
             };
+            s16 angle = atan2s(
+                radarTarget->oPosZ - m->pos[2],
+                radarTarget->oPosX - m->pos[0]
+            ) - atan2s(
+                m->pos[2] - gCamera->pos[2],
+                m->pos[0] - gCamera->pos[0]
+            );
             for (s32 i = 0; i != 4; ++i) {
                 s16 a = angle + ((i * 0x4000) - 0x6000);
                 sRadarArrowVtx[i].v.ob[0] = OMM_RENDER_RADAR_X + OMM_RENDER_RADAR_RADIUS * coss(angle + 0x4000) + OMM_RENDER_RADAR_ARROW_SIZE * OMM_INVSQRT2 * coss(a);
                 sRadarArrowVtx[i].v.ob[1] = OMM_RENDER_RADAR_Y + OMM_RENDER_RADAR_RADIUS * sins(angle + 0x4000) + OMM_RENDER_RADAR_ARROW_SIZE * OMM_INVSQRT2 * sins(a);
             }
-
-            // Red coin icon
-            omm_render_create_dl_ortho_matrix();
-            omm_render_texrect(
-                OMM_RENDER_RADAR_X - OMM_RENDER_RADAR_COIN_SIZE / 2,
-                OMM_RENDER_RADAR_Y - OMM_RENDER_RADAR_COIN_SIZE / 2,
-                OMM_RENDER_RADAR_COIN_SIZE,
-                OMM_RENDER_RADAR_COIN_SIZE,
-                G_IM_FMT_IA, G_IM_SIZ_16b, 32, 32, 
-                0xFF, 0x00, 0x00, 0xFF,
-                (const void *) (OMM_ARRAY_OF(const Gfx *) {
-                    coin_seg3_dl_03007940,
-                    coin_seg3_dl_03007968,
-                    coin_seg3_dl_03007990,
-                    coin_seg3_dl_030079B8
-                })[(gGlobalTimer >> 1) & 3][1].words.w1
-            );
             
-            // Red coin arrow
+            // Radar arrow
             gDPSetTexturePersp(gDisplayListHead++, G_TP_NONE);
             gDPSetRenderMode(gDisplayListHead++, G_RM_AA_XLU_SURF, G_RM_AA_XLU_SURF2);
             gDPSetCombineLERP(gDisplayListHead++, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, ENVIRONMENT, 0);
@@ -1602,7 +1635,7 @@ inline static void omm_render_collectible(s16 x, s16 y, const void *texture, boo
 }
 
 static void omm_render_collectibles() {
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
 
     // Luigi keys
     if ((gHudDisplay.flags & HUD_DISPLAY_FLAG_KEYS) && gHudDisplay.keys > 0 && gHudDisplay.keys < NUM_KEYS) {
@@ -1688,19 +1721,19 @@ static void omm_render_pause_course() {
 
     // Red coins
     s32 numRedCoins = omm_level_get_num_red_coins(gCurrLevelNum, gCurrAreaIndex);
-    if (numRedCoins > 0 && obj_get_first_with_behavior(bhvHiddenRedCoinStar)) {
+    if (numRedCoins > 0 && obj_get_red_coin_star()) {
         s32 redCoinsCollected = numRedCoins - obj_get_count_with_behavior(bhvRedCoin);
         s32 x = OMM_RENDER_RED_COINS_X;
         omm_render_texrect(
             x, OMM_RENDER_RED_COINS_Y, OMM_RENDER_GLYPH_SIZE, OMM_RENDER_GLYPH_SIZE,
             G_IM_FMT_IA, G_IM_SIZ_16b, 32, 32, 
             0xFF, 0x00, 0x00, 0xFF,
-            (const void *) (OMM_ARRAY_OF(const Gfx *) {
-                coin_seg3_dl_03007940,
-                coin_seg3_dl_03007968,
-                coin_seg3_dl_03007990,
-                coin_seg3_dl_030079B8
-            })[(gGlobalTimer >> 1) & 3][1].words.w1
+            (const void *) (OMM_ARRAY_OF(const char *) {
+                OMM_ASSET_COIN_0,
+                OMM_ASSET_COIN_1,
+                OMM_ASSET_COIN_2,
+                OMM_ASSET_COIN_3,
+            })[(gGlobalTimer >> 1) & 3]
         );
         x += 2 * OMM_RENDER_NUMBER_OFFSET_X;
         omm_render_number_hud(redCoinsCollected, 2, x, OMM_RENDER_RED_COINS_Y, sOmmDialogTextAlpha, true, false);
@@ -1713,32 +1746,27 @@ static void omm_render_pause_course() {
     // Collectibles
     omm_render_collectibles();
 
-#if OMM_CODE_SPARKLY
     // Sparkly Stars timer
     if (omm_sparkly_is_enabled()) {
+        s32 mode = omm_sparkly_get_current_mode();
         omm_render_sparkly_timer(
             OMM_RENDER_SPARKLY_TIMER_X(OMM_RENDER_SPARKLY_TIMER_GLYPH_SIZE),
             OMM_RENDER_SPARKLY_TIMER_Y,
             OMM_RENDER_SPARKLY_TIMER_GLYPH_SIZE,
             sOmmDialogTextAlpha,
-            omm_sparkly_get_current_mode(),
-            omm_sparkly_get_timer(omm_sparkly_get_current_mode()),
-           !omm_sparkly_is_grand_star_collected(omm_sparkly_get_current_mode()),
+            mode,
+            omm_sparkly_get_timer(mode),
+           !omm_sparkly_is_grand_star_collected(mode),
             true
         );
     }
-#endif
 
     // Course options
     omm_render_string_left_align(omm_text_convert(OMM_TEXT_CONTINUE, false),         OMM_RENDER_PAUSE_COURSE_LEFT_ALIGN_X, OMM_RENDER_PAUSE_COURSE_OPTIONS_Y - 0 * OMM_RENDER_PAUSE_COURSE_OFFSET_Y, 0xFF, 0xFF, 0xFF, sOmmDialogTextAlpha, false);
     omm_render_string_left_align(omm_text_convert(OMM_TEXT_RESTART_LEVEL, false),    OMM_RENDER_PAUSE_COURSE_LEFT_ALIGN_X, OMM_RENDER_PAUSE_COURSE_OPTIONS_Y - 1 * OMM_RENDER_PAUSE_COURSE_OFFSET_Y, 0xFF, 0xFF, 0xFF, sOmmDialogTextAlpha, false);
     omm_render_string_left_align(omm_text_convert(OMM_TEXT_EXIT_LEVEL, false),       OMM_RENDER_PAUSE_COURSE_LEFT_ALIGN_X, OMM_RENDER_PAUSE_COURSE_OPTIONS_Y - 2 * OMM_RENDER_PAUSE_COURSE_OFFSET_Y, 0xFF, 0xFF, 0xFF, sOmmDialogTextAlpha, false);
-#if OMM_CODE_VANILLA
     omm_render_string_left_align(omm_text_convert(OMM_TEXT_RETURN_TO_CASTLE, false), OMM_RENDER_PAUSE_COURSE_LEFT_ALIGN_X, OMM_RENDER_PAUSE_COURSE_OPTIONS_Y - 3 * OMM_RENDER_PAUSE_COURSE_OFFSET_Y, 0xFF, 0xFF, 0xFF, sOmmDialogTextAlpha, false);
     omm_render_update_scroll(&sOmmPauseCourseScroll, 4, -gPlayer1Controller->stickY);
-#else
-    omm_render_update_scroll(&sOmmPauseCourseScroll, 3, -gPlayer1Controller->stickY);
-#endif
 
     // White triangle
     static const Vtx sOmmHudWhiteTriangleVertices[] = {
@@ -1879,11 +1907,7 @@ static void omm_render_pause_castle() {
     gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
 
     // Update scroll index
-#if OMM_CODE_SPARKLY
     omm_render_update_scroll(&sOmmPauseCastleScrollV, sLevelCount + omm_sparkly_is_enabled(), -gPlayer1Controller->stickY);
-#else
-    omm_render_update_scroll(&sOmmPauseCastleScrollV, sLevelCount, -gPlayer1Controller->stickY);
-#endif
 
     // Display course
     if (sOmmPauseCastleScrollV.idx != sLevelCount) {
@@ -1920,35 +1944,24 @@ static void omm_render_pause_castle() {
         }
     }
 
-#if OMM_CODE_SPARKLY
     // Display Sparkly Stars
     else {
         omm_render_update_scroll(&sOmmPauseCastleScrollH, 30, gPlayer1Controller->stickX);
-        s32 level = (sOmmPauseCastleScrollH.idx == 29 ? LEVEL_GROUNDS : omm_sparkly_get_star_level(omm_sparkly_get_current_mode(), sOmmPauseCastleScrollH.idx));
-        s32 area = (sOmmPauseCastleScrollH.idx == 29 ? 2 : omm_sparkly_get_star_area(omm_sparkly_get_current_mode(), sOmmPauseCastleScrollH.idx));
-        u8 textR = OMM_SPARKLY_STAR_HUD_COLOR[omm_sparkly_get_current_mode()][0];
-        u8 textG = OMM_SPARKLY_STAR_HUD_COLOR[omm_sparkly_get_current_mode()][1];
-        u8 textB = OMM_SPARKLY_STAR_HUD_COLOR[omm_sparkly_get_current_mode()][2];
+        s32 mode = omm_sparkly_get_current_mode();
+        u8 textR = OMM_SPARKLY_STAR_HUD_COLOR[mode][0];
+        u8 textG = OMM_SPARKLY_STAR_HUD_COLOR[mode][1];
+        u8 textB = OMM_SPARKLY_STAR_HUD_COLOR[mode][2];
 
         // Title
-        u8 *textSparklyStars = omm_text_convert(OMM_SPARKLY_STARS_TEXT[omm_sparkly_get_current_mode()], false);
+        u8 *textSparklyStars = omm_text_convert(OMM_SPARKLY_STARS_TEXT[mode], false);
         omm_render_string_centered(textSparklyStars, OMM_RENDER_PAUSE_CASTLE_BOX_LINE_1_Y, textR, textG, textB, sOmmDialogTextAlpha, false);
 
         // Star count
-        omm_render_counter_hud(0xFA, omm_sparkly_get_star_count(omm_sparkly_get_current_mode()), OMM_RENDER_PAUSE_CASTLE_BOX_LINE_2_Y, textR, textG, textB, sOmmDialogTextAlpha);
+        omm_render_counter_hud(0xFA, omm_sparkly_get_star_count(mode), OMM_RENDER_PAUSE_CASTLE_BOX_LINE_2_Y, textR, textG, textB, sOmmDialogTextAlpha);
 
         // Level display
-        u8 *textLevelName = NULL;
-        switch (level * 8 + area) {
-            case LEVEL_CASTLE  * 8 + 1: textLevelName = omm_text_convert(OMM_TEXT_LEVEL_CASTLE_INSIDE, false); break;
-            case LEVEL_CASTLE  * 8 + 2: textLevelName = omm_text_convert(OMM_TEXT_LEVEL_CASTLE_UPSTAIRS, false); break;
-            case LEVEL_CASTLE  * 8 + 3: textLevelName = omm_text_convert(OMM_TEXT_LEVEL_CASTLE_BASEMENT, false); break;
-            case LEVEL_GROUNDS * 8 + 1: textLevelName = omm_text_convert(OMM_TEXT_LEVEL_CASTLE_GROUNDS, false); break;
-            case LEVEL_GROUNDS * 8 + 2: textLevelName = omm_text_convert(omm_sparkly_is_grand_star_collected(omm_sparkly_get_current_mode()) ? OMM_TEXT_LEVEL_BOWSER_4 : OMM_TEXT_LEVEL_UNKNOWN, false); break;
-            case LEVEL_COURT   * 8 + 1: textLevelName = omm_text_convert(OMM_TEXT_LEVEL_CASTLE_COURTYARD, false); break;
-            default:                    textLevelName = omm_level_get_name(level, false, false); break;
-        }
-        if ((sOmmPauseCastleScrollH.idx == 29 && omm_sparkly_is_grand_star_collected(omm_sparkly_get_current_mode())) || omm_sparkly_is_star_collected(omm_sparkly_get_current_mode(), sOmmPauseCastleScrollH.idx)) {
+        u8 *textLevelName = omm_sparkly_get_star_level_name(mode, sOmmPauseCastleScrollH.idx);
+        if ((sOmmPauseCastleScrollH.idx == 29 && omm_sparkly_is_grand_star_collected(mode)) || omm_sparkly_is_star_collected(mode, sOmmPauseCastleScrollH.idx)) {
             omm_render_string_centered(textLevelName, OMM_RENDER_PAUSE_CASTLE_BOX_LINE_3_Y, textR, textG, textB, sOmmDialogTextAlpha, false);
         } else {
             omm_render_string_centered(textLevelName, OMM_RENDER_PAUSE_CASTLE_BOX_LINE_3_Y, textR / 2, textG / 2, textB / 2, sOmmDialogTextAlpha, false);
@@ -1960,13 +1973,12 @@ static void omm_render_pause_castle() {
             OMM_RENDER_SPARKLY_TIMER_Y,
             OMM_RENDER_SPARKLY_TIMER_GLYPH_SIZE,
             sOmmDialogTextAlpha,
-            omm_sparkly_get_current_mode(),
-            omm_sparkly_get_timer(omm_sparkly_get_current_mode()),
-           !omm_sparkly_is_grand_star_collected(omm_sparkly_get_current_mode()),
+            mode,
+            omm_sparkly_get_timer(mode),
+           !omm_sparkly_is_grand_star_collected(mode),
             true
         );
     }
-#endif
 
 #if OMM_CODE_TIME_TRIALS
     }
@@ -1975,7 +1987,7 @@ static void omm_render_pause_castle() {
     // Collectibles
     omm_render_collectibles();
 
-#if defined(SM74)
+#if OMM_GAME_IS_SM74
     // Display "Super Mario 74" and current mode
     const u8 *textSm74 = omm_text_convert(OMM_TEXT_SM74_SUPER_MARIO_74, false);
     omm_render_string_centered(textSm74, SCREEN_HEIGHT - 40, 0xFF, 0xFF, 0xFF, sOmmDialogTextAlpha, true);
@@ -2251,11 +2263,11 @@ static void omm_handle_dialog_text_and_pages(s8 colorMode, struct DialogEntry *d
 }
 
 static void omm_render_dialog_entry() {
-#if defined(SM74)
+#if OMM_GAME_IS_SM74
     struct DialogEntry *dialog = omm_get_dialog_entry((sm74_mode__omm_render_dialog_entry == 2 ?
                                                       (void **) seg2_dialog_table_EE :
                                                       (void **) seg2_dialog_table), gDialogID);
-#elif !defined(R96A)
+#elif !OMM_GAME_IS_R96A
     struct DialogEntry *dialog = omm_get_dialog_entry((void **) seg2_dialog_table, gDialogID);
 #else
     struct DialogEntry *dialog = omm_get_dialog_entry(NULL, gDialogID);
@@ -2375,7 +2387,7 @@ OMM_ROUTINE_UPDATE(omm_menus_and_dialogs_update) {
 // Star select
 //
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
 s32 lvl_star_select() {
     r96_play_menu_jingle(R96_EVENT_STAR_SELECT);
 }
@@ -2556,11 +2568,7 @@ static s32 omm_render_star_select_update(s32 action) {
         // Render
         case 4: {
             s32 selectedIndex = ((sStarSelectTargetIndex + 6) % 6);
-#if defined(SMMS)
-            u32 color = 0x00F000FF;
-#else
-            u32 color = (gOmmExtrasColoredStars ? omm_stars_get_color(gCurrLevelNum) : 0xFFFFFFFF);
-#endif
+            u32 color = (OMM_GAME_IS_SMMS ? 0x00F000FF : (OMM_EXTRAS_COLORED_STARS ? omm_stars_get_color(gCurrLevelNum) : 0xFFFFFFFF));
             u8 r = (color >> 24) & 0xFF;
             u8 g = (color >> 16) & 0xFF;
             u8 b = (color >>  8) & 0xFF;
@@ -2633,11 +2641,7 @@ static s32 omm_render_star_select_update(s32 action) {
             if (starFlags & 0x40) {
                 s32 coinsStarX = OMM_RENDER_STAR_SELECT_100_COINS_STAR_X;
                 s32 coinsStarY = OMM_RENDER_STAR_SELECT_SCORE_Y - ((OMM_RENDER_STAR_SELECT_100_COINS_STAR_SIZE - 8) / 2) + 1;
-#if defined(SMMS)
-                const void *coinsStarTex = omm_render_get_star_glyph(omm_clamp_s(gCurrCourseNum, 0, 16), false);
-#else
-                const void *coinsStarTex = omm_render_get_star_glyph(omm_clamp_s(gCurrCourseNum, 0, 16), gOmmExtrasColoredStars);
-#endif
+                const void *coinsStarTex = omm_render_get_star_glyph(omm_clamp_s(gCurrCourseNum, 0, 16), OMM_EXTRAS_COLORED_STARS);
                 omm_render_glyph(coinsStarX + 1, coinsStarY, OMM_RENDER_STAR_SELECT_100_COINS_STAR_SIZE, OMM_RENDER_STAR_SELECT_100_COINS_STAR_SIZE, 0x00, 0x00, 0x00, sOmmDialogTextAlpha, coinsStarTex, false);
                 omm_render_glyph(coinsStarX - 1, coinsStarY, OMM_RENDER_STAR_SELECT_100_COINS_STAR_SIZE, OMM_RENDER_STAR_SELECT_100_COINS_STAR_SIZE, 0x00, 0x00, 0x00, sOmmDialogTextAlpha, coinsStarTex, false);
                 omm_render_glyph(coinsStarX, coinsStarY + 1, OMM_RENDER_STAR_SELECT_100_COINS_STAR_SIZE, OMM_RENDER_STAR_SELECT_100_COINS_STAR_SIZE, 0x00, 0x00, 0x00, sOmmDialogTextAlpha, coinsStarTex, false);
@@ -2689,7 +2693,6 @@ Gfx *geo_act_selector_strings(s16 callContext, UNUSED struct GraphNode *node) {
 
 static void omm_menu_update_inputs(struct Object *characterSelectButton, struct Object *sparklyStarsScore, f32 *cursorPos) {
     
-#if OMM_CODE_SPARKLY
     // Sparkly Stars score, press A to return or hold B to delete the Sparkly Stars data
     if (sparklyStarsScore) {
         static s32 sHoldTimer = 0;
@@ -2717,10 +2720,8 @@ static void omm_menu_update_inputs(struct Object *characterSelectButton, struct 
             gPlayer3Controller->buttonPressed = 0;
             sHoldTimer = 0;
         }
-    } else
-#else
-    OMM_UNUSED(sparklyStarsScore);
-#endif
+        return;
+    }
     
     // Character select button
     if (characterSelectButton) {
@@ -2737,10 +2738,12 @@ static void omm_menu_update_inputs(struct Object *characterSelectButton, struct 
             if (omm_abs_f(cursorPos[0] - (characterSelectButton->oPosX / 67.5f)) < 20.f &&
                 omm_abs_f(cursorPos[1] - (characterSelectButton->oPosY / 67.5f)) < 16.f) {
 
+                // Advance the character index by 1 until an unlocked character is found and select it
                 do { gOmmCharacter = (gOmmCharacter + 1) % OMM_NUM_PLAYABLE_CHARACTERS;
                 } while (!omm_player_is_unlocked(gOmmCharacter));
                 omm_player_select(gOmmCharacter);
 
+                // Play the character's 'Here-we-go' sound and change the button appearance
                 play_sound(SOUND_MARIO_HERE_WE_GO, gGlobalSoundArgs);
                 play_sound(SOUND_MENU_CLICK_FILE_SELECT | 0xFF00, gGlobalSoundArgs);
                 characterSelectButton->oMenuButtonState = MENU_BUTTON_STATE_ZOOM_IN_OUT;
@@ -2752,11 +2755,10 @@ static void omm_menu_update_inputs(struct Object *characterSelectButton, struct 
                 }
             }
 
-#if OMM_CODE_SPARKLY
             // Select a star icon by pressing A to display the Sparkly Stars score screen
             else if (gPlayer1Controller->buttonPressed & A_BUTTON) {
                 for (s32 mode = OMM_SPARKLY_MODE_NORMAL; mode != OMM_SPARKLY_MODE_COUNT; ++mode) {
-                    if (omm_sparkly_is_mode_unlocked(mode)) {
+                    if (omm_sparkly_is_mode_selectible(mode)) {
                         if (cursorPos[0] >= 56 + mode * 18 && cursorPos[1] >= 72 &&
                             cursorPos[0] <= 73 + mode * 18 && cursorPos[1] <= 90) {
                             spawn_object(characterSelectButton, MODEL_NONE, omm_bhv_act_select_star)->oAction = mode;
@@ -2766,14 +2768,13 @@ static void omm_menu_update_inputs(struct Object *characterSelectButton, struct 
                     }
                 }
             }
-#endif
         }
 
-#if !defined(SMSR)
+#if !OMM_GAME_IS_SMSR
         // Hard mode toggle
         if (gPlayer1Controller->buttonPressed & L_TRIG) {
             play_sound(SOUND_MENU_MARIO_CASTLE_WARP, gGlobalSoundArgs);
-            gIsHardMode = !gIsHardMode;
+            g1HPMode = !g1HPMode;
         }
 #endif
     }
@@ -2789,27 +2790,28 @@ static void omm_menu_render(struct Object *characterSelectButton, struct Object 
         omm_render_string(OMM_RENDER_FONT_GENERIC, str64, 253 - dx, 39, 0xFF, 0xFF, 0xFF, alpha, false);
     }
 
-#if !defined(SMSR)
+#if !OMM_GAME_IS_SMSR
     // Hard mode, press L to toggle
 #if defined(WIDESCREEN)
     s16 hardModeX = GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(3);
 #else
     s16 hardModeX = -6;
 #endif
-    if (gIsHardMode) {
+    if (g1HPMode) {
         omm_render_string(OMM_RENDER_FONT_MENU, omm_text_convert(OMM_TEXT_MENU_HARD_MODE_ON, false), hardModeX, 3, 0xFF, 0xFF, 0xFF, alpha, false);
     } else {
         omm_render_string(OMM_RENDER_FONT_MENU, omm_text_convert(OMM_TEXT_MENU_HARD_MODE_OFF, false), hardModeX, 3, 0x40, 0x40, 0x40, alpha / 2, false);
     }
 #endif
 
-#if OMM_CODE_SPARKLY
     // Sparkly Stars icons
     for (s32 mode = OMM_SPARKLY_MODE_NORMAL; mode != OMM_SPARKLY_MODE_COUNT; ++mode) {
-        if (omm_sparkly_is_mode_completed(mode)) {
-            omm_render_glyph(216 + 18 * mode, SCREEN_HEIGHT - 51, 16, 16, 0xFF, 0xFF, 0xFF, alpha, OMM_SPARKLY_STAR_HUD_GLYPH[mode], false);
-        } else if (omm_sparkly_is_mode_unlocked(mode)) {
-            omm_render_glyph(216 + 18 * mode, SCREEN_HEIGHT - 51, 16, 16, 0x00, 0x00, 0x00, alpha / 2, OMM_SPARKLY_STAR_HUD_GLYPH[mode], false);
+        if (omm_sparkly_is_mode_selectible(mode)) {
+            if (omm_sparkly_is_mode_completed(mode)) {
+                omm_render_glyph(216 + 18 * mode, SCREEN_HEIGHT - 51, 16, 16, 0xFF, 0xFF, 0xFF, alpha, OMM_SPARKLY_STAR_HUD_GLYPH[mode], false);
+            } else {
+                omm_render_glyph(216 + 18 * mode, SCREEN_HEIGHT - 51, 16, 16, 0x00, 0x00, 0x00, alpha / 2, OMM_SPARKLY_STAR_HUD_GLYPH[mode], false);
+            }
         }
     }
 
@@ -2844,18 +2846,7 @@ static void omm_menu_render(struct Object *characterSelectButton, struct Object 
         for (s32 i = 0; i != 30; ++i) {
             s16 x = 12 + 140 * (i / 15);
             s16 y = SCREEN_HEIGHT - 8 - (44 + 12 * (i % 15));
-            s32 level = (i == 29 ? LEVEL_GROUNDS : omm_sparkly_get_star_level(mode, i));
-            s32 area = (i == 29 ? 2 : omm_sparkly_get_star_area(mode, i));
-            u8 *name = NULL;
-            switch (level * 8 + area) {
-                case LEVEL_CASTLE  * 8 + 1: name = omm_text_convert(OMM_TEXT_LEVEL_CASTLE_INSIDE, false); break;
-                case LEVEL_CASTLE  * 8 + 2: name = omm_text_convert(OMM_TEXT_LEVEL_CASTLE_UPSTAIRS, false); break;
-                case LEVEL_CASTLE  * 8 + 3: name = omm_text_convert(OMM_TEXT_LEVEL_CASTLE_BASEMENT, false); break;
-                case LEVEL_GROUNDS * 8 + 1: name = omm_text_convert(OMM_TEXT_LEVEL_CASTLE_GROUNDS, false); break;
-                case LEVEL_GROUNDS * 8 + 2: name = omm_text_convert(omm_sparkly_is_grand_star_collected(mode) ? OMM_TEXT_LEVEL_BOWSER_4 : OMM_TEXT_LEVEL_UNKNOWN, false); break;
-                case LEVEL_COURT   * 8 + 1: name = omm_text_convert(OMM_TEXT_LEVEL_CASTLE_COURTYARD, false); break;
-                default:                    name = omm_level_get_name(level, false, false); break;
-            }
+            u8 *name = omm_sparkly_get_star_level_name(mode, i);
             if ((i == 29 && omm_sparkly_is_grand_star_collected(mode)) || omm_sparkly_is_star_collected(mode, i)) {
                 omm_render_string(OMM_RENDER_FONT_MENU, name, x, y, r, g, b, sparklyStarsScore->oOpacity, false);
             } else {
@@ -2863,9 +2854,6 @@ static void omm_menu_render(struct Object *characterSelectButton, struct Object 
             }
         }
     }
-#else
-    OMM_UNUSED(sparklyStarsScore);
-#endif
 }
 
 void omm_menu_update(f32 *cursorPos, s8 selectedButtonId, u8 alpha) {

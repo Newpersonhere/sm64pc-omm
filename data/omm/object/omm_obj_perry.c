@@ -99,7 +99,7 @@ static void omm_bhv_perry_update() {
 }
 
 const BehaviorScript omm_bhv_perry[] = {
-    OBJ_TYPE_ONE_WAY_INTERACTION, // This object must be updated before omm_bhv_perry_trail
+    OBJ_TYPE_SPECIAL, // This object must be updated before omm_bhv_perry_trail
     0x11010001,
     0x08000000,
     0x0C000000, (uintptr_t) omm_bhv_perry_update,

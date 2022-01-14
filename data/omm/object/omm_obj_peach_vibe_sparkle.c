@@ -235,7 +235,7 @@ static void omm_bhv_peach_vibe_sparkle_update() {
 }
 
 const BehaviorScript omm_bhv_peach_vibe_sparkle[] = {
-    OBJ_TYPE_ONE_WAY_INTERACTION,
+    OBJ_TYPE_SPECIAL,
     0x11010001,
     0x08000000,
     0x0C000000, (uintptr_t) omm_bhv_peach_vibe_sparkle_update,

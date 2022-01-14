@@ -7,7 +7,6 @@
 //
 
 bool omm_sparkly_interact_star(struct MarioState *m, struct Object *o) {
-#if OMM_CODE_SPARKLY
     if (o->behavior == omm_bhv_sparkly_star && m->action != ACT_OMM_POSSESSION) {
         omm_sparkly_collect_star(omm_sparkly_get_current_mode(), omm_sparkly_get_star_index(omm_sparkly_get_current_mode(), gCurrLevelNum, gCurrAreaIndex));
         mario_stop_riding_and_holding(m);
@@ -19,15 +18,11 @@ bool omm_sparkly_interact_star(struct MarioState *m, struct Object *o) {
         omm_mario_set_action(m, ACT_OMM_SPARKLY_STAR_DANCE, (m->prevAction & ACT_FLAG_METAL_WATER) || ((m->prevAction & ACT_GROUP_MASK) == ACT_GROUP_SUBMERGED), 0);
         return true;
     }
-#else
-    OMM_UNUSED(m);
-    OMM_UNUSED(o);
-#endif
     return false;
 }
 
 void omm_sparkly_interact_grand_star(struct MarioState *m, struct Object *o) {
-#if OMM_CODE_SPARKLY
+#if OMM_GAME_IS_SM64
     if (o->behavior == bhvGrandStar && (o->oInteractionSubtype & INT_SUBTYPE_GRAND_STAR)) {
 
         // Sparkly Grand Star
@@ -59,7 +54,6 @@ void omm_sparkly_interact_grand_star(struct MarioState *m, struct Object *o) {
 // Sparkly Star dance
 //
 
-#if OMM_CODE_SPARKLY
 static s32 sOmmSparklyDanceAnimData[][5] = {
     // Animation, Hands, Yaw, PosY, Speed
     { MARIO_ANIM_TRIPLE_JUMP_LAND, MARIO_HAND_FISTS, 0x0000, 0, 1 }, // 00
@@ -159,18 +153,13 @@ static bool omm_sparkly_star_dance_update(struct MarioState *m) {
     m->actionTimer++;
     return false;
 }
-#endif
 
 s32 omm_sparkly_act_star_dance(struct MarioState *m) {
-#if OMM_CODE_SPARKLY
     if (omm_sparkly_star_dance_update(m)) {
         mario_set_forward_vel(m, 0.f);
         omm_mario_set_action(m, m->actionArg ? ACT_WATER_IDLE : ACT_FREEFALL, 0, 0);
         return OMM_MARIO_ACTION_RESULT_CANCEL;
     }
-#else
-    OMM_UNUSED(m);
-#endif
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
@@ -178,7 +167,7 @@ s32 omm_sparkly_act_star_dance(struct MarioState *m) {
 // "Bad" ending cutscenes
 //
 
-#if OMM_CODE_SPARKLY
+#if OMM_GAME_IS_SM64
 typedef struct {
     struct Object *obj;
     s32 anim;
@@ -228,7 +217,7 @@ static struct Object *get_grand_star_object() {
 }
 
 static void omm_sparkly_act_end_cutscene_1_update_music(struct MarioState *m) {
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     if (m->actionArg == 3) {
         static u32 sConfigMasterVolume = 0;
         if (sConfigMasterVolume != 0 && configMasterVolume > 0) {
@@ -258,7 +247,7 @@ static void omm_sparkly_act_end_cutscene_1_update_music(struct MarioState *m) {
 // Sparkly Stars bad ending (Normal only)
 // Toads are waiting for Mario, but Peach isn't here...
 s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
-#if OMM_CODE_SPARKLY
+#if OMM_GAME_IS_SM64
     static Vp sEndCutsceneVp = { { { 640, 480, 511, 0 }, { 640, 480, 511, 0 } } };
     static EndToadStruct sEndToadL = { NULL, 0, 0 };
     static EndToadStruct sEndToadR = { NULL, 0, 0 };
@@ -468,7 +457,7 @@ s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
 // Sparkly Stars bad ending (Normal only)
 // No one is waving at the camera. They're all looking for Peach...
 s32 omm_sparkly_act_end_cutscene_2(struct MarioState *m) {
-#if OMM_CODE_SPARKLY
+#if OMM_GAME_IS_SM64
     if (omm_sparkly_ending == OMM_SPARKLY_ENDING_BAD) {
         action_init(0, 0, 0, 0, m->statusForCamera->cameraEvent = CAM_EVENT_START_END_WAVING;);
         stop_and_set_height_to_floor(m);

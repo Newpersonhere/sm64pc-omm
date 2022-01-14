@@ -477,19 +477,27 @@ OMM_ROUTINE_UPDATE(omm_cappy_update_play_as) {
 
 typedef struct MarioThrowAnimParams { u32 anim; f32 speed; s16 start; s16 end; s32 sound; s32 cappy; } MarioThrowAnimParams;
 static const MarioThrowAnimParams *omm_cappy_get_mario_anim_params(s32 cappyBehavior) {
-    static MarioThrowAnimParams sMarioThrowAnimParams;
-    switch (cappyBehavior) {
-        case OMM_CAPPY_BHV_DEFAULT_GROUND:   sMarioThrowAnimParams = (MarioThrowAnimParams) { MARIO_ANIM_GROUND_THROW,                 1.5f,  0, -1, 0, -4 }; break;
-        case OMM_CAPPY_BHV_DEFAULT_AIR:      sMarioThrowAnimParams = (MarioThrowAnimParams) { MARIO_ANIM_GROUND_THROW,                 1.5f,  0, -1, 0, -4 }; break;
-        case OMM_CAPPY_BHV_UPWARDS_GROUND:   sMarioThrowAnimParams = (MarioThrowAnimParams) { MARIO_ANIM_GROUND_KICK,                  1.5f,  0, -1, 0, -4 }; break;
-        case OMM_CAPPY_BHV_UPWARDS_AIR:      sMarioThrowAnimParams = (MarioThrowAnimParams) { MARIO_ANIM_AIR_KICK,                     1.5f,  0, -1, 0, -4 }; break;
-        case OMM_CAPPY_BHV_DOWNWARDS_GROUND: sMarioThrowAnimParams = (MarioThrowAnimParams) { MARIO_ANIM_GROUND_THROW,                 1.5f,  0, -1, 0, -4 }; break;
-        case OMM_CAPPY_BHV_DOWNWARDS_AIR:    sMarioThrowAnimParams = (MarioThrowAnimParams) { MARIO_ANIM_GROUND_THROW,                 1.5f,  0, -1, 0, -4 }; break;
-        case OMM_CAPPY_BHV_SPIN_GROUND:      sMarioThrowAnimParams = (MarioThrowAnimParams) { MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN, 1.5f, 62, 94, 3,  0 }; break;
-        case OMM_CAPPY_BHV_SPIN_AIR:         sMarioThrowAnimParams = (MarioThrowAnimParams) { MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN, 1.5f, 62, 94, 3,  0 }; break;
-        case OMM_CAPPY_BHV_FLYING:           sMarioThrowAnimParams = (MarioThrowAnimParams) { MARIO_ANIM_WING_CAP_FLY,                 1.0f,  0, -1, 0,  0 }; break;
-    }
-    return &sMarioThrowAnimParams;
+    static const MarioThrowAnimParams sMarioThrowAnimParams[2][9] = {
+    { { MARIO_ANIM_GROUND_THROW,                 1.50f,  0, -1, 0, -4 },
+      { MARIO_ANIM_GROUND_THROW,                 1.50f,  0, -1, 0, -4 },
+      { MARIO_ANIM_GROUND_KICK,                  1.50f,  0, -1, 0, -4 },
+      { MARIO_ANIM_AIR_KICK,                     1.50f,  0, -1, 0, -4 },
+      { MARIO_ANIM_GROUND_THROW,                 1.50f,  0, -1, 0, -4 },
+      { MARIO_ANIM_GROUND_THROW,                 1.50f,  0, -1, 0, -4 },
+      { MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN, 1.50f, 62, 94, 3,  0 },
+      { MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN, 1.50f, 62, 94, 3,  0 },
+      { MARIO_ANIM_WING_CAP_FLY,                 1.00f,  0, -1, 0,  0 }, },
+    { { MARIO_ANIM_OMM_CAPPY_THROW,              1.50f,  0, 28, 0, -4 },
+      { MARIO_ANIM_OMM_CAPPY_THROW,              1.25f, 31, -1, 0, -4 },
+      { MARIO_ANIM_OMM_CAPPY_UP_THROW,           1.25f,  0, 27, 0, -4 },
+      { MARIO_ANIM_OMM_CAPPY_UP_THROW,           1.25f, 29, -1, 0, -4 },
+      { MARIO_ANIM_OMM_CAPPY_DOWN_THROW,         1.25f,  0, 27, 0, -4 },
+      { MARIO_ANIM_OMM_CAPPY_DOWN_THROW,         1.25f, 29, -1, 0, -4 },
+      { MARIO_ANIM_OMM_CAPPY_SPIN_THROW,         1.25f,  0, 37, 3,  0 },
+      { MARIO_ANIM_OMM_CAPPY_SPIN_THROW,         1.25f, 39, -1, 3,  0 },
+      { MARIO_ANIM_WING_CAP_FLY,                 1.00f,  0, -1, 0,  0 }, }
+    };
+    return &sMarioThrowAnimParams[OMM_EXTRAS_SMO_ANIMATIONS][cappyBehavior];
 }
 
 static const s32 sThrowSounds[] = {

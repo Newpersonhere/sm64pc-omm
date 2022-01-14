@@ -50,7 +50,7 @@ static s32 omm_act_holding_bowser(struct MarioState *m) {
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
 static s32 omm_act_wario_pile_driver_land(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_GROUND, 0, RETURN_CANCEL);
     action_a_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_GROUND_POUND_JUMP, 0, RETURN_CANCEL);
@@ -107,7 +107,7 @@ s32 omm_mario_execute_object_action(struct MarioState *m) {
     switch (m->action) {
         case ACT_PUNCHING:                  return omm_act_punching(m);
         case ACT_HOLDING_BOWSER:            return omm_act_holding_bowser(m);
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
         case ACT_WARIO_PILE_DRIVER_LAND:    return omm_act_wario_pile_driver_land(m);
 #endif
     }

@@ -34,12 +34,23 @@
 // The four following macros can be passed to the make command with values 0 or 1.
 //
 
-// OMM_VANILLA | Enables code to enhance Vanilla SM64 (world objects, OMM camera presets, some QoL, and speedrun support)
-#if defined(OMM_VANILLA)
-#define OMM_CODE_VANILLA        DEF(OMM_VANILLA, 0, OMM_VANILLA, OMM_VANILLA, 0, 0)
-#else
-#define OMM_CODE_VANILLA        DEF(1, 0, 1, 1, 0, 0)
-#endif
+// OMM_GAME_* | Attributes a numeric value to every game version
+#define OMM_GAME_SM64           0
+#define OMM_GAME_SMEX           0
+#define OMM_GAME_SMMS           1
+#define OMM_GAME_R96A           2
+#define OMM_GAME_XALO           3
+#define OMM_GAME_SM74           4
+#define OMM_GAME_SMSR           5
+#define OMM_GAME_VERSION        DEF(OMM_GAME_SMEX, OMM_GAME_SMMS, OMM_GAME_R96A, OMM_GAME_XALO, OMM_GAME_SM74, OMM_GAME_SMSR)
+#define OMM_GAME_TYPE           DEF(OMM_GAME_SM64, OMM_GAME_SMMS, OMM_GAME_SM64, OMM_GAME_SM64, OMM_GAME_SM74, OMM_GAME_SMSR)
+#define OMM_GAME_IS_SM64        (OMM_GAME_TYPE == OMM_GAME_SM64)
+#define OMM_GAME_IS_SMEX        (OMM_GAME_VERSION == OMM_GAME_SMEX)
+#define OMM_GAME_IS_SMMS        (OMM_GAME_VERSION == OMM_GAME_SMMS)
+#define OMM_GAME_IS_R96A        (OMM_GAME_VERSION == OMM_GAME_R96A)
+#define OMM_GAME_IS_XALO        (OMM_GAME_VERSION == OMM_GAME_XALO)
+#define OMM_GAME_IS_SM74        (OMM_GAME_VERSION == OMM_GAME_SM74)
+#define OMM_GAME_IS_SMSR        (OMM_GAME_VERSION == OMM_GAME_SMSR)
 
 // OMM_BOWSER | Replaces Vanilla Bowser with OMM Bowser
 #if defined(OMM_BOWSER)
@@ -48,25 +59,11 @@
 #define OMM_CODE_BOWSER         DEF(1, 0, 1, 1, 0, 0)
 #endif
 
-// OMM_SPARKLY | Enables the post-game content (Sparkly Stars and alt endings)
-#if defined(OMM_SPARKLY)
-#define OMM_CODE_SPARKLY        DEF(OMM_SPARKLY, 0, OMM_SPARKLY, OMM_SPARKLY, 0, 0)
-#else
-#define OMM_CODE_SPARKLY        DEF(1, 0, 1, 1, 0, 0)
-#endif
-
 // OMM_DEBUG | Enables some debug stuff
 #if defined(OMM_DEBUG)
 #define OMM_CODE_DEBUG          DEF(OMM_DEBUG, OMM_DEBUG, OMM_DEBUG, OMM_DEBUG, OMM_DEBUG, OMM_DEBUG)
 #else
 #define OMM_CODE_DEBUG          DEF(0, 0, 0, 0, 0, 0)
-#endif
-
-// OMM_DEV_DEBUG | Enables advanced debug stuff
-#if defined(OMM_DEBUG) && defined(DEBUG) && defined(WAPI_SDL2)
-#define OMM_CODE_DEV_DEBUG      DEF(OMM_DEBUG, OMM_DEBUG, 0, OMM_DEBUG, OMM_DEBUG, OMM_DEBUG)
-#else
-#define OMM_CODE_DEV_DEBUG      DEF(0, 0, 0, 0, 0, 0)
 #endif
 
 // EXTERNAL_DATA | If not set, enables STBI implementation in file omm_gfx.c
@@ -81,6 +78,19 @@
 #define OMM_OPT_TYPES_IMPL      DEF(1, 1, 1, 0, 0, 0)
 #else
 #define OMM_OPT_TYPES_IMPL      DEF(0, 0, 0, 0, 0, 0)
+#endif
+
+// OMM_DEV | If set, enables super secret features (dev branch only, requires OMM_DEBUG flag, DEBUG flag and SDL backend for debug features)
+#if defined(OMM_DEV)
+#define OMM_CODE_DEV            DEF(OMM_DEV, OMM_DEV, OMM_DEV, OMM_DEV, OMM_DEV, OMM_DEV)
+#if OMM_CODE_DEBUG && defined(DEBUG) && defined(WAPI_SDL2)
+#define OMM_CODE_DEV_DEBUG      DEF(OMM_DEV, OMM_DEV, OMM_DEV, OMM_DEV, OMM_DEV, OMM_DEV)
+#else
+#define OMM_CODE_DEV_DEBUG      DEF(0, 0, 0, 0, 0, 0)
+#endif
+#else
+#define OMM_CODE_DEV            DEF(0, 0, 0, 0, 0, 0)
+#define OMM_CODE_DEV_DEBUG      DEF(0, 0, 0, 0, 0, 0)
 #endif
 
 //
@@ -170,13 +180,14 @@
 #define load_gfx_memory_pool()          DEF(config_gfx_pool(), config_gfx_pool(), config_gfx_pool(), select_gfx_pool(), select_gfx_pool(), select_gfx_pool())
 #define init_scene_rendering()          DEF(init_render_image(), init_render_image(), init_render_image(), init_rcp(), init_rcp(), init_rcp())
 #define spawnInfoModel                  DEF(unk18, unk18, unk18, model, model, model)
-#define gIsHardMode                     DEF(gOmmHardMode, gOmmHardMode, gOmmHardMode, gOmmHardMode, gOmmHardMode, gStarRoadHardMode)
+#define g1HPMode                        DEF(gOmm1HPMode, gOmm1HPMode, gOmm1HPMode, gOmm1HPMode, gOmm1HPMode, gStarRoadHardMode)
 #define INPUT_STOMP                     DEF(INPUT_UNKNOWN_10, INPUT_UNKNOWN_10, INPUT_UNKNOWN_10, INPUT_STOMPED, INPUT_STOMPED, INPUT_STOMPED)
 
 // OMM
 #define OMM_LEVEL_ENTRY_WARP(level)     DEF(0x0A, 0x0A, 0x0A, 0x0A, 0x0A, (level == LEVEL_JRB ? 0x01 : 0x0A))
 #define OMM_LEVEL_EXIT_DISTANCE         DEF(500.f, 500.f, 500.f, 500.f, 150.f, 500.f)
 #define OMM_LEVEL_SLIDE                 DEF(LEVEL_PSS, LEVEL_PSS, LEVEL_PSS, LEVEL_PSS, LEVEL_PSS, LEVEL_SA)
+#define OMM_LEVEL_RETURN_TO_CASTLE      DEF(__EXPAND(LEVEL_CASTLE, 1, 0x1F, 0), __EXPAND(LEVEL_CASTLE, 1, 0x1F, 0), __EXPAND(LEVEL_CASTLE, 1, 0x1F, 0), __EXPAND(LEVEL_CASTLE, 1, 0x1F, 0), __EXPAND(LEVEL_COURT, gCurrAreaIndex, 0x40, 0), __EXPAND(LEVEL_GROUNDS, 1, 0x80, 0))
 #define OMM_CAMERA_LOOK_UP_WARP_STARS   DEF(10, 10, 10, 10, 10, 120)
 #define OMM_CAMERA_IS_BOWSER_FIGHT      DEF(omm_camera_is_bowser_fight(), omm_camera_is_bowser_fight(), omm_camera_is_bowser_fight(), omm_camera_is_bowser_fight(), omm_camera_is_bowser_fight(), gCurrLevelNum == LEVEL_BOWSER_3)
 #define OMM_TEXT_(id, str)              static const char OMM_TEXT_##id[] = \
@@ -374,6 +385,8 @@ define_actor(omm_geo_star_16_transparent), \
 define_actor(omm_geo_star_17_transparent), \
 define_actor(omm_geo_star_18_transparent), \
 define_actor(omm_geo_star_19_transparent), \
+define_actor(omm_geo_number), \
+define_actor(omm_geo_star_number), \
 define_actor(omm_geo_fire_smoke_red), \
 define_actor(omm_geo_fire_smoke_blue), \
 define_actor(omm_geo_metal_sparkle), \
@@ -381,7 +394,10 @@ define_actor(omm_geo_vanish_mist), \
 define_actor(omm_geo_break_particle), \
 define_actor(omm_geo_snowball), \
 define_actor(omm_geo_mr_i_beam), \
+define_actor(omm_geo_snufit_ball), \
+define_actor(omm_geo_rock), \
 define_actor(omm_geo_explosion), \
+define_actor(omm_geo_blargg_fire_ball), \
 define_actor(omm_geo_shockwave_whomp), \
 define_actor(omm_geo_shockwave_spindrift), \
 define_actor(omm_geo_shockwave_fire), \
@@ -429,7 +445,7 @@ define_actor(omm_geo_menu_button_mario), \
 define_actor(omm_geo_menu_button_peach), \
 define_actor(omm_geo_menu_button_luigi), \
 define_actor(omm_geo_menu_button_wario), \
-define_actor(omm_geo_problem)
+define_actor(omm_geo_problem),
 #endif
 
 //

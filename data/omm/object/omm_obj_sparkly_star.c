@@ -36,7 +36,6 @@ const GeoLayout omm_geo_sparkly_star_3_transparent[] = {
 
 static void omm_bhv_sparkly_star_update() {
     struct Object *o = gCurrentObject;
-#if OMM_CODE_SPARKLY
     if (!omm_sparkly_context_check_star(o)) {
         return;
     }
@@ -191,9 +190,6 @@ static void omm_bhv_sparkly_star_update() {
             o->oNodeFlags &= ~GRAPH_RENDER_INVISIBLE;
         } break;
     }
-#else
-    obj_mark_for_deletion(o);
-#endif
 }
 
 const BehaviorScript omm_bhv_sparkly_star[] = {

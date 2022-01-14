@@ -164,7 +164,7 @@ bool omm_mario_is_kicking(struct MarioState *m) {
 
 bool omm_mario_is_ground_pounding(struct MarioState *m) {
     return (m->action == ACT_GROUND_POUND) ||
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
            (m->action == ACT_WARIO_PILE_DRIVER) ||
 #endif
            (m->action == ACT_OMM_SPIN_POUND) ||
@@ -175,7 +175,7 @@ bool omm_mario_is_ground_pounding(struct MarioState *m) {
 
 bool omm_mario_is_ground_pound_landing(struct MarioState *m) {
     return (m->action == ACT_GROUND_POUND_LAND) ||
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
            (m->action == ACT_WARIO_PILE_DRIVER_LAND) ||
 #endif
            (m->action == ACT_OMM_SPIN_POUND_LAND) ||
@@ -377,7 +377,7 @@ bool omm_mario_check_grab(struct MarioState *m, struct Object *o, bool ignoreAng
 
             // Vanilla Bowser?
             if (bowser && !obj_is_dormant(bowser)) {
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
                 // Spamba Bowser
                 if (bowser->oInteractType == INTERACT_DAMAGE) {
                     return false;
@@ -851,7 +851,7 @@ void omm_mario_update_camera_mode(struct MarioState *m) {
 }
 
 void omm_mario_update_castle_collisions(struct MarioState *m) {
-#if OMM_CODE_VANILLA
+#if OMM_GAME_IS_SM64
     if (m->floor) {
         s16 room = m->floor->room;
 
@@ -949,10 +949,10 @@ void bhv_mario_update() {
 
     // Infinite health cheat
     if (OMM_CHEAT_GOD_MODE) {
-        if (gIsHardMode) {
-            m->health = OMM_HEALTH_HARD_MODE;
+        if (g1HPMode) {
+            m->health = OMM_HEALTH_1_HP;
         } else {
-            m->health = 0x880;
+            m->health = OMM_HEALTH_MAX;
         }
     }
 
@@ -1050,7 +1050,7 @@ void bhv_mario_update() {
     omm_world_update(m);
 
     // Gfx & camera stuff
-#if defined(R96A)
+#if OMM_GAME_IS_R96A
     if (!m->milk) squish_mario_model(m);
 #else
     squish_mario_model(m);
@@ -1082,7 +1082,7 @@ void bhv_mario_update() {
     }
 
     // Misc
-#if !defined(R96A)
+#if !OMM_GAME_IS_R96A
     play_infinite_stairs_music();
 #endif
     m->numLives = omm_max_s(m->numLives, 1);
@@ -1129,17 +1129,21 @@ void bhv_mario_update() {
 
         // Hands
         // Show Peach's crown or Tiara in her right hand
-        bool tiara = !OMM_CAP_CLASSIC && gOmmExtrasCappyEyesOnMariosCap;
-        if (tiara && m->marioBodyState->handState == MARIO_HAND_HOLDING_CAP) {
+        if (OMM_EXTRAS_CAPPY_AND_TIARA && m->marioBodyState->handState == MARIO_HAND_HOLDING_CAP) {
             m->marioBodyState->handState = MARIO_HAND_HOLDING_WING_CAP;
-        } else if (!tiara && m->marioBodyState->handState == MARIO_HAND_HOLDING_WING_CAP) {
+        } else if (!OMM_EXTRAS_CAPPY_AND_TIARA && m->marioBodyState->handState == MARIO_HAND_HOLDING_WING_CAP) {
             m->marioBodyState->handState = MARIO_HAND_HOLDING_CAP;
         }
 
         // Cap
+        // Peach's wings are displayed or hidden depending on the Wing cap state
         // Hide the wings if invisible mode is enabled
-        if (gOmmExtrasInvisibleMode) {
+        if (OMM_EXTRAS_INVISIBLE_MODE) {
             m->marioBodyState->capState = MARIO_HAS_DEFAULT_CAP_OFF;
+        } else if (m->flags & MARIO_WING_CAP) {
+            m->marioBodyState->capState |= 2;
+        } else {
+            m->marioBodyState->capState &= ~2;
         }
     }
     

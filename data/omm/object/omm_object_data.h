@@ -14,17 +14,17 @@ typedef s16 Collision;
 // - Object types are sorted by their update order
 // - Spawner and Surface objects are updated way before other objects
 // - Unimportant objects are not affected by time stop
-#define OBJ_TYPE_SPAWNER                                    (OBJ_LIST_SPAWNER << 16)
-#define OBJ_TYPE_SURFACE                                    (OBJ_LIST_SURFACE << 16)
-#define OBJ_TYPE_POLELIKE                                   (OBJ_LIST_POLELIKE << 16)
-#define OBJ_TYPE_PLAYER                                     (OBJ_LIST_PLAYER << 16)
-#define OBJ_TYPE_ONE_WAY_INTERACTION                        (OBJ_LIST_PLAYER << 16)
-#define OBJ_TYPE_PUSHABLE                                   (OBJ_LIST_PUSHABLE << 16)
-#define OBJ_TYPE_GENACTOR                                   (OBJ_LIST_GENACTOR << 16)
-#define OBJ_TYPE_DESTRUCTIVE                                (OBJ_LIST_DESTRUCTIVE << 16)
-#define OBJ_TYPE_LEVEL                                      (OBJ_LIST_LEVEL << 16)
-#define OBJ_TYPE_DEFAULT                                    (OBJ_LIST_DEFAULT << 16)
-#define OBJ_TYPE_UNIMPORTANT                                (OBJ_LIST_UNIMPORTANT << 16)
+#define OBJ_TYPE_SPAWNER                                    (OBJ_LIST_SPAWNER << 16)        // No collision check
+#define OBJ_TYPE_SURFACE                                    (OBJ_LIST_SURFACE << 16)        // Collision check with OBJ_LIST_PLAYER, OBJ_LIST_DESTRUCTIVE
+#define OBJ_TYPE_POLELIKE                                   (OBJ_LIST_POLELIKE << 16)       // Collision check with OBJ_LIST_PLAYER
+#define OBJ_TYPE_PLAYER                                     (OBJ_LIST_PLAYER << 16)         // Collision check with OBJ_LIST_PLAYER, OBJ_LIST_POLELIKE, OBJ_LIST_LEVEL, OBJ_LIST_GENACTOR, OBJ_LIST_PUSHABLE, OBJ_LIST_SURFACE, OBJ_LIST_DESTRUCTIVE
+#define OBJ_TYPE_PUSHABLE                                   (OBJ_LIST_PUSHABLE << 16)       // Collision check with OBJ_LIST_PUSHABLE
+#define OBJ_TYPE_GENACTOR                                   (OBJ_LIST_GENACTOR << 16)       // Collision check with OBJ_LIST_PLAYER, OBJ_LIST_DESTRUCTIVE
+#define OBJ_TYPE_DESTRUCTIVE                                (OBJ_LIST_DESTRUCTIVE << 16)    // Collision check with OBJ_LIST_PLAYER, OBJ_LIST_DESTRUCTIVE
+#define OBJ_TYPE_LEVEL                                      (OBJ_LIST_LEVEL << 16)          // Collision check with OBJ_LIST_PLAYER
+#define OBJ_TYPE_SPECIAL                                    (OBJ_LIST_LEVEL << 16)
+#define OBJ_TYPE_DEFAULT                                    (OBJ_LIST_DEFAULT << 16)        // No collision check
+#define OBJ_TYPE_UNIMPORTANT                                (OBJ_LIST_UNIMPORTANT << 16)    // No collision check
 
 #define OBJ_FLOOR_TYPE_NONE                                 0
 #define OBJ_FLOOR_TYPE_GROUND                               1
@@ -81,6 +81,10 @@ typedef s16 Collision;
 #define OBJ_INT_PRESET_SNOWBALL_LARGE                       (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS)
 #define OBJ_INT_PRESET_BEAM_SMALL                           (OBJ_INT_ATTACK_WEAK | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS)
 #define OBJ_INT_PRESET_BEAM_LARGE                           (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS)
+#define OBJ_INT_PRESET_SNUFIT_BALL_SMALL                    (OBJ_INT_ATTACK_WEAK | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS)
+#define OBJ_INT_PRESET_SNUFIT_BALL_LARGE                    (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS)
+#define OBJ_INT_PRESET_ROCK                                 (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS)
+#define OBJ_INT_PRESET_BLARGG_FIRE                          (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_DESTRUCTIBLE | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS)
 
 #define OBJ_INT_PRESET_PERRY_ATTACK                         (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_COLLECT_STARS | OBJ_INT_COLLECT_CAPS | OBJ_INT_PERRY_ATTACK)
 #define OBJ_INT_PRESET_PERRY_ATTACK_RAGE                    (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_COLLECT_STARS | OBJ_INT_COLLECT_CAPS | OBJ_INT_PERRY_ATTACK)
@@ -162,7 +166,10 @@ extern const GeoLayout omm_geo_vanish_mist[];
 extern const GeoLayout omm_geo_break_particle[];
 extern const GeoLayout omm_geo_snowball[];
 extern const GeoLayout omm_geo_mr_i_beam[];
+extern const GeoLayout omm_geo_snufit_ball[];
+extern const GeoLayout omm_geo_rock[];
 extern const GeoLayout omm_geo_explosion[];
+extern const GeoLayout omm_geo_blargg_fire_ball[];
 extern const GeoLayout omm_geo_shockwave_whomp[];
 extern const GeoLayout omm_geo_shockwave_spindrift[];
 extern const GeoLayout omm_geo_shockwave_fire[];
@@ -236,7 +243,12 @@ extern const BehaviorScript omm_bhv_vanish_mist[];
 extern const BehaviorScript omm_bhv_break_particle[];
 extern const BehaviorScript omm_bhv_snowball[];
 extern const BehaviorScript omm_bhv_mr_i_beam[];
+extern const BehaviorScript omm_bhv_snufit_ball[];
+extern const BehaviorScript omm_bhv_rock[];
 extern const BehaviorScript omm_bhv_explosion[];
+extern const BehaviorScript omm_bhv_blargg_fire_drop[];
+extern const BehaviorScript omm_bhv_blargg_fire_trail[];
+extern const BehaviorScript omm_bhv_blargg_fire_ball[];
 extern const BehaviorScript omm_bhv_shockwave_whomp[];
 extern const BehaviorScript omm_bhv_shockwave_spindrift[];
 extern const BehaviorScript omm_bhv_shockwave_fire[];

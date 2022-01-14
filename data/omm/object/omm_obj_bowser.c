@@ -2060,10 +2060,8 @@ OMM_ROUTINE_UPDATE(omm_spawn_bowser) {
         (gCurrLevelNum == LEVEL_BOWSER_2) ||
         (gCurrLevelNum == LEVEL_BOWSER_3) ||
 #endif
-#if OMM_CODE_SPARKLY
-        omm_sparkly_is_bowser_4() ||
-#endif
-        0)) {
+        omm_sparkly_is_bowser_4()))
+    {
         struct Object *o = obj_get_first_with_behavior(omm_bhv_bowser);
         if (!o) {
             o = obj_spawn_from_geo(gMarioObject, bowser_geo, omm_bhv_bowser);

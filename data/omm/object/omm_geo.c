@@ -690,7 +690,7 @@ static void omm_geo_preprocess_graph_node_culling_radius(struct GraphNodeCulling
         case 13: {
             struct GraphNode *crownNode = node->node.next;
             struct GraphNode *tiaraNode = node->node.next->next;
-            if (!OMM_CAP_CLASSIC && gOmmExtrasCappyEyesOnMariosCap) {
+            if (OMM_EXTRAS_CAPPY_AND_TIARA) {
                 crownNode->flags &= ~GRAPH_RENDER_ACTIVE;
                 tiaraNode->flags |= GRAPH_RENDER_ACTIVE;
             } else {
@@ -877,3 +877,79 @@ void omm_geo_preprocess_object_graph_node(struct Object *o) {
         __omm_geo_preprocess_object_graph_node(o);
     }
 }
+
+#if OMM_CODE_DEBUG
+
+static void omm_debug_render_surfaces_update_node(struct GraphNode *node, bool active) {
+    if (node) {
+        struct GraphNode *current = node;
+        do {
+            switch (current->type) {
+
+                // Start to disable rendering
+                case GRAPH_NODE_TYPE_CAMERA: {
+                    active = !gOmmDebugSurface;
+                } break;
+
+                // Stop to disable rendering
+                case GRAPH_NODE_TYPE_OBJECT_PARENT: {
+                    active = true;
+                    omm_debug_render_surfaces_update_node(((struct GraphNodeObjectParent *) current)->sharedChild, active);
+                } break;
+                
+                // Disable rendering
+                case GRAPH_NODE_TYPE_TRANSLATION_ROTATION:
+                case GRAPH_NODE_TYPE_TRANSLATION:
+                case GRAPH_NODE_TYPE_ROTATION:
+                case GRAPH_NODE_TYPE_SCALE:
+                case GRAPH_NODE_TYPE_BILLBOARD:
+                case GRAPH_NODE_TYPE_DISPLAY_LIST:
+                case GRAPH_NODE_TYPE_ANIMATED_PART: {
+                    if (active) {
+                        current->flags |= GRAPH_RENDER_ACTIVE;
+                    } else {
+                        current->flags &= ~GRAPH_RENDER_ACTIVE;
+                    }
+                } break;
+
+                // Make invisible only surface objects
+                case GRAPH_NODE_TYPE_OBJECT: {
+                    struct Object *object = (struct Object *) current;
+                    if (object->activeFlags) {
+                        static s32 sSurfaceModelIds[] = { 0x03, 0x16, 0x1C, 0x2F, 0x35, 0x53 };
+                        for (s32 modelId = sSurfaceModelIds[0], j = 1; j < (s32) OMM_ARRAY_SIZE(sSurfaceModelIds); ++modelId) {
+                            if (modelId > sSurfaceModelIds[j]) {
+                                modelId = sSurfaceModelIds[j + 1];
+                                j += 2;
+                            }
+                            if (obj_check_model(object, modelId) || object->collisionData) {
+                                if (gOmmDebugSurface) {
+                                    current->flags |= GRAPH_RENDER_INVISIBLE;
+                                } else if (
+                                    (object->behavior != bhvExclamationBox || object->oAction != 5) &&
+                                    (object->behavior != bhvBlueCoinSwitch || object->oAction != 2) &&
+                                    (object->behavior != bhvWhompKingBoss  || object->oAction != 9)
+                                ) {
+                                    current->flags &= ~GRAPH_RENDER_INVISIBLE;
+                                }
+                                break;
+                            }
+                        }
+                    } else {
+                        current->flags = 0;
+                    }
+                } break;
+            }
+            omm_debug_render_surfaces_update_node(current->children, active);
+            current = current->next;
+        } while (current && current != node);
+    }
+}
+
+OMM_ROUTINE_GFX(omm_debug_render_surfaces_update_area) {
+    if (gMarioObject && gCurrentArea && gCurrentArea->unk04 && !omm_is_main_menu() && !omm_is_ending_cutscene()) {
+        omm_debug_render_surfaces_update_node(&gCurrentArea->unk04->node, true);
+    }
+}
+
+#endif

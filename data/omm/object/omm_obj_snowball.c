@@ -54,7 +54,7 @@ static void omm_bhv_snowball_update() {
         o->oVelY -= 2.f;
 
         // Collided with a wall/floor
-        if (o->oWall || o->oFloorHeight == 0.f) {
+        if (o->oWall || o->oDistToFloor <= 0.f) {
             omm_bhv_snowball_delete(o);
             return;
         }
@@ -78,7 +78,7 @@ static void omm_bhv_snowball_update() {
 }
 
 const BehaviorScript omm_bhv_snowball[] = {
-    OBJ_TYPE_ONE_WAY_INTERACTION,
+    OBJ_TYPE_SPECIAL,
     0x08000000,
     0x0C000000, (uintptr_t) omm_bhv_snowball_update,
     0x09000000,
