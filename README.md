@@ -180,6 +180,7 @@ To install it and make it work, follow these steps:
 
 - [Patch file](https://raw.githubusercontent.com/PeachyPeachSM64/sm64pc-omm/master/patch/omm.patch)
 - [In-depth guide](https://docs.google.com/document/d/1IlhCxYGulxrnbvqbSuBMC1JgtBIEwoCcK3l-urVUADk/edit) (by **Cancel the Eat**)
+- [Sparkly Stars guide](https://www.youtube.com/watch?v=xWHKPV-cbqI&list=PLFZ-DGZKGuUo3KuXfGoaP55RYiDXgxE8N) (by **Cancel the Eat**)
 - [Speedrun leaderboard](https://www.speedrun.com/omm) (by **JokerFactor**, **SwaGh**, **Mr.Needlemouse**)
 
 ---
@@ -195,6 +196,25 @@ To install it and make it work, follow these steps:
 - [Sound packs](https://sm64pc.info/downloads/sound_pack/)
 
 -----
+
+## Version 7.0.2
+
+### OMM Builder:
+- Added a fix for the `undefined reference to 'gMusicData'` error.
+
+### Bug fixes:
+- Fixed a bug where Mario could grab classic Bowser during his jump in BITFS.
+- Fixed a bug where Luigi and Wario couldn't use SMO animations.
+- Fixed a bug where captured Motos could grab the moving bookshelf (and crash the game) in BBH.
+- Fixed a bug where the text "Star Replica" in Star Road didn't show properly when collecting a Star replica with a capture.
+
+### Changes:
+- Sparkly Stars: Captures are not allowed in COTMC.
+- Added an option `Sparkly Stars Hint` in `Extras` to toggle on/off the hint message at level entry.
+- Peach uses different animations for some of her Perry attacks if `SMO Animations` is enabled.
+- Captured Bully:
+  - Increased charge duration from 2 to 3 seconds.
+  - New ability: Press **(B)** while airborne to perform a powerful ground pound, similar to captured Whomp's attack.
 
 ## Version 7.0.0
 

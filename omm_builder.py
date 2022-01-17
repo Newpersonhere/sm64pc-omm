@@ -452,6 +452,25 @@ if __name__ == "__main__":
 
     # Fix typos
     print("--- Fixing typos...")
+    if os.path.isfile("sound/sound_data.s"):
+        fix_typo("Makefile",
+            "$(SOUND_BIN_DIR)/sound_data.o: $(SOUND_BIN_DIR)/sound_data.ctl $(SOUND_BIN_DIR)/sound_data.tbl $(SOUND_BIN_DIR)/sequences.bin $(SOUND_BIN_DIR)/bank_sets",
+            "$(SOUND_BIN_DIR)/sound_data.o: $(SOUND_BIN_DIR)/sound_data.ctl.inc.c $(SOUND_BIN_DIR)/sound_data.tbl.inc.c $(SOUND_BIN_DIR)/sequences.bin.inc.c $(SOUND_BIN_DIR)/bank_sets.inc.c"
+        )
+        os.remove("sound/sound_data.s")
+        with open("sound/sound_data.c", 'w') as f:
+            f.write('unsigned char gSoundDataADSR[] = {\n')
+            f.write('#include "sound/sound_data.ctl.inc.c"\n')
+            f.write('};\n')
+            f.write('unsigned char gSoundDataRaw[] = {\n')
+            f.write('#include "sound/sound_data.tbl.inc.c"\n')
+            f.write('};\n')
+            f.write('unsigned char gMusicData[] = {\n')
+            f.write('#include "sound/sequences.bin.inc.c"\n')
+            f.write('};\n')
+            f.write('unsigned char gBankSetsData[] = {\n')
+            f.write('#include "sound/bank_sets.inc.c"\n')
+            f.write('};\n')
 
     # Apply the 60 FPS patch
     if args["60_FPS"]:
