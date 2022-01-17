@@ -155,9 +155,9 @@ s32 cappy_koopa_update(struct Object *o) {
     obj_update_gfx(o);
     if (gOmmData->object->state.actionState == CAPPY_KOOPA_STATE_SHELLED_SLIDING) {
         obj_scale(o, gOmmData->object->koopa.scale / 1.5f);
-        o->header.gfx.angle[0] = 0;
-        o->header.gfx.angle[1] = o->oTimer * 0x2000;
-        o->header.gfx.angle[2] = 0;
+        o->oGfxAngle[0] = 0;
+        o->oGfxAngle[1] = o->oTimer * 0x2000;
+        o->oGfxAngle[2] = 0;
     } else {
         obj_scale(o, gOmmData->object->koopa.scale);
     }
@@ -165,7 +165,7 @@ s32 cappy_koopa_update(struct Object *o) {
     // Animation
     s32 *animData = sCappyKoopaStateData[gOmmData->object->state.actionState];
     o->oGraphNode = gLoadedGraphNodes[animData[3]];
-    obj_set_animation_with_accel(o, animData[0], omm_max_f(1.f, animData[1] * omm_max_f(1.f, o->oForwardVel * 2.f / (omm_capture_get_walk_speed(o)))));
+    obj_anim_play(o, animData[0], omm_max_f(1.f, animData[1] * omm_max_f(1.f, o->oForwardVel * 2.f / (omm_capture_get_walk_speed(o)))));
     obj_update_blink_state(o, &o->oKoopaBlinkTimer, 20, 50, 4);
 
     // Sound effect

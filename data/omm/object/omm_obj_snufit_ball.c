@@ -35,9 +35,9 @@ static void omm_bhv_snufit_ball_loop() {
         o->oVelX = 48.f * sins(o->oFaceAngleYaw);
         o->oVelY = 0.f;
         o->oVelZ = 48.f * coss(o->oFaceAngleYaw);
-        o->oPosX = p->header.gfx.pos[0] + o->oVelX;
-        o->oPosY = p->header.gfx.pos[1] + o->oVelY;
-        o->oPosZ = p->header.gfx.pos[2] + o->oVelZ;
+        o->oPosX = p->oGfxPos[0] + o->oVelX;
+        o->oPosY = p->oGfxPos[1] + o->oVelY;
+        o->oPosZ = p->oGfxPos[2] + o->oVelZ;
         o->oAction--;
         return;
     }
@@ -80,9 +80,9 @@ struct Object *omm_spawn_snufit_ball(struct Object *o, s32 delay, bool strong) {
     ball->oVelX = 48.f * sins(o->oFaceAngleYaw);
     ball->oVelY = 0.f;
     ball->oVelZ = 48.f * coss(o->oFaceAngleYaw);
-    ball->oPosX = o->header.gfx.pos[0] + ball->oVelX;
-    ball->oPosY = o->header.gfx.pos[1] + ball->oVelY;
-    ball->oPosZ = o->header.gfx.pos[2] + ball->oVelZ;
+    ball->oPosX = o->oGfxPos[0] + ball->oVelX;
+    ball->oPosY = o->oGfxPos[1] + ball->oVelY;
+    ball->oPosZ = o->oGfxPos[2] + ball->oVelZ;
     ball->oAction = delay;
     ball->oSnufitBallStrong = strong;
     return ball;

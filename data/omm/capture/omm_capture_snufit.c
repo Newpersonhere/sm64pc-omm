@@ -97,7 +97,7 @@ s32 cappy_snufit_update(struct Object *o) {
     // Gfx
     obj_update_gfx(o);
     f32 yOff = 8.f * coss(4000 * gGlobalTimer);
-    o->header.gfx.pos[1] += 60.f * o->oScaleY + yOff;
+    o->oGfxPos[1] += 60.f * o->oScaleY + yOff;
 
     // Cappy values
     gOmmData->object->cappy.offset[1] = 90.f + yOff;

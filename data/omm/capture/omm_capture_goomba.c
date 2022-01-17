@@ -171,7 +171,7 @@ s32 cappy_goomba_update(struct Object *o) {
 
     // Gfx
     obj_update_gfx(o);
-    obj_set_animation_with_accel(o, 0, (o->oVelY <= 0.f) * omm_max_f(1.f, o->oForwardVel * 2.f / (omm_capture_get_walk_speed(o))));
+    obj_anim_play(o, 0, (o->oVelY <= 0.f) * omm_max_f(1.f, o->oForwardVel * 2.f / (omm_capture_get_walk_speed(o))));
     obj_update_blink_state(o, &o->oGoombaBlinkTimer, 30, 50, 5);
     if (obj_is_on_ground(o)) {
         obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, omm_capture_get_walk_speed(o) * 8.f, o->oForwardVel, SOUND_OBJ_GOOMBA_WALK, OBJ_STEP_PARTICLE_NONE);
@@ -179,34 +179,34 @@ s32 cappy_goomba_update(struct Object *o) {
 
     // Update Goomba stack
     for (u8 i = 0; i != gOmmData->object->goomba.stackCount; ++i) {
-        struct Object *obj       = gOmmData->object->goomba.stackObj[i];
-        obj->oPosX               = o->oPosX;
-        obj->oPosY               = o->oPosY + omm_capture_get_hitbox_height(o) * (i + 1);
-        obj->oPosZ               = o->oPosZ;
-        obj->oHomeX              = o->oPosX;
-        obj->oHomeY              = o->oPosY;
-        obj->oHomeZ              = o->oPosZ;
-        obj->oFaceAnglePitch     = o->oFaceAnglePitch;
-        obj->oFaceAngleYaw       = o->oFaceAngleYaw;
-        obj->oFaceAngleRoll      = o->oFaceAngleRoll;
-        obj->oMoveAnglePitch     = o->oMoveAnglePitch;
-        obj->oMoveAngleYaw       = o->oMoveAngleYaw;
-        obj->oMoveAngleRoll      = o->oMoveAngleRoll;
-        obj->header.gfx.pos[0]   = obj->oPosX;
-        obj->header.gfx.pos[1]   = obj->oPosY;
-        obj->header.gfx.pos[2]   = obj->oPosZ;
-        obj->header.gfx.angle[0] = obj->oFaceAnglePitch;
-        obj->header.gfx.angle[1] = obj->oFaceAngleYaw;
-        obj->header.gfx.angle[2] = obj->oFaceAngleRoll;
-        obj->header.gfx.scale[0] = o->header.gfx.scale[0];
-        obj->header.gfx.scale[1] = o->header.gfx.scale[1];
-        obj->header.gfx.scale[2] = o->header.gfx.scale[2];
-        obj_set_animation_with_accel(obj, 0, 1.f);
+        struct Object *obj   = gOmmData->object->goomba.stackObj[i];
+        obj->oPosX           = o->oPosX;
+        obj->oPosY           = o->oPosY + omm_capture_get_hitbox_height(o) * (i + 1);
+        obj->oPosZ           = o->oPosZ;
+        obj->oHomeX          = o->oPosX;
+        obj->oHomeY          = o->oPosY;
+        obj->oHomeZ          = o->oPosZ;
+        obj->oFaceAnglePitch = o->oFaceAnglePitch;
+        obj->oFaceAngleYaw   = o->oFaceAngleYaw;
+        obj->oFaceAngleRoll  = o->oFaceAngleRoll;
+        obj->oMoveAnglePitch = o->oMoveAnglePitch;
+        obj->oMoveAngleYaw   = o->oMoveAngleYaw;
+        obj->oMoveAngleRoll  = o->oMoveAngleRoll;
+        obj->oGfxPos[0]      = o->oPosX;
+        obj->oGfxPos[1]      = o->oPosY;
+        obj->oGfxPos[2]      = o->oPosZ;
+        obj->oGfxAngle[0]    = o->oFaceAnglePitch;
+        obj->oGfxAngle[1]    = o->oFaceAngleYaw;
+        obj->oGfxAngle[2]    = o->oFaceAngleRoll;
+        obj->oGfxScale[0]    = o->oGfxScale[0];
+        obj->oGfxScale[1]    = o->oGfxScale[1];
+        obj->oGfxScale[2]    = o->oGfxScale[2];
+        obj_anim_play(obj, 0, 1.f);
         obj_update_blink_state(obj, &obj->oGoombaBlinkTimer, 30, 50, 5);
     }
 
     // Cappy values
-    gOmmData->object->cappy.offset[1] = (omm_capture_get_hitbox_height(o) / o->header.gfx.scale[1]) * (1 + gOmmData->object->goomba.stackCount);
+    gOmmData->object->cappy.offset[1] = (omm_capture_get_hitbox_height(o) / o->oScaleY) * (1 + gOmmData->object->goomba.stackCount);
     gOmmData->object->cappy.scale     = 0.8f;
 
     // OK

@@ -2,10 +2,10 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
-static void omm_common_ground_knockback_action(struct MarioState *m, s32 animation, bool playHeavyLandingSound) {
+static void omm_common_ground_knockback_action(struct MarioState *m, s32 animID, bool playHeavyLandingSound) {
 
     // Animation
-    omm_mario_set_animation(m, animation, 1.25f, -1);
+    obj_anim_play(m->marioObj, animID, 1.25f);
     m->actionTimer++;
 
     // Sound effects
@@ -16,7 +16,7 @@ static void omm_common_ground_knockback_action(struct MarioState *m, s32 animati
     mario_set_forward_vel(m, omm_clamp_f(m->forwardVel * 0.9f, -32.f, 32.f));
     if (perform_ground_step(m) == GROUND_STEP_LEFT_GROUND) {
         omm_mario_set_action(m, m->forwardVel >= 0.f ? ACT_FORWARD_AIR_KB : ACT_BACKWARD_AIR_KB, m->actionArg, 0);
-    } else if (omm_mario_is_anim_at_end(m)) {
+    } else if (obj_anim_is_at_end(m->marioObj)) {
         if (m->health <= OMM_HEALTH_DEAD) {
             omm_mario_set_action(m, ACT_STANDING_DEATH, 0, 0);
         } else {
@@ -33,20 +33,20 @@ static void anim_and_audio_for_walk(struct MarioState *m) {
         bool condToWalk;
         bool condToRun;
         bool tiltBody;
-        s32 animIndex;
-        s32 animAccel;
+        s32 animID;
+        f32 animAccel;
         s32 soundStep1;
         s32 soundStep2;
     } walkAnimAndAudio[5] = {
 
         // Start tip-toe
         {
-            .condToTipToe = m->marioObj->header.gfx.mAnimInfo.curAnim && is_anim_past_frame(m, 23),
+            .condToTipToe = m->marioObj->oCurrAnim && obj_anim_get_frame(m->marioObj) >= 23,
             .condToWalk = walkingSpeed > 8.f,
             .condToRun = false,
             .tiltBody = false,
-            .animIndex = MARIO_ANIM_START_TIPTOE,
-            .animAccel = 0x4000,
+            .animID = MARIO_ANIM_START_TIPTOE,
+            .animAccel = 0.25f,
             .soundStep1 = 7,
             .soundStep2 = 22,
         },
@@ -57,8 +57,8 @@ static void anim_and_audio_for_walk(struct MarioState *m) {
             .condToWalk = walkingSpeed > 8.f,
             .condToRun = false,
             .tiltBody = false,
-            .animIndex = MARIO_ANIM_TIPTOE,
-            .animAccel = 0x10000,
+            .animID = MARIO_ANIM_TIPTOE,
+            .animAccel = 1.f,
             .soundStep1 = 14,
             .soundStep2 = 72,
         },
@@ -69,8 +69,8 @@ static void anim_and_audio_for_walk(struct MarioState *m) {
             .condToWalk = false,
             .condToRun = omm_mario_should_run(m),
             .tiltBody = true,
-            .animIndex = MARIO_ANIM_WALKING,
-            .animAccel = 0x4000,
+            .animID = MARIO_ANIM_WALKING,
+            .animAccel = 0.25f,
             .soundStep1 = 10,
             .soundStep2 = 49,
         },
@@ -81,8 +81,8 @@ static void anim_and_audio_for_walk(struct MarioState *m) {
             .condToWalk = omm_mario_should_walk(m),
             .condToRun = false,
             .tiltBody = true,
-            .animIndex = MARIO_ANIM_RUNNING,
-            .animAccel = (OMM_PLAYER_IS_WARIO ? 0x3000 : 0x4000),
+            .animID = MARIO_ANIM_RUNNING,
+            .animAccel = (OMM_PLAYER_IS_WARIO ? 0.20f : 0.25f),
             .soundStep1 = 9,
             .soundStep2 = 45,
         },
@@ -93,8 +93,8 @@ static void anim_and_audio_for_walk(struct MarioState *m) {
             .condToWalk = false,
             .condToRun = false,
             .tiltBody = false,
-            .animIndex = MARIO_ANIM_MOVE_IN_QUICKSAND,
-            .animAccel = 0x4000,
+            .animID = MARIO_ANIM_MOVE_IN_QUICKSAND,
+            .animAccel = 0.25f,
             .soundStep1 = 19,
             .soundStep2 = 93,
         }
@@ -113,8 +113,8 @@ static void anim_and_audio_for_walk(struct MarioState *m) {
         } else {
             s16 targetPitch = walkAnimAndAudio[index].tiltBody * -((find_floor_slope(m, 0) * m->forwardVel) / 40.f);
             m->marioObj->oMarioWalkingPitch = (s16) approach_s32(m->marioObj->oMarioWalkingPitch, targetPitch, 0x800, 0x800);
-            m->marioObj->header.gfx.angle[0] = m->marioObj->oMarioWalkingPitch;
-            set_mario_anim_with_accel(m, walkAnimAndAudio[index].animIndex, omm_max_s(walkingSpeed * walkAnimAndAudio[index].animAccel, 0x1000));
+            m->marioObj->oGfxAngle[0] = m->marioObj->oMarioWalkingPitch;
+            obj_anim_play(m->marioObj, walkAnimAndAudio[index].animID, omm_max_f(walkingSpeed * walkAnimAndAudio[index].animAccel, 0.1f));
             play_step_sound(m, walkAnimAndAudio[index].soundStep1, walkAnimAndAudio[index].soundStep2);
             break;
         }
@@ -147,7 +147,7 @@ static s32 omm_act_walking(struct MarioState *m) {
     switch (perform_ground_step(m)) {
         case GROUND_STEP_NONE: {
             if (omm_peach_vibe_is_gloom()) {
-                set_mario_anim_with_accel(m, MARIO_ANIM_RUNNING, (s32) (omm_max_f(1.f, omm_abs_f(m->forwardVel / 2.f)) * 0x10000));
+                obj_anim_play(m->marioObj, MARIO_ANIM_RUNNING, omm_max_f(1.f, omm_abs_f(m->forwardVel / 2.f)));
                 play_step_sound(m, 9, 45);
             } else {
                 anim_and_audio_for_walk(m);
@@ -158,8 +158,8 @@ static s32 omm_act_walking(struct MarioState *m) {
         } break;
 
         case GROUND_STEP_LEFT_GROUND: {
-            set_mario_action(m, ACT_FREEFALL, 0);
-            set_mario_animation(m, MARIO_ANIM_GENERAL_FALL);
+            omm_mario_set_action(m, ACT_FREEFALL, 0, 0);
+            obj_anim_play(m->marioObj, MARIO_ANIM_GENERAL_FALL, 1.f);
         } break;
 
         case GROUND_STEP_HIT_WALL: {
@@ -413,14 +413,14 @@ static s32 omm_act_roll(struct MarioState *m) {
     f32 speed = m->forwardVel / 60.f;
     s16 prevAngle = m->faceAngle[0];
     m->faceAngle[0] += (s16) (0x1C00 * speed);
-    set_mario_anim_with_accel(m, MARIO_ANIM_FORWARD_SPINNING, 1);
-    set_anim_to_frame(m, 0);
+    obj_anim_play(m->marioObj, MARIO_ANIM_FORWARD_SPINNING, 0.01f);
+    obj_anim_set_frame(m->marioObj, 0);
     Vec3f v = { 0, -60, -10 };
     vec3f_rotate_zxy(v, v, m->faceAngle[0], m->faceAngle[1], 0);
-    m->marioObj->header.gfx.pos[0] += v[0];
-    m->marioObj->header.gfx.pos[1] += v[1] + 50;
-    m->marioObj->header.gfx.pos[2] += v[2];
-    m->marioObj->header.gfx.angle[0] = m->faceAngle[0];
+    m->marioObj->oGfxPos[0] += v[0];
+    m->marioObj->oGfxPos[1] += v[1] + 50;
+    m->marioObj->oGfxPos[2] += v[2];
+    m->marioObj->oGfxAngle[0] = m->faceAngle[0];
     obj_set_shadow_pos_to_object_pos(gMarioObject);
     m->particleFlags |= PARTICLE_DUST;
     if (prevAngle > m->faceAngle[0]) {

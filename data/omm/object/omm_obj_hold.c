@@ -51,7 +51,6 @@ static const OmmHoldBehavior sOmmHoldBehaviorList[] = {
     { bhvGhostHuntBigBoo,           { ALL_ACTIONS }, -1, -1, HIT_ANY,   ACT_ATTACKED },
     { bhvGhostHuntBoo,              { ALL_ACTIONS }, -1, -1, HIT_ANY,   ACT_ATTACKED },
     { bhvGoomba,                    { ALL_ACTIONS },  0,  0, HIT_ANY,   ACT_DESTROY },
-    { bhvHauntedBookshelf,          { ALL_ACTIONS },  1,  1, HIT_ANY,   ACT_ATTACKED },
     { bhvHauntedChair,              { ALL_ACTIONS },  0,  0, HIT_ANY,   ACT_DESTROY },
     { bhvHeaveHo,                   { ALL_ACTIONS },  0,  0, HIT_ANY,   ACT_DESTROY },
     { bhvJumpingBox,                { ALL_ACTIONS }, -1, -1, HIT_ANY,   ACT_DESTROY },
@@ -78,6 +77,7 @@ static const OmmHoldBehavior sOmmHoldBehaviorList[] = {
     { bhvSpiny,                     { ALL_ACTIONS },  0,  0, HIT_ANY,   ACT_DESTROY },
     { bhvSpindrift,                 { ALL_ACTIONS },  0,  0, HIT_ANY,   ACT_ATTACKED },
     { bhvSwoop,                     { ALL_ACTIONS },  0,  0, HIT_ANY,   ACT_ATTACKED },
+    { bhvTuxiesMother,              { ALL_ACTIONS },  3,  1, HIT_FLOOR, ACT_BOUNCE },
     { bhvToadMessage,               { ALL_ACTIONS },  6,  6, HIT_FLOOR, ACT_BOUNCE },
     { bhvUkiki,                     { ALL_ACTIONS }, 12,  3, HIT_FLOOR, ACT_BOUNCE },
     { bhvUnused20E0,                { ALL_ACTIONS },  3,  1, HIT_FLOOR, ACT_BOUNCE },
@@ -119,7 +119,7 @@ static void omm_bhv_hold_update() {
         // Held (the holder updates its position and angle)
         case HELD_HELD: {
             if (bhv->heldAnim != -1) {
-                obj_set_animation_with_accel(o, bhv->heldAnim, 1.f);
+                obj_anim_play(o, bhv->heldAnim, 1.f);
             }
             obj_update_gfx(o);
         } break;
@@ -127,7 +127,7 @@ static void omm_bhv_hold_update() {
         // Thrown
         case HELD_THROWN: {
             if (bhv->thrownAnim != -1) {
-                obj_set_animation_with_accel(o, bhv->thrownAnim, 1.f);
+                obj_anim_play(o, bhv->thrownAnim, 1.f);
             }
             if (o->oWallHitboxRadius == 0.f) {
                 o->oWallHitboxRadius = omm_max_s(o->hitboxRadius, o->hurtboxRadius);
@@ -188,7 +188,7 @@ static void omm_bhv_hold_update() {
         // Dropped (bounce)
         case HELD_DROPPED: {
             if (bhv->thrownAnim != -1) {
-                obj_set_animation_with_accel(o, bhv->thrownAnim, 1.f);
+                obj_anim_play(o, bhv->thrownAnim, 1.f);
             }
             if (o->oWallHitboxRadius == 0.f) {
                 o->oWallHitboxRadius = omm_max_s(o->hitboxRadius, o->hurtboxRadius);

@@ -125,7 +125,7 @@ s32 cappy_flaming_bobomb_update(struct Object *o) {
     o->oMoveAngleRoll = 0;
     o->oGraphYOffset = 0;
     obj_update_gfx(o);
-    obj_set_animation_with_accel(o, 0, (o->oVelY <= 0.f) * omm_max_f(1.f, o->oForwardVel * (2.f / (omm_capture_get_walk_speed(o)))));
+    obj_anim_play(o, 0, (o->oVelY <= 0.f) * omm_max_f(1.f, o->oForwardVel * (2.f / (omm_capture_get_walk_speed(o)))));
     obj_random_blink(o, &o->oBobombBlinkTimer);
     if (gOmmData->object->flaming_bobomb.interactedTimer & 1) {
         o->oNodeFlags |= GRAPH_RENDER_INVISIBLE;

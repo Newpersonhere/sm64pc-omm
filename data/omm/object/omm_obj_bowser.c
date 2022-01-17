@@ -814,7 +814,7 @@ static void omm_bhv_bowser_turn_to_target(OmmBowser *bowser, f32 x, f32 z, s16 a
     u16 diff = (u16) omm_abs_s(bowser->obj->oFaceAngleYaw - angleToTarget);
     if (diff > 0x40) {
         if (animWalk != -1) {
-            obj_play_anim_and_sound(bowser->obj, animWalk, 1.f, 0, false);
+            obj_anim_play_with_sound(bowser->obj, animWalk, 1.f, 0, false);
         }
         if (!is_bowser_clone) {
             if (animWalk == OMM_BOWSER_ANIM_WALK || animWalk == OMM_BOWSER_ANIM_SURPRISED) {
@@ -825,7 +825,7 @@ static void omm_bhv_bowser_turn_to_target(OmmBowser *bowser, f32 x, f32 z, s16 a
         }
     } else {
         if (animIdle != -1) {
-            obj_play_anim_and_sound(bowser->obj, animIdle, 1.f, 0, false);
+            obj_anim_play_with_sound(bowser->obj, animIdle, 1.f, 0, false);
         }
     }
     bowser->obj->oFaceAngleYaw = angleToTarget - approach_s32((s16) (angleToTarget - bowser->obj->oFaceAngleYaw), 0, angleVel, angleVel);
@@ -998,7 +998,7 @@ static void omm_bhv_bowser_jump(OmmBowser *bowser) {
 OMM_BOWSER_CLONE_CODE(
                 s32 angleVel = omm_abs_s(bowser->jumpAngle - bowser->obj->oFaceAngleYaw) / (6 - bowser->timer);
                 bowser->obj->oFaceAngleYaw = bowser->jumpAngle - approach_s32((s16) (bowser->jumpAngle - bowser->obj->oFaceAngleYaw), 0, angleVel, angleVel);
-                obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_JUMP, 1.f, 0, false);
+                obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_JUMP, 1.f, 0, false);
 );
             }
             
@@ -1032,7 +1032,7 @@ OMM_BOWSER_CLONE_CODE(
                 bowser->jumpShake = 60;
 OMM_BOWSER_CLONE_CODE(
                 bowser->obj->oPosY = bowser->floorHeight;
-                obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_LAND, 1.f, 0, false);
+                obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_LAND, 1.f, 0, false);
                 obj_spawn_white_puff(bowser->obj, SOUND_OBJ_BOWSER_WALK);
 );
                 omm_bhv_bowser_update_action(bowser, 2);
@@ -1043,7 +1043,7 @@ OMM_BOWSER_CLONE_CODE(
         case 2: {
             if (bowser->jumpWaves > 0) {
 OMM_BOWSER_CLONE_CODE(
-                obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_LAND, 1.f, 0, true);
+                obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_LAND, 1.f, 0, true);
                 if ((bowser->timer % omm_bowser_current_action->delay) == 0) {
                     omm_spawn_shockwave_fire(bowser->obj, 100, 100, 150, 30, 5000, OMM_TEXTURE_BOWSER_FIRE_RED_1, OMM_TEXTURE_BOWSER_FIRE_RED_2);
                     bowser->jumpWaves--;
@@ -1056,7 +1056,7 @@ OMM_BOWSER_CLONE_CODE(
 
         // Landed, next action
         case 3: {
-            if (obj_is_anim_near_end(bowser->obj)) {
+            if (obj_anim_is_near_end(bowser->obj)) {
                 omm_bhv_bowser_update_combo(bowser);
             }
         } break;
@@ -1073,7 +1073,7 @@ static void omm_bhv_bowser_fireballs(OmmBowser *bowser) {
             if (bowser->timer < bowser->setupDuration) {
                 omm_bhv_bowser_turn_to_target(bowser, gMarioState->pos[0], gMarioState->pos[2], bowser->setupAngleVel, OMM_BOWSER_ANIM_IDLE, OMM_BOWSER_ANIM_WALK);
             } else {
-                obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_INHALE_AND_THROW, 1.5f, SOUND_OBJ_BOWSER_INHALING, true);
+                obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_INHALE_AND_THROW, 1.5f, SOUND_OBJ_BOWSER_INHALING, true);
                 omm_bhv_bowser_update_action(bowser, 1);
             }
         } break;
@@ -1081,8 +1081,8 @@ static void omm_bhv_bowser_fireballs(OmmBowser *bowser) {
         // Inhales (fast)
         case 1: {
             omm_bhv_bowser_turn_to_target(bowser, gMarioState->pos[0], gMarioState->pos[2], 0x800, -1, -1);
-            if ((bowser->obj->header.gfx.mAnimInfo.animFrameAccelAssist >> 16) >= 42) {
-                obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_THROW_FIRE_BALL, 1.f, 0, true);
+            if (obj_anim_get_frame(bowser->obj) >= 42) {
+                obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_THROW_FIRE_BALL, 1.f, 0, true);
                 omm_bhv_bowser_update_action(bowser, 2);
             }
         } break;
@@ -1143,17 +1143,17 @@ static void omm_bhv_bowser_fireballs(OmmBowser *bowser) {
         case 3: {
             s32 delay = omm_bowser_current_action->delay - (omm_bowser_current_action->count - (bowser->counter + 1)) * omm_bowser_current_action->duration;
             if (bowser->timer < delay) {
-                if (bowser->obj->header.gfx.mAnimInfo.animID == OMM_BOWSER_ANIM_THROW_FIRE_BALL && obj_is_anim_near_end(bowser->obj)) {
-                    obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_IDLE, 1.f, 0, false);
+                if (bowser->obj->oAnimID == OMM_BOWSER_ANIM_THROW_FIRE_BALL && obj_anim_is_near_end(bowser->obj)) {
+                    obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_IDLE, 1.f, 0, false);
                 }
                 s16 angleVel = (s16) (0xC000 / delay);
-                s32 animIdle = (bowser->obj->header.gfx.mAnimInfo.animID == OMM_BOWSER_ANIM_THROW_FIRE_BALL ? -1 : OMM_BOWSER_ANIM_IDLE);
-                s32 animWalk = (bowser->obj->header.gfx.mAnimInfo.animID == OMM_BOWSER_ANIM_THROW_FIRE_BALL ? -1 : OMM_BOWSER_ANIM_WALK);
+                s32 animIdle = (bowser->obj->oAnimID == OMM_BOWSER_ANIM_THROW_FIRE_BALL ? -1 : OMM_BOWSER_ANIM_IDLE);
+                s32 animWalk = (bowser->obj->oAnimID == OMM_BOWSER_ANIM_THROW_FIRE_BALL ? -1 : OMM_BOWSER_ANIM_WALK);
                 omm_bhv_bowser_turn_to_target(bowser, gMarioState->pos[0], gMarioState->pos[2], angleVel, animIdle, animWalk);
             } else if (bowser->counter <= 0) {
                 omm_bhv_bowser_update_action(bowser, 4);
             } else {
-                obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_THROW_FIRE_BALL, 1.f, 0, true);
+                obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_THROW_FIRE_BALL, 1.f, 0, true);
                 omm_bhv_bowser_update_action(bowser, 2);
             }
         } break;
@@ -1185,13 +1185,13 @@ static void omm_bhv_bowser_bombs(OmmBowser *bowser) {
                 s32 angle = (((f32) i - (f32) (omm_bowser_current_action->count / 2.f)) * 0x1740) + bowser->obj->oFaceAngleYaw;
                 omm_spawn_flaming_bobomb(bowser->obj, bowser->obj->oPosX + 500.f * sins(angle), bowser->obj->oPosY + 360.f, bowser->obj->oPosZ + 500.f * coss(angle), i, bowser->bombMaxHeight);
             }
-            obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_RAISE_ARM, 1.f, SOUND_OBJ2_BOWSER_TELEPORT, true);
+            obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_RAISE_ARM, 1.f, SOUND_OBJ2_BOWSER_TELEPORT, true);
             omm_bhv_bowser_update_action(bowser, 2);
         } break;
 
         // Wait
         case 2: {
-            obj_extend_animation(bowser->obj);
+            obj_anim_extend(bowser->obj);
             if (bowser->timer >= 30) {
                 omm_bhv_bowser_update_action(bowser, 3);
             }
@@ -1211,17 +1211,17 @@ static void omm_bhv_bowser_bombs(OmmBowser *bowser) {
                     }
 
                     // Throw a random bob-omb
-                    obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_THROW_BOMB, 1.f, SOUND_OBJ2_BOWSER_ROAR, true);
+                    obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_THROW_BOMB, 1.f, SOUND_OBJ2_BOWSER_ROAR, true);
                     s32 j = (s32) (random_u16() % omm_array_count(bobombs));
                     omm_array_get(bobombs, struct Object *, j)->oAction = 1;
                     omm_array_get(bobombs, struct Object *, j)->oTimer = 0;
                     omm_array_delete(bobombs);
                     bowser->counter--;
                 }
-                if (bowser->obj->header.gfx.mAnimInfo.animID == OMM_BOWSER_ANIM_THROW_BOMB && obj_is_anim_near_end(bowser->obj)) {
-                    obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_RAISE_ARM, 1.f, 0, true);
+                if (bowser->obj->oAnimID == OMM_BOWSER_ANIM_THROW_BOMB && obj_anim_is_near_end(bowser->obj)) {
+                    obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_RAISE_ARM, 1.f, 0, true);
                 } else {
-                    obj_extend_animation(bowser->obj);
+                    obj_anim_extend(bowser->obj);
                 }
             } else {
                 omm_bhv_bowser_update_action(bowser, 4);
@@ -1230,8 +1230,8 @@ static void omm_bhv_bowser_bombs(OmmBowser *bowser) {
 
         // Wait for the last throw anim to end
         case 4: {
-            if (obj_is_anim_near_end(bowser->obj)) {
-                obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_IDLE, 1.f, 0, true);
+            if (obj_anim_is_near_end(bowser->obj)) {
+                obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_IDLE, 1.f, 0, true);
                 omm_bhv_bowser_update_action(bowser, 5);
             }
         } break;
@@ -1259,7 +1259,7 @@ OMM_BOWSER_CLONE_CODE(
 );
             } else {
 OMM_BOWSER_CLONE_CODE(
-                obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_INHALE_AND_THROW, 1.f, SOUND_OBJ_BOWSER_INHALING, true);
+                obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_INHALE_AND_THROW, 1.f, SOUND_OBJ_BOWSER_INHALING, true);
 );
                 omm_bhv_bowser_update_action(bowser, 1);
             }
@@ -1270,7 +1270,7 @@ OMM_BOWSER_CLONE_CODE(
 OMM_BOWSER_CLONE_CODE(
             omm_bhv_bowser_turn_to_target(bowser, gMarioState->pos[0], gMarioState->pos[2], 0x400, -1, -1);
 );
-            if ((bowser->obj->header.gfx.mAnimInfo.animFrameAccelAssist >> 16) >= 54) {
+            if (obj_anim_get_frame(bowser->obj) >= 54) {
                 omm_bhv_bowser_update_action(bowser, 2);
             }
         } break;
@@ -1280,8 +1280,7 @@ OMM_BOWSER_CLONE_CODE(
 
             // Locks the animation on frame 54 (mouth open, facing forward)
 OMM_BOWSER_CLONE_CODE(
-            bowser->obj->header.gfx.mAnimInfo.animFrame = 54;
-            bowser->obj->header.gfx.mAnimInfo.animFrameAccelAssist = (54 << 16);
+            obj_anim_set_frame(bowser->obj, 54);
 );
 
             // Spawn 30 flames, one per frame
@@ -1320,8 +1319,7 @@ OMM_BOWSER_CLONE_CODE(
 
             // Locks the animation on frame 54 (mouth open, facing forward)
 OMM_BOWSER_CLONE_CODE(
-            bowser->obj->header.gfx.mAnimInfo.animFrame = 54;
-            bowser->obj->header.gfx.mAnimInfo.animFrameAccelAssist = (54 << 16);
+            obj_anim_set_frame(bowser->obj, 54);
 );
 
             // Rotates faster and faster
@@ -1369,7 +1367,7 @@ OMM_BOWSER_CLONE_CODE(
 
         // Stops and next action
         case 4: {
-            if (obj_is_anim_near_end(bowser->obj)) {
+            if (obj_anim_is_near_end(bowser->obj)) {
                 omm_bhv_bowser_update_combo(bowser);
             }
         } break;
@@ -1422,7 +1420,7 @@ static void omm_bhv_bowser_clone_start(OmmBowser *bowser) {
 OMM_BOWSER_CLONE_CODE(
                 bowser->obj->oFaceAngleYaw += 0x30 * (is_bowser_clone ? -1 : +1);
                 vec3f_rotate_zxy(&bowser->obj->oPosX, &bowser->obj->oPosX, 0, 0x30 * (is_bowser_clone ? -1 : +1), 0);
-                obj_set_animation_with_accel(bowser->obj, OMM_BOWSER_ANIM_IDLE, 1.f);
+                obj_anim_play(bowser->obj, OMM_BOWSER_ANIM_IDLE, 1.f);
 );
             } else {
                 bowser->clone->obj->oAction = 1;
@@ -1444,14 +1442,14 @@ static void omm_bhv_bowser_surprised(OmmBowser *bowser) {
 
         // Surprised
         case 0: {
-            obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_SURPRISED, 1.25f, SOUND_OBJ_BOWSER_TAIL_PICKUP, true);
+            obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_SURPRISED, 1.25f, SOUND_OBJ_BOWSER_TAIL_PICKUP, true);
             omm_bhv_bowser_update_action(bowser, 1);
         } break;
 
         // Faces Mario, next action
         case 1: {
             omm_bhv_bowser_turn_to_target(bowser, gMarioState->pos[0], gMarioState->pos[2], 0x800, -1, -1);
-            if (obj_is_anim_near_end(bowser->obj)) {
+            if (obj_anim_is_near_end(bowser->obj)) {
                 omm_bhv_bowser_update_combo(bowser);
             }
         } break;
@@ -1475,7 +1473,7 @@ static void omm_bhv_bowser_exhausted(OmmBowser *bowser) {
         // Bowser does a roll
         // The height depends on his remaining health
         bowser->jumpVelY = 45.f + 15.f * (3 - bowser->obj->oHealth);
-        obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_DAMAGED_BELLY, 1.25f, SOUND_OBJ_BOWSER_TAIL_PICKUP, true);
+        obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_DAMAGED_BELLY, 1.25f, SOUND_OBJ_BOWSER_TAIL_PICKUP, true);
         omm_bhv_bowser_update_action(bowser, 4);
     }
 
@@ -1487,7 +1485,7 @@ static void omm_bhv_bowser_exhausted(OmmBowser *bowser) {
             s16 prevAngle = bowser->obj->oFaceAngleYaw;
             omm_bhv_bowser_turn_to_target(bowser, 0, 0, 0x400, OMM_BOWSER_ANIM_WALK, OMM_BOWSER_ANIM_WALK);
             if (bowser->obj->oFaceAngleYaw == prevAngle) {
-                obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_EXHAUSTED, 1.f, SOUND_OBJ_BOWSER_DEFEATED, true);
+                obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_EXHAUSTED, 1.f, SOUND_OBJ_BOWSER_DEFEATED, true);
                 omm_bhv_bowser_update_action(bowser, 1);
             }
         } break;
@@ -1495,7 +1493,7 @@ static void omm_bhv_bowser_exhausted(OmmBowser *bowser) {
         // Falls on belly
         case 1: {
             bowser->obj->oHealth = (bowser->phase + 1); // Bowser is now vulnerable to flaming bob-omb explosions
-            if (obj_is_anim_near_end(bowser->obj)) {
+            if (obj_anim_is_near_end(bowser->obj)) {
                 omm_bhv_bowser_update_action(bowser, 2);
             }
         } break;
@@ -1503,9 +1501,9 @@ static void omm_bhv_bowser_exhausted(OmmBowser *bowser) {
         // Waits some time before moving again
         case 2: {
             bowser->obj->oBowserEyesShut = 1;
-            obj_extend_animation(bowser->obj);
+            obj_anim_extend(bowser->obj);
             if (bowser->timer >= omm_bowser_current_action->duration) {
-                obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_GET_UP, 1.5f, 0, true);
+                obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_GET_UP, 1.5f, 0, true);
                 omm_bhv_bowser_update_action(bowser, 3);
             }
         } break;
@@ -1514,7 +1512,7 @@ static void omm_bhv_bowser_exhausted(OmmBowser *bowser) {
         case 3: {
             bowser->obj->oHealth = -1; // Bowser is no longer vulnerable to flaming bob-omb explosions
             bowser->obj->oBowserEyesShut = 0;
-            if (obj_is_anim_near_end(bowser->obj)) {
+            if (obj_anim_is_near_end(bowser->obj)) {
                 omm_bhv_bowser_update_combo(bowser);
             }
         } break;
@@ -1523,7 +1521,7 @@ static void omm_bhv_bowser_exhausted(OmmBowser *bowser) {
         case 4: {
             bowser->obj->oPosY += bowser->jumpVelY;
             bowser->obj->oBowserEyesShut = 1;
-            obj_extend_animation(bowser->obj);
+            obj_anim_extend(bowser->obj);
 
             // Bounces
             if (bowser->obj->oPosY > bowser->floorHeight) {
@@ -1548,7 +1546,7 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
 
         // Knocked back
         case 0: {
-            obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_DAMAGED_BELLY, 1.25f, SOUND_OBJ_BOWSER_TAIL_PICKUP, true);
+            obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_DAMAGED_BELLY, 1.25f, SOUND_OBJ_BOWSER_TAIL_PICKUP, true);
             omm_bhv_bowser_update_action(bowser, 1);
         } break;
 
@@ -1559,7 +1557,7 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
             bowser->obj->oPosY = (bowser->floorHeight + (bowser->mineHeight + 100.f - bowser->floorHeight) * t + (bowser->jumpMaxHeight - bowser->floorHeight) * 0.5f * sins(0x8000 * t));
             bowser->obj->oPosZ = (bowser->landRadius + (bowser->mineRadius - bowser->landRadius) * t) * -coss(bowser->jumpIndex * bowser->jumpDeltaAngle);
             bowser->obj->oBowserEyesShut = 1;
-            obj_extend_animation(bowser->obj);
+            obj_anim_extend(bowser->obj);
 
             // About to hit the mine
             if (t == 1.f) {
@@ -1587,7 +1585,7 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
 
                 // Hits the mine
                 bowser->jumpVelY = +100.f;
-                obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_DAMAGED_BELLY, 1.25f, SOUND_OBJ_BOWSER_TAIL_PICKUP, true);
+                obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_DAMAGED_BELLY, 1.25f, SOUND_OBJ_BOWSER_TAIL_PICKUP, true);
                 omm_bhv_bowser_update_action(bowser, 2);
             }
         } break;
@@ -1600,7 +1598,7 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
             bowser->obj->oPosZ = (bowser->mineRadius * (1.f - t * q)) * -coss(bowser->jumpIndex * bowser->jumpDeltaAngle);
             bowser->obj->oPosY += bowser->jumpVelY;
             bowser->obj->oBowserEyesShut = 1;
-            obj_extend_animation(bowser->obj);
+            obj_anim_extend(bowser->obj);
 
             // Bounces
             if (bowser->obj->oPosY > bowser->floorHeight) {
@@ -1626,7 +1624,7 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
                 // Gets up
                 else {
                     bowser->obj->oPosY = bowser->floorHeight;
-                    obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_GET_UP, 1.5f, SOUND_OBJ2_BOWSER_ROAR, true);
+                    obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_GET_UP, 1.5f, SOUND_OBJ2_BOWSER_ROAR, true);
                     omm_bhv_bowser_update_action(bowser, 3);
                 }
             }
@@ -1634,7 +1632,7 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
 
         // Next phase
         case 3: {
-            if (obj_is_anim_near_end(bowser->obj)) {
+            if (obj_anim_is_near_end(bowser->obj)) {
                 bowser->obj->oBowserEyesShut = 0;
                 omm_bhv_bowser_update_combo(bowser);
             }
@@ -1643,7 +1641,7 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
         // Gives up, wait for Mario to grab his tail
         case 6: {
             bowser->obj->oBowserEyesShut = 1;
-            obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_GIVE_UP, 1.f, 0, false);
+            obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_GIVE_UP, 1.f, 0, false);
             f32 distMarioFromCenter = sqrtf(omm_sqr_f(gMarioObject->oPosX) + omm_sqr_f(gMarioObject->oPosZ));
             if (distMarioFromCenter <= 100.f && omm_mario_is_punching(gMarioState)) {
                 omm_mario_set_action(gMarioState, ACT_OMM_GRAB_BOWSER, 0, B_BUTTON);
@@ -1653,13 +1651,13 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
                 gMarioState->faceAngle[0] = 0;
                 gMarioState->faceAngle[1] = bowser->obj->oFaceAngleYaw;
                 gMarioState->faceAngle[2] = 0;
-                gMarioObject->header.gfx.pos[0] = 0.f;
-                gMarioObject->header.gfx.pos[1] = bowser->floorHeight;
-                gMarioObject->header.gfx.pos[2] = 0.f;
-                gMarioObject->header.gfx.angle[0] = 0;
-                gMarioObject->header.gfx.angle[1] = bowser->obj->oFaceAngleYaw;
-                gMarioObject->header.gfx.angle[2] = 0;
-                obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_GIVE_UP, 1.f, SOUND_OBJ_BOWSER_TAIL_PICKUP, true);
+                gMarioObject->oGfxPos[0] = 0.f;
+                gMarioObject->oGfxPos[1] = bowser->floorHeight;
+                gMarioObject->oGfxPos[2] = 0.f;
+                gMarioObject->oGfxAngle[0] = 0;
+                gMarioObject->oGfxAngle[1] = bowser->obj->oFaceAngleYaw;
+                gMarioObject->oGfxAngle[2] = 0;
+                obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_GIVE_UP, 1.f, SOUND_OBJ_BOWSER_TAIL_PICKUP, true);
                 omm_bhv_bowser_update_action(bowser, 7);
             }
         } break;
@@ -1693,7 +1691,7 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
 
                 // Hits the mine
                 bowser->jumpVelY = +90.f;
-                obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_DAMAGED_BACK, 1.25f, SOUND_OBJ_BOWSER_TAIL_PICKUP, true);
+                obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_DAMAGED_BACK, 1.25f, SOUND_OBJ_BOWSER_TAIL_PICKUP, true);
                 omm_bhv_bowser_update_action(bowser, 9);
             }
         } break;
@@ -1705,7 +1703,7 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
             bowser->obj->oPosZ = (bowser->mineRadius * (1.f - t)) * coss(bowser->obj->oFaceAngleYaw);
             bowser->obj->oPosY += bowser->jumpVelY;
             bowser->obj->oBowserEyesShut = 1;
-            obj_extend_animation(bowser->obj);
+            obj_anim_extend(bowser->obj);
 
             // Bounces
             if (bowser->obj->oPosY > bowser->floorHeight) {
@@ -1749,16 +1747,16 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
             sm64Bowser->oMoveAnglePitch = bowser->obj->oFaceAnglePitch;
             sm64Bowser->oMoveAngleYaw = bowser->obj->oFaceAngleYaw;
             sm64Bowser->oMoveAngleRoll = bowser->obj->oFaceAngleRoll;
-            sm64Bowser->header.gfx.pos[0] = bowser->obj->oPosX;
-            sm64Bowser->header.gfx.pos[1] = bowser->obj->oPosY;
-            sm64Bowser->header.gfx.pos[2] = bowser->obj->oPosZ;
-            sm64Bowser->header.gfx.angle[0] = bowser->obj->oFaceAnglePitch;
-            sm64Bowser->header.gfx.angle[1] = bowser->obj->oFaceAngleYaw;
-            sm64Bowser->header.gfx.angle[2] = bowser->obj->oFaceAngleRoll;
-            sm64Bowser->header.gfx.scale[0] = bowser->obj->oScaleX;
-            sm64Bowser->header.gfx.scale[1] = bowser->obj->oScaleY;
-            sm64Bowser->header.gfx.scale[2] = bowser->obj->oScaleZ;
-            obj_play_anim_and_sound(sm64Bowser, OMM_BOWSER_ANIM_DEFEATED, 1.f, SOUND_OBJ_BOWSER_DEFEATED | 0xFF00, true);
+            sm64Bowser->oGfxPos[0] = bowser->obj->oPosX;
+            sm64Bowser->oGfxPos[1] = bowser->obj->oPosY;
+            sm64Bowser->oGfxPos[2] = bowser->obj->oPosZ;
+            sm64Bowser->oGfxAngle[0] = bowser->obj->oFaceAnglePitch;
+            sm64Bowser->oGfxAngle[1] = bowser->obj->oFaceAngleYaw;
+            sm64Bowser->oGfxAngle[2] = bowser->obj->oFaceAngleRoll;
+            sm64Bowser->oGfxScale[0] = bowser->obj->oScaleX;
+            sm64Bowser->oGfxScale[1] = bowser->obj->oScaleY;
+            sm64Bowser->oGfxScale[2] = bowser->obj->oScaleZ;
+            obj_anim_play_with_sound(sm64Bowser, OMM_BOWSER_ANIM_DEFEATED, 1.f, SOUND_OBJ_BOWSER_DEFEATED | 0xFF00, true);
             obj_set_dormant(bowser->obj, true);
             omm_bhv_bowser_update_action(bowser, 11);
         } break;
@@ -1802,7 +1800,7 @@ static void omm_bhv_bowser_update_bowser(OmmBowser *bowser) {
         bowser->obj->oIntangibleTimer = 0;
         bowser->obj->oBowserRainbowLightEffect = (gCurrLevelNum == LEVEL_BOWSER_3);
         bowser->obj->oNodeFlags &= ~GRAPH_RENDER_INVISIBLE;
-        obj_play_anim_and_sound(bowser->obj, OMM_BOWSER_ANIM_IDLE, 1.f, 0, true);
+        obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_IDLE, 1.f, 0, true);
         obj_set_params(bowser->obj, INTERACT_DAMAGE, 3, -1, 0, true);
         obj_reset_hitbox(bowser->obj, 200, 400, 200, 400, 0, 0);
 

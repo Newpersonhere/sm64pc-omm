@@ -78,7 +78,7 @@ s32 cappy_friendly_blargg_update(struct Object *o) {
     
     // Cappy values
     gOmmData->object->cappy.offset[0] = -3.f;
-    gOmmData->object->cappy.offset[1] = 48.f + 5.f * sins(((o->header.gfx.mAnimInfo.animFrame - 6) * 0x10000) / 30);
+    gOmmData->object->cappy.offset[1] = 48.f + 5.f * sins(((obj_anim_get_frame(o) - 6) * 0x10000) / 30);
     gOmmData->object->cappy.offset[2] = 44.f;
     gOmmData->object->cappy.angle[0]  = -0x1400;
     gOmmData->object->cappy.scale     = 0.5f;

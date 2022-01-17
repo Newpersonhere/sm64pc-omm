@@ -101,6 +101,7 @@ DEFINE_TOGGLE_SC(gOmmExtrasInvisibleMode, 0);        // Disabled
 #if OMM_CODE_DEV
 DEFINE_TOGGLE_SC(gOmmExtrasRender96Peach, 0);        // Disabled
 #endif
+DEFINE_TOGGLE_SC(gOmmExtrasSparklyStarsHint, 1);     // Enabled
 DEFINE_TOGGLE_SC(gOmmExtrasCrystalStarsReward, 0);   // Disabled
 #if OMM_CODE_DEBUG
 DEFINE_TOGGLE_SC(gOmmDebugHitbox, 0);                // Disabled
@@ -171,6 +172,7 @@ DEFINE_SHORTCUT_TOGGLE(gOmmDebugGameSpeedEnable, OMM_TEXT_OPT_DEBUG_GAME_SPEED),
 DEFINE_SHORTCUT_CHOICE(gOmmDebugGameSpeedFps, OMM_TEXT_OPT_DEBUG_GAME_SPEED, 5, OMM_TEXT_OPT_DEBUG_GAME_SPEED_30_FPS, OMM_TEXT_OPT_DEBUG_GAME_SPEED_20_FPS, OMM_TEXT_OPT_DEBUG_GAME_SPEED_15_FPS, OMM_TEXT_OPT_DEBUG_GAME_SPEED_10_FPS, OMM_TEXT_OPT_DEBUG_GAME_SPEED_5_FPS),
 #endif
 #endif
+DEFINE_SHORTCUT_TOGGLE(gOmmExtrasSparklyStarsHint, OMM_TEXT_OPT_SPARKLY_STARS_HINT),
 DEFINE_SHORTCUT_TOGGLE(gOmmExtrasCrystalStarsReward, OMM_TEXT_OPT_CRYSTAL_STARS_REWARD), // Must be last
 };
 
@@ -539,11 +541,12 @@ void omm_opt_init() {
 #if OMM_CODE_DEV
                 omm_opt_make_toggle(OMM_TEXT_OPT_RENDER96_PEACH, &gOmmExtrasRender96Peach),
 #endif
+                omm_opt_make_toggle(OMM_TEXT_OPT_SPARKLY_STARS_HINT, &gOmmExtrasSparklyStarsHint),
                 omm_opt_make_toggle(OMM_TEXT_OPT_CRYSTAL_STARS_REWARD, &gOmmExtrasCrystalStarsReward),
 #if OMM_GAME_IS_SMMS
-            ), 7 + OMM_CODE_DEV + omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD)),
-#else
             ), 8 + OMM_CODE_DEV + omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD)),
+#else
+            ), 9 + OMM_CODE_DEV + omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD)),
 #endif
             omm_opt_make_shortcuts_submenu(OMM_TEXT_OPT_SHORTCUTS_LABEL, OMM_TEXT_OPT_SHORTCUTS_TITLE),
 #if OMM_CODE_DEBUG

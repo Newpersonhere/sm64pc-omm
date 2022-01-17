@@ -269,9 +269,9 @@ void omm_update_gfx() {
     for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_player_behaviors()) {
         for_each_object_with_behavior(obj, *bhv) {
             if (OMM_EXTRAS_INVISIBLE_MODE) {
-                obj->header.gfx.node.flags |= GRAPH_RENDER_INVISIBLE;
+                obj->oNodeFlags |= GRAPH_RENDER_INVISIBLE;
             } else {
-                obj->header.gfx.node.flags &= ~GRAPH_RENDER_INVISIBLE;
+                obj->oNodeFlags &= ~GRAPH_RENDER_INVISIBLE;
             }
         }
     }

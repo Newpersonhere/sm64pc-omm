@@ -413,7 +413,7 @@ void omm_cappy_update_behavior(struct Object *cappy, struct MarioState *m) {
                 omm_cappy_return_to_mario(cappy);
             } else {
                 if (cappy->oCappyLifeTimer < CAPPY_BHV_FLYING_CALL_BACK_START) {
-                    m->marioObj->header.gfx.angle[2] += ((cappy->oCappyLifeTimer * 0x10000) / CAPPY_BHV_FLYING_CALL_BACK_START);
+                    m->marioObj->oGfxAngle[2] += ((cappy->oCappyLifeTimer * 0x10000) / CAPPY_BHV_FLYING_CALL_BACK_START);
                 }
                 f32 r = omm_min_f(cappy->oCappyLifeTimer * CAPPY_BHV_FLYING_RADIUS_GROWTH, CAPPY_BHV_FLYING_RADIUS_MAX);
                 s16 a = (s16) (cappy->oFaceAngleYaw + (s32) (cappy->oCappyLifeTimer) * CAPPY_BHV_FLYING_ANGLE_VEL);
@@ -547,7 +547,8 @@ void omm_cappy_update_mario_anim(struct Object *cappy, struct MarioState *m) {
     
         // Start
         if (cappy->oCappyFlags & CAPPY_FLAG_START_ANIM) {
-            omm_mario_set_animation(m, p->anim, p->speed, p->start);
+            obj_anim_play(m->marioObj, p->anim, p->speed);
+            obj_anim_set_frame(m->marioObj, p->start);
             play_sound(sThrowSounds[p->sound + (random_u16() % 3) + (6 * ((m->action & ACT_GROUP_MASK) == ACT_GROUP_METAL_WATER))], m->marioObj->oCameraToObject);
             cappy->oCappyFlags &= ~CAPPY_FLAG_START_ANIM;
         }
@@ -555,11 +556,11 @@ void omm_cappy_update_mario_anim(struct Object *cappy, struct MarioState *m) {
         // End
         u32 endAction = sMarioThrowEndAction[(cappy->oCappyBehavior & 1) + (2 * ((m->action & ACT_GROUP_MASK) == ACT_GROUP_METAL_WATER)) + (4 * ((m->action & ACT_GROUP_MASK) == ACT_GROUP_SUBMERGED))];
         if (p->end == -1) {
-            if (omm_mario_is_anim_at_end(m)) {
+            if (obj_anim_is_at_end(m->marioObj)) {
                 omm_mario_set_action(m, endAction, 0, 0);
             }
         } else {
-            if (omm_mario_is_anim_past_frame(m, p->end)) {
+            if (obj_anim_get_frame(m->marioObj) >= p->end) {
                 omm_mario_set_action(m, endAction, 0, 0);
             }
         }

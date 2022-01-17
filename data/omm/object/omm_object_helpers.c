@@ -145,25 +145,6 @@ bool obj_detect_hitbox_overlap(struct Object *o1, struct Object *o2, u32 obj1Fla
     return true;
 }
 
-bool obj_check_if_near_animation_end(struct Object *o) {
-    u32 spC = (s32) o->header.gfx.mAnimInfo.curAnim->flags;
-    s32 sp8 = o->header.gfx.mAnimInfo.animFrame;
-    s32 sp4 = o->header.gfx.mAnimInfo.curAnim->mLoopEnd - 2;
-    bool sp0 = false;
-
-    if (spC & 0x01) {
-        if (sp4 + 1 == sp8) {
-            sp0 = true;
-        }
-    }
-
-    if (sp8 == sp4) {
-        sp0 = true;
-    }
-
-    return sp0;
-}
-
 void obj_set_home(struct Object *o, f32 x, f32 y, f32 z) {
     o->oHomeX = x;
     o->oHomeY = y;
@@ -462,21 +443,6 @@ void obj_make_step_sound_and_particle(struct Object *o, f32 *dist, f32 distMin, 
     }
 }
 
-void obj_set_animation_with_accel(struct Object *o, s32 animation, f32 accel) {
-    struct Animation **anims = o->oAnimations;
-    s32 animAccel = (s32) (accel * 65536.f);
-    if (animAccel <= 0) animAccel = 0x10000;
-    geo_obj_init_animation_accel(&o->header.gfx, &anims[animation], animAccel);
-    o->header.gfx.mAnimInfo.animID = animation;
-    o->oSoundStateID = animation;
-}
-
-void obj_play_anim_and_sound(struct Object *o, s32 animation, f32 accel, s32 soundBits, bool restart) {
-    if (restart) o->header.gfx.mAnimInfo.curAnim = NULL;
-    obj_set_animation_with_accel(o, animation, accel);
-    obj_play_sound(o, soundBits);
-}
-
 void obj_play_sound(struct Object *o, s32 soundBits) {
     if (soundBits != 0) {
         if (o != NULL) {
@@ -484,28 +450,6 @@ void obj_play_sound(struct Object *o, s32 soundBits) {
         } else {
             play_sound(soundBits, gGlobalSoundArgs);
         }
-    }
-}
-
-bool obj_is_anim_near_end(struct Object *o) {
-    return (o->header.gfx.mAnimInfo.curAnim != NULL) && (o->header.gfx.mAnimInfo.animFrame >= (o->header.gfx.mAnimInfo.curAnim->mLoopEnd - 2));
-}
-
-bool obj_is_anim_at_end(struct Object *o) {
-    return (o->header.gfx.mAnimInfo.curAnim != NULL) && (o->header.gfx.mAnimInfo.animFrame >= (o->header.gfx.mAnimInfo.curAnim->mLoopEnd - 1));
-}
-
-void obj_extend_animation(struct Object *o) {
-    if (obj_is_anim_near_end(o)) {
-        o->header.gfx.mAnimInfo.animFrameAccelAssist -= o->header.gfx.mAnimInfo.animAccel;
-        o->header.gfx.mAnimInfo.animFrame = (o->header.gfx.mAnimInfo.animFrameAccelAssist >> 16);
-    }
-}
-
-void obj_loop_animation(struct Object *o) {
-    if (obj_is_anim_at_end(o)) {
-        o->header.gfx.mAnimInfo.curAnim = NULL;
-        obj_set_animation_with_accel(o, o->header.gfx.mAnimInfo.animID, (f32) o->header.gfx.mAnimInfo.animAccel / 65536.f);
     }
 }
 
@@ -816,12 +760,12 @@ void obj_create_respawner(struct Object *o, s32 model, const BehaviorScript *beh
 }
 
 void obj_update_gfx(struct Object *o) {
-    o->header.gfx.pos[0] = o->oPosX;
-    o->header.gfx.pos[1] = o->oPosY + o->oGraphYOffset;
-    o->header.gfx.pos[2] = o->oPosZ;
-    o->header.gfx.angle[0] = o->oFaceAnglePitch & 0xFFFF;
-    o->header.gfx.angle[1] = o->oFaceAngleYaw   & 0xFFFF;
-    o->header.gfx.angle[2] = o->oFaceAngleRoll  & 0xFFFF;
+    o->oGfxPos[0] = o->oPosX;
+    o->oGfxPos[1] = o->oPosY + o->oGraphYOffset;
+    o->oGfxPos[2] = o->oPosZ;
+    o->oGfxAngle[0] = o->oFaceAnglePitch & 0xFFFF;
+    o->oGfxAngle[1] = o->oFaceAngleYaw   & 0xFFFF;
+    o->oGfxAngle[2] = o->oFaceAngleRoll  & 0xFFFF;
 }
 
 void obj_set_params(struct Object *o, s32 interactType, s32 damageOrCoinValue, s32 health, s32 numLootCoins, bool setTangible) {
@@ -882,16 +826,16 @@ void obj_load_collision_model(struct Object *o) {
 
 bool obj_is_always_rendered(struct Object *o) {
     return
-        !(o->header.gfx.node.flags & GRAPH_RENDER_INVISIBLE) &&
-         (o->header.gfx.node.flags & GRAPH_RENDER_ACTIVE) &&
-         (o->header.gfx.node.flags & GRAPH_RENDER_ALWAYS);
+        !(o->oNodeFlags & GRAPH_RENDER_INVISIBLE) &&
+         (o->oNodeFlags & GRAPH_RENDER_ACTIVE) &&
+         (o->oNodeFlags & GRAPH_RENDER_ALWAYS);
 }
 
 void obj_set_always_rendered(struct Object *o, bool set) {
     if (set) {
-        o->header.gfx.node.flags |= GRAPH_RENDER_ALWAYS;
+        o->oNodeFlags |= GRAPH_RENDER_ALWAYS;
     } else {
-        o->header.gfx.node.flags &= ~GRAPH_RENDER_ALWAYS;
+        o->oNodeFlags &= ~GRAPH_RENDER_ALWAYS;
     }
 }
 
@@ -1148,3 +1092,109 @@ bool obj_cutscene_update() {
     return false;
 }
 
+//
+// Animation
+//
+
+static void obj_anim_sync_frame_counters(struct Object *o) {
+    if (!o->oAnimInfo.animAccel) {
+        o->oAnimInfo.animFrameAccelAssist = (o->oAnimInfo.animFrame << 16);
+        o->oAnimInfo.animAccel = 0x10000;
+    } else {
+        o->oAnimInfo.animFrame = (o->oAnimInfo.animFrameAccelAssist >> 16);
+    }
+}
+
+s32 obj_anim_get_id(struct Object *o) {
+    return o->oAnimID;
+}
+
+f32 obj_anim_get_frame(struct Object *o) {
+    obj_anim_sync_frame_counters(o);
+    return (o->oAnimInfo.animFrameAccelAssist / 65536.f);
+}
+
+void obj_anim_play(struct Object *o, s32 animID, f32 animAccel) {
+    obj_anim_play_with_sound(o, animID, animAccel, 0, false);
+}
+
+void obj_anim_play_with_sound(struct Object *o, s32 animID, f32 animAccel, s32 soundBits, bool restart) {
+    if (restart) {
+        o->oAnimID = -1;
+        o->oCurrAnim = NULL;
+    }
+    if (o == gMarioObject) {
+        set_mario_anim_with_accel(gMarioState, animID, animAccel * 0x10000);
+    } else if (o->oAnimations) {
+        geo_obj_init_animation_accel(&o->header.gfx, &o->oAnimations[animID], animAccel * 0x10000);
+        o->oAnimID = animID;
+        o->oSoundStateID = animID;
+    }
+    obj_anim_sync_frame_counters(o);
+    obj_play_sound(o, soundBits);
+}
+
+void obj_anim_loop(struct Object *o) {
+    if (obj_anim_is_at_end(o)) {
+        obj_anim_set_frame(o, o->oCurrAnim->mLoopStart);
+    }
+}
+
+void obj_anim_extend(struct Object *o) {
+    if (obj_anim_is_near_end(o)) {
+        obj_anim_advance(o, -1);
+    }
+}
+
+void obj_anim_advance(struct Object *o, f32 frames) {
+    obj_anim_sync_frame_counters(o);
+    if (o->oCurrAnim) {
+        if (o->oCurrAnim->flags & ANIM_FLAG_FORWARD) {
+            o->oAnimInfo.animFrameAccelAssist = (s32) ((f32) o->oAnimInfo.animFrameAccelAssist - frames * (f32) o->oAnimInfo.animAccel);
+            if (o->oAnimInfo.animFrameAccelAssist < (o->oCurrAnim->mLoopStart << 16)) {
+                if (o->oCurrAnim->flags & ANIM_FLAG_NOLOOP) {
+                    o->oAnimInfo.animFrameAccelAssist = (o->oCurrAnim->mLoopStart << 16);
+                } else {
+                    o->oAnimInfo.animFrameAccelAssist = ((o->oCurrAnim->mLoopEnd - 1) << 16);
+                }
+            }
+        } else {
+            o->oAnimInfo.animFrameAccelAssist = (s32) ((f32) o->oAnimInfo.animFrameAccelAssist + frames * (f32) o->oAnimInfo.animAccel);
+            if (o->oAnimInfo.animFrameAccelAssist >= (o->oCurrAnim->mLoopEnd << 16)) {
+                if (o->oCurrAnim->flags & ANIM_FLAG_NOLOOP) {
+                    o->oAnimInfo.animFrameAccelAssist = ((o->oCurrAnim->mLoopEnd - 1) << 16);
+                } else {
+                    o->oAnimInfo.animFrameAccelAssist = (o->oCurrAnim->mLoopStart << 16);
+                }
+            }
+        }
+    }
+}
+
+void obj_anim_set_frame(struct Object *o, f32 frame) {
+    o->oAnimInfo.animFrame = (s16) frame;
+    o->oAnimInfo.animFrameAccelAssist = (s32) (frame * 65536.f);
+    if (!o->oAnimInfo.animAccel) {
+        o->oAnimInfo.animAccel = 0x10000;
+    }
+}
+
+void obj_anim_clamp_frame(struct Object *o, f32 frameMin, f32 frameMax) {
+    if (obj_anim_get_frame(o) < frameMin) obj_anim_set_frame(o, frameMin);
+    if (obj_anim_get_frame(o) > frameMax) obj_anim_set_frame(o, frameMax);
+}
+
+bool obj_anim_is_past_frame(struct Object *o, f32 frame) {
+    f32 frameCurrent = obj_anim_get_frame(o);
+    f32 frameBefore  = frame - (o->oAnimInfo.animAccel / 131072.f);
+    f32 frameAfter   = frame + (o->oAnimInfo.animAccel / 131072.f);
+    return frameBefore <= frameCurrent && frameCurrent < frameAfter;
+}
+
+bool obj_anim_is_near_end(struct Object *o) {
+    return o->oCurrAnim && obj_anim_get_frame(o) >= (o->oCurrAnim->mLoopEnd - 2);
+}
+
+bool obj_anim_is_at_end(struct Object *o) {
+    return o->oCurrAnim && obj_anim_get_frame(o) >= (o->oCurrAnim->mLoopEnd - 1);
+}

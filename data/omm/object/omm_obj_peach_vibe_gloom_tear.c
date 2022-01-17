@@ -149,7 +149,7 @@ static void omm_bhv_peach_vibe_gloom_tear_update() {
         vec3f_sub(p, mp);
 
         // Handle separately the running animation
-        if (gMarioObject->header.gfx.mAnimInfo.animID == MARIO_ANIM_RUNNING) {
+        if (gMarioObject->oAnimID == MARIO_ANIM_RUNNING) {
             p[0] = 0.f;
             p[1] = 120.f * gMarioObject->oScaleY;
             p[2] = 0.f;

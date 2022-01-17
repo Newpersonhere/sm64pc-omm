@@ -78,12 +78,12 @@ static void omm_bhv_flaming_bobomb_update() {
     o->oFaceAngleRoll += o->oAngleVelRoll;
     Vec3f offset = { 0, 49.f * o->oScaleY, 0 };
     vec3f_rotate_zxy(offset, offset, o->oFaceAnglePitch, o->oFaceAngleYaw, o->oFaceAngleRoll);
-    vec3f_set(o->header.gfx.pos, o->oPosX - offset[0], o->oPosY - offset[1], o->oPosZ - offset[2]);
-    vec3s_set(o->header.gfx.angle, o->oFaceAnglePitch, o->oFaceAngleYaw, o->oFaceAngleRoll);
+    vec3f_set(o->oGfxPos, o->oPosX - offset[0], o->oPosY - offset[1], o->oPosZ - offset[2]);
+    vec3s_set(o->oGfxAngle, o->oFaceAnglePitch, o->oFaceAngleYaw, o->oFaceAngleRoll);
     obj_set_shadow_pos_to_object_pos(o);
     obj_set_params(o, INTERACT_FLAME, 1, 99, 0, true);
     obj_reset_hitbox(o, 50, 100, 0, 0, 0, 50);
-    obj_play_anim_and_sound(o, 0, 1.f, 0, 0);
+    obj_anim_play_with_sound(o, 0, 1.f, 0, 0);
 
     // Update aura
     vec3f_copy(&o->oFlamingBobombAura->oPosX, &o->oPosX);

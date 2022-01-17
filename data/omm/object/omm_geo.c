@@ -136,10 +136,8 @@ void omm_geo_fix_marios_anim_translation_y(struct Object *o, struct GraphNodeAni
         if (sMarioRootNodeState < (1 + OMM_IS_60_FPS)) {
             if (node->translation[1] != 0) {
                 f32 dty;
-                if (gMarioObject->header.gfx.mAnimInfo.animID == MARIO_ANIM_DIVE) { // MARIO_ANIM_DIVE is weird: it has spikes in its y translation, so let's handle it separately
-                    s32 af = (gMarioObject->header.gfx.mAnimInfo.animFrame << 16);
-                    s32 afaa = (gMarioObject->header.gfx.mAnimInfo.animFrameAccelAssist);
-                    f32 df = omm_clamp_0_1_f((f32) omm_max_s(af, afaa) / (f32) (19 * 0x10000));
+                if (gMarioObject->oAnimID == MARIO_ANIM_DIVE) { // MARIO_ANIM_DIVE is weird: it has spikes in its y translation, so let's handle it separately
+                    f32 df = omm_clamp_0_1_f(obj_anim_get_frame(gMarioObject) / 19.f);
                     dty = omm_lerp_f(df, 265.f, 85.f);
                 } else {
                     dty = *translationY - node->translation[1];
@@ -154,7 +152,7 @@ void omm_geo_fix_marios_anim_translation_y(struct Object *o, struct GraphNodeAni
             }
             
             // Jumbo star cutscene animation offset
-            if (gMarioObject->header.gfx.mAnimInfo.animID == MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN) {
+            if (gMarioObject->oAnimID == MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN) {
                 *translationY += 4.f * (sMarioHeight - 120.f + (60.f * (gMarioState->action != ACT_JUMBO_STAR_CUTSCENE)));
             }
             
@@ -469,58 +467,58 @@ static void omm_geo_preprocess_graph_node_culling_radius(struct GraphNodeCulling
 
         // Compute the 'up' vector
         case 1: {
-            sUpVector[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->header.gfx.pos[0];
-            sUpVector[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->header.gfx.pos[1];
-            sUpVector[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->header.gfx.pos[2];
+            sUpVector[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->oGfxPos[0];
+            sUpVector[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->oGfxPos[1];
+            sUpVector[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->oGfxPos[2];
         } break;
 
         // Compute the 'forward' vector
         case 2: {
-            sFwdVector[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->header.gfx.pos[0];
-            sFwdVector[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->header.gfx.pos[1];
-            sFwdVector[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->header.gfx.pos[2];
+            sFwdVector[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->oGfxPos[0];
+            sFwdVector[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->oGfxPos[1];
+            sFwdVector[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->oGfxPos[2];
         } break;
 
         // Compute the 'lateral' vector
         case 3: {
-            sLatVector[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->header.gfx.pos[0];
-            sLatVector[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->header.gfx.pos[1];
-            sLatVector[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->header.gfx.pos[2];
+            sLatVector[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->oGfxPos[0];
+            sLatVector[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->oGfxPos[1];
+            sLatVector[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->oGfxPos[2];
         } break;
 
         // Compute torso position
         case 4: {
-            sTorsoPos[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->header.gfx.pos[0];
-            sTorsoPos[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->header.gfx.pos[1];
-            sTorsoPos[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->header.gfx.pos[2];
+            sTorsoPos[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->oGfxPos[0];
+            sTorsoPos[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->oGfxPos[1];
+            sTorsoPos[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->oGfxPos[2];
         } break;
 
         // Compute left leg position
         case 5: {
-            sLeftLegPos[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->header.gfx.pos[0];
-            sLeftLegPos[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->header.gfx.pos[1];
-            sLeftLegPos[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->header.gfx.pos[2];
+            sLeftLegPos[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->oGfxPos[0];
+            sLeftLegPos[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->oGfxPos[1];
+            sLeftLegPos[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->oGfxPos[2];
         } break;
 
         // Compute left foot position
         case 6: {
-            sLeftFootPos[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->header.gfx.pos[0];
-            sLeftFootPos[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->header.gfx.pos[1];
-            sLeftFootPos[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->header.gfx.pos[2];
+            sLeftFootPos[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->oGfxPos[0];
+            sLeftFootPos[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->oGfxPos[1];
+            sLeftFootPos[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->oGfxPos[2];
         } break;
 
         // Compute right leg position
         case 7: {
-            sRightLegPos[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->header.gfx.pos[0];
-            sRightLegPos[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->header.gfx.pos[1];
-            sRightLegPos[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->header.gfx.pos[2];
+            sRightLegPos[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->oGfxPos[0];
+            sRightLegPos[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->oGfxPos[1];
+            sRightLegPos[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->oGfxPos[2];
         } break;
 
         // Compute right foot position
         case 8: {
-            sRightFootPos[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->header.gfx.pos[0];
-            sRightFootPos[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->header.gfx.pos[1];
-            sRightFootPos[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->header.gfx.pos[2];
+            sRightFootPos[0] = sMatStack[sMatStackIndex].m[3][0] - gCurrGraphNodeObject->oGfxPos[0];
+            sRightFootPos[1] = sMatStack[sMatStackIndex].m[3][1] - gCurrGraphNodeObject->oGfxPos[1];
+            sRightFootPos[2] = sMatStack[sMatStackIndex].m[3][2] - gCurrGraphNodeObject->oGfxPos[2];
         } break;
 
         // Compute Peach's dress rotation, set hips rotation, set legs visibility
@@ -642,7 +640,7 @@ static void omm_geo_preprocess_graph_node_culling_radius(struct GraphNodeCulling
             // Legs visibility
             u16 dlp = (u16) omm_abs_s(la - (sPeachDressRot[2] * 2));
             u16 drp = (u16) omm_abs_s(ra - (sPeachDressRot[2] * 2));
-            s32 animId = gCurrGraphNodeObject->header.gfx.mAnimInfo.animID;
+            s32 animId = gCurrGraphNodeObject->oAnimID;
             if (animId == MARIO_ANIM_WALKING || animId == MARIO_ANIM_RUNNING) {
                 gCurrGraphNodeObject->oAnimState = ((dlp > 0x2800) << 1) | ((drp > 0x2800) << 0);
             } else {
@@ -820,19 +818,19 @@ static void __omm_geo_preprocess_object_graph_node(struct Object *o) {
     sMarioRootNodeState = 0;
 
     // Init the base matrix
-    if (o->header.gfx.throwMatrix) {
-        OMM_MEMCPY(&sMatStack[sMatStackIndex].m, *o->header.gfx.throwMatrix, sizeof(f32) * 4 * 4);
+    if (o->oThrowMatrix) {
+        OMM_MEMCPY(&sMatStack[sMatStackIndex].m, *o->oThrowMatrix, sizeof(f32) * 4 * 4);
     } else {
-        v3f t = { o->header.gfx.pos[0], o->header.gfx.pos[1], o->header.gfx.pos[2] };
-        v3f r = { o->header.gfx.angle[0], o->header.gfx.angle[1], o->header.gfx.angle[2] };
+        v3f t = { o->oGfxPos[0], o->oGfxPos[1], o->oGfxPos[2] };
+        v3f r = { o->oGfxAngle[0], o->oGfxAngle[1], o->oGfxAngle[2] };
         sMatStack[sMatStackIndex] = m4f_rotate_zxy_and_translate(t, r);
     }
-    v3f s = { o->header.gfx.scale[0], o->header.gfx.scale[1], o->header.gfx.scale[2] };
+    v3f s = { o->oGfxScale[0], o->oGfxScale[1], o->oGfxScale[2] };
     sMatStack[sMatStackIndex] = m4f_scale(sMatStack[sMatStackIndex], s);
 
     // Init the animation data
-    if (o->header.gfx.mAnimInfo.curAnim) {
-        omm_geo_preprocess_animation_init_data(&o->header.gfx.mAnimInfo, (o->oNodeFlags & GRAPH_RENDER_HAS_ANIMATION) != 0);
+    if (o->oCurrAnim) {
+        omm_geo_preprocess_animation_init_data(&o->oAnimInfo, (o->oNodeFlags & GRAPH_RENDER_HAS_ANIMATION) != 0);
     }
 
     // Init some globals
@@ -859,15 +857,15 @@ void omm_geo_preprocess_object_graph_node(struct Object *o) {
             // Back-up animation data
             struct AnimInfoStruct marioAnimStruct;
             struct Animation marioAnim;
-            OMM_MEMCPY(&marioAnimStruct, &o->header.gfx.mAnimInfo, sizeof(struct AnimInfoStruct));
+            OMM_MEMCPY(&marioAnimStruct, &o->oAnimInfo, sizeof(struct AnimInfoStruct));
             OMM_MEMCPY(&marioAnim, gMarioState->mMarioAnimations->mMarioTargetAnim, sizeof(struct Animation));
 
             // Preprocess with A-pose animation
-            omm_mario_set_animation(gMarioState, MARIO_ANIM_A_POSE, 1.f, -1);
+            obj_anim_play(gMarioObject, MARIO_ANIM_A_POSE, 1.f);
             __omm_geo_preprocess_object_graph_node(o);
 
             // Restore animation data and compute height
-            OMM_MEMCPY(&o->header.gfx.mAnimInfo, &marioAnimStruct, sizeof(struct AnimInfoStruct));
+            OMM_MEMCPY(&o->oAnimInfo, &marioAnimStruct, sizeof(struct AnimInfoStruct));
             OMM_MEMCPY(gMarioState->mMarioAnimations->mMarioTargetAnim, &marioAnim, sizeof(struct Animation));
             sMarioHeight = 35.f + (sMarioHeadPos[1] - gMarioState->pos[1]);
             sMarioGraphNode = o->oGraphNode;

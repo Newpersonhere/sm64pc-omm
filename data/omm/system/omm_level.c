@@ -313,7 +313,7 @@ u8 *omm_level_get_act_name(s32 level, s32 act, bool decaps, bool num) {
         convert_text_and_set_buffer(sBuffer, OMM_TEXT_LEVEL_EMPTY);
 #else
 #if OMM_GAME_IS_SMSR
-    } else if ((const BehaviorScript *) gMarioState->riddenObj == bhvCustomSMSRStarReplica) {
+    } else if (act == 0) {
         convert_text_and_set_buffer(sBuffer, OMM_TEXT_LEVEL_STAR_REPLICA);
 #endif
     } else if (course > COURSE_STAGES_MAX) {

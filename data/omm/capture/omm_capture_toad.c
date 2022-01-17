@@ -41,7 +41,7 @@ bool cappy_toad_init(struct Object *o) {
 }
 
 void cappy_toad_end(struct Object *o) {
-    obj_set_animation_with_accel(o, 6, 1.f);
+    obj_anim_play(o, 6, 1.f);
     obj_reset_hitbox(o, 80, 100, 0, 0, 30, 0);
     obj_drop_to_floor(o);
     o->oHomeX = o->oPosX;
@@ -136,10 +136,9 @@ s32 cappy_toad_update(struct Object *o) {
 
     // Jump
     if (!obj_is_on_ground(o)) {
-        obj_set_animation_with_accel(o, 0, 1.f);
-        s32 anmf = (o->header.gfx.mAnimInfo.animFrameAccelAssist >> 16);
-        o->header.gfx.mAnimInfo.animFrameAccelAssist = omm_clamp_s(anmf, 18, 24) << 16;
-        o->header.gfx.angle[1] += -0x1400;
+        obj_anim_play(o, 0, 1.f);
+        obj_anim_clamp_frame(o, 18, 24);
+        o->oGfxAngle[1] += -0x1400;
         gOmmData->object->cappy.offset[0] = +12.f;
         gOmmData->object->cappy.offset[1] = 106.f;
         gOmmData->object->cappy.offset[2] = -16.f;
@@ -150,25 +149,23 @@ s32 cappy_toad_update(struct Object *o) {
 
     // Run
     else if (o->oForwardVel > 1.f) {
-        obj_set_animation_with_accel(o, 1, 1.f);
+        obj_anim_play(o, 1, 1.f);
+        obj_anim_set_frame(o, (((s32) (obj_anim_get_frame(o) + 10)) % 18) + 8);
         f32 vn = sqrtf(omm_sqr_f(o->oVelX) + omm_sqr_f(o->oVelZ));
-        s32 anmf = ((((o->header.gfx.mAnimInfo.animFrameAccelAssist >> 16) + 10) % 18) + 8);
-        o->header.gfx.mAnimInfo.animFrameAccelAssist = (anmf << 16);
-        o->header.gfx.angle[1] += 0x8000;
-        o->header.gfx.pos[0]   -= (o->oVelX / vn) * 9.78f * (16.36f + (f32) anmf);
-        o->header.gfx.pos[2]   -= (o->oVelZ / vn) * 9.78f * (16.36f + (f32) anmf);
+        o->oGfxAngle[1] += 0x8000;
+        o->oGfxPos[0]   -= (o->oVelX / vn) * 9.78f * (16.36f + obj_anim_get_frame(o));
+        o->oGfxPos[2]   -= (o->oVelZ / vn) * 9.78f * (16.36f + obj_anim_get_frame(o));
         gOmmData->object->cappy.offset[0] = +8.f;
         gOmmData->object->cappy.offset[1] = 98.f;
         gOmmData->object->cappy.angle[0]  = -0x400;
         gOmmData->object->cappy.angle[2]  = +0x400;
         gOmmData->object->cappy.scale     = 1.f;
-
     }
 
     // Idle
     else {
-        obj_set_animation_with_accel(o, 4, 1.f);
-        o->header.gfx.angle[1] += -0x1400;
+        obj_anim_play(o, 4, 1.f);
+        o->oGfxAngle[1] += -0x1400;
         gOmmData->object->cappy.offset[1] = 94.f;
         gOmmData->object->cappy.offset[2] = -10.f;
         gOmmData->object->cappy.angle[0]  = -0x800;

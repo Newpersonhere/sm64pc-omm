@@ -60,7 +60,7 @@ void omm_mario_init_next_action(struct MarioState *m) {
         (m->action != ACT_OMM_CAPPY_THROW_WATER) &&
         (m->action != ACT_FLYING)) {
         vec3s_set(m->faceAngle, 0, m->faceAngle[1], 0);
-        vec3s_set(m->marioObj->header.gfx.angle, 0, m->faceAngle[1], 0);
+        vec3s_set(m->marioObj->oGfxAngle, 0, m->faceAngle[1], 0);
     }
 
     // Init spin
@@ -385,8 +385,14 @@ bool omm_mario_check_grab(struct MarioState *m, struct Object *o, bool ignoreAng
 #endif
                 // Is Mario facing Bowser's tail, in a 120 deg arc?
                 if (ignoreAngles || omm_abs_s((s16) (m->faceAngle[1] - bowser->oFaceAngleYaw)) < 0x5555) {
-                    gOmmData->mario->grab.obj = bowser;
-                    return true;
+                    
+                    // Is Bowser's action valid for Mario to grab him?
+                    for_each(s32, grabbableAction, 12, OMM_ARRAY_OF(s32) { 0, 3, 7, 8, 9, 10, 11, 13, 14, 15, 17, 18 }) {
+                        if (bowser->oAction == *grabbableAction) {
+                            gOmmData->mario->grab.obj = bowser;
+                            return true;
+                        }
+                    }
                 }
             }
         }
@@ -409,37 +415,6 @@ bool omm_mario_check_grab(struct MarioState *m, struct Object *o, bool ignoreAng
 
     // Not a valid grab
     return false;
-}
-
-//
-// Animation
-//
-
-s16 omm_mario_set_animation(struct MarioState *m, s32 animID, f32 animSpeed, s16 animFrame) {
-    s16 frame = set_mario_anim_with_accel(m, animID, animSpeed * 0x10000);
-    if (animFrame != -1) {
-        set_anim_to_frame(m, animFrame);
-        return animFrame;
-    }
-    return frame;
-}
-
-bool omm_mario_is_anim_at_end(struct MarioState *m) {
-    struct AnimInfoStruct *animData = &m->marioObj->header.gfx.mAnimInfo;
-    s32 frameEnd = (animData->curAnim->mLoopEnd - 1);
-    if (!animData->animAccel) return (animData->animFrame >= frameEnd);
-    return (animData->animFrameAccelAssist >= (frameEnd << 16));
-}
-
-bool omm_mario_is_anim_past_frame(struct MarioState *m, s16 animFrame) {
-    struct AnimInfoStruct *animData = &m->marioObj->header.gfx.mAnimInfo;
-    s32 next = (animData->curAnim->flags & ANIM_FLAG_FORWARD ? +1 : -1);
-    if (!animData->animAccel) return animData->animFrame == (animFrame + next);
-    s32 frameAccel = ((s32) animFrame << 16);
-    s32 lowerBound = omm_min_s(animData->animFrameAccelAssist, animData->animFrameAccelAssist + animData->animAccel * next) - 1;
-    s32 upperBound = omm_max_s(animData->animFrameAccelAssist, animData->animFrameAccelAssist + animData->animAccel * next) + 1;
-    return (omm_min_s(frameAccel, lowerBound) == lowerBound) &&
-           (omm_max_s(frameAccel, upperBound) == upperBound);
 }
 
 //
@@ -562,7 +537,7 @@ void omm_mario_update_grab(struct MarioState *m) {
         
         // Punch
         else {
-            set_mario_animation(m, MARIO_ANIM_FIRST_PUNCH);
+            obj_anim_play(m->marioObj, MARIO_ANIM_FIRST_PUNCH, 1.f);
             omm_mario_set_action(m, ACT_PICKING_UP, 0, 0);
         }
     }
@@ -878,8 +853,8 @@ void omm_mario_update_castle_collisions(struct MarioState *m) {
             m->pos[2] += displacementZ;
             m->marioObj->oPosY += displacementY;
             m->marioObj->oPosZ += displacementZ;
-            m->marioObj->header.gfx.pos[1] += displacementY;
-            m->marioObj->header.gfx.pos[2] += displacementZ;
+            m->marioObj->oGfxPos[1] += displacementY;
+            m->marioObj->oGfxPos[2] += displacementZ;
 
             // Warp the camera
             s16 cameraAngle = m->area->camera->yaw;
@@ -1091,7 +1066,7 @@ void bhv_mario_update() {
     // Update Mario object
     obj_set_pos(gMarioObject, m->pos[0], m->pos[1], m->pos[2]);
     obj_set_vel(gMarioObject, m->vel[0], m->vel[1], m->vel[2]);
-    obj_set_angle(gMarioObject, gMarioObject->header.gfx.angle[0], gMarioObject->header.gfx.angle[1], gMarioObject->header.gfx.angle[2]);
+    obj_set_angle(gMarioObject, gMarioObject->oGfxAngle[0], gMarioObject->oGfxAngle[1], gMarioObject->oGfxAngle[2]);
     obj_set_angle_vel(gMarioObject, m->angleVel[0], m->angleVel[1], m->angleVel[2]);
     gMarioObject->oInteractStatus = 0;
     gMarioObject->oMarioParticleFlags = m->particleFlags;
@@ -1108,7 +1083,7 @@ void bhv_mario_update() {
         // Head
         // Move the head up and down if she's crying
         if (m->action == ACT_IDLE && omm_peach_vibe_is_gloom()) {
-            f32 tAnim = (f32) m->marioObj->header.gfx.mAnimInfo.animFrame / (f32) m->marioObj->header.gfx.mAnimInfo.curAnim->mLoopEnd;
+            f32 tAnim = obj_anim_get_frame(m->marioObj) / m->marioObj->oCurrAnim->mLoopEnd;
             m->marioBodyState->action |= ACT_FLAG_WATER_OR_TEXT;
             m->marioBodyState->headAngle[0] = omm_relerp_f(sins(tAnim * 0x30000), -1.f, +1.f, -0x1000, -0x1800);
             m->marioBodyState->headAngle[1] = 0;

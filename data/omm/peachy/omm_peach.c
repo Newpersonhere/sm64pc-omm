@@ -22,7 +22,7 @@ s32 omm_act_peach_float(struct MarioState *m) {
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
     if (!(m->controller->buttonDown & A_BUTTON) || (gOmmData->mario->peach.floatTimer >= OMM_PEACH_FLOAT_DURATION)) {
         if (m->prevAction == ACT_DOUBLE_JUMP) {
-            set_mario_animation(m, MARIO_ANIM_DOUBLE_JUMP_FALL);
+            obj_anim_play(m->marioObj, MARIO_ANIM_DOUBLE_JUMP_FALL, 1.f);
             m->prevAction = m->action;
             m->action = ACT_DOUBLE_JUMP;
             m->actionArg = 0;
@@ -30,7 +30,7 @@ s32 omm_act_peach_float(struct MarioState *m) {
             m->actionTimer = 1;
             m->flags |= (MARIO_ACTION_SOUND_PLAYED | MARIO_MARIO_SOUND_PLAYED);
         } else {
-            set_mario_animation(m, MARIO_ANIM_GENERAL_FALL);
+            obj_anim_play(m->marioObj, MARIO_ANIM_GENERAL_FALL, 1.f);
             omm_mario_set_action(m, ACT_FREEFALL, 0, 0);
         }
         return OMM_MARIO_ACTION_RESULT_CANCEL;
@@ -41,13 +41,13 @@ s32 omm_act_peach_float(struct MarioState *m) {
     omm_mario_update_air_with_turn(m);
     s32 step = perform_air_step(m, OMM_MOVESET_ODYSSEY * AIR_STEP_CHECK_LEDGE_GRAB);
     action_condition(step == AIR_STEP_LANDED, ACT_FREEFALL_LAND, 0, RETURN_BREAK);
-    action_condition(step == AIR_STEP_GRABBED_LEDGE, ACT_LEDGE_GRAB, 0, RETURN_BREAK, set_mario_animation(m, MARIO_ANIM_IDLE_ON_LEDGE););
+    action_condition(step == AIR_STEP_GRABBED_LEDGE, ACT_LEDGE_GRAB, 0, RETURN_BREAK, obj_anim_play(m->marioObj, MARIO_ANIM_IDLE_ON_LEDGE, 1.f););
     action_condition(step == AIR_STEP_HIT_WALL && omm_mario_check_and_perform_wall_slide(m), ACT_OMM_WALL_SLIDE, 0, RETURN_BREAK);
     action_condition(step == AIR_STEP_HIT_LAVA_WALL && lava_boost_on_wall(m), ACT_LAVA_BOOST, 1, RETURN_BREAK);
 
     // Gfx
-    if (omm_mario_is_anim_at_end(m)) m->marioObj->header.gfx.mAnimInfo.animID = -1;
-    set_mario_animation(m, MARIO_ANIM_BEND_KNESS_RIDING_SHELL);
+    if (obj_anim_is_at_end(m->marioObj)) m->marioObj->oAnimID = -1;
+    obj_anim_play(m->marioObj, MARIO_ANIM_BEND_KNESS_RIDING_SHELL, 1.f);
     m->particleFlags |= PARTICLE_SPARKLES;
     gOmmData->mario->peach.floatTimer++;
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -56,7 +56,7 @@ s32 omm_act_peach_float(struct MarioState *m) {
 s32 omm_act_peach_glide(struct MarioState *m) {
     if (m->actionState == 0) {
         omm_sound_play(OMM_SOUND_EFFECT_PEACH_GLIDE, m->marioObj->oCameraToObject);
-        set_mario_anim_with_accel(m, MARIO_ANIM_GRAB_POLE_SHORT, 0x20000);
+        obj_anim_play(m->marioObj, MARIO_ANIM_GRAB_POLE_SHORT, 2.f);
         m->actionState = 1;
     }
 
@@ -72,19 +72,19 @@ s32 omm_act_peach_glide(struct MarioState *m) {
     omm_mario_update_air_with_turn(m);
     s32 step = perform_air_step(m, OMM_MOVESET_ODYSSEY * AIR_STEP_CHECK_LEDGE_GRAB);
     action_condition(step == AIR_STEP_LANDED, ACT_FREEFALL_LAND, 0, RETURN_BREAK);
-    action_condition(step == AIR_STEP_GRABBED_LEDGE, ACT_LEDGE_GRAB, 0, RETURN_BREAK, set_mario_animation(m, MARIO_ANIM_IDLE_ON_LEDGE););
+    action_condition(step == AIR_STEP_GRABBED_LEDGE, ACT_LEDGE_GRAB, 0, RETURN_BREAK, obj_anim_play(m->marioObj, MARIO_ANIM_IDLE_ON_LEDGE, 1.f););
     action_condition(step == AIR_STEP_HIT_LAVA_WALL && lava_boost_on_wall(m), ACT_LAVA_BOOST, 1, RETURN_BREAK);
 
     // Gfx
-    if (++m->actionTimer > 6) set_mario_animation(m, MARIO_ANIM_IDLE_ON_POLE);
+    if (++m->actionTimer > 6) obj_anim_play(m->marioObj, MARIO_ANIM_IDLE_ON_POLE, 1.f);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
-static void omm_peach_set_animation_and_play_sound(struct MarioState *m, s32 animId, s32 animAccel, s32 sound) {
-    if (m->marioObj->header.gfx.mAnimInfo.animID != animId) {
+static void omm_peach_set_animation_and_play_sound(struct MarioState *m, s32 animID, f32 animAccel, s32 sound) {
+    if (m->marioObj->oAnimID != animID) {
         obj_play_sound(m->marioObj, sound);
     }
-    set_mario_anim_with_accel(m, animId, animAccel);
+    obj_anim_play(m->marioObj, animID, animAccel);
 }
 
 s32 omm_act_peach_attack_ground(struct MarioState *m) {
@@ -119,41 +119,48 @@ s32 omm_act_peach_attack_ground(struct MarioState *m) {
 
         // First attack (part 1)
         case 0: {
-            omm_peach_set_animation_and_play_sound(m, MARIO_ANIM_FIRST_PUNCH, 0x10000, SOUND_MARIO_PUNCH_WAH);
-            action_condition(is_anim_past_end(m), 0, 0, NO_RETURN, m->actionArg = 1;);
+            omm_peach_set_animation_and_play_sound(m, MARIO_ANIM_FIRST_PUNCH, 1.f, SOUND_MARIO_PUNCH_WAH);
+            action_condition(obj_anim_is_near_end(m->marioObj), 0, 0, NO_RETURN, m->actionArg = 1;);
             action_condition(mario_check_object_grab(m), 0, 0, RETURN_BREAK);
             m->actionState = 2;
         } break;
 
         // First attack (part 2)
         case 1: {
-            omm_peach_set_animation_and_play_sound(m, MARIO_ANIM_FIRST_PUNCH_FAST, 0x10000, 0);
+            omm_peach_set_animation_and_play_sound(m, MARIO_ANIM_FIRST_PUNCH_FAST, 1.f, 0);
             action_b_pressed(1, 0, 0, NO_RETURN, m->actionArg = 2;);
-            action_condition(is_anim_at_end(m), ACT_IDLE, 0, RETURN_BREAK);
-            m->actionState = 1 + ((m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist >> 0x10) < 2);
+            action_condition(obj_anim_is_at_end(m->marioObj), ACT_IDLE, 0, RETURN_BREAK);
+            m->actionState = 1 + (obj_anim_get_frame(m->marioObj) < 2);
         } break;
 
         // Second attack (part 1)
         case 2: {
-            omm_peach_set_animation_and_play_sound(m, MARIO_ANIM_SECOND_PUNCH, 0x10000, SOUND_MARIO_PUNCH_YAH);
-            action_condition(is_anim_past_end(m), 0, 0, NO_RETURN, m->actionArg = 3;);
+            omm_peach_set_animation_and_play_sound(m, MARIO_ANIM_SECOND_PUNCH, 1.f, SOUND_MARIO_PUNCH_YAH);
+            action_condition(obj_anim_is_near_end(m->marioObj), 0, 0, NO_RETURN, m->actionArg = 3;);
             m->actionState = 2;
         } break;
 
         // Second attack (part 2)
         case 3: {
-            omm_peach_set_animation_and_play_sound(m, MARIO_ANIM_SECOND_PUNCH_FAST, 0x10000, 0);
+            omm_peach_set_animation_and_play_sound(m, MARIO_ANIM_SECOND_PUNCH_FAST, 1.f, 0);
             action_b_pressed(1, 0, 0, NO_RETURN, m->actionArg = 4;);
-            action_condition(is_anim_at_end(m), ACT_IDLE, 0, RETURN_BREAK);
-            m->actionState = 1 + ((m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist >> 0x10) < 2);
+            action_condition(obj_anim_is_at_end(m->marioObj), ACT_IDLE, 0, RETURN_BREAK);
+            m->actionState = 1 + (obj_anim_get_frame(m->marioObj) < 2);
         } break;
 
         // Spin attack
         case 4: {
-            omm_peach_set_animation_and_play_sound(m, MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN, 0x20000, SOUND_MARIO_PUNCH_HOO);
-            m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist = omm_clamp_s(m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist, (70 << 16), (94 << 16));
-            action_condition(m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist == (94 << 16), ACT_IDLE, 0, RETURN_BREAK);
-            m->actionState = 2;
+            if (OMM_EXTRAS_SMO_ANIMATIONS) {
+                omm_peach_set_animation_and_play_sound(m, MARIO_ANIM_OMM_CAPPY_THROW, 1.5f, SOUND_MARIO_PUNCH_HOO);
+                obj_anim_clamp_frame(m->marioObj, 0, 28);
+                action_condition(obj_anim_is_past_frame(m->marioObj, 28), ACT_IDLE, 0, RETURN_BREAK);
+                m->actionState = 1 + (obj_anim_get_frame(m->marioObj) <= 20);
+            } else {
+                omm_peach_set_animation_and_play_sound(m, MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN, 2.f, SOUND_MARIO_PUNCH_HOO);
+                obj_anim_clamp_frame(m->marioObj, 70, 94);
+                action_condition(obj_anim_is_past_frame(m->marioObj, 94), ACT_IDLE, 0, RETURN_BREAK);
+                m->actionState = 2;
+            }
         } break;
     }
 
@@ -203,26 +210,26 @@ s32 omm_act_peach_attack_fast(struct MarioState *m) {
         // First attack (part 1)
         case 0: {
             if (sAttackTimer++ == 0) omm_peach_play_random_attack_sound(m);
-            set_mario_anim_with_accel(m, MARIO_ANIM_FIRST_PUNCH, 0x10000);
-            action_condition(is_anim_past_end(m), 0, 0, NO_RETURN, m->actionArg = 1; sAttackTimer = 0;);
+            obj_anim_play(m->marioObj, MARIO_ANIM_FIRST_PUNCH, 1.f);
+            action_condition(obj_anim_is_near_end(m->marioObj), 0, 0, NO_RETURN, m->actionArg = 1; sAttackTimer = 0;);
         } break;
 
         // First attack (part 2)
         case 1: {
-            set_mario_anim_with_accel(m, MARIO_ANIM_FIRST_PUNCH_FAST, 0x10000);
+            obj_anim_play(m->marioObj, MARIO_ANIM_FIRST_PUNCH_FAST, 1.f);
             action_condition(++sAttackTimer > 3, 0, 0, NO_RETURN, m->actionArg = 2; sAttackTimer = 0;);
         } break;
 
         // Second attack (part 1)
         case 2: {
             if (sAttackTimer++ == 0) omm_peach_play_random_attack_sound(m);
-            set_mario_anim_with_accel(m, MARIO_ANIM_SECOND_PUNCH, 0x10000);
-            action_condition(is_anim_past_end(m), 0, 0, NO_RETURN, m->actionArg = 3; sAttackTimer = 0;);
+            obj_anim_play(m->marioObj, MARIO_ANIM_SECOND_PUNCH, 1.f);
+            action_condition(obj_anim_is_near_end(m->marioObj), 0, 0, NO_RETURN, m->actionArg = 3; sAttackTimer = 0;);
         } break;
 
         // Second attack (part 2)
         case 3: {
-            set_mario_anim_with_accel(m, MARIO_ANIM_SECOND_PUNCH_FAST, 0x10000);
+            obj_anim_play(m->marioObj, MARIO_ANIM_SECOND_PUNCH_FAST, 1.f);
             action_condition(++sAttackTimer > 3, ACT_WALKING, 0, RETURN_BREAK);
         } break;
     }
@@ -252,15 +259,21 @@ s32 omm_act_peach_attack_air(struct MarioState *m) {
     omm_mario_update_air_without_turn(m);
     s32 step = perform_air_step(m, OMM_MOVESET_ODYSSEY * AIR_STEP_CHECK_LEDGE_GRAB);
     action_condition(step == AIR_STEP_LANDED, ACT_FREEFALL_LAND, 0, RETURN_BREAK);
-    action_condition(step == AIR_STEP_GRABBED_LEDGE, ACT_LEDGE_GRAB, 0, RETURN_BREAK, set_mario_animation(m, MARIO_ANIM_IDLE_ON_LEDGE););
+    action_condition(step == AIR_STEP_GRABBED_LEDGE, ACT_LEDGE_GRAB, 0, RETURN_BREAK, obj_anim_play(m->marioObj, MARIO_ANIM_IDLE_ON_LEDGE, 1.f););
     action_condition(step == AIR_STEP_HIT_WALL && omm_mario_check_and_perform_wall_slide(m), ACT_OMM_WALL_SLIDE, 0, RETURN_BREAK);
     action_condition(step == AIR_STEP_HIT_LAVA_WALL && lava_boost_on_wall(m), ACT_LAVA_BOOST, 1, RETURN_BREAK);
 
     // Gfx
     m->actionTimer++;
-    set_mario_anim_with_accel(m, MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN, 0x20000);
-    m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist = omm_clamp_s(m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist, (70 << 16), (94 << 16));
-    m->flags |= MARIO_KICKING * (m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist < (94 << 16));
+    if (OMM_EXTRAS_SMO_ANIMATIONS) {
+        obj_anim_play(m->marioObj, MARIO_ANIM_OMM_CAPPY_THROW, 1.5f);
+        obj_anim_clamp_frame(m->marioObj, 31, 127);
+        m->flags |= MARIO_KICKING * (obj_anim_get_frame(m->marioObj) < 52);
+    } else {
+        obj_anim_play(m->marioObj, MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN, 2.f);
+        obj_anim_clamp_frame(m->marioObj, 70, 94);
+        m->flags |= MARIO_KICKING * (obj_anim_get_frame(m->marioObj) < 94);
+    }
     m->marioBodyState->punchState = 0;
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
@@ -289,13 +302,13 @@ static s32 omm_peach_vibe_joy_update(struct MarioState *m, s32 yawVel, bool fly)
     action_condition(step == AIR_STEP_HIT_LAVA_WALL && lava_boost_on_wall(m), ACT_LAVA_BOOST, 1, RETURN_BREAK);
 
     // Update Gfx
-    set_mario_animation(m, MARIO_ANIM_TWIRL);
+    obj_anim_play(m->marioObj, MARIO_ANIM_TWIRL, 1.f);
     gOmmData->mario->peach.joySpinYaw += yawVel;
     gOmmData->mario->state.peakHeight = m->pos[1];
     m->peakHeight = m->pos[1];
     m->quicksandDepth = 0.f;
     m->particleFlags |= fly * PARTICLE_DUST;
-    m->marioObj->header.gfx.angle[1] = gOmmData->mario->peach.joySpinYaw;
+    m->marioObj->oGfxAngle[1] = gOmmData->mario->peach.joySpinYaw;
     m->marioBodyState->handState = MARIO_HAND_OPEN;
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }

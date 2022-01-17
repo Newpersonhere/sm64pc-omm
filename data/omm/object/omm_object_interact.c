@@ -246,7 +246,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvGrindel, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
 
     { bhvHardAirKnockBackWarp, 0 },
-    { bhvHauntedBookshelf, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvHauntedBookshelf, 0 },
     { bhvHauntedBookshelfManager, 0 },
     { bhvHauntedChair, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
     { bhvHeaveHo, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },

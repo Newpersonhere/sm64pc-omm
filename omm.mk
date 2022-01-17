@@ -6,13 +6,13 @@
 # Source
 # ------
 
-SRC_DIRS += data/omm data/omm/system data/omm/object data/omm/mario data/omm/cappy data/omm/capture data/omm/peachy
+SRC_DIRS += data/omm data/omm/system data/omm/object data/omm/mario data/omm/cappy data/omm/capture data/omm/peachy data/omm/dev
 
 # -------
 # Version
 # -------
 
-OMM_VERSION_NUMBER := 7.0.0
+OMM_VERSION_NUMBER := 7.0.2
 OMM_VERSION_REVISION := 1
 OMM_DEVELOPER := PeachyPeach
 VERSION_CFLAGS += -DOMM_VERSION="$(OMM_VERSION_NUMBER)"
@@ -102,6 +102,12 @@ OMM_DEBUG ?= -1
 ifneq ($(OMM_DEBUG),-1)
 VERSION_CFLAGS += -DOMM_DEBUG=$(OMM_DEBUG)
 DEFINES += OMM_DEBUG=$(OMM_DEBUG)
+endif
+
+OMM_DEV ?= -1
+ifneq ($(OMM_DEV),-1)
+VERSION_CFLAGS += -DOMM_DEV=$(OMM_DEV)
+DEFINES += OMM_DEV=$(OMM_DEV)
 endif
 
 ifeq ($(DEBUG),1)

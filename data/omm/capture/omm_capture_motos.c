@@ -48,7 +48,7 @@ bool cappy_motos_init(struct Object *o) {
 
 void cappy_motos_end(struct Object *o) {
     omm_obj_throw(gOmmData->object->motos.heldObj, 40.f, 20.f);
-    obj_set_animation_with_accel(o, MOTOS_ANIM_WAIT, 1.f);
+    obj_anim_play(o, MOTOS_ANIM_WAIT, 1.f);
     obj_set_vel(o, 0.f, 0.f, 0.f);
     o->oAction = MOTOS_ACT_WAIT;
 }
@@ -145,7 +145,7 @@ s32 cappy_motos_update(struct Object *o) {
     obj_update_gfx(o);
     switch (gOmmData->object->state.actionState) {
         case 0: {
-            obj_set_animation_with_accel(o, gOmmData->object->motos.heldObj ? MOTOS_ANIM_CARRY_RUN : MOTOS_ANIM_WALK, 1.f);
+            obj_anim_play(o, gOmmData->object->motos.heldObj ? MOTOS_ANIM_CARRY_RUN : MOTOS_ANIM_WALK, 1.f);
             omm_obj_update_held_object(gOmmData->object->motos.heldObj, o, CAPPY_MOTOS_HAND_POS_1);
             if (obj_is_on_ground(o)) {
                 obj_make_step_sound_and_particle(
@@ -157,14 +157,14 @@ s32 cappy_motos_update(struct Object *o) {
         } break;
 
         case 1: {
-            obj_set_animation_with_accel(o, MOTOS_ANIM_CARRY_START, 1.f);
+            obj_anim_play(o, MOTOS_ANIM_CARRY_START, 1.f);
             omm_obj_update_held_object(gOmmData->object->motos.heldObj, o, CAPPY_MOTOS_HAND_POS_1);
-            gOmmData->object->motos.heldObj->oPosX = omm_relerp_0_1_f(o->header.gfx.mAnimInfo.animFrame, 0, 30, gOmmData->object->motos.heldObj->oHomeX, gOmmData->object->motos.heldObj->oPosX);
-            gOmmData->object->motos.heldObj->oPosY = omm_relerp_0_1_f(o->header.gfx.mAnimInfo.animFrame, 0, 30, gOmmData->object->motos.heldObj->oHomeY, gOmmData->object->motos.heldObj->oPosY);
-            gOmmData->object->motos.heldObj->oPosZ = omm_relerp_0_1_f(o->header.gfx.mAnimInfo.animFrame, 0, 30, gOmmData->object->motos.heldObj->oHomeZ, gOmmData->object->motos.heldObj->oPosZ);
-            gOmmData->object->motos.heldObj->oPosY += 0.5f * o->hitboxHeight * sins(omm_relerp_0_1_s(o->header.gfx.mAnimInfo.animFrame, 0, 30, 0, 0x8000));
+            gOmmData->object->motos.heldObj->oPosX = omm_relerp_0_1_f(obj_anim_get_frame(o), 0, 30, gOmmData->object->motos.heldObj->oHomeX, gOmmData->object->motos.heldObj->oPosX);
+            gOmmData->object->motos.heldObj->oPosY = omm_relerp_0_1_f(obj_anim_get_frame(o), 0, 30, gOmmData->object->motos.heldObj->oHomeY, gOmmData->object->motos.heldObj->oPosY);
+            gOmmData->object->motos.heldObj->oPosZ = omm_relerp_0_1_f(obj_anim_get_frame(o), 0, 30, gOmmData->object->motos.heldObj->oHomeZ, gOmmData->object->motos.heldObj->oPosZ);
+            gOmmData->object->motos.heldObj->oPosY += 0.5f * o->hitboxHeight * sins(omm_relerp_0_1_s(obj_anim_get_frame(o), 0, 30, 0, 0x8000));
             obj_update_gfx(gOmmData->object->motos.heldObj);
-            if (obj_is_anim_at_end(o)) {
+            if (obj_anim_is_at_end(o)) {
                 sound_stop(SOUND_GENERAL_CANNON_UP, o->oCameraToObject);
                 omm_mario_unlock(gMarioState);
                 gOmmData->object->state.actionState = 0;
@@ -172,19 +172,19 @@ s32 cappy_motos_update(struct Object *o) {
         } break;
 
         case 2: {
-            obj_set_animation_with_accel(o, MOTOS_ANIM_PITCH, 1.f);
+            obj_anim_play(o, MOTOS_ANIM_PITCH, 1.f);
             Vec3f pos1 = { CAPPY_MOTOS_HAND_POS_1 };
             Vec3f pos2 = { CAPPY_MOTOS_HAND_POS_2 };
-            f32 t = sins(omm_relerp_0_1_f(o->header.gfx.mAnimInfo.animFrame, 0, 14, 0, 0x8000));
+            f32 t = sins(omm_relerp_0_1_f(obj_anim_get_frame(o), 0, 14, 0, 0x8000));
             f32 x = omm_lerp_f(t, pos1[0], pos2[0]);
             f32 y = omm_lerp_f(t, pos1[1], pos2[1]);
             f32 z = omm_lerp_f(t, pos1[2], pos2[2]);
             omm_obj_update_held_object(gOmmData->object->motos.heldObj, o, x, y, z);
-            if (gOmmData->object->motos.heldObj && o->header.gfx.mAnimInfo.animFrame >= 14) {
+            if (gOmmData->object->motos.heldObj && obj_anim_get_frame(o) >= 14) {
                 omm_obj_throw(gOmmData->object->motos.heldObj, 40.f, 20.f);
                 obj_play_sound(o, SOUND_OBJ_UNKNOWN4);
                 gOmmData->object->motos.heldObj = NULL;
-            } else if (obj_is_anim_at_end(o)) {
+            } else if (obj_anim_is_at_end(o)) {
                 omm_mario_unlock(gMarioState);
                 gOmmData->object->state.actionState = 0;
             }

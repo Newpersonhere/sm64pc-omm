@@ -129,7 +129,7 @@ s32 cappy_penguin_small_update(struct Object *o) {
 
     // Gfx
     obj_update_gfx(o);
-    obj_set_animation_with_accel(o, gOmmData->object->state.actionState, 1.f);
+    obj_anim_play(o, gOmmData->object->state.actionState, 1.f);
 
     // Walk
     if (gOmmData->object->state.actionState == 0) {

@@ -138,7 +138,7 @@ static void omm_bhv_peach_vibe_joy_tornado_update() {
     obj_set_angle(o, 0, o->oFaceAngleYaw + 0x1800, 0);
     obj_set_scale(o, 0.4f * gMarioObject->oScaleX, 0.3f * gMarioObject->oScaleY, 0.4f * gMarioObject->oScaleZ);
     obj_update_gfx(o);
-    o->header.gfx.pos[1] -= 50.f * gMarioObject->oScaleY;
+    o->oGfxPos[1] -= 50.f * gMarioObject->oScaleY;
     o->oOpacity = 0x60 * t;
 
     // Produce a sparkle every 6 frames

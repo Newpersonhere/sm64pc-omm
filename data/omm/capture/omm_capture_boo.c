@@ -43,7 +43,7 @@ void cappy_boo_end(struct Object *o) {
     o->oTimer = 0;
     o->oAction = 6;
     o->oBooTargetOpacity = 255;
-    o->header.gfx.pos[1] -= gOmmData->object->boo.gfxOffsetY;
+    o->oGfxPos[1] -= gOmmData->object->boo.gfxOffsetY;
     obj_play_sound(o, SOUND_OBJ_BOO_LAUGH_LONG);
 
     // Ghost Hunt/Merry Go Round boo
@@ -127,7 +127,7 @@ static void cappy_boo_update_opacity_and_scale(struct Object *o) {
     o->oScaleX = scale * (1.f + sins(o->oBooOscillationTimer) * 0.06f);
     o->oScaleY = scale * (1.f - sins(o->oBooOscillationTimer) * 0.06f);
     o->oScaleZ = scale * (1.f + sins(o->oBooOscillationTimer) * 0.06f);
-    o->header.gfx.pos[1] += sins(o->oBooOscillationTimer / 2) * 6.f;
+    o->oGfxPos[1] += sins(o->oBooOscillationTimer / 2) * 6.f;
     o->oBooOscillationTimer += 0x400;
 }
 
@@ -190,7 +190,7 @@ s32 cappy_boo_update(struct Object *o) {
     } else {
         gOmmData->object->boo.gfxOffsetY = omm_max_f(0.f, gOmmData->object->boo.gfxOffsetY - 2.f);
     }
-    o->header.gfx.pos[1] += gOmmData->object->boo.gfxOffsetY;
+    o->oGfxPos[1] += gOmmData->object->boo.gfxOffsetY;
 
     // Cappy values
     gOmmData->object->cappy.copyGfx   = true;

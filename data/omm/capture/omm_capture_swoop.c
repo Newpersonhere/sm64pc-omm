@@ -106,10 +106,10 @@ s32 cappy_swoop_update(struct Object *o) {
         if (!omm_mario_is_locked(gMarioState)) {
             pobj_move(o, POBJ_B_BUTTON_DOWN, false, false);
             if (pobj_jump(o, 0, 6) == POBJ_RESULT_JUMP_START) {
-                o->header.gfx.mAnimInfo.curAnim = NULL;
+                o->oCurrAnim = NULL;
                 obj_play_sound(o, SOUND_OBJ2_SWOOP);
             }
-            if (POBJ_B_BUTTON_DOWN && obj_is_anim_near_end(o)) {
+            if (POBJ_B_BUTTON_DOWN && obj_anim_is_near_end(o)) {
                 obj_play_sound(o, SOUND_OBJ_UNKNOWN6);
             }
         }
@@ -144,9 +144,9 @@ s32 cappy_swoop_update(struct Object *o) {
     // Gfx
     obj_update_gfx(o);
     if (gOmmData->object->swoop.ceilingType != 0) {
-        obj_set_animation_with_accel(o, 1, 1.f);
-        o->header.gfx.pos[1] += o->oScaleY * 60.f;
-        o->header.gfx.angle[2] = 0x8000;
+        obj_anim_play(o, 1, 1.f);
+        o->oGfxPos[1] += o->oScaleY * 60.f;
+        o->oGfxAngle[2] = 0x8000;
 
         // Cappy values
         gOmmData->object->cappy.offset[1] = -50.f + o->oScaleY * 60.f;
@@ -154,7 +154,7 @@ s32 cappy_swoop_update(struct Object *o) {
         gOmmData->object->cappy.angle[2]  = 0x8000;
         gOmmData->object->cappy.scale     = 0.5f;
     } else {
-        obj_set_animation_with_accel(o, 0, (o->oVelY > 0.f || POBJ_B_BUTTON_DOWN) ? 2.f : 1.f);
+        obj_anim_play(o, 0, (o->oVelY > 0.f || POBJ_B_BUTTON_DOWN) ? 2.f : 1.f);
         
         // Cappy values
         gOmmData->object->cappy.offset[1] = 50.f;

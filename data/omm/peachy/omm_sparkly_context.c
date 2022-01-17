@@ -212,11 +212,17 @@ void omm_sparkly_context_update_state(struct MarioState *m) {
         if (data && data->showOnEntry && omm_get_dialog_entry(NULL, OMM_DIALOG_SPARKLY_STAR + data->index)) {
             if (data->showOnEntry == 2) {
                 omm_mario_set_action(m, ACT_READING_AUTOMATIC_DIALOG, OMM_DIALOG_SPARKLY_STAR + data->index, 0xFFFF);
-            } else if (data->index != sLastEntryDialogStarIndex) {
-                level_set_transition(-1, NULL);
-                create_dialog_box(OMM_DIALOG_SPARKLY_STAR + data->index);
+                sLastEntryDialogStarIndex = -1;
+            } else if (OMM_EXTRAS_SPARKLY_STARS_HINT) {
+                s32 entryDialogStarIndex = data->index + 30 * omm_sparkly_get_current_mode();
+                if (entryDialogStarIndex != sLastEntryDialogStarIndex) {
+                    level_set_transition(-1, NULL);
+                    create_dialog_box(OMM_DIALOG_SPARKLY_STAR + data->index);
+                }
+                sLastEntryDialogStarIndex = entryDialogStarIndex;
+            } else {
+                sLastEntryDialogStarIndex = -1;
             }
-            sLastEntryDialogStarIndex = data->index;
         } else {
             sLastEntryDialogStarIndex = -1;
         }

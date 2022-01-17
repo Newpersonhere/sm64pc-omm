@@ -146,6 +146,7 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 #define OMM_EXTRAS_RED_COINS_RADAR                      (gOmmExtrasRedCoinsRadar)
 #define OMM_EXTRAS_SHOW_STAR_NUMBER                     (gOmmExtrasShowStarNumber && !omm_is_ending_cutscene() && (!OMM_GAME_IS_SMSR || (gCurrLevelNum != LEVEL_ENDING)))
 #define OMM_EXTRAS_INVISIBLE_MODE                       (gOmmExtrasInvisibleMode)
+#define OMM_EXTRAS_SPARKLY_STARS_HINT                   (gOmmExtrasSparklyStarsHint)
 #define OMM_EXTRAS_CRYSTAL_STARS_REWARD                 (gOmmExtrasCrystalStarsReward && omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD))
 #define OMM_CHEAT_UNLIMITED_CAPPY_BOUNCES               (gOmmCheatUnlimitedCappyBounces == 1)
 #define OMM_CHEAT_CAPPY_STAYS_FOREVER                   (gOmmCheatCappyStaysForever == 1)
@@ -381,11 +382,18 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 
 #define gCurrGraphNodeObject                            ((struct Object *) gCurGraphNodeObject)
 #define oCameraToObject                                 header.gfx.cameraToObject
+#define oThrowMatrix                                    header.gfx.throwMatrix
 #define oGraphNode                                      header.gfx.sharedChild
 #define oNodeFlags                                      header.gfx.node.flags
+#define oGfxPos                                         header.gfx.pos
+#define oGfxAngle                                       header.gfx.angle
+#define oGfxScale                                       header.gfx.scale
 #define oScaleX                                         header.gfx.scale[0]
 #define oScaleY                                         header.gfx.scale[1]
 #define oScaleZ                                         header.gfx.scale[2]
+#define oAnimInfo                                       header.gfx.mAnimInfo
+#define oAnimID                                         header.gfx.mAnimInfo.animID
+#define oCurrAnim                                       header.gfx.mAnimInfo.curAnim
 #define oWall                                           OBJECT_FIELD_SURFACE(0x19)
 #define oGeoData                                        OBJECT_FIELD_VPTR(0x47)
 #define oBehaviorCommand                                OBJECT_FIELD_CVPTR(0x47)

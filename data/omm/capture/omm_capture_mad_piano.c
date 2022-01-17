@@ -40,7 +40,7 @@ bool cappy_mad_piano_init(struct Object *o) {
 }
 
 void cappy_mad_piano_end(struct Object *o) {
-    obj_set_animation_with_accel(o, 0, 1.f);
+    obj_anim_play(o, 0, 1.f);
     obj_drop_to_floor(o);
     o->oHomeX = o->oPosX;
     o->oHomeY = o->oPosY;
@@ -102,8 +102,8 @@ s32 cappy_mad_piano_update(struct Object *o) {
         gOmmData->object->state.actionTimer--;
     }
     obj_update_gfx(o);
-    obj_set_animation_with_accel(o, gOmmData->object->state.actionState, 1.f);
-    o->header.gfx.angle[1] -= 0x4000;
+    obj_anim_play(o, gOmmData->object->state.actionState, 1.f);
+    o->oGfxAngle[1] -= 0x4000;
 
     // Cappy values
     gOmmData->object->cappy.offset[1] = 150.f;

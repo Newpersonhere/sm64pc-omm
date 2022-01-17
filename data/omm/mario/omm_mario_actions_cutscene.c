@@ -149,19 +149,19 @@ static void omm_lost_coins_respawn() {
 
 typedef struct {
     struct {
-        s32 animId; // mAnm.animID if MARIO_ANIM_CURRENT
-        s32 animAccel;
+        s32 animID; // mAnm.animID if MARIO_ANIM_CURRENT
+        f32 animAccel;
         s16 anglePitch; // mGfx.angle[0] if 0xFFFF
-        s32 frameMin; // mAnm.animFrame if -1
-        s32 frameMax; // mAnm.animFrame if -1
+        f32 frameMin; // mAnm.animFrame if -1
+        f32 frameMax; // mAnm.animFrame if -1
         f32 yOffset;
     } anim1;
     struct {
-        s32 animId; // mAnm.animID if MARIO_ANIM_CURRENT
-        s32 animAccel;
+        s32 animID; // mAnm.animID if MARIO_ANIM_CURRENT
+        f32 animAccel;
         s16 anglePitch; // mGfx.angle[0] if 0xFFFF
-        s32 frameMin; // mAnm.animFrame if -1
-        s32 frameMax; // mAnm.animFrame if -1
+        f32 frameMin; // mAnm.animFrame if -1
+        f32 frameMax; // mAnm.animFrame if -1
         f32 yVelInit; // m->vel[1] if -1
         f32 yVelDec;
         f32 yVelLimit;
@@ -177,23 +177,23 @@ static void omm_play_death_sound(struct MarioState *m, s32 type) {
 }
 
 #define mGfx m->marioObj->header.gfx
-#define mAnm m->marioObj->header.gfx.mAnimInfo
+#define mAnm m->marioObj->oAnimInfo
 static void omm_act_death_handler(struct MarioState *m, s32 type, bool lookAtCamera, u16 tAnim2, u16 tBowserFace, u16 tEnd, const OmmActDeathAnimParams *anims) {
     static f32 sMarioPosY;
     static f32 sAnim2Vel;
 
     // Params
-    s32 anim1_animId     = (anims->anim1.animId == MARIO_ANIM_CURRENT ? mAnm.animID : anims->anim1.animId);
-    s32 anim1_animAccel  = (anims->anim1.animAccel);
+    s32 anim1_animId     = (anims->anim1.animID == MARIO_ANIM_CURRENT ? mAnm.animID : anims->anim1.animID);
+    f32 anim1_animAccel  = (anims->anim1.animAccel);
     s16 anim1_anglePitch = (anims->anim1.anglePitch == (s16) 0xFFFF ? mGfx.angle[0] : anims->anim1.anglePitch);
-    s32 anim1_frameMin   = (anims->anim1.frameMin == -1 ? mAnm.animFrame : anims->anim1.frameMin);
-    s32 anim1_frameMax   = (anims->anim1.frameMax == -1 ? mAnm.animFrame : anims->anim1.frameMax);
+    f32 anim1_frameMin   = (anims->anim1.frameMin == -1 ? mAnm.animFrame : anims->anim1.frameMin);
+    f32 anim1_frameMax   = (anims->anim1.frameMax == -1 ? mAnm.animFrame : anims->anim1.frameMax);
     f32 anim1_yOffset    = (anims->anim1.yOffset);
-    s32 anim2_animId     = (anims->anim2.animId == MARIO_ANIM_CURRENT ? mAnm.animID : anims->anim2.animId);
-    s32 anim2_animAccel  = (anims->anim2.animAccel);
+    s32 anim2_animId     = (anims->anim2.animID == MARIO_ANIM_CURRENT ? mAnm.animID : anims->anim2.animID);
+    f32 anim2_animAccel  = (anims->anim2.animAccel);
     s16 anim2_anglePitch = (anims->anim2.anglePitch == (s16) 0xFFFF ? mGfx.angle[0] : anims->anim2.anglePitch);
-    s32 anim2_frameMin   = (anims->anim2.frameMin == -1 ? mAnm.animFrame : anims->anim2.frameMin);
-    s32 anim2_frameMax   = (anims->anim2.frameMax == -1 ? mAnm.animFrame : anims->anim2.frameMax);
+    f32 anim2_frameMin   = (anims->anim2.frameMin == -1 ? mAnm.animFrame : anims->anim2.frameMin);
+    f32 anim2_frameMax   = (anims->anim2.frameMax == -1 ? mAnm.animFrame : anims->anim2.frameMax);
     f32 anim2_yVelInit   = (anims->anim2.yVelInit == -1 ? m->vel[1] : anims->anim2.yVelInit);
     f32 anim2_yVelDec    = (anims->anim2.yVelDec);
     f32 anim2_yVelLimit  = (anims->anim2.yVelLimit);
@@ -228,17 +228,13 @@ static void omm_act_death_handler(struct MarioState *m, s32 type, bool lookAtCam
 
     // Animations
     if (m->actionTimer < tAnim2) {
-        if (mAnm.animAccel != anim1_animAccel) mAnm.animID = -1;
-        set_mario_anim_with_accel(m, anim1_animId, anim1_animAccel);
-        mAnm.animFrame            = (s16) omm_clamp_s(mAnm.animFrame,            anim1_frameMin,       anim1_frameMax      );
-        mAnm.animFrameAccelAssist = (s32) omm_clamp_s(mAnm.animFrameAccelAssist, anim1_frameMin << 16, anim1_frameMax << 16);
-        mGfx.angle[0]             = anim1_anglePitch;
+        obj_anim_play(m->marioObj, anim1_animId, anim1_animAccel);
+        obj_anim_clamp_frame(m->marioObj, anim1_frameMin, anim1_frameMax);
+        mGfx.angle[0] = anim1_anglePitch;
     } else {
-        if (mAnm.animAccel != anim2_animAccel) mAnm.animID = -1;
-        set_mario_anim_with_accel(m, anim2_animId, anim2_animAccel);
-        mAnm.animFrame            = (s16) omm_clamp_s(mAnm.animFrame,            anim2_frameMin,       anim2_frameMax      );
-        mAnm.animFrameAccelAssist = (s32) omm_clamp_s(mAnm.animFrameAccelAssist, anim2_frameMin << 16, anim2_frameMax << 16);
-        mGfx.angle[0]             = anim2_anglePitch;
+        obj_anim_play(m->marioObj, anim2_animId, anim2_animAccel);
+        obj_anim_clamp_frame(m->marioObj, anim2_frameMin, anim2_frameMax);
+        mGfx.angle[0] = anim2_anglePitch;
         sMarioPosY += sAnim2Vel;
         sAnim2Vel = omm_max_f(sAnim2Vel + anim2_yVelDec, anim2_yVelLimit);
     }
@@ -284,34 +280,34 @@ static void omm_act_death_handler(struct MarioState *m, s32 type, bool lookAtCam
 
 static const OmmActDeathAnimParams *omm_act_death_get_anim_params(s32 deathType) {
     static OmmActDeathAnimParams sOmmActDeathAnimParams[2][7] = {
-    { { { MARIO_ANIM_AIR_FORWARD_KB,     0x10000, 0xE000,  0,  0, 16          },
-        { MARIO_ANIM_BACKWARDS_WATER_KB, 0x10000, 0x0000,  0, 20, 40, -2, -40 } },   // Default
-      { { MARIO_ANIM_DROWNING_PART2,     0x10000, 0x0000,  0,  0, 16          },
-        { MARIO_ANIM_BACKWARDS_WATER_KB, 0x0C000, 0x0000,  0, 20, 20, -1, -20 } },   // Water
-      { { MARIO_ANIM_BEING_GRABBED,      0x20000, 0x0000,  0, 30,  0          },
-        { MARIO_ANIM_BEING_GRABBED,      0x20000, 0x0000,  0, 30, -1, -2, -90 } },   // Fall
-      { { MARIO_ANIM_NONE,               0x00000, 0x0000,  0,  0,  0          },
-        { MARIO_ANIM_CURRENT,            0x00001, 0xFFFF, -1, -1,  0,  0,   0 } },   // Frozen
-      { { MARIO_ANIM_NONE,               0x00000, 0x0000,  0,  0,  0          },
-        { MARIO_ANIM_CURRENT,            0x00001, 0xFFFF, -1, -1,  0,  0,   0 } },   // Eaten by Bubba
-      { { MARIO_ANIM_NONE,               0x00000, 0x0000,  0,  0,  8          },
-        { MARIO_ANIM_DYING_IN_QUICKSAND, 0x10000, 0x0000,  0, 60,  0, -3,  -3 } },   // Quicksand
-      { { MARIO_ANIM_NONE,               0x00000, 0x0000,  0,  0,  0          },
-        { MARIO_ANIM_A_POSE,             0x00001, 0x0000,  0,  0,  0,  0,   0 } } }, // Squished
-    { { { MARIO_ANIM_OMM_DEATH,          0x10000, 0x0000,  0,  5,  0          },
-        { MARIO_ANIM_OMM_DEATH,          0x10000, 0x0000,  6, 91, 40, -2, -50 } },   // Default
-      { { MARIO_ANIM_OMM_DROWN,          0x10000, 0x0000,  0,  5,  0          },
-        { MARIO_ANIM_OMM_DROWN,          0x10000, 0x0000,  6, 91, 20, -1, -20 } },   // Water
-      { { MARIO_ANIM_BEING_GRABBED,      0x20000, 0x0000,  0, 30,  0          },
-        { MARIO_ANIM_BEING_GRABBED,      0x20000, 0x0000,  0, 30, -1, -2, -90 } },   // Fall
-      { { MARIO_ANIM_NONE,               0x00000, 0x0000,  0,  0,  0          },
-        { MARIO_ANIM_OMM_FREEZE,         0x10000, 0x0000,  0,  7,  0,  0,   0 } },   // Frozen
-      { { MARIO_ANIM_NONE,               0x00000, 0x0000,  0,  0,  0          },
-        { MARIO_ANIM_CURRENT,            0x00001, 0xFFFF, -1, -1,  0,  0,   0 } },   // Eaten by Bubba
-      { { MARIO_ANIM_NONE,               0x00000, 0x0000,  0,  0,  8          },
-        { MARIO_ANIM_DYING_IN_QUICKSAND, 0x10000, 0x0000,  0, 60,  0, -3,  -3 } },   // Quicksand
-      { { MARIO_ANIM_NONE,               0x00000, 0x0000,  0,  0,  0          },
-        { MARIO_ANIM_A_POSE,             0x00001, 0x0000,  0,  0,  0,  0,   0 } } }, // Squished
+    { { { MARIO_ANIM_AIR_FORWARD_KB,     1.00f, 0xE000,  0,  0, 16          },
+        { MARIO_ANIM_BACKWARDS_WATER_KB, 1.00f, 0x0000,  0, 20, 40, -2, -40 } },   // Default
+      { { MARIO_ANIM_DROWNING_PART2,     1.00f, 0x0000,  0,  0, 16          },
+        { MARIO_ANIM_BACKWARDS_WATER_KB, 0.75f, 0x0000,  0, 20, 20, -1, -20 } },   // Water
+      { { MARIO_ANIM_BEING_GRABBED,      2.00f, 0x0000,  0, 30,  0          },
+        { MARIO_ANIM_BEING_GRABBED,      2.00f, 0x0000,  0, 30, -1, -2, -90 } },   // Fall
+      { { MARIO_ANIM_NONE,               0.00f, 0x0000,  0,  0,  0          },
+        { MARIO_ANIM_CURRENT,            1.00f, 0xFFFF, -1, -1,  0,  0,   0 } },   // Frozen
+      { { MARIO_ANIM_NONE,               0.00f, 0x0000,  0,  0,  0          },
+        { MARIO_ANIM_CURRENT,            1.00f, 0xFFFF, -1, -1,  0,  0,   0 } },   // Eaten by Bubba
+      { { MARIO_ANIM_NONE,               0.00f, 0x0000,  0,  0,  8          },
+        { MARIO_ANIM_DYING_IN_QUICKSAND, 1.00f, 0x0000,  0, 60,  0, -3,  -3 } },   // Quicksand
+      { { MARIO_ANIM_NONE,               0.00f, 0x0000,  0,  0,  0          },
+        { MARIO_ANIM_A_POSE,             1.00f, 0x0000,  0,  0,  0,  0,   0 } } }, // Squished
+    { { { MARIO_ANIM_OMM_DEATH,          1.00f, 0x0000,  0,  5,  0          },
+        { MARIO_ANIM_OMM_DEATH,          1.00f, 0x0000,  6, 91, 40, -2, -50 } },   // Default
+      { { MARIO_ANIM_OMM_DROWN,          1.00f, 0x0000,  0,  5,  0          },
+        { MARIO_ANIM_OMM_DROWN,          1.00f, 0x0000,  6, 91, 20, -1, -20 } },   // Water
+      { { MARIO_ANIM_BEING_GRABBED,      2.00f, 0x0000,  0, 30,  0          },
+        { MARIO_ANIM_BEING_GRABBED,      2.00f, 0x0000,  0, 30, -1, -2, -90 } },   // Fall
+      { { MARIO_ANIM_NONE,               0.00f, 0x0000,  0,  0,  0          },
+        { MARIO_ANIM_OMM_FREEZE,         1.00f, 0x0000,  0,  7,  0,  0,   0 } },   // Frozen
+      { { MARIO_ANIM_NONE,               0.00f, 0x0000,  0,  0,  0          },
+        { MARIO_ANIM_CURRENT,            1.00f, 0xFFFF, -1, -1,  0,  0,   0 } },   // Eaten by Bubba
+      { { MARIO_ANIM_NONE,               0.00f, 0x0000,  0,  0,  8          },
+        { MARIO_ANIM_DYING_IN_QUICKSAND, 1.00f, 0x0000,  0, 60,  0, -3,  -3 } },   // Quicksand
+      { { MARIO_ANIM_NONE,               0.00f, 0x0000,  0,  0,  0          },
+        { MARIO_ANIM_A_POSE,             1.00f, 0x0000,  0,  0,  0,  0,   0 } } }, // Squished
     };
     return &sOmmActDeathAnimParams[OMM_EXTRAS_SMO_ANIMATIONS][deathType];
 }
@@ -372,7 +368,7 @@ static s32 omm_act_disappeared(struct MarioState *m) {
 //
 
 typedef struct {
-    s32 animId;
+    s32 animID;
     s32 handState;
     s16 yawOffset;
     f32 yOffset;
@@ -478,13 +474,14 @@ static const OmmStarDanceAnimFrame sOmmStarDanceAnimFrames[2][48] = {
 };
 
 static bool omm_update_star_dance(struct MarioState *m) {
-    static struct Object *celebStar;
+    static const BehaviorScript *starBehavior = NULL;
+    static struct Object *celebStar = NULL;
 
     // Enable time stop and spawn the celebration star
     if (m->actionTimer == 0) {
-        m->riddenObj = (void *) m->interactObj->behavior; // Mario stops ridding when collecting a star, so we can safely use this slot to store the star behavior
+        starBehavior = m->interactObj->behavior;
         m->faceAngle[1] = m->area->camera->yaw;
-        vec3s_set(m->marioObj->header.gfx.angle, 0, m->area->camera->yaw, 0);
+        vec3s_set(m->marioObj->oGfxAngle, 0, m->area->camera->yaw, 0);
         disable_background_sound();
         audio_play_course_clear();
         f32 radius =  60.f * m->marioObj->oScaleX;
@@ -496,6 +493,9 @@ static bool omm_update_star_dance(struct MarioState *m) {
 
     // Display the text box "You got a star"
     else if (m->actionTimer == 39) {
+#if OMM_GAME_IS_SMSR
+#define gLastCompletedStarNum (gLastCompletedStarNum * (starBehavior != bhvCustomSMSRStarReplica))
+#endif
         omm_render_start_you_got_a_star(OMM_TEXT_YOU_GOT_A_STAR, omm_level_get_name(gCurrLevelNum, false, false), omm_level_get_act_name(gCurrLevelNum, gLastCompletedStarNum, false, false));
     }
     
@@ -515,7 +515,7 @@ static bool omm_update_star_dance(struct MarioState *m) {
         omm_render_stop_you_got_a_star();
         omm_health_fully_heal_mario(m);
         m->healCounter = OMM_O2_REFILL;
-        m->riddenObj = NULL;
+        starBehavior = NULL;
         return true;
     }
 
@@ -524,10 +524,10 @@ static bool omm_update_star_dance(struct MarioState *m) {
 
     // Animation
     const OmmStarDanceAnimFrame *frame = &sOmmStarDanceAnimFrames[OMM_EXTRAS_SMO_ANIMATIONS][omm_min_s(m->actionTimer, 47)];
-    omm_mario_set_animation(m, frame->animId, 1.f, -1);
+    obj_anim_play(m->marioObj, frame->animID, 1.f);
     m->marioBodyState->handState = frame->handState;
-    m->marioObj->header.gfx.pos[1] = m->pos[1] + frame->yOffset;
-    m->marioObj->header.gfx.angle[1] = m->faceAngle[1] - frame->yawOffset;
+    m->marioObj->oGfxPos[1] = m->pos[1] + frame->yOffset;
+    m->marioObj->oGfxAngle[1] = m->faceAngle[1] - frame->yawOffset;
     m->actionTimer++;
     return false;
 }
@@ -605,7 +605,7 @@ static s32 omm_act_transition_wf_tower(struct MarioState *m) {
             m->intendedYaw = 0xA000;
             m->faceAngle[1] = 0xA000;
             m->marioObj->oFaceAngleYaw = 0xA000;
-            m->marioObj->header.gfx.angle[1] = 0xA000;
+            m->marioObj->oGfxAngle[1] = 0xA000;
             mario_set_forward_vel(m, 0.f);
             omm_mario_set_action(m, ACT_FREEFALL, 0, 0xFFFF);
             play_transition(WARP_TRANSITION_FADE_FROM_COLOR, 30, 0xFF, 0xFF, 0xFF);
@@ -619,11 +619,11 @@ static s32 omm_act_transition_wf_tower(struct MarioState *m) {
 // Exits
 //
 
-static bool omm_mario_launch_until_land(struct MarioState *m, s32 endAction, s32 animation, f32 forwardVel, u16 delay) {
+static bool omm_mario_launch_until_land(struct MarioState *m, s32 endAction, s32 animID, f32 forwardVel, u16 delay) {
     if (m->actionTimer++ >= delay) {
         m->marioObj->oNodeFlags |= GRAPH_RENDER_ACTIVE;
         mario_set_forward_vel(m, forwardVel);
-        set_mario_animation(m, animation);
+        obj_anim_play(m->marioObj, animID, 1.f);
         if (perform_air_step(m, 0) == AIR_STEP_LANDED) {
             omm_mario_set_action(m, endAction, 0, 0);
             return true;
@@ -639,7 +639,7 @@ static s32 omm_act_exit_airborne(struct MarioState *m) {
         omm_health_fully_heal_mario(m);
         m->healCounter = 31;
     }
-    m->marioObj->header.gfx.angle[1] += 0x8000;
+    m->marioObj->oGfxAngle[1] += 0x8000;
     m->particleFlags |= PARTICLE_SPARKLES;
     return OMM_MARIO_ACTION_RESULT_BREAK;
 }
@@ -649,7 +649,7 @@ static s32 omm_act_falling_exit_airborne(struct MarioState *m) {
         omm_health_fully_heal_mario(m);
         m->healCounter = 31;
     }
-    m->marioObj->header.gfx.angle[1] += 0x8000;
+    m->marioObj->oGfxAngle[1] += 0x8000;
     m->particleFlags |= PARTICLE_SPARKLES;
     return OMM_MARIO_ACTION_RESULT_BREAK;
 }
@@ -661,7 +661,7 @@ static s32 omm_act_special_exit_airborne(struct MarioState *m) {
         m->healCounter = 31;
         m->actionArg = 1;
     }
-    m->marioObj->header.gfx.angle[1] += 0x8000;
+    m->marioObj->oGfxAngle[1] += 0x8000;
     m->particleFlags |= PARTICLE_SPARKLES;
     return OMM_MARIO_ACTION_RESULT_BREAK;
 }

@@ -23,8 +23,8 @@ void cappy_bobomb_end(struct Object *o) {
     o->oBehParams &= 0xFF00FFFF;
     o->oBehParams |= (BOBOMB_BP_STYPE_GENERIC << 16);
     o->oBehParams2ndByte = BOBOMB_BP_STYPE_GENERIC;
-    o->header.gfx.mAnimInfo.curAnim = NULL;
-    obj_set_animation_with_accel(o, 0, 1.f);
+    o->oAnimInfo.curAnim = NULL;
+    obj_anim_play(o, 0, 1.f);
 
     // As Bob-omb's respawn point is set to its home position,
     // reset the latter to its previous value if the floor
@@ -124,7 +124,7 @@ s32 cappy_bobomb_update(struct Object *o) {
 
     // Gfx
     obj_update_gfx(o);
-    obj_set_animation_with_accel(o, 0, (o->oVelY <= 0.f) * omm_max_f(1.f, o->oForwardVel * (2.f / (omm_capture_get_walk_speed(o)))));
+    obj_anim_play(o, 0, (o->oVelY <= 0.f) * omm_max_f(1.f, o->oForwardVel * (2.f / (omm_capture_get_walk_speed(o)))));
     obj_random_blink(o, &o->oBobombBlinkTimer);
     if (obj_is_on_ground(o)) {
         obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, omm_capture_get_walk_speed(o) * 11.f, o->oForwardVel, SOUND_OBJ_BOBOMB_WALK, OBJ_STEP_PARTICLE_NONE);

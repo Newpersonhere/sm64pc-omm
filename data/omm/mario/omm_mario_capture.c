@@ -28,7 +28,7 @@ static void copy_object_data(struct Object *o, bool revert) {
     copy_object_field(hurtboxRadius);
     copy_object_field(hurtboxHeight);
     copy_object_field(hitboxDownOffset);
-    copy_object_field(header.gfx.scale);
+    copy_object_field(oGfxScale);
     copy_object_field(rawData);
 #if IS_64_BIT
     copy_object_field(ptrData);
@@ -47,20 +47,22 @@ static void copy_object_data(struct Object *o, bool revert) {
 //
 
 static void omm_act_possession_update_star_dance(struct MarioState *m) {
-    static struct Object *celebStar;
+    static const BehaviorScript *starBehavior = NULL;
+    static struct Object *celebStar = NULL;
     struct Object *o = gOmmData->mario->capture.obj;
     o->oNodeFlags &= ~GRAPH_RENDER_INVISIBLE;
 
     // Turn Mario (not the possessed object) to face the camera
     // so that the camera won't try to face the possessed object
     m->faceAngle[1] = m->area->camera->yaw;
-    vec3s_set(m->marioObj->header.gfx.angle, 0, m->area->camera->yaw, 0);
+    vec3s_set(m->marioObj->oGfxAngle, 0, m->area->camera->yaw, 0);
     omm_mario_lock_camera(m, true);
 
     // Enable time stop and spawn the celebration star
     if (m->actionTimer == 0) {
+        starBehavior = m->interactObj->behavior;
         m->faceAngle[1] = m->area->camera->yaw;
-        vec3s_set(m->marioObj->header.gfx.angle, 0, m->area->camera->yaw, 0);
+        vec3s_set(m->marioObj->oGfxAngle, 0, m->area->camera->yaw, 0);
         disable_background_sound();
         audio_play_course_clear();
         f32 radius = omm_capture_get_hitbox_radius(o);
@@ -75,6 +77,9 @@ static void omm_act_possession_update_star_dance(struct MarioState *m) {
 
     // Display the text box "You got a star"
     else if (m->actionTimer == 39) {
+#if OMM_GAME_IS_SMSR
+#define gLastCompletedStarNum (gLastCompletedStarNum * (starBehavior != bhvCustomSMSRStarReplica))
+#endif
         omm_render_start_you_got_a_star(OMM_TEXT_YOU_GOT_A_STAR, omm_level_get_name(gCurrLevelNum, false, false), omm_level_get_act_name(gCurrLevelNum, gLastCompletedStarNum, false, false));
     }
     
@@ -94,6 +99,7 @@ static void omm_act_possession_update_star_dance(struct MarioState *m) {
         omm_render_stop_you_got_a_star();
         omm_health_fully_heal_mario(m);
         m->healCounter = OMM_O2_REFILL;
+        starBehavior = NULL;
         omm_mario_unlock(m);
         gOmmData->mario->capture.timer = 20;
     }
@@ -147,7 +153,7 @@ static void mario_cappy_update_object_and_gfx(struct MarioState *m) {
         vec3f_copy(m->vel, &o->oVelX);
         vec3s_set(m->faceAngle, -o->oFaceAnglePitch, o->oFaceAngleYaw, o->oFaceAngleRoll);
         obj_scale(m->marioObj, 1.f);
-        set_mario_animation(m, MARIO_ANIM_A_POSE);
+        obj_anim_play(m->marioObj, MARIO_ANIM_A_POSE, 1.f);
         m->forwardVel = o->oForwardVel;
         m->squishTimer = 0;
         m->marioObj->oNodeFlags |= GRAPH_RENDER_INVISIBLE;
@@ -159,18 +165,18 @@ static void mario_cappy_update_object_and_gfx(struct MarioState *m) {
     // Cappy
     if (cap != NULL) {
         Vec3f dv = {
-            -gOmmData->object->cappy.offset[0] * o->header.gfx.scale[0],
-            +gOmmData->object->cappy.offset[1] * o->header.gfx.scale[1],
-            +gOmmData->object->cappy.offset[2] * o->header.gfx.scale[0]
+            -gOmmData->object->cappy.offset[0] * o->oGfxScale[0],
+            +gOmmData->object->cappy.offset[1] * o->oGfxScale[1],
+            +gOmmData->object->cappy.offset[2] * o->oGfxScale[0]
         };
         if (gOmmData->object->cappy.copyGfx) {
-            vec3f_rotate_zxy(dv, dv, o->header.gfx.angle[0], o->header.gfx.angle[1], o->header.gfx.angle[2]);
-            cap->oPosX           = o->header.gfx.pos[0] + dv[0];
-            cap->oPosY           = o->header.gfx.pos[1] + dv[1];
-            cap->oPosZ           = o->header.gfx.pos[2] + dv[2];
-            cap->oFaceAnglePitch = o->header.gfx.angle[0] + gOmmData->object->cappy.angle[0];
-            cap->oFaceAngleYaw   = o->header.gfx.angle[1] + gOmmData->object->cappy.angle[1];
-            cap->oFaceAngleRoll  = o->header.gfx.angle[2] + gOmmData->object->cappy.angle[2];
+            vec3f_rotate_zxy(dv, dv, o->oGfxAngle[0], o->oGfxAngle[1], o->oGfxAngle[2]);
+            cap->oPosX           = o->oGfxPos[0] + dv[0];
+            cap->oPosY           = o->oGfxPos[1] + dv[1];
+            cap->oPosZ           = o->oGfxPos[2] + dv[2];
+            cap->oFaceAnglePitch = o->oGfxAngle[0] + gOmmData->object->cappy.angle[0];
+            cap->oFaceAngleYaw   = o->oGfxAngle[1] + gOmmData->object->cappy.angle[1];
+            cap->oFaceAngleRoll  = o->oGfxAngle[2] + gOmmData->object->cappy.angle[2];
         } else {
             vec3f_rotate_zxy(dv, dv, o->oFaceAnglePitch, o->oFaceAngleYaw, o->oFaceAngleRoll);
             cap->oPosX           = o->oPosX + dv[0];
@@ -180,19 +186,19 @@ static void mario_cappy_update_object_and_gfx(struct MarioState *m) {
             cap->oFaceAngleYaw   = o->oFaceAngleYaw   + gOmmData->object->cappy.angle[1];
             cap->oFaceAngleRoll  = o->oFaceAngleRoll  + gOmmData->object->cappy.angle[2];
         }
-        cap->oOpacity            = 0xFF;
-        cap->header.gfx.pos[0]   = cap->oPosX;
-        cap->header.gfx.pos[1]   = cap->oPosY + cap->oGraphYOffset;
-        cap->header.gfx.pos[2]   = cap->oPosZ;
-        cap->header.gfx.angle[0] = cap->oFaceAnglePitch & 0xFFFF;
-        cap->header.gfx.angle[1] = cap->oFaceAngleYaw   & 0xFFFF;
-        cap->header.gfx.angle[2] = cap->oFaceAngleRoll  & 0xFFFF;
-        cap->header.gfx.scale[0] = gOmmData->object->cappy.scale * o->header.gfx.scale[0];
-        cap->header.gfx.scale[1] = gOmmData->object->cappy.scale * o->header.gfx.scale[1];
-        cap->header.gfx.scale[2] = gOmmData->object->cappy.scale * o->header.gfx.scale[2];
-        cap->oNodeFlags          = GRAPH_RENDER_ACTIVE;
-        cap->oNodeFlags         &= ~GRAPH_RENDER_INVISIBLE;
-        cap->oNodeFlags         |= GRAPH_RENDER_INVISIBLE * ((o->oNodeFlags & GRAPH_RENDER_INVISIBLE) != 0);
+        cap->oOpacity     = 0xFF;
+        cap->oGfxPos[0]   = cap->oPosX;
+        cap->oGfxPos[1]   = cap->oPosY + cap->oGraphYOffset;
+        cap->oGfxPos[2]   = cap->oPosZ;
+        cap->oGfxAngle[0] = cap->oFaceAnglePitch & 0xFFFF;
+        cap->oGfxAngle[1] = cap->oFaceAngleYaw   & 0xFFFF;
+        cap->oGfxAngle[2] = cap->oFaceAngleRoll  & 0xFFFF;
+        cap->oGfxScale[0] = gOmmData->object->cappy.scale * o->oGfxScale[0];
+        cap->oGfxScale[1] = gOmmData->object->cappy.scale * o->oGfxScale[1];
+        cap->oGfxScale[2] = gOmmData->object->cappy.scale * o->oGfxScale[2];
+        cap->oNodeFlags   = GRAPH_RENDER_ACTIVE;
+        cap->oNodeFlags  &= ~GRAPH_RENDER_INVISIBLE;
+        cap->oNodeFlags  |= GRAPH_RENDER_INVISIBLE * ((o->oNodeFlags & GRAPH_RENDER_INVISIBLE) != 0);
     }
 }
 
@@ -257,8 +263,8 @@ s32 omm_act_possession(struct MarioState *m) {
         m->pos[2] = lerp(coeff(t), zFrom(t), zTo(t));
         m->faceAngle[0] = angle(t);
         m->squishTimer = 0xFF;
-        vec3f_set(m->marioObj->header.gfx.scale, scale(t), scale(t), scale(t));
-        set_mario_animation(m, anim(t));
+        vec3f_set(m->marioObj->oGfxScale, scale(t), scale(t), scale(t));
+        obj_anim_play(m->marioObj, anim(t), 1.f);
         m->particleFlags |= PARTICLE_SPARKLES;
         gOmmData->mario->capture.timer++;
 

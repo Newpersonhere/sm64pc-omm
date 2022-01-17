@@ -267,6 +267,7 @@ DECLARE_TOGGLE_SC(gOmmExtrasInvisibleMode);
 #if OMM_CODE_DEV
 DECLARE_TOGGLE_SC(gOmmExtrasRender96Peach);
 #endif
+DECLARE_TOGGLE_SC(gOmmExtrasSparklyStarsHint);
 DECLARE_TOGGLE_SC(gOmmExtrasCrystalStarsReward);
 #if OMM_CODE_DEBUG
 DECLARE_TOGGLE_SC(gOmmDebugHitbox);

@@ -88,8 +88,8 @@ s32 stationary_ground_step(struct MarioState *m) {
     m->vel[1] = 0.f;
     omm_clamp_mario_pos(m);
     gOmmData->mario->state.peakHeight = m->pos[1];
-    vec3f_copy(m->marioObj->header.gfx.pos, m->pos);
-    vec3s_set(m->marioObj->header.gfx.angle, 0, m->faceAngle[1], 0);
+    vec3f_copy(m->marioObj->oGfxPos, m->pos);
+    vec3s_set(m->marioObj->oGfxAngle, 0, m->faceAngle[1], 0);
     return GROUND_STEP_NONE;
 }
 
@@ -97,8 +97,8 @@ void stop_and_set_height_to_floor(struct MarioState *m) {
     mario_set_forward_vel(m, 0.f);
     m->vel[1] = 0.f;
     m->pos[1] = m->floorHeight = find_floor_height(m->pos[0], m->pos[1], m->pos[2]);
-    vec3f_copy(m->marioObj->header.gfx.pos, m->pos);
-    vec3s_set(m->marioObj->header.gfx.angle, 0, m->faceAngle[1], 0);
+    vec3f_copy(m->marioObj->oGfxPos, m->pos);
+    vec3s_set(m->marioObj->oGfxAngle, 0, m->faceAngle[1], 0);
 }
 
 //
@@ -221,8 +221,8 @@ s32 perform_ground_step(struct MarioState *m) {
     omm_clamp_mario_pos(m);
     gOmmData->mario->state.peakHeight = m->pos[1];
     m->terrainSoundAddend = mario_get_terrain_sound_addend(m);
-    vec3f_copy(m->marioObj->header.gfx.pos, m->pos);
-    vec3s_set(m->marioObj->header.gfx.angle, 0, m->faceAngle[1], 0);
+    vec3f_copy(m->marioObj->oGfxPos, m->pos);
+    vec3s_set(m->marioObj->oGfxAngle, 0, m->faceAngle[1], 0);
     return (stepResult == GROUND_STEP_HIT_WALL_CONTINUE_QSTEPS ? GROUND_STEP_HIT_WALL : stepResult);
 }
 
@@ -332,7 +332,7 @@ u32 mario_push_off_steep_floor(struct MarioState *m, u32 action, u32 actionArg) 
         m->forwardVel = -16.f;
         m->faceAngle[1] = m->floorAngle + 0x8000;
     }
-    return set_mario_action(m, action, actionArg);
+    return omm_mario_set_action(m, action, actionArg, 0);
 }
 
 //
@@ -550,6 +550,11 @@ static void omm_mario_apply_gravity(struct MarioState *m) {
         maxV = 15.f;
     }
 
+    // Peach air attack
+    else if (m->action == ACT_OMM_PEACH_ATTACK_AIR) {
+        decV = (m->vel[1] >= 0.f ? 1.25f : 4.f);
+    }
+
     // Wall-slide
     else if (m->action == ACT_OMM_WALL_SLIDE) {
         decV = 2.f;
@@ -713,8 +718,8 @@ s32 perform_air_step(struct MarioState *m, u32 stepArg) {
     m->terrainSoundAddend = mario_get_terrain_sound_addend(m);
     omm_mario_apply_gravity(m);
     omm_mario_apply_vertical_wind(m);
-    vec3f_copy(m->marioObj->header.gfx.pos, m->pos);
-    vec3s_set(m->marioObj->header.gfx.angle, 0, m->faceAngle[1], 0);
+    vec3f_copy(m->marioObj->oGfxPos, m->pos);
+    vec3s_set(m->marioObj->oGfxAngle, 0, m->faceAngle[1], 0);
     return stepResult;
 }
 
@@ -813,8 +818,8 @@ s32 perform_hang_step(struct MarioState *m) {
     omm_clamp_mario_pos(m);
     m->slideYaw = m->faceAngle[1];
     gOmmData->mario->state.peakHeight = m->pos[1];
-    vec3f_copy(m->marioObj->header.gfx.pos, m->pos);
-    vec3s_set(m->marioObj->header.gfx.angle, 0, m->faceAngle[1], 0);
+    vec3f_copy(m->marioObj->oGfxPos, m->pos);
+    vec3s_set(m->marioObj->oGfxAngle, 0, m->faceAngle[1], 0);
     return stepResult;
 }
 
@@ -979,8 +984,8 @@ s32 perform_water_step(struct MarioState *m) {
     }
 
     omm_clamp_mario_pos(m);
-    vec3f_copy(m->marioObj->header.gfx.pos, m->pos);
-    vec3s_set(m->marioObj->header.gfx.angle, -m->faceAngle[0], m->faceAngle[1], m->faceAngle[2]);
+    vec3f_copy(m->marioObj->oGfxPos, m->pos);
+    vec3s_set(m->marioObj->oGfxAngle, -m->faceAngle[0], m->faceAngle[1], m->faceAngle[2]);
     return stepResult;
 }
 

@@ -78,16 +78,16 @@ s32 cappy_blargg_update(struct Object *o) {
 
         // Idle/Moving
         case 0: {
-            obj_set_animation_with_accel(o, 0, 1.f);
+            obj_anim_play(o, 0, 1.f);
         } break;
 
         // Throw fire ball
         case 1: {
-            obj_set_animation_with_accel(o, 1, 1.f);
-            if (o->header.gfx.mAnimInfo.animFrame == 12) {
+            obj_anim_play(o, 1, 1.f);
+            if (obj_anim_is_past_frame(o, 12)) {
                 obj_play_sound(o, SOUND_OBJ_FLAME_BLOWN | 0xFF00);
                 omm_spawn_blargg_fire_ball(o);
-            } else if (obj_is_anim_at_end(o)) {
+            } else if (obj_anim_is_at_end(o)) {
                 gOmmData->object->state.actionState = 0;
                 omm_mario_unlock(gMarioState);
             }
@@ -96,7 +96,7 @@ s32 cappy_blargg_update(struct Object *o) {
     
     // Cappy values
     gOmmData->object->cappy.offset[0] = -6.f;
-    gOmmData->object->cappy.offset[1] = 96.f + 10.f * sins(((o->header.gfx.mAnimInfo.animFrame - 6) * 0x10000) / 30);
+    gOmmData->object->cappy.offset[1] = 96.f + 10.f * sins(((obj_anim_get_frame(o) - 6) * 0x10000) / 30);
     gOmmData->object->cappy.offset[2] = 88.f;
     gOmmData->object->cappy.angle[0]  = -0x1400;
     gOmmData->object->cappy.scale     = 1.f * (gOmmData->object->state.actionState != 1);

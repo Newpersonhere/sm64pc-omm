@@ -189,7 +189,7 @@ static void omm_bhv_mips_step(struct Object *o, f32 fVel, bool dropToFloor) {
 
 static void omm_bhv_mips_init() {
     struct Object *o = gCurrentObject;
-    obj_play_anim_and_sound(o, 0, 1.f, 0, true);
+    obj_anim_play_with_sound(o, 0, 1.f, 0, true);
 }
 
 //
@@ -205,13 +205,13 @@ static void omm_bhv_mips_act_wait(struct Object *o) {
         o->oMoveAngleYaw = o->oFaceAngleYaw;
     }
     omm_bhv_mips_step(o, 0.f, true);
-    obj_play_anim_and_sound(o, 0, 1.f, 0, false);
+    obj_anim_play_with_sound(o, 0, 1.f, 0, false);
     if (o->oMipsEscapePath != -1 || (o->oTimer >= (4 - 2 * o->oMipsGrabbedCounter) && omm_bhv_mips_should_move(o))) {
         s32 nextWaypoint = omm_bhv_mips_get_target_waypoint(o);
         if (nextWaypoint != -1) {
             o->oAction = OMM_MIPS_ACT_MOVE;
             o->oMipsTargetWaypoint = nextWaypoint;
-            obj_play_anim_and_sound(o, 1, 1.f, 0, true);
+            obj_anim_play_with_sound(o, 1, 1.f, 0, true);
         }
     }
 }
@@ -232,9 +232,9 @@ static void omm_bhv_mips_act_move(struct Object *o) {
                 o->oFloor = NULL;
                 o->oSubAction = 1;
                 o->oForwardVel = o->oMipsForwardVelocity * (0.5f + 0.3f * random_float());
-                obj_play_anim_and_sound(o, 1, 1.f, 0, true);
+                obj_anim_play_with_sound(o, 1, 1.f, 0, true);
                 omm_bhv_mips_play_step_sound(o);
-            } else if (cur_obj_check_if_near_animation_end()) {
+            } else if (obj_anim_is_near_end(o)) {
                 omm_bhv_mips_play_step_sound(o);
             }
         } break;
@@ -250,7 +250,7 @@ static void omm_bhv_mips_act_move(struct Object *o) {
         // Waypoint reached
         case 2: {
             if (obj_is_on_ground(o)) {
-                obj_play_anim_and_sound(o, 0, 1.f, 0, true);
+                obj_anim_play_with_sound(o, 0, 1.f, 0, true);
                 o->oMipsCurrentWaypoint = o->oMipsTargetWaypoint;
                 o->oAction = OMM_MIPS_ACT_WAIT;
             } else {
@@ -272,12 +272,12 @@ static void omm_bhv_mips_act_idle(struct Object *o) {
         // Falling
         case 0: {
             omm_bhv_mips_step(o, 0.f, false);
-            o->header.gfx.mAnimInfo.animFrame = 0;
+            obj_anim_set_frame(o, 0);
             if (obj_is_on_ground(o)) {
                 o->oSubAction = 1;
                 o->oFlags |= OBJ_FLAG_SET_FACE_YAW_TO_MOVE_YAW;
                 o->oMoveAngleYaw = o->oFaceAngleYaw;
-                obj_play_anim_and_sound(o, 0, 1.f, 0, true);
+                obj_anim_play_with_sound(o, 0, 1.f, 0, true);
                 if (o->oPosY < find_water_level(o->oPosX, o->oPosZ)) {
                     spawn_object(o, MODEL_NONE, bhvShallowWaterSplash);
                 }
@@ -307,7 +307,7 @@ static void omm_bhv_mips_held(struct Object *o) {
     if (!(o->oInteractionSubtype & INT_SUBTYPE_DROP_IMMEDIATELY)) {
         o->oIntangibleTimer = -1;
         o->oNodeFlags |= GRAPH_RENDER_INVISIBLE;
-        obj_play_anim_and_sound(o, 4, 1.f, 0, false);
+        obj_anim_play_with_sound(o, 4, 1.f, 0, false);
         cur_obj_set_pos_relative(gMarioObject, 0, 60.f, 100.f);
         if (o->oMipsGrabbedCounter < 3) {
             if (set_mario_npc_dialog(1) == 2) {

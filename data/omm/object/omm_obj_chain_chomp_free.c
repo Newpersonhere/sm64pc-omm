@@ -204,7 +204,7 @@ static void omm_bhv_chain_chomp_free_update() {
 
     o->oVelY = omm_max_f(o->oVelY + o->oGravity, -75.f);
     obj_update_pos_and_vel(o, true, false, false, obj_is_on_ground(o), NULL);
-    obj_set_animation_with_accel(o, 0, 1.f);
+    obj_anim_play(o, 0, 1.f);
     bhv_chain_chomp_update_chain_parts(o, true);
     obj_reset_hitbox(o, 80, 160, 80, 160, 120, 0);
 }

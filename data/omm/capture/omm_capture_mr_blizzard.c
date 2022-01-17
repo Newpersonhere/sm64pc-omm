@@ -34,7 +34,7 @@ void cappy_mr_blizzard_end(struct Object *o) {
     // Turns the Mr. Blizzard into a snowball thrower one
     o->oBehParams2ndByte = MR_BLIZZARD_STYPE_NO_CAP;
     o->oAction = 0;
-    obj_set_animation_with_accel(o, 0, 1.f);
+    obj_anim_play(o, 0, 1.f);
 
     // Remove the snowball from its hand and create a new fresh one
     if (o->oMrBlizzardHeldObj) {
@@ -117,9 +117,8 @@ s32 cappy_mr_blizzard_update(struct Object *o) {
 
     // Gfx
     obj_update_gfx(o);
-    obj_set_animation_with_accel(o, gOmmData->object->state.actionState, 1.f);
-    s32 anmf = (o->header.gfx.mAnimInfo.animFrameAccelAssist >> 16);
-    o->header.gfx.mAnimInfo.animFrameAccelAssist = (omm_max_s(5 + 10 * (1 - gOmmData->object->state.actionState), anmf) << 16);
+    obj_anim_play(o, gOmmData->object->state.actionState, 1.f);
+    obj_anim_clamp_frame(o, 5 + 10 * (1 - gOmmData->object->state.actionState), 127);
 
     // Cappy values
     gOmmData->object->cappy.offset[1] = 200.f;

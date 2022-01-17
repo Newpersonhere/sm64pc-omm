@@ -68,9 +68,9 @@ s32 cappy_koopa_shell_update(struct Object *o) {
 
     // Gfx
     obj_update_gfx(o);
-    o->header.gfx.angle[0] = 0;
-    o->header.gfx.angle[1] = o->oTimer * 0x2000;
-    o->header.gfx.angle[2] = 0;
+    o->oGfxAngle[0] = 0;
+    o->oGfxAngle[1] = o->oTimer * 0x2000;
+    o->oGfxAngle[2] = 0;
     spawn_object(o, MODEL_NONE, bhvSparkleSpawn);
 
     // Sound effect

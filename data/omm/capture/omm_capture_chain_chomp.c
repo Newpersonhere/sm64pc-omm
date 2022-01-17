@@ -134,7 +134,7 @@ s32 cappy_chain_chomp_update(struct Object *o) {
 
     // Gfx
     obj_update_gfx(o);
-    obj_set_animation_with_accel(o, 0, (gOmmData->object->chain_chomp.isBiting ? 2.f : 1.f));
+    obj_anim_play(o, 0, (gOmmData->object->chain_chomp.isBiting ? 2.f : 1.f));
     bhv_chain_chomp_update_chain_parts(o, gOmmData->object->chain_chomp.isFreed);
 
     // Cappy values

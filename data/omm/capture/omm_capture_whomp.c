@@ -102,8 +102,8 @@ s32 cappy_whomp_update(struct Object *o) {
     // Begin Body slam
     if (gOmmData->object->state.actionState == CAPPY_WHOMP_ACTION_BEGIN_ATTACK) {
         omm_mario_lock(gMarioState, -1);
-        obj_set_animation_with_accel(o, 1, 2.0f);
-        if (obj_check_if_near_animation_end(o)) {
+        obj_anim_play(o, 1, 2.0f);
+        if (obj_anim_is_near_end(o)) {
             o->oVelY = 40.0f;
             gOmmData->object->state.actionState = CAPPY_WHOMP_ACTION_ATTACK;
         }
@@ -152,7 +152,7 @@ s32 cappy_whomp_update(struct Object *o) {
 
     // Default
     else {
-        obj_set_animation_with_accel(o, 0, (o->oVelY <= 0.f) * omm_max_f(1.f, o->oForwardVel * 3.f / (omm_capture_get_walk_speed(o))));
+        obj_anim_play(o, 0, (o->oVelY <= 0.f) * omm_max_f(1.f, o->oForwardVel * 3.f / (omm_capture_get_walk_speed(o))));
         if (obj_is_on_ground(o)) {
             obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, omm_capture_get_walk_speed(o) * 9.f, o->oForwardVel, SOUND_OBJ_POUNDING1, OBJ_STEP_PARTICLE_NONE);
         }

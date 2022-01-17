@@ -61,7 +61,7 @@ static void omm_bhv_snowball_update() {
     }
 
     // Update
-    vec3f_copy(o->header.gfx.pos, &o->oPosX);
+    vec3f_copy(o->oGfxPos, &o->oPosX);
     obj_set_params(o, 0, 0, 0, 0, o->parentObj == NULL);
     obj_reset_hitbox(o, 30, 50, 0, 0, 15, 25);
     if (o->parentObj == NULL) {

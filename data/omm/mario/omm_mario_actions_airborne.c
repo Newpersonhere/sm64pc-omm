@@ -2,13 +2,13 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
-static void omm_common_air_knockback_step(struct MarioState *m, u32 landAction, s32 animation, bool isForward) {
+static void omm_common_air_knockback_step(struct MarioState *m, u32 landAction, s32 animID, bool isForward) {
     mario_set_forward_vel(m, m->forwardVel * 0.95f);
     switch (perform_air_step(m, 0)) {
         case AIR_STEP_NONE:
-            omm_mario_set_animation(m, animation, 1.f, -1);
+            obj_anim_play(m->marioObj, animID, 1.f);
             if (m->actionTimer++ >= 30 + (15 * isForward)) {
-                omm_mario_set_animation(m, MARIO_ANIM_GENERAL_FALL, 1.f, -1);
+                obj_anim_play(m->marioObj, MARIO_ANIM_GENERAL_FALL, 1.f);
                 omm_mario_set_action(m, ACT_FREEFALL, 0, 0);
             }
             break;
@@ -18,7 +18,7 @@ static void omm_common_air_knockback_step(struct MarioState *m, u32 landAction, 
             break;
 
         case AIR_STEP_HIT_WALL:
-            set_mario_animation(m, MARIO_ANIM_BACKWARD_AIR_KB);
+            obj_anim_play(m->marioObj, MARIO_ANIM_BACKWARD_AIR_KB, 1.f);
             mario_bonk_reflection(m, FALSE);
             mario_set_forward_vel(m, -m->forwardVel);
             break;
@@ -215,15 +215,19 @@ static s32 omm_act_burning_fall(struct MarioState *m) {
 
 static s32 omm_act_jump_kick(struct MarioState *m) {
     if (m->actionState == 0) {
-        s32 cappyTwirl = (OMM_MOVESET_ODYSSEY && ((omm_cappy_get_object() != NULL) || OMM_PLAYER_IS_PEACH));
-        f32 forwardVel = m->forwardVel / (1 + cappyTwirl);
-        f32 upwardsVel = omm_get_initial_upwards_velocity(m, (20.f + 10.f * cappyTwirl) * omm_player_get_selected_jump_multiplier());
-        mario_set_forward_vel(m, forwardVel);
-        m->vel[1] = upwardsVel;
-        m->actionArg = cappyTwirl;
+        if (OMM_MOVESET_ODYSSEY && OMM_PLAYER_IS_PEACH) {
+            mario_set_forward_vel(m, m->forwardVel / 1.5f);
+            m->vel[1] = omm_get_initial_upwards_velocity(m, 15.f * omm_player_get_selected_jump_multiplier());
+            m->actionArg = 1;
+        } else {
+            s32 rainbowSpin = OMM_MOVESET_ODYSSEY && omm_cappy_get_object();
+            mario_set_forward_vel(m, m->forwardVel / (1.f + rainbowSpin));
+            m->vel[1] = omm_get_initial_upwards_velocity(m, (20.f + 10.f * rainbowSpin) * omm_player_get_selected_jump_multiplier());
+            m->actionArg = rainbowSpin;
+        }
         m->actionState = 1;
         m->actionTimer = 0;
-        m->marioObj->header.gfx.mAnimInfo.animID = -1;
+        m->marioObj->oAnimID = -1;
         play_sound(SOUND_MARIO_PUNCH_HOO, m->marioObj->oCameraToObject);
     }
 
@@ -239,7 +243,7 @@ static s32 omm_act_jump_kick(struct MarioState *m) {
 
     // Vanilla
     if (OMM_MOVESET_CLASSIC && !m->actionArg) {
-        set_mario_animation(m, MARIO_ANIM_AIR_KICK);
+        obj_anim_play(m->marioObj, MARIO_ANIM_AIR_KICK, 1.f);
         return OMM_MARIO_ACTION_RESULT_CONTINUE;
     }
 
@@ -247,28 +251,28 @@ static s32 omm_act_jump_kick(struct MarioState *m) {
     omm_mario_update_air_without_turn(m);
     s32 step = perform_air_step(m, OMM_MOVESET_ODYSSEY * AIR_STEP_CHECK_LEDGE_GRAB);
     action_condition(step == AIR_STEP_LANDED, ACT_FREEFALL_LAND, 0, RETURN_BREAK);
-    action_condition(step == AIR_STEP_GRABBED_LEDGE, ACT_LEDGE_GRAB, 0, RETURN_BREAK, set_mario_animation(m, MARIO_ANIM_IDLE_ON_LEDGE););
+    action_condition(step == AIR_STEP_GRABBED_LEDGE, ACT_LEDGE_GRAB, 0, RETURN_BREAK, obj_anim_play(m->marioObj, MARIO_ANIM_IDLE_ON_LEDGE, 1.f););
     action_condition(step == AIR_STEP_HIT_WALL && omm_mario_check_and_perform_wall_slide(m), ACT_OMM_WALL_SLIDE, 0, RETURN_BREAK);
     action_condition(step == AIR_STEP_HIT_LAVA_WALL && lava_boost_on_wall(m), ACT_LAVA_BOOST, 1, RETURN_BREAK);
 
     // Cappy twirl
     if (m->actionArg) {
         if (OMM_EXTRAS_SMO_ANIMATIONS) {
-            set_mario_animation(m, MARIO_ANIM_OMM_CAPPY_RAINBOW_SPIN);
-            m->flags |= MARIO_KICKING * (m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist < (20 << 16));
+            obj_anim_play(m->marioObj, MARIO_ANIM_OMM_CAPPY_RAINBOW_SPIN, 1.f);
+            m->flags |= MARIO_KICKING * (obj_anim_get_frame(m->marioObj) < 20);
         } else {
-            set_mario_anim_with_accel(m, MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN, 0x18000);
-            m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist = omm_clamp_s(m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist, (74 << 16), (94 << 16));
-            m->flags |= MARIO_KICKING * (m->marioObj->header.gfx.mAnimInfo.animFrameAccelAssist < (94 << 16));
+            obj_anim_play(m->marioObj, MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN, 1.5f);
+            obj_anim_clamp_frame(m->marioObj, 74, 94);
+            m->flags |= MARIO_KICKING * (obj_anim_get_frame(m->marioObj) < 94);
         }
         m->marioBodyState->punchState = 0;
     }
 
     // Kick
     else {
-        s16 animFrame = set_mario_animation(m, MARIO_ANIM_AIR_KICK);
-        if (animFrame == 0) m->marioBodyState->punchState = (2 << 6) | 6;
-        m->flags |= MARIO_KICKING * (animFrame < 8);
+        obj_anim_play(m->marioObj, MARIO_ANIM_AIR_KICK, 1.f);
+        if (obj_anim_is_past_frame(m->marioObj, 0)) m->marioBodyState->punchState = (2 << 6) | 6;
+        m->flags |= MARIO_KICKING * (obj_anim_get_frame(m->marioObj) < 8);
     }
 
     return OMM_MARIO_ACTION_RESULT_BREAK;
@@ -376,18 +380,18 @@ static s32 omm_act_air_hit_wall(struct MarioState *m) {
 }
 
 static s32 omm_act_forward_rollout(struct MarioState *m) {
-    action_init(m->forwardVel, 30.f, 0, SOUND_ACTION_TERRAIN_JUMP, m->marioObj->header.gfx.mAnimInfo.animID = -1;);
+    action_init(m->forwardVel, 30.f, 0, SOUND_ACTION_TERRAIN_JUMP, m->marioObj->oAnimID = -1;);
 
     // Spin
     if (m->actionState == 1) {
-        omm_mario_set_animation(m, MARIO_ANIM_FORWARD_SPINNING, 1.f, -1);
+        obj_anim_play(m->marioObj, MARIO_ANIM_FORWARD_SPINNING, 1.f);
         if (m->actionTimer++ == 4) play_sound(SOUND_ACTION_SPIN, m->marioObj->oCameraToObject);
-        if (omm_mario_is_anim_at_end(m)) m->actionState = 2;
+        if (obj_anim_is_at_end(m->marioObj)) m->actionState = 2;
     }
 
     // Fall
     if (m->actionState == 2) {
-        omm_mario_set_animation(m, MARIO_ANIM_GENERAL_FALL, 1.f, -1);
+        obj_anim_play(m->marioObj, MARIO_ANIM_GENERAL_FALL, 1.f);
     }
 
     // Step
@@ -401,18 +405,18 @@ static s32 omm_act_forward_rollout(struct MarioState *m) {
 }
 
 static s32 omm_act_backward_rollout(struct MarioState *m) {
-    action_init(m->forwardVel, 30.f, 0, SOUND_ACTION_TERRAIN_JUMP, m->marioObj->header.gfx.mAnimInfo.animID = -1;);
+    action_init(m->forwardVel, 30.f, 0, SOUND_ACTION_TERRAIN_JUMP, m->marioObj->oAnimID = -1;);
 
     // Spin
     if (m->actionState == 1) {
-        omm_mario_set_animation(m, MARIO_ANIM_BACKWARD_SPINNING, 1.f, -1);
+        obj_anim_play(m->marioObj, MARIO_ANIM_BACKWARD_SPINNING, 1.f);
         if (m->actionTimer++ == 4) play_sound(SOUND_ACTION_SPIN, m->marioObj->oCameraToObject);
-        if (m->marioObj->header.gfx.mAnimInfo.animFrame == 2) m->actionState = 2;
+        if (obj_anim_is_past_frame(m->marioObj, 2)) m->actionState = 2;
     }
 
     // Fall
     if (m->actionState == 2) {
-        omm_mario_set_animation(m, MARIO_ANIM_GENERAL_FALL, 1.f, -1);
+        obj_anim_play(m->marioObj, MARIO_ANIM_GENERAL_FALL, 1.f);
     }
 
     // Step
@@ -482,7 +486,7 @@ static s32 omm_act_wall_slide(struct MarioState *m) {
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_FREEFALL, 0, RETURN_CANCEL, SFX(SOUND_MARIO_UH););
 
     mario_set_forward_vel(m, 0);
-    set_mario_animation(m, MARIO_ANIM_START_WALLKICK);
+    obj_anim_play(m->marioObj, MARIO_ANIM_START_WALLKICK, 1.f);
     play_sound(SOUND_MOVING_TERRAIN_SLIDE + m->terrainSoundAddend, m->marioObj->oCameraToObject);
     m->particleFlags |= PARTICLE_DUST;
 
@@ -497,7 +501,7 @@ static s32 omm_act_wall_slide(struct MarioState *m) {
     action_condition(step == AIR_STEP_HIT_WALL && !omm_mario_check_wall_slide(m), ACT_FREEFALL, 0, RETURN_BREAK);
 
     // Turn Mario away from the wall
-    m->marioObj->header.gfx.angle[1] = atan2s(m->wall->normal.z, m->wall->normal.x);
+    m->marioObj->oGfxAngle[1] = atan2s(m->wall->normal.z, m->wall->normal.x);
     m->marioBodyState->handState = MARIO_HAND_OPEN;
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
@@ -524,7 +528,7 @@ static s32 omm_act_ground_cappy_bounce(struct MarioState *m) {
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
     if (OMM_EXTRAS_SMO_ANIMATIONS) {
         action_condition(common_air_action_step(m, ACT_DOUBLE_JUMP_LAND, MARIO_ANIM_OMM_CAPPY_VAULT, AIR_STEP_CHECK_LEDGE_GRAB) != AIR_STEP_NONE, 0, 0, RETURN_BREAK);
-        if (m->marioObj->header.gfx.mAnimInfo.animFrame == 6) play_sound(SOUND_ACTION_SIDE_FLIP_UNK, m->marioObj->oCameraToObject);
+        if (obj_anim_is_past_frame(m->marioObj, 6)) play_sound(SOUND_ACTION_SIDE_FLIP_UNK, m->marioObj->oCameraToObject);
     } else {
         action_condition(common_air_action_step(m, ACT_DOUBLE_JUMP_LAND, MARIO_ANIM_TRIPLE_JUMP, AIR_STEP_CHECK_LEDGE_GRAB) != AIR_STEP_NONE, 0, 0, RETURN_BREAK);
         play_flip_sounds(m, 2, 8, 20);
@@ -547,12 +551,12 @@ static s32 omm_act_ground_pound_jump(struct MarioState *m) {
         action_condition(common_air_action_step(m, ACT_JUMP_LAND, MARIO_ANIM_SINGLE_JUMP, AIR_STEP_CHECK_LEDGE_GRAB) != AIR_STEP_NONE, 0, 0, RETURN_BREAK);
     }
 
-    set_mario_animation(m, MARIO_ANIM_SINGLE_JUMP);
-    if (m->actionTimer++ > 10) set_anim_to_frame(m, 10); // Luigi's freaking flutter jump (again)
+    obj_anim_play(m->marioObj, MARIO_ANIM_SINGLE_JUMP, 1.f);
+    obj_anim_clamp_frame(m->marioObj, 0, 9); // Luigi's freaking flutter jump (again)
     s16 prevSpinYaw = gOmmData->mario->spin.yaw;
     gOmmData->mario->spin.yaw += (0x80 * m->vel[1]) * (prevSpinYaw != 0) * (omm_mario_has_vanish_cap(m) ? 0.8f : 1.f) / omm_sqr_f(omm_player_get_selected_jump_multiplier());
     gOmmData->mario->spin.yaw *= ((u16) prevSpinYaw < (u16) gOmmData->mario->spin.yaw) * (m->vel[1] > 0.f);
-    m->marioObj->header.gfx.angle[1] = m->faceAngle[1] + gOmmData->mario->spin.yaw;
+    m->marioObj->oGfxAngle[1] = m->faceAngle[1] + gOmmData->mario->spin.yaw;
     m->particleFlags |= (m->vel[1] > 0.f ? PARTICLE_DUST : 0);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
@@ -574,14 +578,14 @@ static s32 omm_act_cappy_throw_airborne(struct MarioState *m) {
     action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
     action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
-    action_condition(common_air_action_step(m, ACT_FREEFALL_LAND, m->marioObj->header.gfx.mAnimInfo.animID, 0) != AIR_STEP_NONE, 0, 0, RETURN_BREAK);
+    action_condition(common_air_action_step(m, ACT_FREEFALL_LAND, m->marioObj->oAnimID, 0) != AIR_STEP_NONE, 0, 0, RETURN_BREAK);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
 static s32 omm_act_roll_air(struct MarioState *m) {
     action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
-    action_condition((m->forwardVel < 45.f) && !(m->controller->buttonDown & Z_TRIG), ACT_FREEFALL, 0, RETURN_CANCEL, omm_mario_set_animation(m, MARIO_ANIM_GENERAL_FALL, 1.f, -1););
+    action_condition((m->forwardVel < 45.f) && !(m->controller->buttonDown & Z_TRIG), ACT_FREEFALL, 0, RETURN_CANCEL, obj_anim_play(m->marioObj, MARIO_ANIM_GENERAL_FALL, 1.f););
 
     omm_mario_update_air_without_turn(m);
     s32 step = perform_air_step(m, 0);
@@ -592,14 +596,14 @@ static s32 omm_act_roll_air(struct MarioState *m) {
     f32 speed = m->forwardVel / 60.f;
     s16 prevAngle = m->faceAngle[0];
     m->faceAngle[0] += (s16) (0x1C00 * speed);
-    set_mario_anim_with_accel(m, MARIO_ANIM_FORWARD_SPINNING, 1);
-    set_anim_to_frame(m, 0);
+    obj_anim_play(m->marioObj, MARIO_ANIM_FORWARD_SPINNING, 1.f);
+    obj_anim_set_frame(m->marioObj, 0);
     Vec3f v = { 0, -60, -10 };
     vec3f_rotate_zxy(v, v, m->faceAngle[0], m->faceAngle[1], 0);
-    m->marioObj->header.gfx.pos[0] += v[0];
-    m->marioObj->header.gfx.pos[1] += v[1] + 50;
-    m->marioObj->header.gfx.pos[2] += v[2];
-    m->marioObj->header.gfx.angle[0] = m->faceAngle[0];
+    m->marioObj->oGfxPos[0] += v[0];
+    m->marioObj->oGfxPos[1] += v[1] + 50;
+    m->marioObj->oGfxPos[2] += v[2];
+    m->marioObj->oGfxAngle[0] = m->faceAngle[0];
     obj_set_shadow_pos_to_object_pos(gMarioObject);
     if (prevAngle > m->faceAngle[0]) play_sound(SOUND_ACTION_TWIRL, m->marioObj->oCameraToObject);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -619,11 +623,11 @@ static s32 omm_act_spin_air(struct MarioState *m) {
     action_condition(step == AIR_STEP_HIT_LAVA_WALL && lava_boost_on_wall(m), ACT_LAVA_BOOST, 1, RETURN_BREAK);
     action_condition(step == AIR_STEP_HIT_WALL && omm_mario_check_wall_slide(m) && omm_mario_can_perform_wall_slide(m), ACT_OMM_WALL_SLIDE, 0, RETURN_BREAK);
 
-    set_mario_animation(m, MARIO_ANIM_TWIRL);
+    obj_anim_play(m->marioObj, MARIO_ANIM_TWIRL, 1.f);
     s16 prevSpinYaw = gOmmData->mario->spin.yaw;
     gOmmData->mario->spin.yaw += omm_min_s(0x4714, 0x400 * gOmmData->mario->spin.timer);
     if (gOmmData->mario->spin.yaw < prevSpinYaw) play_sound(SOUND_ACTION_SPIN, m->marioObj->oCameraToObject);
-    m->marioObj->header.gfx.angle[1] = m->faceAngle[1] - gOmmData->mario->spin.yaw;
+    m->marioObj->oGfxAngle[1] = m->faceAngle[1] - gOmmData->mario->spin.yaw;
     m->marioBodyState->handState = MARIO_HAND_OPEN;
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
@@ -641,11 +645,11 @@ static s32 omm_act_spin_jump(struct MarioState *m) {
     action_condition(step == AIR_STEP_HIT_LAVA_WALL && lava_boost_on_wall(m), ACT_LAVA_BOOST, 1, RETURN_BREAK);
     action_condition(m->vel[1] <= 0.f, ACT_FREEFALL, 0, RETURN_BREAK);
 
-    set_mario_animation(m, MARIO_ANIM_TWIRL);
+    obj_anim_play(m->marioObj, MARIO_ANIM_TWIRL, 1.f);
     s16 prevSpinYaw = gOmmData->mario->spin.yaw;
     gOmmData->mario->spin.yaw += omm_min_s(0x5EDC, 0x400 * m->vel[1]);
     if (gOmmData->mario->spin.yaw < prevSpinYaw) play_sound(SOUND_ACTION_SPIN, m->marioObj->oCameraToObject);
-    m->marioObj->header.gfx.angle[1] = m->faceAngle[1] - gOmmData->mario->spin.yaw;
+    m->marioObj->oGfxAngle[1] = m->faceAngle[1] - gOmmData->mario->spin.yaw;
     m->marioBodyState->handState = MARIO_HAND_OPEN;
     m->particleFlags |= PARTICLE_SPARKLES;
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -662,11 +666,11 @@ static s32 omm_act_spin_pound(struct MarioState *m) {
     action_condition(step == AIR_STEP_LANDED, ACT_OMM_SPIN_POUND_LAND, 0, RETURN_BREAK, SFX(soundBits); PFX(particles); set_camera_shake_from_hit(SHAKE_GROUND_POUND););
     action_condition(step == AIR_STEP_HIT_LAVA_WALL && lava_boost_on_wall(m), ACT_LAVA_BOOST, 1, RETURN_BREAK);
 
-    set_mario_animation(m, MARIO_ANIM_TWIRL);
+    obj_anim_play(m->marioObj, MARIO_ANIM_TWIRL, 1.f);
     s16 prevSpinYaw = gOmmData->mario->spin.yaw;
     gOmmData->mario->spin.yaw += 0x4000;
     if (gOmmData->mario->spin.yaw < prevSpinYaw) play_sound(SOUND_ACTION_SIDE_FLIP_UNK, m->marioObj->oCameraToObject);
-    m->marioObj->header.gfx.angle[1] = m->faceAngle[1] - gOmmData->mario->spin.yaw;
+    m->marioObj->oGfxAngle[1] = m->faceAngle[1] - gOmmData->mario->spin.yaw;
     m->marioBodyState->handState = MARIO_HAND_OPEN;
     m->particleFlags |= PARTICLE_DUST;
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -692,7 +696,7 @@ static s32 omm_act_midair_spin(struct MarioState *m) {
 
     if (m->actionTimer == 8) {
         if (m->prevAction == ACT_DOUBLE_JUMP) {
-            set_mario_animation(m, MARIO_ANIM_DOUBLE_JUMP_FALL);
+            obj_anim_play(m->marioObj, MARIO_ANIM_DOUBLE_JUMP_FALL, 1.f);
             m->prevAction = m->action;
             m->action = ACT_DOUBLE_JUMP;
             m->actionArg = 0;
@@ -700,13 +704,13 @@ static s32 omm_act_midair_spin(struct MarioState *m) {
             m->actionTimer = 1;
             m->flags |= (MARIO_ACTION_SOUND_PLAYED | MARIO_MARIO_SOUND_PLAYED);
         } else {
-            set_mario_animation(m, MARIO_ANIM_GENERAL_FALL);
+            obj_anim_play(m->marioObj, MARIO_ANIM_GENERAL_FALL, 1.f);
             omm_mario_set_action(m, ACT_FREEFALL, 0, 0);
         }
         return OMM_MARIO_ACTION_RESULT_BREAK;
     } else {
-        set_mario_animation(m, MARIO_ANIM_TWIRL);
-        m->marioObj->header.gfx.angle[1] = m->faceAngle[1] - (s16) (++m->actionTimer * 0x2000);
+        obj_anim_play(m->marioObj, MARIO_ANIM_TWIRL, 1.f);
+        m->marioObj->oGfxAngle[1] = m->faceAngle[1] - (s16) (++m->actionTimer * 0x2000);
         m->marioBodyState->handState = MARIO_HAND_FISTS;
     }
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -749,18 +753,18 @@ static void omm_update_flying(struct MarioState *m) {
     if (m->controller->buttonDown & B_BUTTON) {
         m->forwardVel = omm_max_f(omm_abs_f(m->forwardVel) - 2.f, 0.f);
         if (m->forwardVel != 0.f) {
-            m->marioObj->header.gfx.mAnimInfo.animID = -1;
+            m->marioObj->oAnimID = -1;
             m->particleFlags |= PARTICLE_DUST;
         }
         m->faceAngle[2] *= (m->forwardVel / OMM_WING_FLYING_VEL_MAX);
-        set_mario_animation(m, MARIO_ANIM_FALL_FROM_SLIDE_KICK);
+        obj_anim_play(m->marioObj, MARIO_ANIM_FALL_FROM_SLIDE_KICK, 1.f);
     }
     
     // Flying
     else {
         m->forwardVel = omm_min_f(omm_abs_f(m->forwardVel) + 1.f, OMM_WING_FLYING_VEL_MAX * omm_player_get_selected_air_speed_multiplier());
-        set_mario_animation(m, MARIO_ANIM_FORWARD_SPINNING_FLIP);
-        if (m->marioObj->header.gfx.mAnimInfo.animFrame == 1) {
+        obj_anim_play(m->marioObj, MARIO_ANIM_FORWARD_SPINNING_FLIP, 1.f);
+        if (obj_anim_is_past_frame(m->marioObj, 1)) {
             play_sound(SOUND_ACTION_SPIN, m->marioObj->oCameraToObject);
         }
     }
@@ -788,8 +792,8 @@ static s32 omm_act_flying(struct MarioState *m) {
         case AIR_STEP_LANDED:
             m->faceAngle[0] = 0;
             omm_mario_set_action(m, ACT_DIVE_SLIDE, 0, 0);
-            set_mario_animation(m, MARIO_ANIM_DIVE);
-            set_anim_to_frame(m, 7);
+            obj_anim_play(m->marioObj, MARIO_ANIM_DIVE, 1.f);
+            obj_anim_set_frame(m->marioObj, 7);
             omm_set_default_camera(m);
             return OMM_MARIO_ACTION_RESULT_BREAK;
 
@@ -812,8 +816,8 @@ static s32 omm_act_flying(struct MarioState *m) {
     }
 
     // Gfx
-    m->marioObj->header.gfx.angle[0] = -m->faceAngle[0];
-    m->marioObj->header.gfx.angle[2] = +m->faceAngle[2];
+    m->marioObj->oGfxAngle[0] = -m->faceAngle[0];
+    m->marioObj->oGfxAngle[2] = +m->faceAngle[2];
 
     // Sound
     play_sound(SOUND_MOVING_FLYING, m->marioObj->oCameraToObject);

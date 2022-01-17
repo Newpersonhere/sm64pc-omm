@@ -99,29 +99,29 @@ s32 cappy_spindrift_update(struct Object *o) {
     POBJ_STOP_IF_UNPOSSESSED;
 
     // Gfx
-    vec3f_copy(o->header.gfx.pos, &o->oPosX);
-    obj_set_animation_with_accel(o, 0, 1.f);
+    vec3f_copy(o->oGfxPos, &o->oPosX);
+    obj_anim_play(o, 0, 1.f);
 
     // Spin attack
     gOmmData->object->state.actionTimer = omm_max_s(0, gOmmData->object->state.actionTimer - 1);
     if ((gOmmData->object->state.actionTimer != 0) && omm_mario_is_locked(gMarioState)) {
-        o->header.gfx.angle[1] += 0x2000;
+        o->oGfxAngle[1] += 0x2000;
     }
 
     // Propeller jump
     else if (gOmmData->object->state.actionState == 1) {
-        o->header.gfx.angle[1] += o->oVelY * 69;
+        o->oGfxAngle[1] += o->oVelY * 69;
         spawn_object(o, MODEL_NONE, bhvMistParticleSpawner);
     }
 
     // Float
     else if (gOmmData->object->state.actionFlag) {
-        o->header.gfx.angle[1] += 0x1000;
+        o->oGfxAngle[1] += 0x1000;
     }
 
     // Default
     else {
-        o->header.gfx.angle[1] = o->oFaceAngleYaw;
+        o->oGfxAngle[1] = o->oFaceAngleYaw;
     }
 
     // Cappy values

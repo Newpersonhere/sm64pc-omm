@@ -36,7 +36,7 @@ static void omm_bhv_goomba_stack_update() {
     o->oMoveAngleYaw = p->oFaceAngleYaw;
     o->oMoveAngleRoll = 0;
     obj_update_gfx(o);
-    obj_set_animation_with_accel(o, 0, 1.f);
+    obj_anim_play(o, 0, 1.f);
     obj_update_blink_state(o, &o->oGoombaBlinkTimer, 30, 50, 5);
 }
 

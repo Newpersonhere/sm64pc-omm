@@ -118,19 +118,19 @@ void omm_cappy_update(struct MarioState *m) {
             } else if (omm_cappy_perform_step_return_to_mario(cappy, m)) {
                 sReturnedToMario = true;
             }
-            cappy->header.gfx.angle[1] += CAPPY_GFX_ANGLE_VEL;
+            cappy->oGfxAngle[1] += CAPPY_GFX_ANGLE_VEL;
         }
 
         // Update Cappy's Gfx
         if (awaken) {
-            cappy->header.gfx.pos[0] = cappy->oPosX;
-            cappy->header.gfx.pos[1] = cappy->oPosY;
-            cappy->header.gfx.pos[2] = cappy->oPosZ;
-            cappy->header.gfx.angle[0] = 0;
-            cappy->header.gfx.angle[2] = 0;
-            cappy->header.gfx.scale[0] = CAPPY_GFX_SCALE_X;
-            cappy->header.gfx.scale[1] = CAPPY_GFX_SCALE_Y;
-            cappy->header.gfx.scale[2] = CAPPY_GFX_SCALE_Z;
+            cappy->oGfxPos[0] = cappy->oPosX;
+            cappy->oGfxPos[1] = cappy->oPosY;
+            cappy->oGfxPos[2] = cappy->oPosZ;
+            cappy->oGfxAngle[0] = 0;
+            cappy->oGfxAngle[2] = 0;
+            cappy->oGfxScale[0] = CAPPY_GFX_SCALE_X;
+            cappy->oGfxScale[1] = CAPPY_GFX_SCALE_Y;
+            cappy->oGfxScale[2] = CAPPY_GFX_SCALE_Z;
             cappy->oNodeFlags |= GRAPH_RENDER_ACTIVE;
             cappy->oNodeFlags &= ~GRAPH_RENDER_INVISIBLE;
             cappy->oOpacity = (m->flags & MARIO_VANISH_CAP ? 0x80 : 0xFF);

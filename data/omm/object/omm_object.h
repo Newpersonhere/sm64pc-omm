@@ -64,7 +64,6 @@ bool obj_is_object2_hit_from_below(struct Object *o1, struct Object *o2);
 bool obj_is_object2_pushing_object1_backwards(struct Object *o1, struct Object *o2, bool setObj1FaceYaw);
 bool obj_check_hitbox(struct Object *o, u32 flags);
 bool obj_detect_hitbox_overlap(struct Object *o1, struct Object *o2, u32 obj1Flags, u32 obj2Flags);
-bool obj_check_if_near_animation_end(struct Object *o);
 void obj_set_home(struct Object *o, f32 x, f32 y, f32 z);
 void obj_set_vel(struct Object *o, f32 x, f32 y, f32 z);
 void obj_set_forward_vel(struct Object *o, s16 yaw, f32 mag, f32 velMax);
@@ -75,13 +74,7 @@ void obj_update_pos_and_vel(struct Object *o, bool updateHome, bool moveThroughW
 void obj_update_blink_state(struct Object *o, s32 *timer, s16 base, s16 range, s16 length);
 void obj_random_blink(struct Object *o, s32 *timer);
 void obj_make_step_sound_and_particle(struct Object *o, f32 *dist, f32 distMin, f32 distInc, s32 soundBits, u32 particles);
-void obj_set_animation_with_accel(struct Object *o, s32 animation, f32 accel);
-void obj_play_anim_and_sound(struct Object *o, s32 animation, f32 accel, s32 soundBits, bool restart);
 void obj_play_sound(struct Object *o, s32 soundBits);
-bool obj_is_anim_near_end(struct Object *o);
-bool obj_is_anim_at_end(struct Object *o);
-void obj_extend_animation(struct Object *o);
-void obj_loop_animation(struct Object *o);
 s32  obj_get_model_id(struct Object *o);
 s32  obj_get_coin_type(struct Object *o);
 void obj_spawn_star(struct Object *o, f32 xFrom, f32 yFrom, f32 zFrom, f32 xTo, f32 yTo, f32 zTo, s32 starIndex, bool noExit);
@@ -112,6 +105,23 @@ bool obj_dialog_update();
 bool obj_cutscene_start(u8 cutsceneId, struct Object *o);
 bool obj_cutscene_update();
 struct Waypoint *obj_path_get_nearest_waypoint(struct Object *o, struct Waypoint *list, f32 radiusMax);
+
+//
+// Animation
+//
+
+s32  obj_anim_get_id(struct Object *o);
+f32  obj_anim_get_frame(struct Object *o);
+void obj_anim_play(struct Object *o, s32 animID, f32 animAccel);
+void obj_anim_play_with_sound(struct Object *o, s32 animID, f32 animAccel, s32 soundBits, bool restart);
+void obj_anim_loop(struct Object *o);
+void obj_anim_extend(struct Object *o);
+void obj_anim_advance(struct Object *o, f32 frames);
+void obj_anim_set_frame(struct Object *o, f32 frame);
+void obj_anim_clamp_frame(struct Object *o, f32 frameMin, f32 frameMax);
+bool obj_anim_is_past_frame(struct Object *o, f32 frame);
+bool obj_anim_is_near_end(struct Object *o);
+bool obj_anim_is_at_end(struct Object *o);
 
 //
 // Types and interactions

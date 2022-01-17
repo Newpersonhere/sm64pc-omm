@@ -95,14 +95,6 @@ bool omm_mario_check_death_warp                 (struct MarioState *m, s32 warpO
 bool omm_mario_check_grab                       (struct MarioState *m, struct Object *o, bool ignoreAngles);
 
 //
-// Animation
-//
-
-s16  omm_mario_set_animation                    (struct MarioState *m, s32 animID, f32 animSpeed, s16 animFrame);
-bool omm_mario_is_anim_at_end                   (struct MarioState *m);
-bool omm_mario_is_anim_past_frame               (struct MarioState *m, s16 animFrame);
-
-//
 // Update
 //
 

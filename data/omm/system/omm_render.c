@@ -2141,7 +2141,7 @@ s32 omm_render_course_complete() {
 
     // Wait for the coins to count up, then wait for 90 frames and Mario's
     // animation end to fade out and close the course complete screen
-    if (sOmmCourseCompleteTimer != -1 && sOmmCourseCompleteTimer++ >= 90 && is_anim_at_end(gMarioState)) {
+    if (sOmmCourseCompleteTimer != -1 && sOmmCourseCompleteTimer++ >= 90 && obj_anim_is_at_end(gMarioObject)) {
         sOmmDialogTextAlpha = omm_max_s(sOmmDialogTextAlpha - 0x10, 0x00);
         if (sOmmDialogTextAlpha == 0) {
             level_set_transition(0, 0);

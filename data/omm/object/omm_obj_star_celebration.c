@@ -41,7 +41,7 @@ static void omm_bhv_star_celebration_update() {
     // Grows up to 1.25x and moves up
     else if (frame < 40) {
         obj_scale(o, 1.25f * ((frame - 35) / 4.f));
-        o->oPosY = o->oHomeY + o->oCelebStarHeight + (m->marioObj->header.gfx.pos[1] - m->pos[1]);
+        o->oPosY = o->oHomeY + o->oCelebStarHeight + (m->marioObj->oGfxPos[1] - m->pos[1]);
     }
     
     // Goes back to 1x

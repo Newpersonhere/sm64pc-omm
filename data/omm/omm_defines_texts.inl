@@ -116,6 +116,7 @@ OMM_TEXT_(OPT_INVISIBLE_MODE,                           "Invisible Mode")
 #if OMM_CODE_DEV
 OMM_TEXT_(OPT_RENDER96_PEACH,                           "Render96 Peach")
 #endif
+OMM_TEXT_(OPT_SPARKLY_STARS_HINT,                       "Sparkly Stars Hint")
 OMM_TEXT_(OPT_CRYSTAL_STARS_REWARD,                     "Crystal Stars Reward")
 OMM_TEXT_(OPT_SHORTCUTS_TITLE,                          "SHORTCUTS")
 OMM_TEXT_(OPT_SHORTCUTS_LABEL,                          "Shortcuts")

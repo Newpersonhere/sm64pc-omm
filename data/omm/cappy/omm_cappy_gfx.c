@@ -3,6 +3,11 @@
 #undef OMM_ALL_HEADERS
 
 typedef struct {
+    u32 id;
+    void *ptr;
+} IdPtr;
+
+typedef struct {
     f32 x, y, z;
 } v3f;
 
@@ -87,7 +92,7 @@ static bool omm_cappy_gfx_read_data_from_file(u32 id, v3fa *points, v3fa *normal
 
             case 'c': {
                 sscanf(buffer + 1, "%d", count);
-                *count = omm_clamp_s(*count, 4, 32);
+                *count = omm_clamp_s(*count, 4, 64);
             } break;
 
             case 'r': {
@@ -190,12 +195,18 @@ static v3f omm_cappy_gfx_get_horizontal_axis(v3f fwd, v3f vrt) {
 // Cappy eyes display list
 //
 
-static Vtx omm_cappy_gfx_get_vertex(v3f ori, v3f hrz, v3f vrt, v3f fwd, f32 hrzv, f32 vrtv, f32 fwdv, f32 u, f32 v) {
-    if (u < 0) u = ((u + 0.5f) * CAPPY_EYES_TEXCOORDS_MULT) - 0.5f;
-    else       u = ((u - 0.5f) * CAPPY_EYES_TEXCOORDS_MULT) + 0.5f;
-    if (v < 0) v = ((v + 0.5f) * CAPPY_EYES_TEXCOORDS_MULT) - 0.5f;
-    else       v = ((v - 0.5f) * CAPPY_EYES_TEXCOORDS_MULT) + 0.5f;
-    Vtx vtx = { { { 0, 0, 0 }, 0, { (s16) (u * 0x1000), (s16) (v * 0x1000) }, { 0xFF, 0xFF, 0xFF, 0xFF } } };
+static Vtx omm_cappy_gfx_get_vertex(v3f ori, v3f hrz, v3f vrt, v3f fwd, f32 gap, f32 radius, f32 sign, s32 count, s32 i, bool back) {
+    s16 a    = (s16) ((65536.f * (i - 1)) / count);
+    f32 texu = (i == 0 ? 0.5f : (1.f - ((1.f + sins(a)) / 2.f)) * sign - ((sign - 1.f) / 2.f));
+    f32 texv = (i == 0 ? 0.5f : (1.f - ((1.f + coss(a)) / 2.f)));
+    f32 hrzv = ((i != 0) * radius * sins(a) - sign * gap) * -CAPPY_EYES_WH_RATIO;
+    f32 vrtv = ((i != 0) * radius * coss(a));
+    f32 fwdv = -((1.f - coss(((i != 0) * (radius != 0.f) * sins(-sign * a) + 1.f) * 0x2000)) * CAPPY_EYES_CURVE + (back ? CAPPY_EYES_DEPTH : 0.f));
+    if (texu < 0) texu = ((texu + 0.5f) * CAPPY_EYES_TEXCOORDS_MULT) - 0.5f;
+    else          texu = ((texu - 0.5f) * CAPPY_EYES_TEXCOORDS_MULT) + 0.5f;
+    if (texv < 0) texv = ((texv + 0.5f) * CAPPY_EYES_TEXCOORDS_MULT) - 0.5f;
+    else          texv = ((texv - 0.5f) * CAPPY_EYES_TEXCOORDS_MULT) + 0.5f;
+    Vtx vtx = { { { 0, 0, 0 }, 0, { (s16) (texu * 0x1000), (s16) (texv * 0x1000) }, { 0xFF, 0xFF, 0xFF, 0xFF } } };
     vtx.v.ob[0] = hrzv * hrz.x + vrtv * vrt.x + fwdv * fwd.x + ori.x;
     vtx.v.ob[1] = hrzv * hrz.y + vrtv * vrt.y + fwdv * fwd.y + ori.y;
     vtx.v.ob[2] = hrzv * hrz.z + vrtv * vrt.z + fwdv * fwd.z + ori.z;
@@ -226,115 +237,72 @@ static Gfx *omm_cappy_gfx_get_display_list(u32 id, bool metal, bool mirror) {
     ori.y += fwd.y * offset;
     ori.z += fwd.z * offset;
 
-    // Vertices
-    Vtx *vtxData = OMM_MEMNEW(Vtx, ((count * 4) + 2) * 2);
-    Vtx *vtxHead = vtxData;
-
-    // Triangles
-    Gfx *triData = OMM_MEMNEW(Gfx, (((count * 4) + 3) * 2) + 1);
-    Gfx *triHead = triData;
-
-    // +1 for Left eye, -1 for Right eye
-    for (s32 left = 0; left != 2; ++left) {
-        f32 sign = (left ? +1 : -1);
-
-        // Eye triangles
-        gSPVertex(triHead++, vtxHead, count + 1, 0);
-        for (s32 i = 0; i != count; ++i) {
-            s32 v0 = 0;
-            s32 v1 = (i + 1);
-            s32 v2 = ((((i + 2) - 1) % count) + 1);
-            gSP1Triangle(triHead++, v0, v1, v2, 0);
-        }
-
-        // Eye vertices
-        *(vtxHead++) = omm_cappy_gfx_get_vertex(ori, hrz, vrt, fwd, sign * CAPPY_EYES_GAP * (radius * CAPPY_EYES_WH_RATIO), 0, -(1.f - coss(0x2000)) * CAPPY_EYES_CURVE, 0.5f, 0.5f);
-        for (s32 i = 0; i != count; ++i) {
-            s16 a = (s16) ((65536.f * i) / count);
-            f32 u = (1.f - ((1.f + sins(a)) / 2.f)) * sign - ((sign - 1.f) / 2.f);
-            f32 v = (1.f - ((1.f + coss(a)) / 2.f));
-            f32 f = (1.f - (coss((sins(-sign * a) + 1.f) * 0x2000))) * CAPPY_EYES_CURVE;
-            *(vtxHead++) = omm_cappy_gfx_get_vertex(ori, hrz, vrt, fwd, (sign * CAPPY_EYES_GAP - sins(a)) * (radius * CAPPY_EYES_WH_RATIO), coss(a) * radius, -f, u, v);
-        }
-
-        // Border triangles
-        gSPVertex(triHead++, vtxHead, count * 2, 0);
-        for (s32 i = 0; i != count; ++i) {
-            s32 v0 = (2 * i + 0);
-            s32 v1 = (2 * i + 1);
-            s32 v2 = (2 * i + 2) % (count * 2);
-            s32 v3 = (2 * i + 3) % (count * 2);
-            gSP1Triangle(triHead++, v0, v1, v2, 0);
-            gSP1Triangle(triHead++, v2, v1, v3, 0);
-        }
-
-        // Border vertices
-        for (s32 i = 0; i != count; ++i) {
-            s16 a = (s16) ((65536.f * i) / count);
-            f32 u = (1.f - ((1.f + sins(a)) / 2.f)) * sign - ((sign - 1.f) / 2.f);
-            f32 v = (1.f - ((1.f + coss(a)) / 2.f));
-            f32 f = (1.f - (coss((sins(-sign * a) + 1.f) * 0x2000))) * CAPPY_EYES_CURVE;
-            *(vtxHead++) = omm_cappy_gfx_get_vertex(ori, hrz, vrt, fwd, (sign * CAPPY_EYES_GAP - sins(a)) * (radius * CAPPY_EYES_WH_RATIO), coss(a) * radius, -f,                    u, v);
-            *(vtxHead++) = omm_cappy_gfx_get_vertex(ori, hrz, vrt, fwd, (sign * CAPPY_EYES_GAP - sins(a)) * (radius * CAPPY_EYES_WH_RATIO), coss(a) * radius, -f - CAPPY_EYES_DEPTH, u, v);
-        }
-
-        // Back triangles
-        gSPVertex(triHead++, vtxHead, count + 1, 0);
-        for (s32 i = 0; i != count; ++i) {
-            s32 v0 = 0;
-            s32 v1 = (i + 1);
-            s32 v2 = (((i + 2) - 1) % count) + 1;
-            gSP1Triangle(triHead++, v0, v2, v1, 0);
-        }
-
-        // Back vertices
-        *(vtxHead++) = omm_cappy_gfx_get_vertex(ori, hrz, vrt, fwd, sign * CAPPY_EYES_GAP * (radius * CAPPY_EYES_WH_RATIO), 0, -(1.f - coss(0x2000)) * CAPPY_EYES_CURVE - CAPPY_EYES_DEPTH, 0, 0);
-        for (s32 i = 0; i != count; ++i) {
-            s16 a = (s16) ((65536.f * i) / count);
-            f32 f = (1.f - (coss((sins(-sign * a) + 1.f) * 0x2000))) * CAPPY_EYES_CURVE;
-            *(vtxHead++) = omm_cappy_gfx_get_vertex(ori, hrz, vrt, fwd, (sign * CAPPY_EYES_GAP - sins(a)) * (radius * CAPPY_EYES_WH_RATIO), coss(a) * radius, -f - CAPPY_EYES_DEPTH, 0, 0);
-        }
-    }
-    gSPEndDisplayList(triHead++);
-
     // Textures
     const char *texCappy = (count < 12 ? OMM_TEXTURE_CAPPY_EYE_32   : (count < 20 ? OMM_TEXTURE_CAPPY_EYE_64   : OMM_TEXTURE_CAPPY_EYE_128  ));
     const char *texMetal = (count < 12 ? OMM_TEXTURE_CAPPY_METAL_32 : (count < 20 ? OMM_TEXTURE_CAPPY_METAL_64 : OMM_TEXTURE_CAPPY_METAL_128));
 
-    // Display list
-    Gfx *gfxData = OMM_MEMNEW(Gfx, 0x1000);
-    Gfx *gfxHead = gfxData + 1;
-    gDPPipeSync(gfxHead++);
-    gSPClearGeometryMode(gfxHead++, G_TEXTURE_GEN | G_CULL_BOTH);
-    gSPSetGeometryMode(gfxHead++, mirror ? G_CULL_FRONT : G_CULL_BACK);
-    gDPSetCombineLERP(gfxHead++, TEXEL0, SHADE, TEXEL0_ALPHA, SHADE, 0, 0, 0, ENVIRONMENT, TEXEL0, SHADE, TEXEL0_ALPHA, SHADE, 0, 0, 0, ENVIRONMENT); // G_CC_BLENDRGBFADEA
-    gSPTexture(gfxHead++, 0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON);
-    gDPLoadTextureBlock(gfxHead++, texCappy, G_IM_FMT_RGBA, G_IM_SIZ_32b, 128, 128, 0, 0, 0, 0, 0, 0, 0);
-    gSPDisplayList(gfxHead++, triData);
-    gSPTexture(gfxHead++, 0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF);
-    gDPPipeSync(gfxHead++);
-    if (metal) {
-        gSPSetGeometryMode(gfxHead++, G_TEXTURE_GEN);
-        gDPSetCombineLERP(gfxHead++, 0, 0, 0, TEXEL0, 0, 0, 0, ENVIRONMENT, 0, 0, 0, TEXEL0, 0, 0, 0, ENVIRONMENT); // G_CC_DECALFADE
-        gDPLoadTextureBlock(gfxHead++, texMetal, G_IM_FMT_RGBA, G_IM_SIZ_32b, 128, 128, 0, 0, 0, 0, 0, 0, 0);
-        gSPTexture(gfxHead++, 0x1F00, 0x1F00, 0, G_TX_RENDERTILE, G_ON);
-    } else {
-        gDPSetCombineLERP(gfxHead++, 0, 0, 0, SHADE, 0, 0, 0, ENVIRONMENT, 0, 0, 0, SHADE, 0, 0, 0, ENVIRONMENT); // G_CC_SHADEFADEA
-    }
-    gSPEndDisplayList(gfxHead++);
+    // Data
+    Vtx *vtx = OMM_MEMNEW(Vtx, count * 12);
+    Gfx *tri = OMM_MEMNEW(Gfx, count * 6 + 1);
+    Gfx *gfx = NULL;
 
-    return gfxData;
+    // Display list
+    const Gfx gfx_[2][0x20] = { {
+        gsDPPipeSync(),
+        gsSPClearGeometryMode(G_TEXTURE_GEN | G_CULL_BOTH),
+        gsSPSetGeometryMode(mirror ? G_CULL_FRONT : G_CULL_BACK),
+        gsDPSetCombineLERP(TEXEL0, SHADE, TEXEL0_ALPHA, SHADE, 0, 0, 0, ENVIRONMENT, TEXEL0, SHADE, TEXEL0_ALPHA, SHADE, 0, 0, 0, ENVIRONMENT), // G_CC_BLENDRGBFADEA
+        gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
+        gsDPLoadTextureBlock(texCappy, G_IM_FMT_RGBA, G_IM_SIZ_32b, 128, 128, 0, 0, 0, 0, 0, 0, 0),
+        gsSPDisplayList(tri),
+        gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
+        gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, ENVIRONMENT, 0, 0, 0, SHADE, 0, 0, 0, ENVIRONMENT), // G_CC_SHADEFADEA
+        gsSPEndDisplayList(),
+    }, {
+        gsDPPipeSync(),
+        gsSPClearGeometryMode(G_TEXTURE_GEN | G_CULL_BOTH),
+        gsSPSetGeometryMode(mirror ? G_CULL_FRONT : G_CULL_BACK),
+        gsDPSetCombineLERP(TEXEL0, SHADE, TEXEL0_ALPHA, SHADE, 0, 0, 0, ENVIRONMENT, TEXEL0, SHADE, TEXEL0_ALPHA, SHADE, 0, 0, 0, ENVIRONMENT), // G_CC_BLENDRGBFADEA
+        gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
+        gsDPLoadTextureBlock(texCappy, G_IM_FMT_RGBA, G_IM_SIZ_32b, 128, 128, 0, 0, 0, 0, 0, 0, 0),
+        gsSPDisplayList(tri),
+        gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
+        gsSPSetGeometryMode(G_TEXTURE_GEN),
+        gsDPSetCombineLERP(0, 0, 0, TEXEL0, 0, 0, 0, ENVIRONMENT, 0, 0, 0, TEXEL0, 0, 0, 0, ENVIRONMENT), // G_CC_DECALFADE
+        gsDPLoadTextureBlock(texMetal, G_IM_FMT_RGBA, G_IM_SIZ_32b, 128, 128, 0, 0, 0, 0, 0, 0, 0),
+        gsSPTexture(0x1F00, 0x1F00, 0, G_TX_RENDERTILE, G_ON),
+        gsSPEndDisplayList(),
+    } };
+    gfx = OMM_MEMDUP(gfx_[metal], sizeof(gfx_[metal]));
+    
+    // Triangles and vertices
+    for (s32 sign = -1; sign <= +1; sign += 2) {
+        for (s32 i = 1; i <= count; ++i) {
+            gSPVertex(tri++, vtx, 6, 0);
+            gSP2Triangles(tri++, 0, 2, 4, 0, 5, 3, 1, 0); // Front & Back
+            gSP2Triangles(tri++, 2, 3, 4, 0, 5, 4, 3, 0); // Border
+            *(vtx++) = omm_cappy_gfx_get_vertex(ori, hrz, vrt, fwd, CAPPY_EYES_GAP * radius, radius, sign, count,     0, 0);
+            *(vtx++) = omm_cappy_gfx_get_vertex(ori, hrz, vrt, fwd, CAPPY_EYES_GAP * radius,    0.f, sign, count, i + 0, 1);
+            *(vtx++) = omm_cappy_gfx_get_vertex(ori, hrz, vrt, fwd, CAPPY_EYES_GAP * radius, radius, sign, count, i + 0, 0);
+            *(vtx++) = omm_cappy_gfx_get_vertex(ori, hrz, vrt, fwd, CAPPY_EYES_GAP * radius, radius, sign, count, i + 0, 1);
+            *(vtx++) = omm_cappy_gfx_get_vertex(ori, hrz, vrt, fwd, CAPPY_EYES_GAP * radius, radius, sign, count, i + 1, 0);
+            *(vtx++) = omm_cappy_gfx_get_vertex(ori, hrz, vrt, fwd, CAPPY_EYES_GAP * radius, radius, sign, count, i + 1, 1);
+        }
+    }
+    gSPEndDisplayList(tri);
+    return gfx;
 }
 
 static bool omm_cappy_gfx_draw(u32 id, u8 alpha, bool metal, bool mirror, void (*append)(void *, s16)) {
-    static OmmArray sCappyEyesDisplayLists[2][2] = { NULL };
-    omm_array_init(sCappyEyesDisplayLists[mirror][metal], uintptr_t);
+    static OmmArray sIdDisplayLists = NULL;
+    omm_array_init(sIdDisplayLists, IdPtr);
     Gfx *displayList = NULL;
+    u32 displayListId = (id & ~3) | (metal << 0) | (mirror << 1);
 
     // Find existing display list
-    for (s32 i = 0; i != omm_array_count(sCappyEyesDisplayLists[mirror][metal]); i += 2) {
-        if (id == (u32) omm_array_get(sCappyEyesDisplayLists[mirror][metal], uintptr_t, i + 0)) {
-            displayList = (Gfx *) omm_array_get(sCappyEyesDisplayLists[mirror][metal], uintptr_t, i + 1);
+    omm_array_for_each(sIdDisplayLists, IdPtr, idptr) {
+        if (idptr->id == displayListId) {
+            displayList = (Gfx *) idptr->ptr;
             break;
         }
     }
@@ -343,8 +311,7 @@ static bool omm_cappy_gfx_draw(u32 id, u8 alpha, bool metal, bool mirror, void (
     if (!displayList) {
         displayList = omm_cappy_gfx_get_display_list(id, metal, mirror);
         if (!displayList) return false;
-        omm_array_add_inplace(sCappyEyesDisplayLists[mirror][metal], uintptr_t, (uintptr_t) id);
-        omm_array_add_inplace(sCappyEyesDisplayLists[mirror][metal], uintptr_t, (uintptr_t) displayList);
+        omm_array_add_inplace(sIdDisplayLists, IdPtr, { displayListId, displayList });
     }
 
     // Draw display list
@@ -377,7 +344,7 @@ bool omm_cappy_gfx_draw_eyes(struct GraphNodeSwitchCase *node, void (*append)(vo
         if (node->fnNode.func == (GraphNodeFunc) geo_switch_anim_state) {
 
             // Object's model must be a cap model
-            struct Object *o = (struct Object *) gCurGraphNodeObject;
+            struct Object *o = gCurrGraphNodeObject;
             for (s32 i = 0; i != OMM_NUM_PLAYABLE_CHARACTERS; ++i) {
                 if (obj_check_model(o, omm_player_get_normal_cap(i)) ||
                     obj_check_model(o, omm_player_get_wing_cap(i)) ||
@@ -471,13 +438,14 @@ static void omm_cappy_gfx_process_graph_node(struct GraphNode *node) {
 }
 
 u32 omm_cappy_gfx_get_graph_node_identifier(struct GraphNode *node) {
-    static OmmArray sGraphNodes = NULL;
-    static OmmArray sIdentifiers = NULL;
+    static OmmArray sIdGraphNodes = NULL;
+    omm_array_init(sIdGraphNodes, IdPtr);
 
     // Find the graph node and return its identifier
-    s32 index = omm_array_find(sGraphNodes, node);
-    if (index != -1) {
-        return omm_array_get(sIdentifiers, u32, index);
+    omm_array_for_each(sIdGraphNodes, IdPtr, idptr) {
+        if (idptr->ptr == node) {
+            return idptr->id;
+        }
     }
     
     // Compute the graph node identifier and add it to the look-up table
@@ -485,9 +453,6 @@ u32 omm_cappy_gfx_get_graph_node_identifier(struct GraphNode *node) {
     sTriCount = 0;
     omm_cappy_gfx_process_graph_node(node);
     u32 identifier = (u32) ((sVtxCount << 16u) | (sTriCount << 0u));
-    omm_array_init(sGraphNodes, struct GraphNode *);
-    omm_array_add(sGraphNodes, node);
-    omm_array_init(sIdentifiers, u32);
-    omm_array_add(sIdentifiers, identifier);
+    omm_array_add_inplace(sIdGraphNodes, IdPtr, { identifier, node });
     return identifier;
 }

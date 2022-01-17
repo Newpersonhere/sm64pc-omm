@@ -100,7 +100,7 @@ static bool omm_sparkly_star_dance_update(struct MarioState *m) {
     // Enable time stop and spawn the celebration star
     if (m->actionTimer == 0) {
         m->faceAngle[1] = m->area->camera->yaw;
-        vec3s_set(m->marioObj->header.gfx.angle, 0, m->area->camera->yaw, 0);
+        vec3s_set(m->marioObj->oGfxAngle, 0, m->area->camera->yaw, 0);
         disable_background_sound();
         music_pause();
         omm_sound_play(OMM_SOUND_EVENT_SPARKLY_STAR_GET, gGlobalSoundArgs);
@@ -145,11 +145,11 @@ static bool omm_sparkly_star_dance_update(struct MarioState *m) {
 
     // Animation
     s32 *animData = sOmmSparklyDanceAnimData[omm_min_s(m->actionTimer, 35)];
-    omm_mario_set_animation(m, animData[0], animData[4], -1);
-    if (m->actionTimer >= 33) set_anim_to_frame(m, 10); // Luigi's freaking flutter jump
+    obj_anim_play(m->marioObj, animData[0], animData[4]);
+    if (m->actionTimer >= 33) obj_anim_clamp_frame(m->marioObj, 0, 9); // Luigi's freaking flutter jump
     m->marioBodyState->handState = animData[1];
-    m->marioObj->header.gfx.angle[1] = m->faceAngle[1] - (s16) animData[2];
-    m->marioObj->header.gfx.pos[1] = m->pos[1] + animData[3];
+    m->marioObj->oGfxAngle[1] = m->faceAngle[1] - (s16) animData[2];
+    m->marioObj->oGfxPos[1] = m->pos[1] + animData[3];
     m->actionTimer++;
     return false;
 }
@@ -177,7 +177,7 @@ typedef struct {
 static void update_end_toad_anim(EndToadStruct *toad) {
     if (toad->obj) {
         geo_obj_init_animation(&toad->obj->header.gfx, (struct Animation **) &toad_seg6_anims_0600FB58[toad->anim]);
-        if (obj_is_anim_near_end(toad->obj) && (toad->anim == 0 || toad->anim == 2)) {
+        if (obj_anim_is_near_end(toad->obj) && (toad->anim == 0 || toad->anim == 2)) {
             toad->anim++;
         }
     }
@@ -199,10 +199,10 @@ static void set_end_toad_message(const char *msg, s16 duration) {
 }
 
 static void set_visual_pos(struct Object *o, f32 *value) {
-    Vec3s t; find_mario_anim_flags_and_translation(o, o->header.gfx.angle[1], t);
-    f32 x = o->header.gfx.pos[0] + t[0];
-    f32 y = o->header.gfx.pos[1] + 10.0f;
-    f32 z = o->header.gfx.pos[2] + t[2];
+    Vec3s t; find_mario_anim_flags_and_translation(o, o->oGfxAngle[1], t);
+    f32 x = o->oGfxPos[0] + t[0];
+    f32 y = o->oGfxPos[1] + 10.0f;
+    f32 z = o->oGfxPos[2] + t[2];
     struct Surface *floor;
     *value = find_floor(x, y, z, &floor);
 }
@@ -308,7 +308,7 @@ s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
             } break;
 
             case 4: {
-                set_mario_animation(m, MARIO_ANIM_CREDITS_RETURN_FROM_LOOK_UP);
+                obj_anim_play(m->marioObj, MARIO_ANIM_CREDITS_RETURN_FROM_LOOK_UP, 1.f);
                 m->actionState = 0;
                 m->actionTimer = 0;
                 m->actionArg++;
@@ -323,12 +323,12 @@ s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
 
                     // Mario scratches his head
                     case 1: {
-                        set_mario_animation(m, MARIO_ANIM_MISSING_CAP);
+                        obj_anim_play(m->marioObj, MARIO_ANIM_MISSING_CAP, 1.f);
                     } break;
 
                     // Toad message 1
                     case 60: {
-                        set_mario_animation(m, MARIO_ANIM_FIRST_PERSON);
+                        obj_anim_play(m->marioObj, MARIO_ANIM_FIRST_PERSON, 1.f);
                         sEndToadL.jump = 8;
                         omm_sound_play(OMM_SOUND_TOAD_1, sEndToadL.obj->oCameraToObject);
                         set_end_toad_message(OMM_TEXT_BAD_ENDING_TOAD_1, 30);
@@ -351,7 +351,7 @@ s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
                     case 300: {
                         omm_sound_play(OMM_SOUND_TOAD_4, sEndToadR.obj->oCameraToObject);
                         set_end_toad_message(OMM_TEXT_BAD_ENDING_TOAD_4, 60);
-                        set_mario_animation(m, 50);
+                        obj_anim_play(m->marioObj, MARIO_ANIM_DYING_FALL_OVER, 1.f);
                     } break;
 
                     // Toad message 5, Mario stands up, credits sequence
@@ -359,12 +359,12 @@ s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
                         sEndToadR.jump = 8;
                         omm_sound_play(OMM_SOUND_TOAD_5, sEndToadR.obj->oCameraToObject);
                         set_end_toad_message(OMM_TEXT_BAD_ENDING_TOAD_5, 60);
-                        set_mario_animation(m, 200);
+                        obj_anim_play(m->marioObj, MARIO_ANIM_WAKE_FROM_SLEEP, 1.f);
                     } break;
 
                     // Mario looks at Toads
                     case 480: {
-                        set_mario_animation(m, MARIO_ANIM_FIRST_PERSON);
+                        obj_anim_play(m->marioObj, MARIO_ANIM_FIRST_PERSON, 1.f);
                     } break;
 
                     // Toad message 6
@@ -408,12 +408,12 @@ s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
                     case 800: {
                         sEndToadL.anim = 0;
                         sEndToadR.anim = 2;
-                        set_mario_animation(m, MARIO_ANIM_CREDITS_START_WALK_LOOK_UP);
+                        obj_anim_play(m->marioObj, MARIO_ANIM_CREDITS_START_WALK_LOOK_UP, 1.f);
                     } break;
 
                     // Mario moves
                     case 900: {
-                        set_mario_animation(m, MARIO_ANIM_CREDITS_LOOK_BACK_THEN_RUN);
+                        obj_anim_play(m->marioObj, MARIO_ANIM_CREDITS_LOOK_BACK_THEN_RUN, 1.f);
                     } break;
 
                     // Camera starts moving up, birds spawn
@@ -430,7 +430,7 @@ s32 omm_sparkly_act_end_cutscene_1(struct MarioState *m) {
                     } break;
                 }
 
-                set_visual_pos(m->marioObj, &m->marioObj->header.gfx.pos[1]);
+                set_visual_pos(m->marioObj, &m->marioObj->oGfxPos[1]);
                 set_visual_pos(sEndToadL.obj, &sEndToadL.obj->oPosY);
                 set_visual_pos(sEndToadR.obj, &sEndToadR.obj->oPosY);
                 update_end_toad_jump(&sEndToadL);

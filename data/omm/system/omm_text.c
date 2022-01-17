@@ -56,11 +56,11 @@ u8 *omm_text_convert(const char *str, bool heapAlloc) {
 #else
     str64 = omm_text_alloc(strlen(str) + 1, heapAlloc);
     for (s32 i = 0;;) {
-        str = omm_text_add_char(str64, str, &i);
         if (*str == 0) {
             str64[i] = 0xFF;
             break;
         }
+        str = omm_text_add_char(str64, str, &i);
     }
 #endif
     return str64;

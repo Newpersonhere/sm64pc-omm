@@ -257,6 +257,7 @@ void save_file_load_all() {
 #if OMM_CODE_DEV
                         READ_TOGGLE_SC(gOmmExtrasRender96Peach, token.args);
 #endif
+                        READ_TOGGLE_SC(gOmmExtrasSparklyStarsHint, token.args);
                         READ_TOGGLE_SC(gOmmExtrasCrystalStarsReward, token.args);
 #if OMM_CODE_DEBUG
                         READ_TOGGLE_SC(gOmmDebugHitbox, token.args);
@@ -524,6 +525,7 @@ static void save_file_write() {
 #if OMM_CODE_DEV
     WRITE_TOGGLE_SC(gOmmExtrasRender96Peach);
 #endif
+    WRITE_TOGGLE_SC(gOmmExtrasSparklyStarsHint);
     WRITE_TOGGLE_SC(gOmmExtrasCrystalStarsReward);
 #if OMM_CODE_DEBUG
     WRITE_TOGGLE_SC(gOmmDebugHitbox);

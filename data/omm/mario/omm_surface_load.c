@@ -196,8 +196,8 @@ static void omm_surface_process_data(s16 areaIndex, s16 *data, struct Object *o,
                     }
 
                     // Compute the transform matrix
-                    if (o->header.gfx.throwMatrix == NULL) {
-                        o->header.gfx.throwMatrix = &o->transform;
+                    if (o->oThrowMatrix == NULL) {
+                        o->oThrowMatrix = &o->transform;
                         obj_build_transform_from_pos_and_angle(o, O_POS_INDEX, O_FACE_ANGLE_INDEX);
                     }
                     Mat4 m; obj_apply_scale_to_matrix(o, m, o->transform);

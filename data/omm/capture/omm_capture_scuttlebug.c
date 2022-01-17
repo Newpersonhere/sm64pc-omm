@@ -97,12 +97,12 @@ s32 cappy_scuttlebug_update(struct Object *o) {
     obj_update_gfx(o);
     if (gOmmData->object->state.actionState) {
         s16 wallAngle = 0x8000 + atan2s(o->oWall->normal.z, o->oWall->normal.x);
-        o->header.gfx.pos[0] += o->oWallHitboxRadius * sins(wallAngle);
-        o->header.gfx.pos[2] += o->oWallHitboxRadius * coss(wallAngle);
-        o->header.gfx.angle[0] = -0x4000;
-        o->header.gfx.angle[1] = wallAngle;
+        o->oGfxPos[0] += o->oWallHitboxRadius * sins(wallAngle);
+        o->oGfxPos[2] += o->oWallHitboxRadius * coss(wallAngle);
+        o->oGfxAngle[0] = -0x4000;
+        o->oGfxAngle[1] = wallAngle;
     }
-    obj_set_animation_with_accel(o, 0, (o->oVelY <= 0.f) * omm_max_f(1.f, o->oForwardVel * 2.f / (omm_capture_get_walk_speed(o))));
+    obj_anim_play(o, 0, (o->oVelY <= 0.f) * omm_max_f(1.f, o->oForwardVel * 2.f / (omm_capture_get_walk_speed(o))));
     if (obj_is_on_ground(o)) {
         obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, omm_capture_get_walk_speed(o) * 12.f, o->oForwardVel, SOUND_OBJ2_SCUTTLEBUG_WALK, OBJ_STEP_PARTICLE_NONE);
     }

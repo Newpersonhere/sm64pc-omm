@@ -21,8 +21,8 @@ void cappy_hoot_end(struct Object *o) {
     o->oHomeX = gOmmData->object->state.initialPos[0];
     o->oHomeY = gOmmData->object->state.initialPos[1];
     o->oHomeZ = gOmmData->object->state.initialPos[2];
-    o->header.gfx.mAnimInfo.curAnim = NULL;
-    obj_set_animation_with_accel(o, 0, 1.f);
+    o->oCurrAnim = NULL;
+    obj_anim_play(o, 0, 1.f);
 }
 
 f32 cappy_hoot_get_top(struct Object *o) {
@@ -50,7 +50,7 @@ s32 cappy_hoot_update(struct Object *o) {
     if (!omm_mario_is_locked(gMarioState)) {
         pobj_move(o, false, false, false);
         if (pobj_jump(o, 0, 6) == POBJ_RESULT_JUMP_START) {
-            o->header.gfx.mAnimInfo.curAnim = NULL;
+            o->oCurrAnim = NULL;
             obj_play_sound(o, SOUND_GENERAL_SWISH_WATER);
         }
     }
@@ -68,7 +68,7 @@ s32 cappy_hoot_update(struct Object *o) {
 
     // Gfx
     obj_update_gfx(o);
-    obj_set_animation_with_accel(o, 0, (o->oVelY > 0.f) ? 2.f : 1.f);
+    obj_anim_play(o, 0, (o->oVelY > 0.f) ? 2.f : 1.f);
 
     // Cappy values
     gOmmData->object->cappy.offset[1] = 100.f;
