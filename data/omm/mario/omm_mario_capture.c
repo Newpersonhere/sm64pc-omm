@@ -394,7 +394,8 @@ bool omm_mario_possess_object(struct MarioState *m, struct Object *o, bool check
     }
     
     // Holding X prevents Cappy from capturing objects
-    if (m->controller->buttonDown & X_BUTTON) {
+    // (does nothing during OMM Bowser fights)
+    if ((m->controller->buttonDown & X_BUTTON) && !obj_get_first_with_behavior(omm_bhv_bowser)) {
         return false;
     }
     

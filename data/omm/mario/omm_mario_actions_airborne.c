@@ -2,34 +2,6 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
-static s16 omm_wall_slide_get_jump_angle(struct MarioState *m) {
-    s16 wAngle = atan2s(m->wall->normal.z, m->wall->normal.x);
-    s16 dAngle = m->faceAngle[1] - wAngle;
-    if (m->controller->stickMag > 32.f) {
-        dAngle = m->intendedYaw - wAngle;
-        if (-0x4000 < dAngle && dAngle < +0x4000) {
-            dAngle = 0x8000 - dAngle;
-        }
-        if (dAngle < 0) {
-            dAngle = omm_min_s(dAngle, -0x8000 + OMM_MARIO_WALL_SLIDE_JUMP_ANGLE_MAX);
-        } else {
-            dAngle = omm_max_s(dAngle, +0x8000 - OMM_MARIO_WALL_SLIDE_JUMP_ANGLE_MAX);
-        }
-    }
-    return (0x8000 + wAngle - dAngle);
-}
-
-static void omm_wall_slide_cancel(struct MarioState *m, f32 forwardVel, f32 upwardsVel, bool setJumpAngle) {
-    if (setJumpAngle) {
-        m->faceAngle[1] = omm_wall_slide_get_jump_angle(m);
-    }
-    mario_set_forward_vel(m, forwardVel);
-    m->vel[1] = upwardsVel * omm_player_get_selected_jump_multiplier();
-    gOmmData->mario->wallSlide.height = m->pos[1] - 200.f;
-    gOmmData->mario->wallSlide.jumped = true;
-    gOmmData->mario->midairSpin.counter = 0;
-}
-
 static void omm_common_air_knockback_step(struct MarioState *m, u32 landAction, s32 animID, bool isForward) {
     mario_set_forward_vel(m, m->forwardVel * 0.95f);
     switch (perform_air_step(m, 0)) {
@@ -90,15 +62,42 @@ static f32 omm_get_initial_upwards_velocity(struct MarioState *m, f32 max) {
     return max;
 }
 
+static s16 omm_wall_slide_get_jump_angle(struct MarioState *m) {
+    s16 wAngle = atan2s(m->wall->normal.z, m->wall->normal.x);
+    s16 dAngle = m->faceAngle[1] - wAngle;
+    if (m->controller->stickMag > 32.f) {
+        dAngle = m->intendedYaw - wAngle;
+        if (-0x4000 < dAngle && dAngle < +0x4000) {
+            dAngle = 0x8000 - dAngle;
+        }
+        if (dAngle < 0) {
+            dAngle = omm_min_s(dAngle, -0x8000 + OMM_MARIO_WALL_SLIDE_JUMP_ANGLE_MAX);
+        } else {
+            dAngle = omm_max_s(dAngle, +0x8000 - OMM_MARIO_WALL_SLIDE_JUMP_ANGLE_MAX);
+        }
+    }
+    return (0x8000 + wAngle - dAngle);
+}
+
+static void omm_wall_slide_cancel(struct MarioState *m, f32 forwardVel, f32 upwardsVel, bool setJumpAngle) {
+    if (setJumpAngle) {
+        m->faceAngle[1] = omm_wall_slide_get_jump_angle(m);
+    }
+    mario_set_forward_vel(m, forwardVel);
+    m->vel[1] = omm_get_initial_upwards_velocity(m, upwardsVel * omm_player_get_selected_jump_multiplier());
+    gOmmData->mario->wallSlide.height = m->pos[1] - 200.f;
+    gOmmData->mario->wallSlide.jumped = true;
+    gOmmData->mario->midairSpin.counter = 0;
+}
+
 //
 // Actions
 //
 
 static s32 omm_act_jump(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -106,9 +105,8 @@ static s32 omm_act_jump(struct MarioState *m) {
 
 static s32 omm_act_double_jump(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -116,9 +114,8 @@ static s32 omm_act_double_jump(struct MarioState *m) {
 
 static s32 omm_act_triple_jump(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -131,9 +128,8 @@ static s32 omm_act_special_triple_jump(struct MarioState *m) {
 
 static s32 omm_act_backflip(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -149,9 +145,8 @@ static s32 omm_act_long_jump(struct MarioState *m) {
 
 static s32 omm_act_freefall(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -159,9 +154,8 @@ static s32 omm_act_freefall(struct MarioState *m) {
 
 static s32 omm_act_side_flip(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -169,9 +163,8 @@ static s32 omm_act_side_flip(struct MarioState *m) {
 
 static s32 omm_act_wall_kick_air(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -179,9 +172,8 @@ static s32 omm_act_wall_kick_air(struct MarioState *m) {
 
 static s32 omm_act_water_jump(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -252,7 +244,6 @@ static s32 omm_act_jump_kick(struct MarioState *m) {
     // Cancels
     action_condition(OMM_MOVESET_ODYSSEY && OMM_PLAYER_IS_PEACH, ACT_OMM_PEACH_ATTACK_AIR, 0, RETURN_CANCEL);
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
     action_b_pressed(omm_mario_has_wing_cap(m), ACT_FLYING, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY && (m->actionTimer >= 16), ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
@@ -305,9 +296,8 @@ static s32 omm_act_flying_triple_jump(struct MarioState *m) {
 
 static s32 omm_act_top_of_pole_jump(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -511,9 +501,8 @@ static s32 omm_act_wall_slide(struct MarioState *m) {
 static s32 omm_act_cappy_bounce(struct MarioState *m) {
     action_init(m->forwardVel * 0.8f, omm_get_initial_upwards_velocity(m, 56.f), 0, SOUND_MARIO_HOOHOO);
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
     action_condition(common_air_action_step(m, ACT_DOUBLE_JUMP_LAND, (m->vel[1] >= 0.f ? MARIO_ANIM_DOUBLE_JUMP_RISE : MARIO_ANIM_DOUBLE_JUMP_FALL), AIR_STEP_CHECK_LEDGE_GRAB) != AIR_STEP_NONE, 0, 0, RETURN_BREAK);
@@ -523,9 +512,8 @@ static s32 omm_act_cappy_bounce(struct MarioState *m) {
 static s32 omm_act_ground_cappy_bounce(struct MarioState *m) {
     action_init(m->forwardVel * 0.8f, 68.f, 0, SOUND_MARIO_YAHOO_WAHA_YIPPEE + ((random_u16() % 5) << 16));
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
     if (OMM_EXTRAS_SMO_ANIMATIONS) {
@@ -541,9 +529,8 @@ static s32 omm_act_ground_cappy_bounce(struct MarioState *m) {
 static s32 omm_act_ground_pound_jump(struct MarioState *m) {
     action_init(0, 66.f, 0, SOUND_MARIO_YAHOO, gOmmData->mario->spin.yaw = 1;);
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
 
@@ -565,9 +552,8 @@ static s32 omm_act_ground_pound_jump(struct MarioState *m) {
 
 static s32 omm_act_leave_object_jump(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
     action_condition(common_air_action_step(m, ACT_JUMP_LAND, MARIO_ANIM_SINGLE_JUMP, AIR_STEP_CHECK_LEDGE_GRAB) != AIR_STEP_NONE, 0, 0, RETURN_BREAK);
@@ -578,9 +564,8 @@ static s32 omm_act_leave_object_jump(struct MarioState *m) {
 static s32 omm_act_cappy_throw_airborne(struct MarioState *m) {
     action_init(omm_min_f(m->forwardVel, 8.f), omm_get_initial_upwards_velocity(m, 16.f), 0, 0);
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
     action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
     action_condition(common_air_action_step(m, ACT_FREEFALL_LAND, m->marioObj->oAnimID, 0) != AIR_STEP_NONE, 0, 0, RETURN_BREAK);
@@ -588,7 +573,6 @@ static s32 omm_act_cappy_throw_airborne(struct MarioState *m) {
 }
 
 static s32 omm_act_roll_air(struct MarioState *m) {
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
     action_condition((m->forwardVel < 45.f) && !(m->controller->buttonDown & Z_TRIG), ACT_FREEFALL, 0, RETURN_CANCEL, obj_anim_play(m->marioObj, MARIO_ANIM_GENERAL_FALL, 1.f););
 
@@ -617,9 +601,8 @@ static s32 omm_act_roll_air(struct MarioState *m) {
 static s32 omm_act_spin_air(struct MarioState *m) {
     action_init(m->forwardVel, omm_get_initial_upwards_velocity(m, 12.f), 0, 0);
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_condition(gOmmData->mario->spin.timer == 0, ACT_FREEFALL, 0, RETURN_CANCEL);
 
     omm_mario_update_air_without_turn(m);
@@ -640,9 +623,8 @@ static s32 omm_act_spin_air(struct MarioState *m) {
 static s32 omm_act_spin_jump(struct MarioState *m) {
     action_init(m->forwardVel, 45.f, 0, SOUND_MARIO_YAHOO_WAHA_YIPPEE + ((2 + (random_u16() % 3)) << 16));
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
 
     omm_mario_update_air_without_turn(m);
     s32 step = perform_air_step(m, 0);
@@ -689,9 +671,8 @@ static s32 omm_act_midair_spin(struct MarioState *m) {
         omm_sound_play(OMM_SOUND_EFFECT_MIDAIR_SPIN, m->marioObj->oCameraToObject);
     );
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
-    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
-    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
 
     omm_mario_update_air_without_turn(m);
     s32 step = perform_air_step(m, 0);
