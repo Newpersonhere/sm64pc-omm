@@ -26,6 +26,7 @@ def usage_info():
     print("  smsr  | Super Mario Star Road")
     print("  r96a  | Render96 ex-alpha")
     print("  rt64  | Render96 RT64")
+    print("  saex  | Saturn (sm64ex-nightly)")
     print("")
     print("[build_speed] must be one of the following:")
     print("  slow     | Build the game by compiling files one by one.")
@@ -176,23 +177,21 @@ def fix_typo(filepath, strFrom, strTo):
             file.write(data)
             file.close()
 
-def get_exe_list(dir):
-    return [
-        { "filepath": f"{dir}/build/us_pc/sm64.us.f3dex2e.exe", "command": f"start {dir}/build/us_pc/sm64.us.f3dex2e.exe" }, # Windows
-        { "filepath": f"{dir}/build/us_pc/sm64.us.f3dex2e", "command": f"{dir}/build/us_pc/sm64.us.f3dex2e &" }, # Linux
-    ]
+def get_exe(dir):
+    for path, _, files in os.walk(f"{dir}/build/us_pc"):
+        for filename in files:
+            if ".exe" in filename:
+                return path + "/" + filename
+    return None
 
 def check_executable(dir):
-    for exe in get_exe_list(dir):
-        if os.path.isfile(exe["filepath"]):
-            return True
-    return False
+    return get_exe(dir) is not None
 
 def start_game(dir):
-    for exe in get_exe_list(dir):
-        if os.path.isfile(exe["filepath"]):
-            return os.system(exe["command"])
-    raise_error("Unable to locate the game executable: 'sm64.us.f3dex2e'", False)
+    exe = get_exe(dir)
+    if exe is None:
+        raise_error("Unable to locate the game executable.", False)
+    os.system(f"start {exe}")
 
 
 
@@ -207,6 +206,7 @@ if __name__ == "__main__":
         "smsr": { "name": "Super Mario Star Road",     "repo": "https://github.com/PeachyPeachSM64/sm64pc-omm.git -b smsr",      "dependency": "",          "args": [] },
         "r96a": { "name": "Render96 ex-alpha",         "repo": "https://github.com/Render96/Render96ex.git -b alpha",            "dependency": "",          "args": ["DYNOS"] },
         "rt64": { "name": "Render96 RT64",             "repo": "https://github.com/Render96/Render96ex.git -b tester_rt64alpha", "dependency": "",          "args": ["DYNOS"] },
+        "saex": { "name": "Saturn (sm64ex-nightly)",   "repo": "https://github.com/Llennpie/Saturn -b legacy",                   "dependency": "",          "args": ["DYNOS"] },
     }
     BUILD_SPEEDS = {
         "slow"   : { "name": "Slow",    "jobs": "" },
@@ -370,6 +370,8 @@ if __name__ == "__main__":
 
     # Check compatibility
     print("--- Checking compatibility...")
+    if version in ["saex"] and vn2i(OMM_VERSION_NUMBER) < vn2i("7.0.9"):
+        raise_error("{} ({}) can be built only with OMM v7.0.9 and later.".format(VERSIONS[version]["name"], version), False)
     if version in ["xalo", "smsr", "r96a", "rt64"] and vn2i(OMM_VERSION_NUMBER) < vn2i("6.1.0"):
         raise_error("{} ({}) can be built only with OMM v6.1.0 and later.".format(VERSIONS[version]["name"], version), False)
     if version in ["xalo", "sm74", "smsr"] and args["DYNOS"]:
@@ -481,7 +483,7 @@ if __name__ == "__main__":
                 set_patched("60fps_ex.patch")
 
     # Download and apply the DynOS patch
-    if args["DYNOS"] and not version in ["r96a", "rt64"]:
+    if args["DYNOS"] and not version in ["r96a", "rt64", "saex"]:
         print("--- Applying DynOS patch...")
         if not check_patched("dynos.patch"):
             os.system("wget --no-check-certificate --no-cache --no-cookies https://sm64pc.info/downloads/patches/DynOS.1.1.patch -O dynos.patch -q || rm -f dynos.patch")
