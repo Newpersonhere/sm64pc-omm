@@ -356,7 +356,7 @@ if __name__ == "__main__":
             OMM_PATCH_DIR = get_omm_patch_dir()
             if OMM_PATCH_DIR == "":
                 raise_error("Cannot find any OMM patch.", False)
-    OMM_PATCH_NAME = "omm." + OMM_VERSION_NUMBER
+    OMM_PATCH_NAME = "omm." + OMM_VERSION_NUMBER + "." + OMM_VERSION_REVISION
 
     # Print some info before starting
     print("")
