@@ -2,6 +2,34 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
+static s16 omm_wall_slide_get_jump_angle(struct MarioState *m) {
+    s16 wAngle = atan2s(m->wall->normal.z, m->wall->normal.x);
+    s16 dAngle = m->faceAngle[1] - wAngle;
+    if (m->controller->stickMag > 32.f) {
+        dAngle = m->intendedYaw - wAngle;
+        if (-0x4000 < dAngle && dAngle < +0x4000) {
+            dAngle = 0x8000 - dAngle;
+        }
+        if (dAngle < 0) {
+            dAngle = omm_min_s(dAngle, -0x8000 + OMM_MARIO_WALL_SLIDE_JUMP_ANGLE_MAX);
+        } else {
+            dAngle = omm_max_s(dAngle, +0x8000 - OMM_MARIO_WALL_SLIDE_JUMP_ANGLE_MAX);
+        }
+    }
+    return (0x8000 + wAngle - dAngle);
+}
+
+static void omm_wall_slide_cancel(struct MarioState *m, f32 forwardVel, f32 upwardsVel, bool setJumpAngle) {
+    if (setJumpAngle) {
+        m->faceAngle[1] = omm_wall_slide_get_jump_angle(m);
+    }
+    mario_set_forward_vel(m, forwardVel);
+    m->vel[1] = upwardsVel * omm_player_get_selected_jump_multiplier();
+    gOmmData->mario->wallSlide.height = m->pos[1] - 200.f;
+    gOmmData->mario->wallSlide.jumped = true;
+    gOmmData->mario->midairSpin.counter = 0;
+}
+
 static void omm_common_air_knockback_step(struct MarioState *m, u32 landAction, s32 animID, bool isForward) {
     mario_set_forward_vel(m, m->forwardVel * 0.95f);
     switch (perform_air_step(m, 0)) {
@@ -140,15 +168,6 @@ static s32 omm_act_side_flip(struct MarioState *m) {
 }
 
 static s32 omm_act_wall_kick_air(struct MarioState *m) {
-    if (OMM_MOVESET_ODYSSEY) {
-        action_init(24.f, omm_get_initial_upwards_velocity(m, 52.f), 0, 0,
-            if (m->prevAction == ACT_OMM_WALL_SLIDE) {
-                gOmmData->mario->wallSlide.height = m->pos[1] - 200.f;
-                gOmmData->mario->wallSlide.jumped = true;
-            }
-            gOmmData->mario->midairSpin.counter = 0;
-        );
-    }
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
     action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
     action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
@@ -217,8 +236,7 @@ static s32 omm_act_jump_kick(struct MarioState *m) {
     if (m->actionState == 0) {
         if (OMM_MOVESET_ODYSSEY && OMM_PLAYER_IS_PEACH) {
             mario_set_forward_vel(m, m->forwardVel / 1.5f);
-            m->vel[1] = omm_get_initial_upwards_velocity(m, 15.f * omm_player_get_selected_jump_multiplier());
-            m->actionArg = 1;
+            m->vel[1] = omm_get_initial_upwards_velocity(m, 24.f * omm_player_get_selected_jump_multiplier());
         } else {
             s32 rainbowSpin = OMM_MOVESET_ODYSSEY && omm_cappy_get_object();
             mario_set_forward_vel(m, m->forwardVel / (1.f + rainbowSpin));
@@ -463,27 +481,11 @@ static s32 omm_act_wario_triple_jump(struct MarioState *m) {
 }
 #endif
 
-static s16 omm_wall_slide_get_jump_angle(struct MarioState *m) {
-    s16 wAngle = atan2s(m->wall->normal.z, m->wall->normal.x);
-    s16 dAngle = m->faceAngle[1] - wAngle;
-    if (m->controller->stickMag > 32.f) {
-        dAngle = m->intendedYaw - wAngle;
-        if (-0x4000 < dAngle && dAngle < +0x4000) {
-            dAngle = 0x8000 - dAngle;
-        }
-        if (dAngle < 0) {
-            dAngle = omm_min_s(dAngle, -0x8000 + OMM_MARIO_WALL_SLIDE_JUMP_ANGLE_MAX);
-        } else {
-            dAngle = omm_max_s(dAngle, +0x8000 - OMM_MARIO_WALL_SLIDE_JUMP_ANGLE_MAX);
-        }
-    }
-    return (0x8000 + wAngle - dAngle);
-}
-
 static s32 omm_act_wall_slide(struct MarioState *m) {
     action_condition(!m->wall, ACT_FREEFALL, 0, RETURN_CANCEL, SFX(SOUND_MARIO_UH););
-    action_a_pressed(OMM_MOVESET_ODYSSEY, ACT_WALL_KICK_AIR, 0, RETURN_CANCEL, m->faceAngle[1] = omm_wall_slide_get_jump_angle(m););
-    action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_FREEFALL, 0, RETURN_CANCEL, SFX(SOUND_MARIO_UH););
+    action_a_pressed(OMM_MOVESET_ODYSSEY, ACT_WALL_KICK_AIR, 0, RETURN_CANCEL, omm_wall_slide_cancel(m, 24.f, 52.f, 1););
+    action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_FREEFALL, 0, RETURN_CANCEL, omm_wall_slide_cancel(m, -8.f, 0.f, 0); SFX(SOUND_MARIO_UH););
+    action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL, omm_wall_slide_cancel(m, 8.f, 0.f, 1););
 
     mario_set_forward_vel(m, 0);
     obj_anim_play(m->marioObj, MARIO_ANIM_START_WALLKICK, 1.f);
@@ -575,9 +577,12 @@ static s32 omm_act_leave_object_jump(struct MarioState *m) {
 
 static s32 omm_act_cappy_throw_airborne(struct MarioState *m) {
     action_init(omm_min_f(m->forwardVel, 8.f), omm_get_initial_upwards_velocity(m, 16.f), 0, 0);
+    action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
     action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
     action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
+    action_midair_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_MIDAIR_SPIN, 0, RETURN_CANCEL);
+    action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_AIR, 0, RETURN_CANCEL);
     action_condition(common_air_action_step(m, ACT_FREEFALL_LAND, m->marioObj->oAnimID, 0) != AIR_STEP_NONE, 0, 0, RETURN_BREAK);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
@@ -656,9 +661,9 @@ static s32 omm_act_spin_jump(struct MarioState *m) {
 }
 
 static s32 omm_act_spin_pound(struct MarioState *m) {
+    action_init(0.f, -60.f, 0, 0);
     action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_DIVE, 0, RETURN_CANCEL);
 
-    m->vel[1] = -60.f;
     mario_set_forward_vel(m, 0);
     s32 step = perform_air_step(m, 0);
     s32 soundBits = (((m->flags & MARIO_METAL_CAP) ? SOUND_ACTION_METAL_HEAVY_LANDING : SOUND_ACTION_TERRAIN_HEAVY_LANDING) | 0x0000FF00);
@@ -864,63 +869,64 @@ s32 omm_mario_execute_airborne_action(struct MarioState *m) {
 
     // Actions
     switch (m->action) {
-        case ACT_JUMP:                      return omm_act_jump(m);
-        case ACT_DOUBLE_JUMP:               return omm_act_double_jump(m);
-        case ACT_TRIPLE_JUMP:               return omm_act_triple_jump(m);
-        case ACT_SPECIAL_TRIPLE_JUMP:       return omm_act_special_triple_jump(m);
-        case ACT_BACKFLIP:                  return omm_act_backflip(m);
-        case ACT_LONG_JUMP:                 return omm_act_long_jump(m);
-        case ACT_FREEFALL:                  return omm_act_freefall(m);
-        case ACT_SIDE_FLIP:                 return omm_act_side_flip(m);
-        case ACT_WALL_KICK_AIR:             return omm_act_wall_kick_air(m);
-        case ACT_WATER_JUMP:                return omm_act_water_jump(m);
-        case ACT_STEEP_JUMP:                return omm_act_steep_jump(m);
-        case ACT_GROUND_POUND:              return omm_act_ground_pound(m);
-        case ACT_DIVE:                      return omm_act_dive(m);
-        case ACT_BURNING_JUMP:              return omm_act_burning_jump(m);
-        case ACT_BURNING_FALL:              return omm_act_burning_fall(m);
-        case ACT_JUMP_KICK:                 return omm_act_jump_kick(m);
-        case ACT_FLYING:                    return omm_act_flying(m);
-        case ACT_FLYING_TRIPLE_JUMP:        return omm_act_flying_triple_jump(m);
-        case ACT_TOP_OF_POLE_JUMP:          return omm_act_top_of_pole_jump(m);
-        case ACT_TWIRLING:                  return omm_act_twirling(m);
-        case ACT_BACKWARD_AIR_KB:           return omm_act_backward_air_kb(m);
-        case ACT_FORWARD_AIR_KB:            return omm_act_forward_air_kb(m);
-        case ACT_HARD_FORWARD_AIR_KB:       return omm_act_hard_forward_air_kb(m);
-        case ACT_HARD_BACKWARD_AIR_KB:      return omm_act_hard_backward_air_kb(m);
-        case ACT_SOFT_BONK:                 return omm_act_soft_bonk(m);
-        case ACT_AIR_HIT_WALL:              return omm_act_air_hit_wall(m);
-        case ACT_FORWARD_ROLLOUT:           return omm_act_forward_rollout(m);
-        case ACT_BACKWARD_ROLLOUT:          return omm_act_backward_rollout(m);
-        case ACT_VERTICAL_WIND:             return omm_act_vertical_wind(m);
-        case ACT_LAVA_BOOST:                return omm_act_lava_boost(m);
-        case ACT_GETTING_BLOWN:             return omm_act_getting_blown(m);
-        case ACT_THROWN_FORWARD:            return omm_act_thrown_forward(m);
-        case ACT_THROWN_BACKWARD:           return omm_act_thrown_backward(m);
+        case ACT_JUMP:                          return omm_act_jump(m);
+        case ACT_DOUBLE_JUMP:                   return omm_act_double_jump(m);
+        case ACT_TRIPLE_JUMP:                   return omm_act_triple_jump(m);
+        case ACT_SPECIAL_TRIPLE_JUMP:           return omm_act_special_triple_jump(m);
+        case ACT_BACKFLIP:                      return omm_act_backflip(m);
+        case ACT_LONG_JUMP:                     return omm_act_long_jump(m);
+        case ACT_FREEFALL:                      return omm_act_freefall(m);
+        case ACT_SIDE_FLIP:                     return omm_act_side_flip(m);
+        case ACT_WALL_KICK_AIR:                 return omm_act_wall_kick_air(m);
+        case ACT_WATER_JUMP:                    return omm_act_water_jump(m);
+        case ACT_STEEP_JUMP:                    return omm_act_steep_jump(m);
+        case ACT_GROUND_POUND:                  return omm_act_ground_pound(m);
+        case ACT_DIVE:                          return omm_act_dive(m);
+        case ACT_BURNING_JUMP:                  return omm_act_burning_jump(m);
+        case ACT_BURNING_FALL:                  return omm_act_burning_fall(m);
+        case ACT_JUMP_KICK:                     return omm_act_jump_kick(m);
+        case ACT_FLYING:                        return omm_act_flying(m);
+        case ACT_FLYING_TRIPLE_JUMP:            return omm_act_flying_triple_jump(m);
+        case ACT_TOP_OF_POLE_JUMP:              return omm_act_top_of_pole_jump(m);
+        case ACT_TWIRLING:                      return omm_act_twirling(m);
+        case ACT_BACKWARD_AIR_KB:               return omm_act_backward_air_kb(m);
+        case ACT_FORWARD_AIR_KB:                return omm_act_forward_air_kb(m);
+        case ACT_HARD_FORWARD_AIR_KB:           return omm_act_hard_forward_air_kb(m);
+        case ACT_HARD_BACKWARD_AIR_KB:          return omm_act_hard_backward_air_kb(m);
+        case ACT_SOFT_BONK:                     return omm_act_soft_bonk(m);
+        case ACT_AIR_HIT_WALL:                  return omm_act_air_hit_wall(m);
+        case ACT_FORWARD_ROLLOUT:               return omm_act_forward_rollout(m);
+        case ACT_BACKWARD_ROLLOUT:              return omm_act_backward_rollout(m);
+        case ACT_VERTICAL_WIND:                 return omm_act_vertical_wind(m);
+        case ACT_LAVA_BOOST:                    return omm_act_lava_boost(m);
+        case ACT_GETTING_BLOWN:                 return omm_act_getting_blown(m);
+        case ACT_THROWN_FORWARD:                return omm_act_thrown_forward(m);
+        case ACT_THROWN_BACKWARD:               return omm_act_thrown_backward(m);
 #if OMM_GAME_IS_R96A
-        case ACT_WARIO_TRIPLE_JUMP:         return omm_act_wario_triple_jump(m);
+        case ACT_WARIO_TRIPLE_JUMP:             return omm_act_wario_triple_jump(m);
 #endif
 
         // Odyssey
-        case ACT_OMM_WALL_SLIDE:            return omm_act_wall_slide(m);
-        case ACT_OMM_CAPPY_BOUNCE:          return omm_act_cappy_bounce(m);
-        case ACT_OMM_GROUND_CAPPY_BOUNCE:   return omm_act_ground_cappy_bounce(m);
-        case ACT_OMM_GROUND_POUND_JUMP:     return omm_act_ground_pound_jump(m);
-        case ACT_OMM_LEAVE_OBJECT_JUMP:     return omm_act_leave_object_jump(m);
-        case ACT_OMM_CAPPY_THROW_AIRBORNE:  return omm_act_cappy_throw_airborne(m);
-        case ACT_OMM_ROLL_AIR:              return omm_act_roll_air(m);
-        case ACT_OMM_SPIN_AIR:              return omm_act_spin_air(m);
-        case ACT_OMM_SPIN_JUMP:             return omm_act_spin_jump(m);
-        case ACT_OMM_SPIN_POUND:            return omm_act_spin_pound(m);
-        case ACT_OMM_MIDAIR_SPIN:           return omm_act_midair_spin(m);
+        case ACT_OMM_WALL_SLIDE:                return omm_act_wall_slide(m);
+        case ACT_OMM_CAPPY_BOUNCE:              return omm_act_cappy_bounce(m);
+        case ACT_OMM_GROUND_CAPPY_BOUNCE:       return omm_act_ground_cappy_bounce(m);
+        case ACT_OMM_GROUND_POUND_JUMP:         return omm_act_ground_pound_jump(m);
+        case ACT_OMM_LEAVE_OBJECT_JUMP:         return omm_act_leave_object_jump(m);
+        case ACT_OMM_CAPPY_THROW_AIRBORNE:      return omm_act_cappy_throw_airborne(m);
+        case ACT_OMM_ROLL_AIR:                  return omm_act_roll_air(m);
+        case ACT_OMM_SPIN_AIR:                  return omm_act_spin_air(m);
+        case ACT_OMM_SPIN_JUMP:                 return omm_act_spin_jump(m);
+        case ACT_OMM_SPIN_POUND:                return omm_act_spin_pound(m);
+        case ACT_OMM_MIDAIR_SPIN:               return omm_act_midair_spin(m);
 
         // Peach
-        case ACT_OMM_PEACH_FLOAT:           return omm_act_peach_float(m);
-        case ACT_OMM_PEACH_GLIDE:           return omm_act_peach_glide(m);
-        case ACT_OMM_PEACH_ATTACK_AIR:      return omm_act_peach_attack_air(m);
-        case ACT_OMM_PEACH_VIBE_JOY_MOVE:   return omm_act_peach_vibe_joy_move(m);
-        case ACT_OMM_PEACH_VIBE_JOY_FLY:    return omm_act_peach_vibe_joy_fly(m);
-        case ACT_OMM_PEACH_VIBE_JOY_ATTACK: return omm_act_peach_vibe_joy_attack(m);
+        case ACT_OMM_PEACH_FLOAT:               return omm_act_peach_float(m);
+        case ACT_OMM_PEACH_GLIDE:               return omm_act_peach_glide(m);
+        case ACT_OMM_PEACH_ATTACK_AIR:          return omm_act_peach_attack_air(m);
+        case ACT_OMM_PEACH_PERRY_CHARGE_AIR:    return omm_act_peach_perry_charge_air(m);
+        case ACT_OMM_PEACH_VIBE_JOY_MOVE:       return omm_act_peach_vibe_joy_move(m);
+        case ACT_OMM_PEACH_VIBE_JOY_FLY:        return omm_act_peach_vibe_joy_fly(m);
+        case ACT_OMM_PEACH_VIBE_JOY_ATTACK:     return omm_act_peach_vibe_joy_attack(m);
     }
 
     return OMM_MARIO_ACTION_RESULT_CONTINUE;

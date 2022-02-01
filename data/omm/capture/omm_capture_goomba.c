@@ -140,7 +140,7 @@ s32 cappy_goomba_update(struct Object *o) {
     if (gOmmData->object->goomba.stackCount < (OBJ_GOOMBA_STACK_MAX - 1) && omm_obj_is_goomba(obj) && obj->oIntangibleTimer == 0) {
 
         // Fall check
-        if (!obj_is_on_ground(o) && o->oVelY <= 0.f) {
+        if ((!obj_is_on_ground(o) && o->oVelY <= 0.f) || (obj_is_on_ground(o) && o->oPosY > obj->oPosY + obj->hitboxHeight / 4.f)) {
             
             // Height check
             f32 y1 = obj->oPosY;

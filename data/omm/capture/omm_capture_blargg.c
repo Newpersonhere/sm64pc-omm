@@ -6,7 +6,7 @@
 // Init
 //
 
-bool cappy_blargg_init(struct Object *o) {
+bool cappy_blargg_init(UNUSED struct Object *o) {
     gOmmData->object->state.actionState = 0;
     return true;
 }

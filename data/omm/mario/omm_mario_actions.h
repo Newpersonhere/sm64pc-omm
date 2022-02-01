@@ -85,6 +85,8 @@
 //
 
 #define BUTTONS_PRESSED(x)                          ((m->controller->buttonPressed & (x)) == (x))
+#define BUTTONS_DOWN(x)                             ((m->controller->buttonDown & (x)) == (x))
+#define BUTTONS_RELEASED(x)                         ((m->controller->buttonDown & (x)) == 0)
 #define SFX(x)                                      play_sound((x), m->marioObj->oCameraToObject)
 #define PFX(x)                                      m->particleFlags |= (x)
 #define NO_RETURN
@@ -126,9 +128,15 @@ if (BUTTONS_PRESSED(X_BUTTON) && (cond)) { \
     action_set(omm_mario_throw_cappy, action, actionArg, 0, result, __VA_ARGS__); \
 }
 
+// Trigger an action change if Z and A are pressed
+#define action_za_pressed(cond, action, actionArg, result, ...) \
+if (BUTTONS_PRESSED(A_BUTTON) && BUTTONS_DOWN(Z_TRIG) && (cond)) { \
+    action_set(omm_mario_set_action, action, actionArg, Z_TRIG | A_BUTTON, result, __VA_ARGS__); \
+}
+
 // Trigger an action change if Z and B are pressed
 #define action_zb_pressed(cond, action, actionArg, result, ...) \
-if (BUTTONS_PRESSED(Z_TRIG | B_BUTTON) && (cond)) { \
+if (BUTTONS_PRESSED(B_BUTTON) && BUTTONS_DOWN(Z_TRIG) && (cond)) { \
     action_set(omm_mario_set_action, action, actionArg, Z_TRIG | B_BUTTON, result, __VA_ARGS__); \
 }
 

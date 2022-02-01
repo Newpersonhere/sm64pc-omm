@@ -8,6 +8,7 @@
 
 static s32 omm_act_punching(struct MarioState *m) {
     action_condition(OMM_MOVESET_ODYSSEY && OMM_PLAYER_IS_PEACH, ACT_OMM_PEACH_ATTACK_GROUND, ((m->prevAction == ACT_OMM_SPIN_GROUND) ? 4 : 0), RETURN_CANCEL);
+    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_ROLL, 0, RETURN_CANCEL);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 

@@ -47,6 +47,8 @@ struct OmmData {
             s32 vibeGauge;
             s32 vibeTimer;
             s32 joySpinYaw;
+            s32 perryCharge;
+            bool perryBlast;
         } peach;
 
         // Wall-slide moves data

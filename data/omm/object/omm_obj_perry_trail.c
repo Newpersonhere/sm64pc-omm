@@ -68,7 +68,7 @@ static void omm_bhv_perry_trail_update() {
     // Add new point...
     struct Object *perry = obj_get_first_with_behavior(omm_bhv_perry);
     if (o->oAction == 0 && perry && (perry->oPerryFlags & OBJ_INT_PERRY_TRAIL)) {
-        Vec3f perryDir = { 0, 110, 0 };
+        Vec3f perryDir = { 0.f, 110.f, 0.f };
         vec3f_rotate_zxy(perryDir, perryDir, perry->oFaceAnglePitch, perry->oFaceAngleYaw, perry->oFaceAngleRoll);
 
         // Real points, not interpolated
@@ -186,23 +186,29 @@ OMM_ROUTINE_UPDATE(omm_spawn_perry_trail) {
         return;
     }
 
-    // Colors
-    static const u8 sOmmPerryColors[][2][3] = {
-        { { OMM_PEACH_COLOR_PERRY_FRONT      }, { OMM_PEACH_COLOR_PERRY_BACK      } },
-        { { OMM_PEACH_COLOR_VIBE_JOY_FRONT   }, { OMM_PEACH_COLOR_VIBE_JOY_BACK   } },
-        { { OMM_PEACH_COLOR_VIBE_RAGE_FRONT  }, { OMM_PEACH_COLOR_VIBE_RAGE_BACK  } },
-        { { OMM_PEACH_COLOR_VIBE_GLOOM_FRONT }, { OMM_PEACH_COLOR_VIBE_GLOOM_BACK } },
-        { { OMM_PEACH_COLOR_VIBE_CALM_FRONT  }, { OMM_PEACH_COLOR_VIBE_CALM_BACK  } },
-    };
-    const u8 *cf = sOmmPerryColors[gOmmData->mario->peach.vibeType][0];
-    const u8 *cb = sOmmPerryColors[gOmmData->mario->peach.vibeType][1];
-
     // Spawn new trail
-    struct Object *trail = obj_spawn_from_geo(gMarioObject, omm_geo_perry_trail, omm_bhv_perry_trail);
-    OmmPerryTrailGeoData *data = omm_geo_get_geo_data(trail, sizeof(OmmPerryTrailGeoData), omm_perry_trail_gfx, sizeof(omm_perry_trail_gfx));
-    data->lightsFront = (Lights1) gdSPDefLights1(cf[0], cf[1], cf[2], cf[0], cf[1], cf[2], 0x28, 0x28, 0x28);
-    data->lightsBack = (Lights1) gdSPDefLights1(cb[0], cb[1], cb[2], cb[0], cb[1], cb[2], 0x28, 0x28, 0x28);
-    trail->oGeoData = (void *) data;
-    trail->oAction = 0;
-    trail->oSubAction = 0;
+    struct Object *o = obj_spawn_from_geo(gMarioObject, omm_geo_perry_trail, omm_bhv_perry_trail);
+    o->oAction = 0;
+    o->oSubAction = 0;
+    o->oAnimState = gOmmData->mario->peach.vibeType;
+    OmmPerryTrailGeoData *data = omm_geo_get_geo_data(o, sizeof(OmmPerryTrailGeoData), omm_perry_trail_gfx, sizeof(omm_perry_trail_gfx));
+    gSPEndDisplayList(data->tri);
+    data->lightsFront = (Lights1) gdSPDefLights1(
+        OMM_PERRY_COLOR_FRONT[0],
+        OMM_PERRY_COLOR_FRONT[1],
+        OMM_PERRY_COLOR_FRONT[2],
+        OMM_PERRY_COLOR_FRONT[0],
+        OMM_PERRY_COLOR_FRONT[1],
+        OMM_PERRY_COLOR_FRONT[2],
+        0x28, 0x28, 0x28
+    );
+    data->lightsBack = (Lights1) gdSPDefLights1(
+        omm_lerp_s(0.5f, OMM_PERRY_COLOR_FRONT[0], OMM_PERRY_COLOR_BACK[0]),
+        omm_lerp_s(0.5f, OMM_PERRY_COLOR_FRONT[1], OMM_PERRY_COLOR_BACK[1]),
+        omm_lerp_s(0.5f, OMM_PERRY_COLOR_FRONT[2], OMM_PERRY_COLOR_BACK[2]),
+        omm_lerp_s(0.5f, OMM_PERRY_COLOR_FRONT[0], OMM_PERRY_COLOR_BACK[0]),
+        omm_lerp_s(0.5f, OMM_PERRY_COLOR_FRONT[1], OMM_PERRY_COLOR_BACK[1]),
+        omm_lerp_s(0.5f, OMM_PERRY_COLOR_FRONT[2], OMM_PERRY_COLOR_BACK[2]),
+        0x28, 0x28, 0x28
+    );
 }

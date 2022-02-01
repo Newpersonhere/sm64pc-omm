@@ -2,6 +2,7 @@
 #define OMM_PEACH_H
 
 #include "data/omm/omm_includes.h"
+#include "omm_perry.h"
 
 #define MODEL_PEACH_OMM                     0x30
 #define MODEL_PEACHS_CAP_OMM                0x31
@@ -21,10 +22,11 @@ s32 omm_act_peach_glide(struct MarioState *m);
 s32 omm_act_peach_attack_ground(struct MarioState *m);
 s32 omm_act_peach_attack_fast(struct MarioState *m);
 s32 omm_act_peach_attack_air(struct MarioState *m);
+s32 omm_act_peach_perry_charge_ground(struct MarioState *m);
+s32 omm_act_peach_perry_charge_air(struct MarioState *m);
 
 s32 omm_act_peach_vibe_joy_move(struct MarioState *m);
 s32 omm_act_peach_vibe_joy_fly(struct MarioState *m);
 s32 omm_act_peach_vibe_joy_attack(struct MarioState *m);
-
 
 #endif

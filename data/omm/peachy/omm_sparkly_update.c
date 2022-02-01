@@ -31,9 +31,10 @@ static void omm_sparkly_spawn_star_blocks(struct MarioState *m) {
                         block->oAction = 3;
                         block->oTimer = 0;
 
-                        // Extreme mode: Select Peach and enable 1 HP mode
+                        // Extreme mode: Select Peach and enable Non-Stop mode and 1 HP mode
                         if (mode == OMM_SPARKLY_MODE_EXTREME) {
                             g1HPMode = true;
+                            gOmmStarsMode = 1;
                             if (!OMM_PLAYER_IS_PEACH) {
                                 omm_player_select(OMM_PLAYER_PEACH);
                                 obj_spawn_white_puff(m->marioObj, -1);
@@ -81,12 +82,6 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update) {
         return;
     }
 
-    // Disable the Sparkly Stars Extreme mode if Peach is not selected or the 1 HP mode is not enabled
-    if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_EXTREME) && (!g1HPMode || !OMM_PLAYER_IS_PEACH)) {
-        omm_sparkly_set_opt_mode(OMM_SPARKLY_MODE_DISABLED);
-        omm_sparkly_disable();
-    }
-
     // If a save file with less than the minimum number of stars required is selected, disable the Sparkly Stars mode and return
     if (m->numStars < OMM_SPARKLY_REQUIRED_STARS) {
         omm_sparkly_disable();
@@ -124,6 +119,13 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update) {
         gCurrLevelNum == LEVEL_BOWSER_2 ||
         gCurrLevelNum == LEVEL_BOWSER_3) {
         return;
+    }
+
+    // Peach, Non-Stop mode and 1 HP mode are required in Extreme mode
+    // Disable the Sparkly Stars Extreme mode if one of the conditions is not fulfilled
+    if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_EXTREME) && (!OMM_PLAYER_IS_PEACH || !OMM_STARS_NON_STOP || !g1HPMode)) {
+        omm_sparkly_set_opt_mode(OMM_SPARKLY_MODE_DISABLED);
+        omm_sparkly_disable();
     }
 
     // Sparkly Stars blocks
@@ -210,12 +212,10 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update) {
     static bool sDeathState = false;
     if (omm_sparkly_flags_get(OMM_SPARKLY_FLAG_CHEAT_DETECTED)) {
 
-        // Turn off cheats, turn off Non-Stop mode,
-        // disable caps and reduce Mario's health to 0...
+        // Turn off cheats, disable caps and reduce Mario's health to 0...
         if (!sDeathState) {
             omm_sparkly_context_unset_flag(OMM_SPARKLY_CONTEXT_FLAG_CHEAT_DETECTED, 1);
             omm_sparkly_turn_off_cheats();
-            gOmmStarsMode = 0;
             m->capTimer = 0;
             m->flags &= ~(MARIO_WING_CAP | MARIO_METAL_CAP | MARIO_VANISH_CAP);
             if (OMM_MOVESET_ODYSSEY) {
@@ -255,7 +255,6 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update) {
             omm_sparkly_cheats[2] = OMM_DIALOG_SPARKLY_ANTI_CHEAT_0 + (random_u16() % 8);
             omm_sparkly_cheats[3] = OMM_DIALOG_SPARKLY_ANTI_CHEAT_END_0 + (random_u16() % 3);
             omm_sparkly_flags_set(OMM_SPARKLY_FLAG_CHEAT_DETECTED, 0);
-            gOmmStarsMode = omm_sparkly_flags_get(OMM_SPARKLY_FLAG_NON_STOP_MODE);
             sDeathState = false;
         }
         return;
@@ -265,7 +264,6 @@ OMM_ROUTINE_UPDATE(omm_sparkly_update) {
 #if OMM_GAME_IS_SM64
     // Unlock Bowser 4
     // Display the "unlocked Bowser 4" message if the player has met the requirements to unlock the final fight (Vanilla only)
-    // The player also needs the 30 Pink Gold and Crystal Stars for the Extreme difficulty
     if (!omm_is_game_paused() &&
         !omm_is_transition_active() &&
         !omm_sparkly_is_bowser_4_unlocked(omm_sparkly_get_current_mode()) &&

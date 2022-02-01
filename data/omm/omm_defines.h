@@ -5,8 +5,8 @@
 // Utilities
 //
 
-#define OMM_EXE_FOLDER                                  sys_exe_path()
-#define OMM_USER_FOLDER                                 sys_user_path()
+#define OMM_EXE_FOLDER                                  omm_exe_path()
+#define OMM_USER_FOLDER                                 omm_user_path()
 #define OMM_RES_FOLDER                                  "omm"
 #define OMM_GFX_FOLDER                                  OMM_RES_FOLDER "/gfx"
 #define OMM_SOUND_FOLDER                                OMM_RES_FOLDER "/sound"
@@ -148,6 +148,7 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 #define OMM_EXTRAS_INVISIBLE_MODE                       (gOmmExtrasInvisibleMode)
 #define OMM_EXTRAS_SPARKLY_STARS_HINT                   (gOmmExtrasSparklyStarsHint)
 #define OMM_EXTRAS_CRYSTAL_STARS_REWARD                 (gOmmExtrasCrystalStarsReward && omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD))
+#define OMM_EXTRAS_NEBULA_STARS_REWARD                  (gOmmExtrasNebulaStarsReward && omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_EXTREME))
 #define OMM_CHEAT_UNLIMITED_CAPPY_BOUNCES               (gOmmCheatUnlimitedCappyBounces == 1)
 #define OMM_CHEAT_CAPPY_STAYS_FOREVER                   (gOmmCheatCappyStaysForever == 1)
 #define OMM_CHEAT_HOMING_ATTACK_GLOBAL_RANGE            (gOmmCheatHomingAttackGlobalRange == 1)
@@ -341,6 +342,9 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 #define OMM_SOUND_EFFECT_MIDAIR_SPIN                    0x87
 #define OMM_SOUND_EFFECT_PEACH_GLIDE                    0x88
 #define OMM_SOUND_EFFECT_PEACH_VIBE                     0x89
+#define OMM_SOUND_EFFECT_PERRY_CHARGE                   0x8A
+#define OMM_SOUND_EFFECT_PERRY_CHARGED                  0x8B
+#define OMM_SOUND_EFFECT_PERRY_BEAM                     0x8C
 
 //
 // Playable characters
@@ -437,10 +441,14 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 #define oSparklyStarPosY                                OBJECT_FIELD_F32(0x1F)
 #define oSparklyStarPosZ                                OBJECT_FIELD_F32(0x20)
 #define oPerryFlags                                     OBJECT_FIELD_S32(0x1B)
-#define oPerryShockwaveType                             OBJECT_FIELD_S32(0x1B)
-#define oPerryShockwaveDelay                            OBJECT_FIELD_S32(0x1C)
-#define oPerryShockwaveAngleYaw                         OBJECT_FIELD_S32(0x1D)
-#define oPerryShockwaveClockwise                        OBJECT_FIELD_S32(0x1E)
+#define oPerryRightHandRot(x)                           OBJECT_FIELD_S32(0x1C + x)
+#define oPerryShockwaveBlast                            OBJECT_FIELD_S16(0x1B, 0)
+#define oPerryShockwaveDelay                            OBJECT_FIELD_S16(0x1B, 1)
+#define oPerryShockwaveAngleYaw                         OBJECT_FIELD_S32(0x1C)
+#define oPerryShockwaveAngleDir                         OBJECT_FIELD_S32(0x1D)
+#define oPerryShockwaveBaseScale                        OBJECT_FIELD_F32(0x1E)
+#define oPerryChargeSwordTimer                          OBJECT_FIELD_S32(0x1C)
+#define oPerryChargeHandTimer                           OBJECT_FIELD_S32(0x1D)
 #define oMrIBeamPower                                   OBJECT_FIELD_F32(0x17)
 #define oSnufitBallStrong                               OBJECT_FIELD_S32(0x17)
 #define oMenuButtonCharacterIndex                       OBJECT_FIELD_S32(0x21)

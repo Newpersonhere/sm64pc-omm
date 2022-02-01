@@ -70,7 +70,6 @@
 #define OMM_SPARKLY_FLAG_TRANSITION                     (1 << 4)
 #define OMM_SPARKLY_FLAG_MARIO_UPDATED                  (1 << 5)
 #define OMM_SPARKLY_FLAG_CHEAT_DETECTED                 (1 << 6)
-#define OMM_SPARKLY_FLAG_NON_STOP_MODE                  (1 << 7)
 
 //
 // Data

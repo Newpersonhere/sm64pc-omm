@@ -558,10 +558,12 @@ void omm_cappy_update_mario_anim(struct Object *cappy, struct MarioState *m) {
         if (p->end == -1) {
             if (obj_anim_is_at_end(m->marioObj)) {
                 omm_mario_set_action(m, endAction, 0, 0);
+                omm_mario_init_next_action(m);
             }
         } else {
             if (obj_anim_get_frame(m->marioObj) >= p->end) {
                 omm_mario_set_action(m, endAction, 0, 0);
+                omm_mario_init_next_action(m);
             }
         }
     }

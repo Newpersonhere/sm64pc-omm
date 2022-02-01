@@ -30,11 +30,12 @@
 //
 // OMM macros
 // Depending on which repo/conversion/hack we are building the game,
-// we need to enable/disable some code for OMM to work properly.
-// The four following macros can be passed to the make command with values 0 or 1.
+// some code must be enabled or disabled for OMM to work properly.
+// The macros OMM_BOWSER, OMM_DEBUG and OMM_DEV can be passed to the make
+// command with values 0 or 1 to enable or disable the corresponding code.
 //
 
-// OMM_GAME_* | Attributes a numeric value to every game version
+// OMM_GAME_* | Attributes a numeric value to every game version/type/save/mode
 #define OMM_GAME_SM64           0
 #define OMM_GAME_SMEX           0
 #define OMM_GAME_SMMS           1
@@ -44,6 +45,8 @@
 #define OMM_GAME_SMSR           5
 #define OMM_GAME_VERSION        DEF(OMM_GAME_SMEX, OMM_GAME_SMMS, OMM_GAME_R96A, OMM_GAME_XALO, OMM_GAME_SM74, OMM_GAME_SMSR)
 #define OMM_GAME_TYPE           DEF(OMM_GAME_SM64, OMM_GAME_SMMS, OMM_GAME_SM64, OMM_GAME_SM64, OMM_GAME_SM74, OMM_GAME_SMSR)
+#define OMM_GAME_SAVE           DEF(OMM_GAME_SM64, OMM_GAME_SMMS, OMM_GAME_R96A, OMM_GAME_SM64, OMM_GAME_SM74, OMM_GAME_SMSR)
+#define OMM_GAME_MODE           DEF(0, 0, 0, 0, sm74_mode__omm_save, 0)
 #define OMM_GAME_IS_SM64        (OMM_GAME_TYPE == OMM_GAME_SM64)
 #define OMM_GAME_IS_SMEX        (OMM_GAME_VERSION == OMM_GAME_SMEX)
 #define OMM_GAME_IS_SMMS        (OMM_GAME_VERSION == OMM_GAME_SMMS)
@@ -147,6 +150,7 @@
 #define music_lower_volume(...)         DEF(func_8031FFB4(__VA_ARGS__), func_8031FFB4(__VA_ARGS__), func_8031FFB4(__VA_ARGS__), seq_player_lower_volume(__VA_ARGS__), seq_player_lower_volume(__VA_ARGS__), seq_player_lower_volume(__VA_ARGS__))
 #define music_unlower_volume(...)       DEF(sequence_player_unlower(__VA_ARGS__), sequence_player_unlower(__VA_ARGS__), sequence_player_unlower(__VA_ARGS__), seq_player_unlower_volume(__VA_ARGS__), seq_player_unlower_volume(__VA_ARGS__), seq_player_unlower_volume(__VA_ARGS__))
 #define music_play_sequence_define      DEF(0, 0, 0, 1, 1, 1)
+#define MUSIC_QUEUE_MAX_SIZE            DEF(MAX_BG_MUSIC_QUEUE_SIZE, MAX_BG_MUSIC_QUEUE_SIZE, MAX_BG_MUSIC_QUEUE_SIZE, MAX_BACKGROUND_MUSIC_QUEUE_SIZE, MAX_BACKGROUND_MUSIC_QUEUE_SIZE, MAX_BACKGROUND_MUSIC_QUEUE_SIZE)
 
 // Sound
 #define sound_stop(...)                 DEF(func_803205E8(__VA_ARGS__), func_803205E8(__VA_ARGS__), func_803205E8(__VA_ARGS__), stop_sound(__VA_ARGS__), stop_sound(__VA_ARGS__), stop_sound(__VA_ARGS__))
@@ -155,10 +159,19 @@
 #define SOUND_OBJ_WHOMP_SLAM            DEF(SOUND_OBJ_WHOMP_LOWPRIO, SOUND_OBJ_WHOMP_LOWPRIO, SOUND_OBJ_WHOMP_LOWPRIO, SOUND_OBJ_WHOMP, SOUND_OBJ_WHOMP, SOUND_OBJ_WHOMP)
 
 // Object fields
+#define oSnowmansBodyScale              DEF(oSnowmansBottomUnkF4, oSnowmansBottomUnkF4, oSnowmansBottomUnkF4, oSnowmansBottomScale, oSnowmansBottomScale, oSnowmansBottomScale)
 #define oBitsPlatformBowserObject       DEF(oPlatformUnkF8, oPlatformUnkF8, oPlatformUnkF8, oBitsPlatformBowser, oBitsPlatformBowser, oBitsPlatformBowser)
+#define oBowserCameraState              DEF(oBowserUnk88, oBowserUnk88, oBowserUnk88, oBowserCamAct, oBowserCamAct, oBowserCamAct)
+#define oBowserFlags                    DEF(oBowserUnkF4, oBowserUnkF4, oBowserUnkF4, oBowserStatus, oBowserStatus, oBowserStatus)
+#define oBowserActionTimer              DEF(oBowserUnkF8, oBowserUnkF8, oBowserUnkF8, oBowserTimer, oBowserTimer, oBowserTimer)
+#define oBowserBitsJump                 DEF(oBowserUnk106, oBowserUnk106, oBowserUnk106, oBowserBitsJustJump, oBowserBitsJustJump, oBowserBitsJustJump)
+#define oBowserSpitFireNumFlames        DEF(oBowserUnk108, oBowserUnk108, oBowserUnk108, oBowserRandSplitFloor, oBowserRandSplitFloor, oBowserRandSplitFloor)
+#define oBowserGrabbedAction            DEF(oBowserUnk10E, oBowserUnk10E, oBowserUnk10E, oBowserGrabbedStatus, oBowserGrabbedStatus, oBowserGrabbedStatus)
+#define oBowserActionSelected           DEF(oBowserUnk110, oBowserUnk110, oBowserUnk110, oBowserIsReacting, oBowserIsReacting, oBowserIsReacting)
+#define oBowserOpacityTarget            DEF(oBowserUnk1AC, oBowserUnk1AC, oBowserUnk1AC, oBowserTargetOpacity, oBowserTargetOpacity, oBowserTargetOpacity)
+#define oBowserBlinkTimer               DEF(oBowserUnk1AE, oBowserUnk1AE, oBowserUnk1AE, oBowserEyesTimer, oBowserEyesTimer, oBowserEyesTimer)
 #define oBowserRainbowLightEffect       DEF(oBowserUnk1B2, oBowserUnk1B2, oBowserUnk1B2, oBowserRainbowLight, oBowserRainbowLight, oBowserRainbowLight)
 #define oBowserShockwaveScale           DEF(oBowserShockWaveUnkF4, oBowserShockWaveUnkF4, oBowserShockWaveUnkF4, oBowserShockWaveScale, oBowserShockWaveScale, oBowserShockWaveScale)
-#define oSnowmansBodyScale              DEF(oSnowmansBottomUnkF4, oSnowmansBottomUnkF4, oSnowmansBottomUnkF4, oSnowmansBottomScale, oSnowmansBottomScale, oSnowmansBottomScale)
 
 // Dialogs and menus
 #define gDialogType                     DEF(gDialogBoxType, gDialogBoxType, gDialogBoxType, gDialogBoxType, gDialogBoxType, gDialogBoxType)
@@ -181,7 +194,7 @@
 #define init_scene_rendering()          DEF(init_render_image(), init_render_image(), init_render_image(), init_rcp(), init_rcp(), init_rcp())
 #define spawnInfoModel                  DEF(unk18, unk18, unk18, model, model, model)
 #define g1HPMode                        DEF(gOmm1HPMode, gOmm1HPMode, gOmm1HPMode, gOmm1HPMode, gOmm1HPMode, gStarRoadHardMode)
-#define INPUT_STOMP                     DEF(INPUT_UNKNOWN_10, INPUT_UNKNOWN_10, INPUT_UNKNOWN_10, INPUT_STOMPED, INPUT_STOMPED, INPUT_STOMPED)
+#define INPUT_BOUNCE                    DEF(INPUT_UNKNOWN_10, INPUT_UNKNOWN_10, INPUT_UNKNOWN_10, INPUT_STOMPED, INPUT_STOMPED, INPUT_STOMPED)
 
 // OMM
 #define OMM_LEVEL_ENTRY_WARP(level)     DEF(0x0A, 0x0A, 0x0A, 0x0A, 0x0A, (level == LEVEL_JRB ? 0x01 : 0x0A))
@@ -446,6 +459,19 @@ define_actor(omm_geo_menu_button_peach), \
 define_actor(omm_geo_menu_button_luigi), \
 define_actor(omm_geo_menu_button_wario), \
 define_actor(omm_geo_problem)
+#endif
+
+//
+// Saturn defines
+// For Machinima features with OMM custom actions and code
+//
+
+#if defined(SATURN)
+#include "saturn/saturn.h"
+#else
+#define enable_head_rotations   true
+#define enable_dust_particles   true
+#define is_anim_playing         false
 #endif
 
 //

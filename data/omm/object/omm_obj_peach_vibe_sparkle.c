@@ -257,7 +257,7 @@ const BehaviorScript omm_bhv_peach_vibe_joy_sparkle[] = {
 struct Object *omm_spawn_peach_vibe_sparkle(struct Object *o, f32 x, f32 y, f32 z) {
     struct Object *sparkle = obj_spawn_from_geo(o, omm_geo_peach_vibe_sparkle, omm_bhv_peach_vibe_sparkle);
     obj_set_pos(sparkle, 0, 0, 0);
-    obj_set_vel(sparkle, random_f32_around_zero(2.f), random_f32_around_zero(2.f), random_f32_around_zero(2.f));
+    obj_set_vel(sparkle, random_f32_around_zero(2.5f), random_f32_around_zero(2.5f), random_f32_around_zero(2.5f));
     obj_set_angle(sparkle, 0, 0, 0);
     obj_set_scale(sparkle, 1.f, 1.f, 1.f);
     obj_set_always_rendered(sparkle, true);

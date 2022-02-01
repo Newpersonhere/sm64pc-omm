@@ -25,7 +25,6 @@
 #define BHV_TYPE_WF_STAR_WALL       (1 << 20) // Whomp Fortress Star inside wall
 #define BHV_TYPE_EXCLAMATION_BOX    (1 << 21) // Yellow exclamation box
 #define BHV_TYPE_UNAGIS_TAIL        (1 << 22) // Unagi's tail
-#define BHV_TYPE_VIBE_SPARKLES(x)   ((x) << 29) // Drop x Vibe sparkles when defeated if attacked with Perry or a Vibe (up to 7)
 #define BHV_TYPE_COLLECTIBLE        (BHV_TYPE_COIN | BHV_TYPE_WATER_RING | BHV_TYPE_MUSHROOM_1UP | BHV_TYPE_STAR_OR_KEY | BHV_TYPE_CAP | BHV_TYPE_SECRET)
 #define BHV_TYPE_KNOCKABLE          (BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_KNOCKABLE_1)
 
@@ -44,7 +43,6 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhv1upRunningAway, BHV_TYPE_MUSHROOM_1UP },
     { bhv1upSliding, BHV_TYPE_MUSHROOM_1UP },
     { bhv1upWalking, BHV_TYPE_MUSHROOM_1UP },
-
     { bhvActSelector, BHV_TYPE_STAR_MODEL },
     { bhvActSelectorStarType, 0 },
     { bhvActivatedBackAndForthPlatform, 0 },
@@ -57,8 +55,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvAnotherElavator, 0 },
     { bhvAnotherTiltingPlatform, 0 },
     { bhvArrowLift, 0 },
-
-    { bhvBalconyBigBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES(5) },
+    { bhvBalconyBigBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
     { bhvBbhTiltingTrapPlatform, 0 },
     { bhvBbhTumblingBridge, 0 },
     { bhvBeginningLakitu, 0 },
@@ -73,11 +70,11 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvBetaMovingFlamesSpawn, BHV_TYPE_FLAME },
     { bhvBetaTrampolineSpring, 0 },
     { bhvBetaTrampolineTop, 0 },
-    { bhvBigBoulder, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvBigBoulder, BHV_TYPE_DESTRUCTIBLE },
     { bhvBigBoulderGenerator, 0 },
-    { bhvBigBully, BHV_TYPE_BULLY | BHV_TYPE_VIBE_SPARKLES(5) },
-    { bhvBigBullyWithMinions, BHV_TYPE_BULLY | BHV_TYPE_VIBE_SPARKLES(5) },
-    { bhvBigChillBully, BHV_TYPE_BULLY | BHV_TYPE_VIBE_SPARKLES(5) },
+    { bhvBigBully, BHV_TYPE_BULLY },
+    { bhvBigBullyWithMinions, BHV_TYPE_BULLY },
+    { bhvBigChillBully, BHV_TYPE_BULLY },
     { bhvBigSnowmanWhole, BHV_TYPE_INVULNERABLE },
     { bhvBird, 0 },
     { bhvBirdsSoundLoop, 0 },
@@ -94,7 +91,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvBlueFish, 0 },
     { bhvBlueFlamesGroup, BHV_TYPE_FLAME },
     { bhvBobBowlingBallSpawner, 0 },
-    { bhvBobomb, BHV_TYPE_WEAK | BHV_TYPE_GRABBABLE | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_VIBE_SPARKLES(2) },
+    { bhvBobomb, BHV_TYPE_WEAK | BHV_TYPE_GRABBABLE | BHV_TYPE_KNOCKABLE_0 },
     { bhvBobombAnchorMario, 0 },
     { bhvBobombBuddy, 0 },
     { bhvBobombBuddyOpensCannon, 0 },
@@ -102,17 +99,17 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvBobombExplosionBubble, 0 },
     { bhvBobombExplosionBubble3600, 0 },
     { bhvBobombFuseSmoke, 0 },
-    { bhvBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
     { bhvBooCage, 0 },
     { bhvBooInCastle, 0 },
-    { bhvBooWithCage, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES(5) },
+    { bhvBooWithCage, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
     { bhvBookSwitch, 0 },
     { bhvBookendSpawn, 0 },
     { bhvBouncingFireball, BHV_TYPE_FLAME },
     { bhvBouncingFireballFlame, BHV_TYPE_FLAME },
-    { bhvBowlingBall, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvBowlingBall, BHV_TYPE_DESTRUCTIBLE },
     { bhvBowser, BHV_TYPE_INVULNERABLE },
-    { bhvBowserBodyAnchor, 0 },
+    { bhvBowserBodyAnchor, BHV_TYPE_INVULNERABLE },
     { bhvBowserBomb, 0 },
     { bhvBowserBombExplosion, 0 },
     { bhvBowserBombSmoke, 0 },
@@ -126,8 +123,8 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvBowserTailAnchor, BHV_TYPE_GRABBABLE | BHV_TYPE_NO_CAPPY },
     { bhvBowsersSub, 0 },
     { bhvBreakBoxTriangle, 0 },
-    { bhvBreakableBox, BHV_TYPE_BREAKABLE | BHV_TYPE_VIBE_SPARKLES(5) },
-    { bhvBreakableBoxSmall, BHV_TYPE_BREAKABLE | BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_GRABBABLE | BHV_TYPE_VIBE_SPARKLES(5) },
+    { bhvBreakableBox, BHV_TYPE_BREAKABLE },
+    { bhvBreakableBoxSmall, BHV_TYPE_BREAKABLE | BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_GRABBABLE },
     { bhvBreathParticleSpawner, 0 },
     { bhvBub, 0 },
     { bhvBubba, 0 },
@@ -137,7 +134,6 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvBulletBill, BHV_TYPE_INVULNERABLE },
     { bhvBulletBillCannon, 0 },
     { bhvButterfly, 0 },
-
     { bhvCameraLakitu, 0 },
     { bhvCannon, 0 },
     { bhvCannonBarrel, 0 },
@@ -164,7 +160,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvCheckerboardPlatformSub, 0 },
     { bhvChirpChirp, 0 },
     { bhvChirpChirpUnused, 0 },
-    { bhvChuckya, BHV_TYPE_STRONG | BHV_TYPE_GRABBABLE | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvChuckya, BHV_TYPE_STRONG | BHV_TYPE_GRABBABLE | BHV_TYPE_KNOCKABLE_0 },
     { bhvChuckyaAnchorMario, 0 },
     { bhvCirclingAmp, 0 },
     { bhvClamShell, 0 },
@@ -182,7 +178,6 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvControllablePlatformSub, 0 },
     { bhvCourtyardBooTriplet, 0 },
     { bhvCutOutObject, 0 },
-
     { bhvDDDPole, 0 },
     { bhvDddMovingPole, 0 },
     { bhvDddWarp, 0 },
@@ -194,18 +189,16 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvDoor, 0 },
     { bhvDoorWarp, 0 },
     { bhvDorrie, 0 },
-
     { bhvEndBirds1, 0 },
     { bhvEndBirds2, 0 },
     { bhvEndPeach, 0 },
     { bhvEndToad, 0 },
-    { bhvEnemyLakitu, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvEnemyLakitu, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
     { bhvExclamationBox, BHV_TYPE_BREAKABLE | BHV_TYPE_EXCLAMATION_BOX },
     { bhvExitPodiumWarp, 0 },
     { bhvExplosion, 0 },
     { bhvEyerokBoss, 0 },
-    { bhvEyerokHand, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(5) },
-
+    { bhvEyerokHand, BHV_TYPE_DESTRUCTIBLE },
     { bhvFadingWarp, 0 },
     { bhvFallingBowserPlatform, 0 },
     { bhvFallingPillar, 0 },
@@ -213,7 +206,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvFerrisWheelAxle, 0 },
     { bhvFerrisWheelPlatform, 0 },
     { bhvFireParticleSpawner, 0 },
-    { bhvFirePiranhaPlant, BHV_TYPE_WEAK | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvFirePiranhaPlant, BHV_TYPE_WEAK },
     { bhvFireSpitter, BHV_TYPE_FLAME },
     { bhvFish, 0 },
     { bhvFishGroup, 0 },
@@ -230,26 +223,24 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvFloorSwitchHardcodedModel, 0 },
     { bhvFloorSwitchHiddenObjects, 0 },
     { bhvFloorTrapInCastle, 0 },
-    { bhvFlyGuy, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvFlyGuy, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
     { bhvFlyguyFlame, BHV_TYPE_FLAME },
-    { bhvFlyingBookend, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvFlyingBookend, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
     { bhvFlyingWarp, 0 },
     { bhvFreeBowlingBall, BHV_TYPE_DESTRUCTIBLE },
-
-    { bhvGhostHuntBigBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES(5) },
-    { bhvGhostHuntBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvGhostHuntBigBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
+    { bhvGhostHuntBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
     { bhvGiantPole, 0 },
     { bhvGoldenCoinSparkles, 0 },
-    { bhvGoomba, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_GOOMBA | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvGoomba, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_GOOMBA },
     { bhvGoombaTripletSpawner, 0 },
     { bhvGrandStar, BHV_TYPE_STAR_OR_KEY | BHV_TYPE_STAR_MODEL },
-    { bhvGrindel, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
-
+    { bhvGrindel, BHV_TYPE_DESTRUCTIBLE },
     { bhvHardAirKnockBackWarp, 0 },
     { bhvHauntedBookshelf, 0 },
     { bhvHauntedBookshelfManager, 0 },
-    { bhvHauntedChair, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
-    { bhvHeaveHo, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvHauntedChair, BHV_TYPE_DESTRUCTIBLE },
+    { bhvHeaveHo, BHV_TYPE_DESTRUCTIBLE },
     { bhvHeaveHoThrowMario, 0 },
     { bhvHidden1up, BHV_TYPE_MUSHROOM_1UP },
     { bhvHidden1upInPole, BHV_TYPE_MUSHROOM_1UP },
@@ -258,7 +249,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvHidden1upTrigger, BHV_TYPE_MUSHROOM_1UP },
     { bhvHiddenAt120Stars, 0 },
     { bhvHiddenBlueCoin, BHV_TYPE_COIN },
-    { bhvHiddenObject, BHV_TYPE_BREAKABLE | BHV_TYPE_VIBE_SPARKLES(2) },
+    { bhvHiddenObject, BHV_TYPE_BREAKABLE },
     { bhvHiddenRedCoinStar, 0 },
     { bhvHiddenStaircaseStep, 0 },
     { bhvHiddenStar, 0 },
@@ -267,8 +258,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvHomingAmp, 0 },
     { bhvHoot, 0 },
     { bhvHorStarParticleSpawner, 0 },
-    { bhvHorizontalGrindel, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
-
+    { bhvHorizontalGrindel, BHV_TYPE_DESTRUCTIBLE },
     { bhvIdleWaterWave, 0 },
     { bhvIgloo, 0 },
     { bhvInSunkenShip, 0 },
@@ -279,25 +269,22 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvInstantActiveWarp, 0 },
     { bhvIntroScene, 0 },
     { bhvInvisibleObjectsUnderBridge, 0 },
-
     { bhvJetStream, 0 },
     { bhvJetStreamRingSpawner, 0 },
     { bhvJetStreamWaterRing, BHV_TYPE_WATER_RING },
     { bhvJrbFloatingBox, 0 },
     { bhvJrbFloatingPlatform, 0 },
-    { bhvJrbSlidingBox, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(5) },
-    { bhvJumpingBox, BHV_TYPE_BREAKABLE | BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_GRABBABLE | BHV_TYPE_VIBE_SPARKLES(5) },
-
+    { bhvJrbSlidingBox, BHV_TYPE_DESTRUCTIBLE },
+    { bhvJumpingBox, BHV_TYPE_BREAKABLE | BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_GRABBABLE },
     { bhvKickableBoard, BHV_TYPE_KICKABLE_BOARD },
     { bhvKingBobomb, BHV_TYPE_GRABBABLE },
     { bhvKlepto, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
-    { bhvKoopa, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvKoopa, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 },
     { bhvKoopaFlag, 0 },
     { bhvKoopaRaceEndpoint, 0 },
     { bhvKoopaShell, 0 },
     { bhvKoopaShellFlame, 0 },
     { bhvKoopaShellUnderwater, 0 },
-
     { bhvLargeBomp, 0 },
     { bhvLaunchDeathWarp, 0 },
     { bhvLaunchStarCollectWarp, 0 },
@@ -321,9 +308,8 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvLllTumblingBridge, 0 },
     { bhvLllVolcanoFallingTrap, 0 },
     { bhvLllWoodPiece, 0 },
-
     { bhvMacroUkiki, BHV_TYPE_GRABBABLE },
-    { bhvMadPiano, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvMadPiano, BHV_TYPE_DESTRUCTIBLE },
     { bhvMantaRay, 0 },
     { bhvMantaRayRingManager, 0 },
     { bhvMantaRayWaterRing, BHV_TYPE_WATER_RING },
@@ -331,8 +317,8 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvMenuButton, 0 },
     { bhvMenuButtonManager, 0 },
     { bhvMerryGoRound, 0 },
-    { bhvMerryGoRoundBigBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES(5) },
-    { bhvMerryGoRoundBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvMerryGoRoundBigBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
+    { bhvMerryGoRoundBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
     { bhvMerryGoRoundBooManager, 0 },
     { bhvMeshElevator, 0 },
     { bhvMessagePanel, 0 },
@@ -341,22 +327,20 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvMistCircParticleSpawner, 0 },
     { bhvMistParticleSpawner, 0 },
     { bhvMoatGrills, 0 },
-    { bhvMoneybag, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_VIBE_SPARKLES(5) },
+    { bhvMoneybag, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 },
     { bhvMoneybagHidden, BHV_TYPE_INVULNERABLE },
-    { bhvMontyMole, BHV_TYPE_WEAK | BHV_TYPE_VIBE_SPARKLES(1) },
+    { bhvMontyMole, BHV_TYPE_WEAK },
     { bhvMontyMoleHole, 0 },
     { bhvMontyMoleRock, 0 },
     { bhvMovingBlueCoin, BHV_TYPE_COIN },
     { bhvMovingYellowCoin, BHV_TYPE_COIN },
-    { bhvMrBlizzard, BHV_TYPE_STRONG | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvMrBlizzard, BHV_TYPE_STRONG },
     { bhvMrBlizzardSnowball, 0 },
-    { bhvMrI, BHV_TYPE_STRONG | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvMrI, BHV_TYPE_STRONG | BHV_TYPE_KNOCKABLE_0 },
     { bhvMrIBlueCoin, BHV_TYPE_COIN },
     { bhvMrIBody, 0 },
     { bhvMrIParticle, 0 },
-
     { bhvNormalCap, BHV_TYPE_CAP },
-
     { bhvObjectBubble, 0 },
     { bhvObjectWaterSplash, 0 },
     { bhvObjectWaterWave, 0 },
@@ -366,22 +350,21 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvOpenableCageDoor, 0 },
     { bhvOpenableGrill, 0 },
     { bhvOrangeNumber, 0 },
-
     { bhvPaintingDeathWarp, 0 },
     { bhvPaintingStarCollectWarp, 0 },
     { bhvPenguinBaby, BHV_TYPE_GRABBABLE },
     { bhvPenguinRaceFinishLine, 0 },
     { bhvPenguinRaceShortcutCheck, 0 },
     { bhvPillarBase, 0 },
-    { bhvPiranhaPlant, BHV_TYPE_WEAK | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvPiranhaPlant, BHV_TYPE_WEAK },
     { bhvPiranhaPlantBubble, 0 },
     { bhvPiranhaPlantWakingBubbles, 0 },
-    { bhvPitBowlingBall, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvPitBowlingBall, BHV_TYPE_DESTRUCTIBLE },
     { bhvPlatformOnTrack, 0 },
     { bhvPlaysMusicTrackWhenTouched, 0 },
     { bhvPlungeBubble, 0 },
-    { bhvPokey, BHV_TYPE_WEAK | BHV_TYPE_VIBE_SPARKLES(3) },
-    { bhvPokeyBodyPart, BHV_TYPE_WEAK | BHV_TYPE_VIBE_SPARKLES(1) },
+    { bhvPokey, BHV_TYPE_WEAK },
+    { bhvPokeyBodyPart, BHV_TYPE_WEAK },
     { bhvPoleGrabbing, 0 },
     { bhvPoundTinyStarParticle, 0 },
     { bhvPunchTinyTriangle, 0 },
@@ -393,7 +376,6 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvPyramidPillarTouchDetector, 0 },
     { bhvPyramidTop, 0 },
     { bhvPyramidTopFragment, 0 },
-
     { bhvRacingPenguin, 0 },
     { bhvRandomAnimatedTexture, 0 },
     { bhvRecoveryHeart, 0 },
@@ -407,11 +389,10 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvRrCruiserWing, 0 },
     { bhvRrElevatorPlatform, 0 },
     { bhvRrRotatingBridgePlatform, 0 },
-
     { bhvSLSnowmanWind, 0 },
     { bhvSLWalkingPenguin, 0 },
     { bhvSandSoundLoop, 0 },
-    { bhvScuttlebug, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_VIBE_SPARKLES(2) },
+    { bhvScuttlebug, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 },
     { bhvScuttlebugSpawn, 0 },
     { bhvSeaweed, 0 },
     { bhvSeaweedBundle, 0 },
@@ -421,13 +402,13 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvShipPart3, 0 },
     { bhvSignOnWall, 0 },
     { bhvSingleCoinGetsSpawned, BHV_TYPE_COIN },
-    { bhvSkeeter, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvSkeeter, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 },
     { bhvSkeeterWave, 0 },
     { bhvSlidingPlatform2, 0 },
     { bhvSlidingSnowMound, 0 },
     { bhvSmallBomp, 0 },
-    { bhvSmallBully, BHV_TYPE_BULLY | BHV_TYPE_VIBE_SPARKLES(3) },
-    { bhvSmallChillBully, BHV_TYPE_BULLY | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvSmallBully, BHV_TYPE_BULLY },
+    { bhvSmallChillBully, BHV_TYPE_BULLY },
     { bhvSmallParticle, 0 },
     { bhvSmallParticleBubbles, 0 },
     { bhvSmallParticleSnow, 0 },
@@ -435,7 +416,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvSmallPiranhaFlame, BHV_TYPE_FLAME },
     { bhvSmallWaterWave, 0 },
     { bhvSmallWaterWave398, 0 },
-    { bhvSmallWhomp, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvSmallWhomp, BHV_TYPE_DESTRUCTIBLE },
     { bhvSmoke, 0 },
     { bhvSnowBall, 0 },
     { bhvSnowMoundSpawn, 0 },
@@ -443,7 +424,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvSnowmansBodyCheckpoint, 0 },
     { bhvSnowmansBottom, BHV_TYPE_INVULNERABLE },
     { bhvSnowmansHead, BHV_TYPE_INVULNERABLE },
-    { bhvSnufit, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvSnufit, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
     { bhvSnufitBalls, 0 },
     { bhvSoundSpawner, 0 },
     { bhvSparkle, 0 },
@@ -453,9 +434,9 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvSpawnedStarNoLevelExit, BHV_TYPE_STAR_OR_KEY | BHV_TYPE_STAR_MODEL },
     { bhvSpinAirborneCircleWarp, 0 },
     { bhvSpinAirborneWarp, 0 },
-    { bhvSpindel, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
-    { bhvSpindrift, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_VIBE_SPARKLES(3) },
-    { bhvSpiny, BHV_TYPE_STRONG | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_VIBE_SPARKLES(2) },
+    { bhvSpindel, BHV_TYPE_DESTRUCTIBLE },
+    { bhvSpindrift, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 },
+    { bhvSpiny, BHV_TYPE_STRONG | BHV_TYPE_KNOCKABLE_0 },
     { bhvSquarishPathMoving, 0 },
     { bhvSquishablePlatform, 0 },
     { bhvSslMovingPyramidWall, 0 },
@@ -475,8 +456,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvSushiSharkCollisionChild, BHV_TYPE_INVULNERABLE },
     { bhvSwimmingWarp, 0 },
     { bhvSwingPlatform, 0 },
-    { bhvSwoop, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES(3) },
-
+    { bhvSwoop, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
     { bhvTTC2DRotator, 0 },
     { bhvTTCCog, 0 },
     { bhvTTCElevator, 0 },
@@ -493,15 +473,15 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvThiHugeIslandTop, 0 },
     { bhvThiTinyIslandTop, 0 },
     { bhvThreeCoinsSpawn, 0 },
-    { bhvThwomp, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
-    { bhvThwomp2, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvThwomp, BHV_TYPE_DESTRUCTIBLE },
+    { bhvThwomp2, BHV_TYPE_DESTRUCTIBLE },
     { bhvTiltingBowserLavaPlatform, 0 },
     { bhvTinyStrongWindParticle, 0 },
     { bhvToadMessage, 0 },
     { bhvTower, 0 },
-    { bhvTowerDoor, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvTowerDoor, BHV_TYPE_DESTRUCTIBLE },
     { bhvTowerPlatformGroup, 0 },
-    { bhvToxBox, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvToxBox, BHV_TYPE_DESTRUCTIBLE },
     { bhvTrackBall, 0 },
     { bhvTreasureChestBottom, 0 },
     { bhvTreasureChestTop, 0 },
@@ -519,7 +499,6 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvTuxiesMother, 0 },
     { bhvTweester, 0 },
     { bhvTweesterSandParticle, 0 },
-
     { bhvUkiki, BHV_TYPE_GRABBABLE },
     { bhvUkikiCage, 0 },
     { bhvUkikiCageChild, 0 },
@@ -536,12 +515,10 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvUnusedFakeStar, BHV_TYPE_STAR_MODEL },
     { bhvUnusedParticleSpawn, 0 },
     { bhvUnusedPoundablePlatform, 0 },
-
     { bhvVanishCap, BHV_TYPE_CAP },
     { bhvVertStarParticleSpawner, 0 },
     { bhvVolcanoFlames, 0 },
     { bhvVolcanoSoundLoop, 0 },
-
     { bhvWallTinyStarParticle, 0 },
     { bhvWarp, 0 },
     { bhvWarpPipe, 0 },
@@ -563,8 +540,8 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvWdwExpressElevatorPlatform, 0 },
     { bhvWdwRectangularFloatingPlatform, 0 },
     { bhvWdwSquareFloatingPlatform, 0 },
-    { bhvWfBreakableWallLeft, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(5) },
-    { bhvWfBreakableWallRight, BHV_TYPE_WF_STAR_WALL | BHV_TYPE_VIBE_SPARKLES(5) },
+    { bhvWfBreakableWallLeft, BHV_TYPE_DESTRUCTIBLE },
+    { bhvWfBreakableWallRight, BHV_TYPE_WF_STAR_WALL },
     { bhvWfElevatorTowerPlatform, 0 },
     { bhvWfRotatingWoodenPlatform, 0 },
     { bhvWfSlidingPlatform, 0 },
@@ -577,32 +554,29 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvWhitePuffExplosion, 0 },
     { bhvWhitePuffSmoke, 0 },
     { bhvWhitePuffSmoke2, 0 },
-    { bhvWhompKingBoss, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(5) },
+    { bhvWhompKingBoss, BHV_TYPE_DESTRUCTIBLE },
     { bhvWigglerBody, 0 },
-    { bhvWigglerHead, BHV_TYPE_WEAK | BHV_TYPE_VIBE_SPARKLES(5) },
+    { bhvWigglerHead, BHV_TYPE_WEAK },
     { bhvWind, 0 },
     { bhvWingCap, BHV_TYPE_CAP },
     { bhvWoodenPost, 0 },
-
     { bhvYellowBackgroundInMenu, 0 },
     { bhvYellowBall, 0 },
     { bhvYellowCoin, BHV_TYPE_COIN },
     { bhvYoshi, 0 },
-
 #if OMM_GAME_IS_SMMS
-    { bhvBee, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES(3) },
-    { bhvgoombone, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_GOOMBA | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvBee, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
+    { bhvgoombone, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_GOOMBA },
 #endif
-
 #if OMM_GAME_IS_R96A
     { bhvBetaBooKey, BHV_TYPE_MUSHROOM_1UP },
     { bhvWarioCoin, BHV_TYPE_MUSHROOM_1UP },
     { bhvMovingYellowCoinWario, BHV_TYPE_COIN },
     { bhvBlueCoinMotos, BHV_TYPE_COIN },
     { bhvMotosHand, 0 },
-    { bhvMotos, BHV_TYPE_BULLY | BHV_TYPE_GRABBABLE | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvMotos, BHV_TYPE_BULLY | BHV_TYPE_GRABBABLE },
     { bhvYoshiEgg, BHV_TYPE_COIN },
-    { bhvBlargg, BHV_TYPE_FLAME | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvBlargg, BHV_TYPE_FLAME },
     { bhvFriendlyBlargg, 0 },
     { bhvCharacterSwitchPipe, 0 },
     { bhvCharacterSwitchPipeWarioLocked, 0 },
@@ -614,12 +588,11 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvSpambaRedCoin, BHV_TYPE_COIN },
     { bhvSpambaBlueCoin, BHV_TYPE_COIN },
 #endif
-
 #if OMM_GAME_IS_SMSR
-    { bhvCustomSMSRBreakableRock, BHV_TYPE_BREAKABLE | BHV_TYPE_VIBE_SPARKLES(5) },
+    { bhvCustomSMSRBreakableRock, BHV_TYPE_BREAKABLE },
     { bhvCustomSMSRWoodenOctagonalPlatform, 0 },
-    { bhvCustomSMSRShyGuy, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_GOOMBA | BHV_TYPE_VIBE_SPARKLES(3) },
-    { bhvCustomSMSRBreakableWindow,  BHV_TYPE_BREAKABLE | BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvCustomSMSRShyGuy, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_GOOMBA },
+    { bhvCustomSMSRBreakableWindow, BHV_TYPE_BREAKABLE | BHV_TYPE_DESTRUCTIBLE },
     { bhvCustomSMSRStarReplica, BHV_TYPE_STAR_OR_KEY | BHV_TYPE_STAR_MODEL },
     { bhvCustomSMSRRedOctagonalPlatform, 0 },
     { bhvCustomSMSRRedSinkingPlatform, 0 },
@@ -635,41 +608,40 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvCustomSMSRStaticMessage, 0 },
     { bhvCustomSMSRStoneCubePlatform, 0 },
     { bhvCustomSMSR30StarDoorWall, 0 },
-    { bhvCustomSMSRSpecialBreakeableBox, BHV_TYPE_BREAKABLE | BHV_TYPE_VIBE_SPARKLES(5) },
+    { bhvCustomSMSRSpecialBreakeableBox, BHV_TYPE_BREAKABLE },
     { bhvCustomSMSRRecoveryBubbleWater, 0 },
-    { bhvCustomSMSRBreakableFloor, BHV_TYPE_BREAKABLE | BHV_TYPE_VIBE_SPARKLES(5) },
+    { bhvCustomSMSRBreakableFloor, BHV_TYPE_BREAKABLE },
     { bhvCustomSMSRBoatOnTrack, 0 },
     { bhvCustomSMSRAngrySun, BHV_TYPE_FLAME },
     { bhvCustomSMSRYoshiCoin, BHV_TYPE_COIN },
-    { bhvCustomSMSRPiranhaPlantWild, BHV_TYPE_WEAK | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvCustomSMSRPiranhaPlantWild, BHV_TYPE_WEAK },
     { bhvCustomSMSRMovingMushroom, 0 },
     { bhvCustomSMSRMipsMessage, 0 },
     { bhvCustomSMSRBigLeaves, 0 },
     { bhvCustomSMSRLilyPad, 0 },
     { bhvCustomSMSRInvisibleCannon, 0 },
     { bhvCustomSMSRTambourine, 0 },
-    { bhvCustomSMSRSmallBee, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 | BHV_TYPE_VIBE_SPARKLES(3) },
+    { bhvCustomSMSRSmallBee, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
     { bhvCustomSMSRDrumStick, 0 },
     { bhvCustomSMSRStarMoving, BHV_TYPE_STAR_OR_KEY | BHV_TYPE_STAR_MODEL },
-    { bhvCustomSMSRFallingDomino, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvCustomSMSRFallingDomino, BHV_TYPE_DESTRUCTIBLE },
     { bhvCustomSMSRLavaLift, 0 },
     { bhvCustomSMSRRotatingLavaPlatform, 0 },
     { bhvCustomSMSRSmallSwingPlatform, 0 },
     { bhvCustomSMSRSinkingDonut, 0 },
-    { bhvCustomSMSRFloatingThwomp, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvCustomSMSRFloatingThwomp, BHV_TYPE_DESTRUCTIBLE },
     { bhvCustomSMSRTiltingPyramid, 0 },
     { bhvCustomSMSRPlatformLift, 0 },
     { bhvCustomSMSRRisingLava, 0 },
     { bhvCustomSMSRRisingTallPlatform, 0 },
     { bhvCustomSMSRSinkingPlatform, 0 },
     { bhvCustomSMSRToxicWastePlatform, 0 },
-    { bhvCustomSMSRAttractedSpaceBox, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
-    { bhvCustomSMSRSpaceBox, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_VIBE_SPARKLES(4) },
+    { bhvCustomSMSRAttractedSpaceBox, BHV_TYPE_DESTRUCTIBLE },
+    { bhvCustomSMSRSpaceBox, BHV_TYPE_DESTRUCTIBLE },
     { bhvCustomSMSRSpaceOctagonPlatform, 0 },
     { bhvCustomSMSRSpaceRedPlatform, 0 },
     { bhvCustomSMSRBulletMine, BHV_TYPE_BREAKABLE | BHV_TYPE_DESTRUCTIBLE },
 #endif
-
     { omm_bhv_grab, 0 },
     { omm_bhv_damage_mario, 0 },
     { omm_bhv_dummy, 0 },
@@ -935,6 +907,7 @@ const BehaviorScript **omm_obj_get_player_behaviors() {
         omm_bhv_metal_sparkle,
         omm_bhv_perry,
         omm_bhv_perry_trail,
+        omm_bhv_perry_charge,
         omm_bhv_peach_vibe_joy_tornado,
         omm_bhv_peach_vibe_joy_sparkle,
         omm_bhv_peach_vibe_rage_aura,
@@ -965,13 +938,103 @@ const BehaviorScript **omm_obj_get_bowser_behaviors() {
 // Perry attacks (include Vibes)
 //
 
+static const struct {
+    const BehaviorScript *behavior;
+    s32 vibeSparkles;
+    s32 deathAction;
+} sOmmPerryAttackBehaviorList[] = {
+    { bhvBalconyBigBoo, 8, 4 },
+    { bhvBigBoulder, 4, -1 },
+    { bhvBigBully, 8, -1 },
+    { bhvBigBullyWithMinions, 8, -1 },
+    { bhvBigChillBully, 8, -1 },
+    { bhvBobomb, 2, -1 },
+    { bhvBoo, 3, -1 },
+    { bhvBooWithCage, 3, -1 },
+    { bhvBowlingBall, 5, -1 },
+    { bhvBreakableBox, 5, -1 },
+    { bhvBreakableBoxSmall, 5, -1 },
+    { bhvChuckya, 4, -1 },
+    { bhvEnemyLakitu, 3, -1 },
+    { bhvEyerokHand, 5, -1 },
+    { bhvFirePiranhaPlant, 3, -1 },
+    { bhvFlyGuy, 3, -1 },
+    { bhvFlyingBookend, 3, -1 },
+    { bhvFreeBowlingBall, 5, -1 },
+    { bhvGhostHuntBigBoo, 8, 4 },
+    { bhvGhostHuntBoo, 3, -1 },
+    { bhvGoomba, 3, -1 },
+    { bhvGrindel, 5, -1 },
+    { bhvHauntedChair, 5, -1 },
+    { bhvHeaveHo, 5, -1 },
+    { bhvHiddenObject, 2, -1 },
+    { bhvHorizontalGrindel, 5, -1 },
+    { bhvJrbSlidingBox, 5, -1 },
+    { bhvJumpingBox, 5, -1 },
+    { bhvKingBobomb, 8, 8 },
+    { bhvKoopa, 3, -1 },
+    { bhvMadPiano, 5, -1 },
+    { bhvMerryGoRoundBigBoo, 8, 4 },
+    { bhvMerryGoRoundBoo, 3, -1 },
+    { bhvMoneybag, 5, -1 },
+    { bhvMrBlizzard, 4, -1 },
+    { bhvMrI, 4, -1 },
+    { bhvPiranhaPlant, 3, PIRANHA_PLANT_ACT_WAIT_TO_RESPAWN },
+    { bhvPitBowlingBall, 5, -1 },
+    { bhvPokey, 3, -1 },
+    { bhvPokeyBodyPart, 1, -1 },
+    { bhvScuttlebug, 3, -1 },
+    { bhvSkeeter, 3, -1 },
+    { bhvSmallBully, 3, -1 },
+    { bhvSmallChillBully, 3, -1 },
+    { bhvSmallWhomp, 5, -1 },
+    { bhvSnufit, 3, -1 },
+    { bhvSpindel, 5, -1 },
+    { bhvSpindrift, 3, -1 },
+    { bhvSpiny, 2, -1 },
+    { bhvSwoop, 3, -1 },
+    { bhvThwomp, 5, -1 },
+    { bhvThwomp2, 5, -1 },
+    { bhvTowerDoor, 5, -1 },
+    { bhvToxBox, 5, -1 },
+    { bhvWaterBomb, 3, -1 },
+    { bhvWfBreakableWallLeft, 5, -1 },
+    { bhvWfBreakableWallRight, 5, -1 },
+    { bhvWhompKingBoss, 8, 9 },
+    { bhvWigglerHead, 8, WIGGLER_ACT_FALL_THROUGH_FLOOR },
+#if OMM_GAME_IS_SMMS
+    { bhvBee, 3, -1 },
+    { bhvgoombone, 3, -1 },
+#endif
+#if OMM_GAME_IS_R96A
+    { bhvMotos, 4, -1 },
+    { bhvBlargg, 4, -1 },
+#endif
+#if OMM_GAME_IS_SMSR
+    { bhvCustomSMSRBreakableRock, 4, -1 },
+    { bhvCustomSMSRShyGuy, 3, -1 },
+    { bhvCustomSMSRBreakableWindow, 4, -1 },
+    { bhvCustomSMSRSpecialBreakeableBox, 5, -1 },
+    { bhvCustomSMSRBreakableFloor, 4, -1 },
+    { bhvCustomSMSRPiranhaPlantWild, 3, -1 },
+    { bhvCustomSMSRSmallBee, 3, -1 },
+    { bhvCustomSMSRFallingDomino, 5, -1 },
+    { bhvCustomSMSRFloatingThwomp, 5, -1 },
+    { bhvCustomSMSRAttractedSpaceBox, 5, -1 },
+    { bhvCustomSMSRSpaceBox, 5, -1 },
+    { bhvCustomSMSRBulletMine, 2, -1 },
+#endif
+};
+
+#define MAX_PERRY_ATTACKS 32
 typedef struct {
     struct Object *obj;
     const BehaviorScript *bhv;
     Vec3f pos;
     s32 spk;
+    s32 act;
 } PerryAttack;
-static PerryAttack sPerryAttacks[16];
+static PerryAttack sPerryAttacks[MAX_PERRY_ATTACKS];
 
 OMM_ROUTINE_LEVEL_ENTRY(omm_obj_init_perry_attacks) {
     OMM_MEMSET(sPerryAttacks, 0, sizeof(sPerryAttacks));
@@ -981,11 +1044,11 @@ OMM_ROUTINE_GFX(omm_obj_update_perry_attacks) {
     if (OMM_LIKELY(gMarioObject)) {
 
         // Check objects attacked by Perry
-        for (s32 i = 0; i != 16; ++i) {
+        for (s32 i = 0; i != MAX_PERRY_ATTACKS; ++i) {
             PerryAttack *patk = &sPerryAttacks[i];
             if (patk->obj) {
                 if (patk->obj->behavior == patk->bhv) {
-                    if (!patk->obj->activeFlags) {
+                    if (!patk->obj->activeFlags || patk->obj->oAction == patk->act) {
                         patk->pos[0] = patk->obj->oPosX;
                         patk->pos[1] = patk->obj->oPosY + omm_max_f(0.f, patk->obj->hitboxHeight - patk->obj->hitboxDownOffset);
                         patk->pos[2] = patk->obj->oPosZ;
@@ -999,7 +1062,7 @@ OMM_ROUTINE_GFX(omm_obj_update_perry_attacks) {
         }
 
         // Spawn sparkles from dead objects
-        for (s32 i = 0; i != 16; ++i) {
+        for (s32 i = 0; i != MAX_PERRY_ATTACKS; ++i) {
             PerryAttack *patk = &sPerryAttacks[i];
             if (!patk->obj && patk->spk) {
                 for (s32 j = 0; j != patk->spk; ++j) {
@@ -1013,28 +1076,35 @@ OMM_ROUTINE_GFX(omm_obj_update_perry_attacks) {
 
 static void omm_obj_handle_perry_attack(struct Object *o, u32 interactionFlags) {
     if (interactionFlags & OBJ_INT_PERRY_ATTACK) {
-        s32 vibeSparkles = ((omm_obj_get_behavior_types(o) >> 29) & 0b111);
-        if (vibeSparkles > 0) {
-            s32 j = -1;
+        for (s32 i = 0; i != OMM_ARRAY_SIZE(sOmmPerryAttackBehaviorList); ++i) {
+            if (sOmmPerryAttackBehaviorList[i].behavior == o->behavior) {
+                s32 vibeSparkles = sOmmPerryAttackBehaviorList[i].vibeSparkles;
+                if (vibeSparkles > 0) {
+                    s32 j = -1;
 
-            // Look for an existing object
-            for (s32 i = 0; i != 16; ++i) {
-                PerryAttack *patk = &sPerryAttacks[i];
-                if (!patk->obj) {
-                    j = i;
-                } else if (patk->obj == o) {
-                    patk->bhv = o->behavior;
-                    patk->spk = vibeSparkles;
-                    return;
+                    // Look for an existing object
+                    for (s32 k = 0; k != MAX_PERRY_ATTACKS; ++k) {
+                        PerryAttack *patk = &sPerryAttacks[k];
+                        if (!patk->obj) {
+                            j = k;
+                        } else if (patk->obj == o) {
+                            patk->bhv = o->behavior;
+                            patk->spk = vibeSparkles;
+                            patk->act = sOmmPerryAttackBehaviorList[i].deathAction;
+                            return;
+                        }
+                    }
+
+                    // Not found, add it to the list
+                    if (j != -1) {
+                        PerryAttack *patk = &sPerryAttacks[j];
+                        patk->obj = o;
+                        patk->bhv = o->behavior;
+                        patk->spk = vibeSparkles;
+                        patk->act = sOmmPerryAttackBehaviorList[i].deathAction;
+                    }
                 }
-            }
-
-            // Not found, add it to the list
-            if (j != -1) {
-                PerryAttack *patk = &sPerryAttacks[j];
-                patk->obj = o;
-                patk->bhv = o->behavior;
-                patk->spk = vibeSparkles;
+                return;
             }
         }
     }
@@ -1050,10 +1120,103 @@ static bool sStopAndReturn;
 bool omm_obj_check_interaction(struct Object *o, struct MarioState *m, bool ignoreTangibility) {
     return !(o->oInteractStatus & INT_STATUS_INTERACTED) &&     // Not interacted
             (o->oIntangibleTimer == 0 || ignoreTangibility) &&  // Not intangible
+            (o->activeFlags != ACTIVE_FLAG_DEACTIVATED) &&      // Not unloading/unloaded
             (o != gOmmData->mario->capture.obj) &&              // Not a capture
             (o != m->usedObj || !omm_mario_is_picking_up(m)) && // Not used or not picking up
             (o != m->heldObj) &&                                // Not held
             (o != m->riddenObj);                                // Not ridden
+}
+
+static void omm_obj_interact_heal_mario(struct Object *target, u32 interactionFlags) {
+    if ((interactionFlags & OBJ_INT_HEAL_MARIO) && !omm_obj_is_collectible(target)) {
+        omm_health_heal_mario(gMarioState);
+        gMarioState->healCounter += 4;
+    }
+}
+
+static bool omm_obj_interact_defeat_in_one_hit(struct Object *o, struct Object *target) {
+
+    // King Bob-omb
+    if (target->behavior == bhvKingBobomb && target->oHealth) {
+        obj_play_sound(target, SOUND_OBJ_KING_BOBOMB);
+        obj_spawn_white_puff(target, SOUND_OBJ2_KING_BOBOMB_DAMAGE);
+        set_camera_shake_from_point(SHAKE_POS_SMALL, target->oPosX, target->oPosY, target->oPosZ);
+        obj_set_forward_vel(target, 0, 0, 0);
+        target->oAction = 7;
+        target->oHealth = 0;
+        return true;
+    }
+
+    // King Whomp
+    if (target->behavior == bhvWhompKingBoss && target->oHealth) {
+        set_camera_shake_from_point(SHAKE_POS_SMALL, target->oPosX, target->oPosY, target->oPosZ);
+        obj_set_forward_vel(target, 0, 0, 0);
+        obj_destroy(target);
+        return true;
+    }
+
+    // Big Boos
+    if (target->behavior == bhvBalconyBigBoo ||
+        target->behavior == bhvGhostHuntBigBoo ||
+        target->behavior == bhvMerryGoRoundBigBoo) {
+        target->oHealth = 1;
+        target->oInteractStatus = (ATTACK_GROUND_POUND_OR_TWIRL | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED);
+        return true;
+    }
+
+    // Big Bullies
+    if (target->behavior == bhvBigBully ||
+        target->behavior == bhvBigBullyWithMinions ||
+        target->behavior == bhvBigChillBully) {
+        target->oForwardVel = 150.f;
+        target->oMoveAngleYaw = obj_get_object1_angle_yaw_to_object2((o->parentObj != NULL) ? o->parentObj : o, target);
+        target->oFaceAngleYaw = target->oMoveAngleYaw + 0x8000;
+        target->oInteractStatus = (ATTACK_KICK_OR_TRIP | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED);
+        play_sound(SOUND_OBJ_BULLY_METAL, target->oCameraToObject);
+        return true;
+    }
+
+    // Eyerock hands
+    if (target->behavior == bhvEyerokHand) {
+        set_camera_shake_from_point(SHAKE_POS_SMALL, target->oPosX, target->oPosY, target->oPosZ);
+        obj_set_forward_vel(target, 0, 0, 0);
+        obj_destroy(target);
+        return true;
+    }
+
+    // Wiggler
+    if (target->behavior == bhvWigglerHead) {
+        target->oHealth = 2;
+        target->oInteractStatus = (ATTACK_GROUND_POUND_OR_TWIRL | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED);
+        return true;
+    }
+
+    // Bowser
+    if (target->behavior == bhvBowserBodyAnchor) {
+        struct Object *bowser = target->parentObj;
+        if (bowser && bowser->behavior == bhvBowser && bowser->oHealth && gIsBowserInteractible[bowser->oAction]) {
+#if OMM_GAME_IS_R96A
+            // Spamba Bowser
+            if (bowser->oInteractType == INTERACT_DAMAGE) {
+                return false;
+            }
+#endif
+            // Fake a Bowser throw, set his health to 1 and spawn a mine below him
+            bowser->oAction = 1;
+            bowser->oPrevAction = 1;
+            bowser->oSubAction = 1;
+            bowser->oTimer = 0;
+            bowser->oHealth = 1;
+            bowser->oBowserCameraState = 10;
+            obj_anim_play(bowser, 2, 1.f);
+            spawn_object(bowser, MODEL_NONE, bhvBowserBomb);
+            return true;
+        }
+        return false;
+    }
+
+    // Not a Boss
+    return false;
 }
 
 bool omm_obj_process_one_surface_interaction(struct Object *o, struct Object *target, u32 interactionFlags) {
@@ -1074,10 +1237,18 @@ CAPPY_ONLY_CODE(
             return true;
         }
 );
-
         // Interactible
         if (omm_obj_is_interactible(target)) {
             interacted = true;
+
+            // Defeat enemies in one hit
+            if (interactionFlags & OBJ_INT_ATTACK_ONE_HIT) {
+                if (omm_obj_interact_defeat_in_one_hit(o, target)) {
+                    omm_obj_handle_perry_attack(target, interactionFlags);
+                    sStopAndReturn = true;
+                    return true;
+                }
+            }
 
             // Attackable objects
             if (interactionFlags & (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG)) {
@@ -1098,6 +1269,7 @@ CAPPY_ONLY_CODE(
                 // Destructible
                 if (omm_obj_is_destructible(target)) {
                     omm_obj_handle_perry_attack(target, interactionFlags);
+                    omm_obj_interact_heal_mario(target, interactionFlags);
                     target->oInteractStatus = INT_STATUS_INTERACTED;
                     obj_destroy(target);
 CAPPY_ONLY_CODE(
@@ -1108,6 +1280,7 @@ CAPPY_ONLY_CODE(
                 // WF star wall
                 if (omm_obj_is_wf_star_wall(target)) {
                     omm_obj_handle_perry_attack(target, interactionFlags);
+                    omm_obj_interact_heal_mario(target, interactionFlags);
                     target->oInteractStatus = INT_STATUS_INTERACTED;
                     audio_play_puzzle_jingle();
                     obj_destroy(target);
@@ -1142,10 +1315,18 @@ CAPPY_ONLY_CODE(
             return true;
         }
 );
-
         // Interactible
         if (omm_obj_is_interactible(target)) {
             interacted = true;
+
+            // Defeat enemies in one hit
+            if (interactionFlags & OBJ_INT_ATTACK_ONE_HIT) {
+                if (omm_obj_interact_defeat_in_one_hit(o, target)) {
+                    omm_obj_handle_perry_attack(target, interactionFlags);
+                    sStopAndReturn = true;
+                    return true;
+                }
+            }
 
             // Triggers
             if (interactionFlags & OBJ_INT_COLLECT_TRIGGERS) {
@@ -1217,6 +1398,7 @@ CAPPY_ONLY_CODE(
             // Grabbable
             if (interactionFlags & OBJ_INT_GRAB_OBJECTS) {
                 if (omm_obj_is_grabbable(target)) {
+                    omm_obj_handle_perry_attack(target, interactionFlags);
                     if (!isCappy || (omm_cappy_is_mario_available(m, false) && !(m->action & (ACT_FLAG_AIR | ACT_FLAG_SWIMMING | ACT_FLAG_METAL_WATER)))) {
                         if (omm_mario_check_grab(m, target, true)) {
                             vec3f_set(m->vel, 0, 0, 0);
@@ -1248,6 +1430,7 @@ CAPPY_ONLY_CODE(
                             target->oInteractStatus = (ATTACK_KICK_OR_TRIP | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED);
                         }
                     }
+                    omm_obj_interact_heal_mario(target, interactionFlags);
 CAPPY_ONLY_CODE(
                     omm_cappy_bounce_back(o);
 );
@@ -1267,6 +1450,7 @@ CAPPY_ONLY_CODE(
                         target->oInteractStatus = INT_STATUS_INTERACTED;
                         obj_destroy(target);
                     }
+                    omm_obj_interact_heal_mario(target, interactionFlags);
 CAPPY_ONLY_CODE(
                     omm_cappy_bounce_back(o);
 );
@@ -1277,6 +1461,7 @@ CAPPY_ONLY_CODE(
             if (interactionFlags & OBJ_INT_ATTACK_DESTRUCTIBLE) {
                 if (omm_obj_is_destructible(target)) {
                     omm_obj_handle_perry_attack(target, interactionFlags);
+                    omm_obj_interact_heal_mario(target, interactionFlags);
                     target->oInteractStatus = INT_STATUS_INTERACTED;
                     obj_destroy(target);
 CAPPY_ONLY_CODE(
@@ -1296,6 +1481,7 @@ CAPPY_ONLY_CODE(
                         target->oInteractStatus = (ATTACK_KICK_OR_TRIP | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED);
                         set_camera_shake_from_hit(SHAKE_ATTACK);
                     }
+                    omm_obj_interact_heal_mario(target, interactionFlags);
 CAPPY_ONLY_CODE(
                     omm_cappy_bounce_back(o);
 );
@@ -1306,6 +1492,7 @@ CAPPY_ONLY_CODE(
             if (interactionFlags & (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG)) {
                 if (omm_obj_is_bully(target)) {
                     omm_obj_handle_perry_attack(target, interactionFlags);
+                    omm_obj_interact_heal_mario(target, interactionFlags);
                     target->oForwardVel = ((interactionFlags & OBJ_INT_ATTACK_STRONG) != 0 ? 4800.f : 3600.f) / target->hitboxRadius;
                     target->oMoveAngleYaw = obj_get_object1_angle_yaw_to_object2((o->parentObj != NULL) ? o->parentObj : o, target);
                     target->oFaceAngleYaw = target->oMoveAngleYaw + 0x8000;
@@ -1322,6 +1509,7 @@ CAPPY_ONLY_CODE(
             if (interactionFlags & OBJ_INT_ATTACK_FLAMES) {
                 if (omm_obj_is_flame(target)) {
                     omm_obj_handle_perry_attack(target, interactionFlags);
+                    omm_obj_interact_heal_mario(target, interactionFlags);
                     obj_spawn_white_puff(target, SOUND_GENERAL_FLAME_OUT);
                     obj_mark_for_deletion(target);
                 }
@@ -1334,6 +1522,7 @@ CAPPY_ONLY_CODE(
 struct Object *omm_obj_process_interactions(struct Object *o, u32 interactionFlags) {
     struct Object *interacted = NULL;
     bool isCappy = (o == omm_cappy_get_object());
+    bool notInteracted = ((interactionFlags & OBJ_INT_NOT_INTERACTED) != 0);
     sStopAndReturn = false;
 
     // Surfaces
@@ -1359,7 +1548,7 @@ struct Object *omm_obj_process_interactions(struct Object *o, u32 interactionFla
                             if (obj && omm_obj_process_one_surface_interaction(o, obj, interactionFlags)) {
                                 interacted = obj;
                                 if (sStopAndReturn) {
-                                    return interacted;
+                                    return (notInteracted ? NULL : interacted);
                                 }
                             }
                         }
@@ -1375,11 +1564,11 @@ struct Object *omm_obj_process_interactions(struct Object *o, u32 interactionFla
             if (omm_obj_process_one_object_interaction(o, obj, interactionFlags)) {
                 interacted = obj;
                 if (sStopAndReturn) {
-                    return interacted;
+                    return (notInteracted ? NULL : interacted);
                 }
             }
         }
     }
 
-    return interacted;
+    return (notInteracted ? NULL : interacted);
 }

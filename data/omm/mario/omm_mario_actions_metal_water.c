@@ -162,8 +162,9 @@ static s32 omm_act_metal_water_idle(struct MarioState *m) {
 
 static s32 omm_act_metal_water_walking(struct MarioState *m) {
     action_cappy(1, ACT_OMM_METAL_WATER_CAPPY_THROW_GROUND, 0, RETURN_CANCEL);
+    action_za_pressed(OMM_MOVESET_ODYSSEY && m->forwardVel > 8.f, ACT_OMM_METAL_WATER_LONG_JUMP, 0, RETURN_CANCEL);
     action_a_pressed(analog_stick_held_back(m) && m->forwardVel >= OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED / 2.f, ACT_OMM_METAL_WATER_SIDE_FLIP, 0, RETURN_CANCEL);
-    action_a_pressed((m->forwardVel >= OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED / 2.f || gOmmData->mario->metalWater.jumpNext == ACT_OMM_METAL_WATER_LONG_JUMP) && (m->controller->buttonDown & Z_TRIG), ACT_OMM_METAL_WATER_LONG_JUMP, 0, RETURN_CANCEL);
+    action_a_pressed((m->forwardVel > 8.f || gOmmData->mario->metalWater.jumpNext == ACT_OMM_METAL_WATER_LONG_JUMP) && (m->controller->buttonDown & Z_TRIG), ACT_OMM_METAL_WATER_LONG_JUMP, 0, RETURN_CANCEL);
     action_a_pressed(1, gOmmData->mario->metalWater.jumpNext, 0, RETURN_CANCEL);
 #if OMM_GAME_IS_R96A
     action_b_pressed(OMM_PLAYER_IS_WARIO && m->forwardVel >= OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED * 0.85f, ACT_OMM_METAL_WATER_WARIO_CHARGE, 0, RETURN_CANCEL);
@@ -725,6 +726,11 @@ static s32 omm_act_metal_water_backward_air_kb(struct MarioState *m) {
 //
 
 static s32 omm_act_metal_water_cappy_throw_ground(struct MarioState *m) {
+    action_cappy(1, ACT_OMM_METAL_WATER_CAPPY_THROW_GROUND, 0, RETURN_CANCEL);
+    action_za_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_METAL_WATER_LONG_JUMP, 0, RETURN_CANCEL);
+    action_a_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_METAL_WATER_JUMP, 0, RETURN_CANCEL);
+    action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_METAL_WATER_PUNCHING, 0, RETURN_CANCEL);
+    action_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_METAL_WATER_SPIN_GROUND, 0, RETURN_CANCEL);
     f32 f = coss(omm_abs_s(m->faceAngle[1] - m->intendedYaw)) * m->controller->stickMag / 64.f;
     mario_set_forward_vel(m, m->forwardVel * omm_clamp_f(f, 0.80f, 0.98f));
 
@@ -736,9 +742,11 @@ static s32 omm_act_metal_water_cappy_throw_ground(struct MarioState *m) {
 
 static s32 omm_act_metal_water_cappy_throw_airborne(struct MarioState *m) {
     action_init(omm_min_f(m->forwardVel, 4.f), 10.f, 0, 0);
+    action_cappy(1, ACT_OMM_METAL_WATER_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
     action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_METAL_WATER_DIVE, 0, RETURN_CANCEL);
     action_b_pressed(1, ACT_OMM_METAL_WATER_JUMP_KICK, 0, RETURN_CANCEL);
     action_z_pressed(1, ACT_OMM_METAL_WATER_GROUND_POUND, 0, RETURN_CANCEL);
+    action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_METAL_WATER_SPIN_AIR, 0, RETURN_CANCEL);
     action_condition(omm_metal_water_check_water_jump(m), ACT_WATER_JUMP, 0, RETURN_CANCEL);
 
     omm_metal_water_common_air_action_step(m, ACT_OMM_METAL_WATER_FREEFALL_LAND, m->marioObj->oAnimID);

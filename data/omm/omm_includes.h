@@ -117,6 +117,7 @@
 #include "pc/cliopts.h"
 #include "pc/platform.h"
 #include "pc/controller/controller_api.h"
+#include "pc/controller/controller_sdl.h"
 #include "pc/gfx/gfx_rendering_api.h"
 #include "pc/fs/fs.h"
 #include FILE_OPTIONS_H
@@ -161,6 +162,7 @@ extern u32 gKeyPressed;
 extern f32 gDialogAngle;
 extern f32 gDialogScale;
 extern const Gfx NULL_dl[];
+extern const bool gIsBowserInteractible[];
 extern const BehaviorScript *sWarpBhvSpawnTable[];
 extern struct PlayerGeometry sMarioGeometry;
 extern struct PlayerCameraState *sMarioCamState;

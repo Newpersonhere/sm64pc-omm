@@ -7,15 +7,18 @@
 //
 
 bool omm_sparkly_interact_star(struct MarioState *m, struct Object *o) {
-    if (o->behavior == omm_bhv_sparkly_star && m->action != ACT_OMM_POSSESSION) {
-        omm_sparkly_collect_star(omm_sparkly_get_current_mode(), omm_sparkly_get_star_index(omm_sparkly_get_current_mode(), gCurrLevelNum, gCurrAreaIndex));
-        mario_stop_riding_and_holding(m);
-        update_mario_sound_and_camera(m);
-        play_sound(SOUND_MENU_STAR_SOUND, m->marioObj->oCameraToObject);
-        spawn_object(o, MODEL_NONE, bhvStarKeyCollectionPuffSpawner);
-        omm_sparkly_context_set_state(OMM_SPARKLY_CONTEXT_STATE_INVALID, 0);
-        omm_sparkly_context_reset_data();
-        omm_mario_set_action(m, ACT_OMM_SPARKLY_STAR_DANCE, (m->prevAction & ACT_FLAG_METAL_WATER) || ((m->prevAction & ACT_GROUP_MASK) == ACT_GROUP_SUBMERGED), 0);
+    if (o->behavior == omm_bhv_sparkly_star) {
+        if (m->action != ACT_OMM_POSSESSION) {
+            omm_sparkly_collect_star(omm_sparkly_get_current_mode(), omm_sparkly_get_star_index(omm_sparkly_get_current_mode(), gCurrLevelNum, gCurrAreaIndex));
+            mario_stop_riding_and_holding(m);
+            update_mario_sound_and_camera(m);
+            play_sound(SOUND_MENU_STAR_SOUND, m->marioObj->oCameraToObject);
+            spawn_object(o, MODEL_NONE, bhvStarKeyCollectionPuffSpawner);
+            omm_sparkly_context_set_state(OMM_SPARKLY_CONTEXT_STATE_INVALID, 0);
+            omm_sparkly_context_reset_data();
+            omm_mario_set_action(m, ACT_OMM_SPARKLY_STAR_DANCE, (m->prevAction & ACT_FLAG_METAL_WATER) || ((m->prevAction & ACT_GROUP_MASK) == ACT_GROUP_SUBMERGED), 0);
+            obj_mark_for_deletion(o);
+        }
         return true;
     }
     return false;

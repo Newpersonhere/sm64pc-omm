@@ -140,9 +140,10 @@ void omm_cappy_process_interactions(struct Object *cappy, struct MarioState *m) 
                 } else {
                     omm_mario_set_action(m, (m->action & ACT_FLAG_METAL_WATER) ? ACT_OMM_METAL_WATER_TRIPLE_JUMP : ACT_OMM_GROUND_CAPPY_BOUNCE, 1, 0);
                 }
+                omm_mario_init_next_action(m);
+                omm_cappy_return_to_mario(cappy);
                 spawn_object(m->marioObj, MODEL_NONE, bhvHorStarParticleSpawner);
                 play_sound(SOUND_GENERAL_BOING1, m->marioObj->oCameraToObject);
-                omm_cappy_return_to_mario(cappy);
                 return;
             }
         }

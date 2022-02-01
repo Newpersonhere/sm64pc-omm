@@ -608,6 +608,12 @@ static void omm_update_worlds(struct MarioState *m) {
 #endif
     }
 
+    // Set recovery hearts dormant in Sparkly Stars Extreme mode
+    omm_world_behavior_set_dormant(bhvRecoveryHeart, omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_EXTREME));
+#if GAME_IS_SMSR
+    omm_world_behavior_set_dormant(bhvCustomSMSRRecoveryBubbleWater, omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_EXTREME));
+#endif
+    
 #if !OMM_GAME_IS_R96A
     // Disable Bowser objects outside of Bowser fights
     if (gCurrLevelNum != LEVEL_BOWSER_1 &&

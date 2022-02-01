@@ -122,6 +122,42 @@ void play_sequence(u8 player, u8 seqId, u16 arg2) { \
 } void unused_8031E4F0
 #endif
 
+// If the boss sequence is missing, the level music is not going to restart...
+// So, add the boss music in the queue to force the stop_background_music
+// function to remove it from the queue and restart the level music.
+#define stop_background_music_fix_boss_music() \
+if ((seqId & 0xFF) == SEQ_EVENT_BOSS) { \
+    for (u8 i = 0; i <= sBackgroundMusicQueueSize; ++i) { \
+        if (i == sBackgroundMusicQueueSize) { \
+            sBackgroundMusicQueueSize = omm_min_s(sBackgroundMusicQueueSize + 1, MUSIC_QUEUE_MAX_SIZE); \
+            OMM_MEMMOV(sBackgroundMusicQueue + 1, sBackgroundMusicQueue, sizeof(sBackgroundMusicQueue[0]) * (MUSIC_QUEUE_MAX_SIZE - 1)); \
+            sBackgroundMusicQueue[0].seqId = SEQ_EVENT_BOSS; \
+            sBackgroundMusicQueue[0].priority = 4; \
+            break; \
+        } else if (sBackgroundMusicQueue[i].seqId == SEQ_EVENT_BOSS) { \
+            break; \
+        } \
+    } \
+}
+
+// Fix annoying crashes that can occur in rooms with paintings
+#define geo_painting_update_fix_floor() \
+gLastPaintingUpdateCounter = gPaintingUpdateCounter; \
+gPaintingUpdateCounter = gAreaUpdateCounter; \
+extern struct MarioState *gMarioState; \
+if (gMarioState->floor) { \
+    surface = gMarioState->floor; \
+} else { \
+    find_floor(gMarioObject->oPosX, gMarioObject->oPosY, gMarioObject->oPosZ, &surface); \
+} \
+if (surface) { \
+    gPaintingMarioFloorType = surface->type; \
+    gPaintingMarioXPos = gMarioObject->oPosX; \
+    gPaintingMarioYPos = gMarioObject->oPosY; \
+    gPaintingMarioZPos = gMarioObject->oPosZ; \
+} \
+return NULL;
+
 // Call the omm_update_cmd function inside the level script update
 #define omm_update_current_cmd() \
 void *ommCurrCmd = (void *) sCurrentCmd; \

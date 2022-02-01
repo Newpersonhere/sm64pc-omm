@@ -259,7 +259,7 @@ void optmenu_draw(void) {
 
         // Check if the A, R and Start buttons have binds
         // If not, reset binds to default
-        for_each(u32 *, binds, 3, OMM_ARRAY_OF(u32 *) {
+        for_each_(u32 *, binds, 3, OMM_ARRAY_OF(u32 *) {
             gOmmControlsButtonA,
             gOmmControlsTriggerR,
             gOmmControlsButtonStart }) {
@@ -276,7 +276,7 @@ void optmenu_draw(void) {
         // still access to the 'Reset Controls' button
         for (s32 i = 0; i != MAX_BINDS; ++i) {
             if (gOmmControlsButtonA[i] != VK_INVALID) {
-                for_each(u32*, binds, 19, OMM_ARRAY_OF(u32*) {
+                for_each_(u32*, binds, 19, OMM_ARRAY_OF(u32*) {
                     gOmmControlsButtonB,
                     gOmmControlsButtonX,
                     gOmmControlsButtonY,

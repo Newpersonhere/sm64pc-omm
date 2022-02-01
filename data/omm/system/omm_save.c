@@ -117,7 +117,6 @@ static OmmSaveBuffer sOmmSaveBuffers[] = {
     { "sm74", 2, 7, NULL, { { { 0 } } } },
     { "smsr", 1, 7, NULL, { { { 0 } } } },
 };
-#define OMM_SAVE_MODE_INDEX DEF(0, 0, 0, 0, sm74_mode__omm_save, 0)
 
 //
 // Utils
@@ -125,8 +124,8 @@ static OmmSaveBuffer sOmmSaveBuffers[] = {
 
 #define sOmmCurrSaveFileIndex               (gCurrSaveFileNum - 1)
 #define sOmmCurrCourseIndex                 (gCurrCourseNum - 1)
-#define sOmmCurrSaveBuffer                  (&sOmmSaveBuffers[OMM_GAME_VERSION])
-#define sOmmCurrSaveFile                    (&sOmmSaveBuffers[OMM_GAME_VERSION].files[sOmmCurrSaveFileIndex][OMM_SAVE_MODE_INDEX])
+#define sOmmCurrSaveBuffer                  (&sOmmSaveBuffers[OMM_GAME_SAVE])
+#define sOmmCurrSaveFile                    (&sOmmSaveBuffers[OMM_GAME_SAVE].files[sOmmCurrSaveFileIndex][OMM_GAME_MODE])
 
 #define COURSE_CASTLE                       (COURSE_COUNT - 1)
 #define CHECK_FILE_INDEX(i, fail)           if (i < 0 || i >= NUM_SAVE_FILES) { fail; }
@@ -259,6 +258,7 @@ void save_file_load_all() {
 #endif
                         READ_TOGGLE_SC(gOmmExtrasSparklyStarsHint, token.args);
                         READ_TOGGLE_SC(gOmmExtrasCrystalStarsReward, token.args);
+                        READ_TOGGLE_SC(gOmmExtrasNebulaStarsReward, token.args);
 #if OMM_CODE_DEBUG
                         READ_TOGGLE_SC(gOmmDebugHitbox, token.args);
                         READ_TOGGLE_SC(gOmmDebugHurtbox, token.args);
@@ -392,8 +392,8 @@ static void save_file_write() {
     // Set current save file as existing if not empty (i.e. at least 1 star, 1 collectible or 1 in-game flag)
     s32 fileIndex = (omm_is_main_menu() ? -1 : sOmmCurrSaveFileIndex);
     if (fileIndex >= 0 && fileIndex < NUM_SAVE_FILES) {
-        if (!save_file_is_empty(&sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX])) {
-            sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].flags |= SAVE_FLAG_FILE_EXISTS;
+        if (!save_file_is_empty(&sOmmCurrSaveBuffer->files[fileIndex][OMM_GAME_MODE])) {
+            sOmmCurrSaveBuffer->files[fileIndex][OMM_GAME_MODE].flags |= SAVE_FLAG_FILE_EXISTS;
         }
     }
 
@@ -527,6 +527,7 @@ static void save_file_write() {
 #endif
     WRITE_TOGGLE_SC(gOmmExtrasSparklyStarsHint);
     WRITE_TOGGLE_SC(gOmmExtrasCrystalStarsReward);
+    WRITE_TOGGLE_SC(gOmmExtrasNebulaStarsReward);
 #if OMM_CODE_DEBUG
     WRITE_TOGGLE_SC(gOmmDebugHitbox);
     WRITE_TOGGLE_SC(gOmmDebugHurtbox);
@@ -606,13 +607,13 @@ u32 save_file_get_flags() {
 u32 save_file_get_star_flags(s32 fileIndex, s32 courseIndex) {
     CHECK_FILE_INDEX(fileIndex, return 0);
     CHECK_COURSE_INDEX(courseIndex, return 0);
-    return (sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].courses[(courseIndex == -1) ? COURSE_CASTLE : courseIndex].stars);
+    return (sOmmCurrSaveBuffer->files[fileIndex][OMM_GAME_MODE].courses[(courseIndex == -1) ? COURSE_CASTLE : courseIndex].stars);
 }
 
 u32 save_file_get_cannon_flags(s32 fileIndex, s32 courseIndex) {
     CHECK_FILE_INDEX(fileIndex, return 0);
     CHECK_COURSE_INDEX(courseIndex, return 0);
-    return (sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].courses[(courseIndex == -1) ? COURSE_CASTLE : courseIndex].cannon);
+    return (sOmmCurrSaveBuffer->files[fileIndex][OMM_GAME_MODE].courses[(courseIndex == -1) ? COURSE_CASTLE : courseIndex].cannon);
 }
 
 s32 save_file_is_cannon_unlocked() {
@@ -642,7 +643,7 @@ s32 save_file_get_total_star_count(s32 fileIndex, s32 minCourse, s32 maxCourse) 
 s32 save_file_get_course_coin_score(s32 fileIndex, s32 courseIndex) {
     CHECK_FILE_INDEX(fileIndex, return 0);
     CHECK_COURSE_INDEX(courseIndex, return 0);
-    return sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].courses[courseIndex].score;
+    return sOmmCurrSaveBuffer->files[fileIndex][OMM_GAME_MODE].courses[courseIndex].score;
 }
 
 u32 save_file_get_max_coin_score(s32 courseIndex) {
@@ -686,7 +687,7 @@ void save_file_clear_flags(u32 flags) {
 void save_file_set_star_flags(s32 fileIndex, s32 courseIndex, u32 starFlags) {
     CHECK_FILE_INDEX(fileIndex, return);
     CHECK_COURSE_INDEX(courseIndex, return);
-    sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].courses[(courseIndex == -1) ? COURSE_CASTLE : courseIndex].stars |= starFlags;
+    sOmmCurrSaveBuffer->files[fileIndex][OMM_GAME_MODE].courses[(courseIndex == -1) ? COURSE_CASTLE : courseIndex].stars |= starFlags;
     gSaveFileModified = true;
 }
 
@@ -750,12 +751,12 @@ void save_file_move_cap_to_default_location() {
 
 s32 save_file_taken_key(s32 fileIndex, s32 keyId) {
     CHECK_FILE_INDEX(fileIndex, return FALSE);
-    return OMM_COLLECTIBLE_GET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].collectibles, 0, keyId);
+    return OMM_COLLECTIBLE_GET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_GAME_MODE].collectibles, 0, keyId);
 }
 
 void save_file_register_key(s32 fileIndex, s32 keyId) {
     CHECK_FILE_INDEX(fileIndex, return);
-    OMM_COLLECTIBLE_SET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].collectibles, 0, keyId, TRUE);
+    OMM_COLLECTIBLE_SET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_GAME_MODE].collectibles, 0, keyId, TRUE);
     gSaveFileModified = true;
 }
 
@@ -763,19 +764,19 @@ s32 save_file_get_keys(s32 fileIndex) {
     CHECK_FILE_INDEX(fileIndex, return 0);
     s32 keys = 0;
     for (s32 i = 0; i != NUM_KEYS; ++i) {
-        keys += OMM_COLLECTIBLE_GET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].collectibles, 0, i);
+        keys += OMM_COLLECTIBLE_GET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_GAME_MODE].collectibles, 0, i);
     }
     return keys;
 }
 
 s32 save_file_taken_wario_coin(s32 fileIndex, s32 coinId) {
     CHECK_FILE_INDEX(fileIndex, return FALSE);
-    return OMM_COLLECTIBLE_GET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].collectibles, NUM_KEYS, coinId);
+    return OMM_COLLECTIBLE_GET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_GAME_MODE].collectibles, NUM_KEYS, coinId);
 }
 
 void save_file_register_wario_coin(s32 fileIndex, s32 coinId) {
     CHECK_FILE_INDEX(fileIndex, return);
-    OMM_COLLECTIBLE_SET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].collectibles, NUM_KEYS, coinId, TRUE);
+    OMM_COLLECTIBLE_SET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_GAME_MODE].collectibles, NUM_KEYS, coinId, TRUE);
     gSaveFileModified = true;
 }
 
@@ -783,7 +784,7 @@ s32 save_file_get_wario_coins(s32 fileIndex) {
     CHECK_FILE_INDEX(fileIndex, return 0);
     s32 coins = 0;
     for (s32 i = 0; i != NUM_WARIO_COINS; ++i) {
-        coins += OMM_COLLECTIBLE_GET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_SAVE_MODE_INDEX].collectibles, NUM_KEYS, i);
+        coins += OMM_COLLECTIBLE_GET_B(sOmmCurrSaveBuffer->files[fileIndex][OMM_GAME_MODE].collectibles, NUM_KEYS, i);
     }
     return coins;
 }

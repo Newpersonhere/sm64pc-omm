@@ -428,6 +428,11 @@ static void omm_geo_preprocess_graph_node_animated_part(struct GraphNodeAnimated
             sMarioHandPos[sMarioHandFlag - 1][0] = sMatStack[sMatStackIndex + 1].m[3][0];
             sMarioHandPos[sMarioHandFlag - 1][1] = sMatStack[sMatStackIndex + 1].m[3][1];
             sMarioHandPos[sMarioHandFlag - 1][2] = sMatStack[sMatStackIndex + 1].m[3][2];
+            if (sMarioHandFlag == 1 && OMM_PLAYER_IS_PEACH) { // Right hand
+                Vec3f translation = { t.x, t.y, t.z };
+                Vec3s rotation = { r.x, r.y, r.z };
+                omm_peach_update_perry_graphics(gMarioState, sMatStack[sMatStackIndex].m, translation, rotation);
+            }
             sMarioHandFlag = 0;
         }
 
@@ -701,12 +706,27 @@ static void omm_geo_preprocess_graph_node_culling_radius(struct GraphNodeCulling
         case 14: {
             struct GraphNode *closeNode = node->node.next;
             struct GraphNode *openNode = node->node.next->next;
-            if (gCurrGraphNodeObject->oAction != 0) {
+            if (gCurrGraphNodeObject->oAction) {
                 closeNode->flags &= ~GRAPH_RENDER_ACTIVE;
                 openNode->flags |= GRAPH_RENDER_ACTIVE;
             } else {
                 closeNode->flags |= GRAPH_RENDER_ACTIVE;
                 openNode->flags &= ~GRAPH_RENDER_ACTIVE;
+            }
+        } break;
+
+        // Rotate Peach's hand to look like she's holding a sword
+        case 15: {
+            struct GraphNodeRotation *rot = (struct GraphNodeRotation *) node->node.next;
+            struct Object *perry = obj_get_first_with_behavior(omm_bhv_perry);
+            if (perry && (perry->oPerryFlags & OBJ_INT_PERRY_SWORD)) {
+                rot->rotation[0] = perry->oPerryRightHandRot(0);
+                rot->rotation[1] = perry->oPerryRightHandRot(1);
+                rot->rotation[2] = perry->oPerryRightHandRot(2);
+            } else {
+                rot->rotation[0] = 0;
+                rot->rotation[1] = 0;
+                rot->rotation[2] = 0;
             }
         } break;
     }

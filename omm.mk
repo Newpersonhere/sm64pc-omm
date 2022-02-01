@@ -12,7 +12,7 @@ SRC_DIRS += data/omm data/omm/system data/omm/object data/omm/mario data/omm/cap
 # Version
 # -------
 
-OMM_VERSION_NUMBER := 7.0.2
+OMM_VERSION_NUMBER := 7.0.9
 OMM_VERSION_REVISION := 1
 OMM_DEVELOPER := PeachyPeach
 VERSION_CFLAGS += -DOMM_VERSION="$(OMM_VERSION_NUMBER)"
@@ -49,6 +49,12 @@ else ifeq ($(or $(and $(wildcard data/r96/r96_defines.h),1),0),1)
 	VERSION_CFLAGS += -DR96A
 	DEFINES += R96A=1
 	OMM_VERSION_SUB := Render96 ex-alpha
+
+# Saturn-legacy
+else ifeq ($(or $(and $(wildcard src/saturn/saturn.h),1),0),1)
+	VERSION_CFLAGS += -DSMEX -DSATURN
+	DEFINES += SMEX=1 SATURN=1
+	OMM_VERSION_SUB := Saturn (sm64ex-nightly)
 
 # sm64ex-alo (Refresh 14)
 else ifeq ($(or $(and $(wildcard src/extras/bettercamera.h),1),0),1)

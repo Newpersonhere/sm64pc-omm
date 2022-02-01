@@ -27,6 +27,41 @@ extern void omm_set_complete_save_file(s32 fileIndex);
 extern void omm_stars_init_bits();
 
 //
+// Paths
+//
+
+const char *omm_exe_path() {
+    static char *sOmmExePath = NULL;
+    if (!sOmmExePath) {
+        sOmmExePath = SDL_GetBasePath();
+        if (sOmmExePath) {
+            s32 length = strlen(sOmmExePath);
+            for (char *sep = sOmmExePath + length - 1; *sep == '/' || *sep == '\\'; --sep) {
+                *sep = 0;
+            }
+        }
+    }
+    return sOmmExePath;
+}
+
+const char *omm_user_path() {
+    static char *sOmmUserPath = NULL;
+    if (!sOmmUserPath) {
+        sOmmUserPath = SDL_GetPrefPath("", "sm64ex");
+        if (sOmmUserPath) {
+            s32 length = strlen(sOmmUserPath);
+            for (char *sep = sOmmUserPath + length - 1; *sep == '/' || *sep == '\\'; --sep) {
+                *sep = 0;
+            }
+            if (!fs_sys_dir_exists(sOmmUserPath)) {
+                fs_sys_mkdir(sOmmUserPath);
+            }
+        }
+    }
+    return sOmmUserPath;
+}
+
+//
 // Routines
 //
 

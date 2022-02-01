@@ -38,6 +38,8 @@ static void omm_data_reset_mario_fields() {
     gOmmData->mario->peach.vibeGauge = 0;
     gOmmData->mario->peach.vibeTimer = OMM_PEACH_VIBE_COOLDOWN;
     gOmmData->mario->peach.joySpinYaw = 0;
+    gOmmData->mario->peach.perryCharge = 0;
+    gOmmData->mario->peach.perryBlast = false;
 
     // Wall-slide moves data
     gOmmData->mario->wallSlide.jumped = false;
@@ -138,6 +140,8 @@ static void omm_data_update_mario_fields() {
         gOmmData->mario->peach.vibeGauge = 0;
         gOmmData->mario->peach.vibeTimer = OMM_PEACH_VIBE_COOLDOWN;
         gOmmData->mario->peach.joySpinYaw = 0;
+        gOmmData->mario->peach.perryCharge = 0;
+        gOmmData->mario->peach.perryBlast = false;
     }
 
     // Capture data

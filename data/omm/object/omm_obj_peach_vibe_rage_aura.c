@@ -140,25 +140,7 @@ static void omm_bhv_peach_vibe_rage_aura_update() {
     // Process interactions
     obj_set_params(o, 0, 0, 0, 0, true);
     obj_reset_hitbox(o, 100, 200, 0, 0, 0, 80);
-    struct Object *interacted = omm_obj_process_interactions(o, OBJ_INT_PRESET_PEACH_VIBE_RAGE_AURA);
-        
-    // One-shot bosses if Peach is ground-pounding
-    if (interacted && omm_mario_is_ground_pounding(gMarioState)) {
-        typedef struct { const BehaviorScript* bhv; s32 hpToKO; s32 intStatus; } Boss;
-        static Boss sBosses[] = {
-            { bhvGhostHuntBigBoo, 1, ATTACK_GROUND_POUND_OR_TWIRL | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED },
-            { bhvMerryGoRoundBigBoo, 1, ATTACK_GROUND_POUND_OR_TWIRL | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED },
-            { bhvBalconyBigBoo, 1, ATTACK_GROUND_POUND_OR_TWIRL | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED },
-            { bhvWigglerHead, 2, ATTACK_GROUND_POUND_OR_TWIRL | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED },
-        };
-        for_each(Boss, boss, OMM_ARRAY_SIZE(sBosses), sBosses) {
-            if (interacted->behavior == boss->bhv) {
-                interacted->oHealth = boss->hpToKO;
-                interacted->oInteractStatus = boss->intStatus;
-                break;
-            }
-        }
-    }
+    omm_obj_process_interactions(o, OBJ_INT_PRESET_PEACH_VIBE_RAGE_AURA);
 }
 
 const BehaviorScript omm_bhv_peach_vibe_rage_aura[] = {

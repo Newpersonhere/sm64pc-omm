@@ -21,7 +21,7 @@
 extern s32 gOmmCappyObjectLists[];
 extern s32 gOmmInteractionObjectLists[];
 
-#define for_each(__type__, __item__, __size__, ...)             s32 index_##__item__ = 0; for (__type__ *__item__ = __VA_ARGS__; index_##__item__ != __size__; ++index_##__item__, ++__item__)
+#define for_each_(__type__, __item__, __size__, ...)            s32 index_##__item__ = 0; for (__type__ *__item__ = __VA_ARGS__; index_##__item__ != __size__; ++index_##__item__, ++__item__)
 #define for_each_until_null(__type__, __item__, ...)            for (__type__ *__item__ = __VA_ARGS__; *__item__ != NULL; ++__item__)
 #define for_each_object_in_list(__obj__, __list__)              for (struct Object* __obj__ = obj_get_first(__list__); __obj__ != NULL; __obj__ = obj_get_next(__obj__, __list__))
 #define for_each_object_in_cappy_lists(__obj__)                 for (s32 *__list__ = gOmmCappyObjectLists; *__list__ != -1; ++__list__) for (struct Object* __obj__ = obj_get_first(*__list__); __obj__ != NULL; __obj__ = obj_get_next(__obj__, *__list__))
@@ -191,6 +191,7 @@ struct Object *omm_spawn_fire_smoke(struct Object *o, s32 type);
 struct Object *omm_spawn_wing_glow_and_trail(struct Object *o);
 struct Object *omm_spawn_metal_sparkle(struct Object *o);
 struct Object *omm_spawn_vanish_mist(struct Object *o);
+struct Object *omm_spawn_sparkle(struct Object *o, u8 r, u8 g, u8 b, f32 translationRange, f32 minScale, f32 maxScale);
 struct Object *omm_spawn_break_particle(struct Object *o, u8 r, u8 g, u8 b, f32 offsetY, f32 velMin, f32 velMax, f32 velY, f32 scaleMin, f32 scaleMax);
 struct Object *omm_spawn_snowball(struct Object *o);
 struct Object *omm_spawn_mr_i_beam(struct Object *o, f32 power);
@@ -217,6 +218,7 @@ struct Object *omm_spawn_sparkly_star_sparkle(struct Object *o, s32 mode, f32 yO
 struct Object *omm_spawn_sparkly_star_sparkle_mario(struct Object *o, s32 mode, f32 yOffset, f32 vel, f32 scale, f32 offset);
 struct Object *omm_spawn_sparkly_star_celebration(struct Object *o, s32 mode);
 struct Object *omm_spawn_perry_shockwave(struct Object *o, s32 delay, s32 type, bool clockwise);
+struct Object *omm_spawn_perry_blast(struct Object *o, s32 type);
 struct Object *omm_spawn_peach_vibe_aura(struct Object *o);
 struct Object *omm_spawn_peach_vibe_sparkle(struct Object *o, f32 x, f32 y, f32 z);
 struct Object *omm_spawn_peach_vibe_joy_tornado(struct Object *o);
@@ -253,6 +255,7 @@ void vec3f_transform(Vec3f dest, Vec3f v, Vec3f translation, Vec3s rotation, Vec
 void vec3f_interpolate(Vec3f dest, f32 t, Vec3f p0, f32 t0, Vec3f p1, f32 t1, Vec3f p2, f32 t2);
 bool vec3f_is_inside_cylinder(Vec3f v, Vec3f pos, f32 radius, f32 height, f32 downOffset);
 void vec2f_get_projected_point_on_line(Vec2f dest, Vec2f p, Vec2f a, Vec2f b);
+bool mtxf_invert(Mat4 dest, Mat4 m);
 
 //
 // Geo
@@ -290,6 +293,6 @@ u32 omm_stars_get_color(s32 level);
 bool omm_stars_is_collected(s32 index);
 bool omm_stars_all_collected(s32 level);
 void omm_stars_set_bits(u8 bits);
-#define OMM_ALL_STARS (omm_stars_all_collected(gCurrLevelNum))
+#define OMM_ALL_STARS (omm_stars_all_collected(gCurrLevelNum) && !omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_EXTREME))
 
 #endif // OMM_OBJECT_H

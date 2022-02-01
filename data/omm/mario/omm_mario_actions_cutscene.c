@@ -98,7 +98,7 @@ static void omm_lost_coins_save() {
 }
 
 static void omm_lost_coins_respawn() {
-    if (OMM_STARS_NON_STOP) {
+    if (OMM_STARS_NON_STOP && !omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_EXTREME)) {
 #if OMM_CODE_TIME_TRIALS
         if (!time_trials_enabled()) omm_stars_set_bits(sOmmCurrStarBits);
 #else

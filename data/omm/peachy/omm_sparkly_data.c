@@ -116,7 +116,7 @@ const OmmSparklyStarsData gOmmSparklyStarsData[4][30] = {
     { 21, OMM_GAME_SM64, LEVEL_PSS,     1,  -6360,  -4350,   3435,  3566,  6144, -6100, 0x4000, 1,     0,     0,      0, 0x0000, 0,  -630, CONDITION | COINS(50) | NO_BUTTON(A_BUTTON | B_BUTTON | START_BUTTON | R_TRIG | L_TRIG | Z_TRIG | X_BUTTON | Y_BUTTON) | NO_B_COIN | NO_R_COIN },
     { 22, OMM_GAME_SM64, LEVEL_WMOTR,   1,      0,      0,      0,     0,     0,     0, 0x0000, 1,     0,     0,      0, 0x0000, 0,     0, CONDITION },
     { 23, OMM_GAME_SM64, LEVEL_SA,      1,      0,      0,      0,     0,     0,     0, 0x0000, 1,     0,     0,      0, 0x0000, 0,     0, CONDITION },
-    { 24, OMM_GAME_SM64, LEVEL_GROUNDS, 1,      0,  15500,  -4020,     0,   800,  1400, 0x0000, 0,     0,     0,      0, 0x0000, 0,     0, 0 },
+    { 24, OMM_GAME_SM64, LEVEL_GROUNDS, 1,      0,  16500,  -4020,     0,   800,  1400, 0x0000, 0,     0,     0,      0, 0x0000, 0,     0, 0 },
     { 25, OMM_GAME_SM64, LEVEL_CASTLE,  1,      0,      0,      0,     0,     0,     0, 0x0000, 0,     0,     0,      0, 0x0000, 0,     0, CONDITION },
     { 26, OMM_GAME_SM64, LEVEL_CASTLE,  3,      0,      0,      0,     0,     0,     0, 0x0000, 0,     0,     0,      0, 0x0000, 0,     0, CONDITION },
     { 27, OMM_GAME_SM64, LEVEL_CASTLE,  2,      0,      0,      0,     0,     0,     0, 0x0000, 0,     0,     0,      0, 0x0000, 0,     0, CONDITION },

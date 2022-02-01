@@ -36,7 +36,8 @@ const GeoLayout omm_geo_sparkly_star_3_transparent[] = {
 
 static void omm_bhv_sparkly_star_update() {
     struct Object *o = gCurrentObject;
-    if (!omm_sparkly_context_check_star(o)) {
+    if (!omm_sparkly_is_enabled() || !omm_sparkly_context_check_star(o)) {
+        obj_mark_for_deletion(o);
         return;
     }
 

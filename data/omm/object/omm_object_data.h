@@ -60,17 +60,20 @@ typedef s16 Collision;
 
 #define OBJ_INT_ATTACK_WEAK                                 (1 << 0) // Common attacks
 #define OBJ_INT_ATTACK_STRONG                               (1 << 1) // Strong attacks, such as charged snowballs or beams
-#define OBJ_INT_ATTACK_DESTRUCTIBLE                         (1 << 2) // Destructive attacks, such as explosions
-#define OBJ_INT_ATTACK_BREAKABLE                            (1 << 3) // Fragile/Breakable objects, such as cork boxes
-#define OBJ_INT_ATTACK_FLAMES                               (1 << 4) // Flame-type objects
-#define OBJ_INT_ATTACK_KNOCKBACK                            (1 << 5) // Turn attacks into knockbacks (only for some enemies)
-#define OBJ_INT_COLLECT_COINS                               (1 << 6) // Coins
-#define OBJ_INT_COLLECT_TRIGGERS                            (1 << 7) // Water rings, secrets, 1up-mushrooms and invisible triggers
-#define OBJ_INT_COLLECT_STARS                               (1 << 8) // Stars and keys
-#define OBJ_INT_COLLECT_CAPS                                (1 << 9) // Caps
-#define OBJ_INT_GRAB_OBJECTS                                (1 << 10) // Perform a grab instead of attacking
+#define OBJ_INT_ATTACK_ONE_HIT                              (1 << 2) // Powerful attacks, defeat bosses in one hit
+#define OBJ_INT_ATTACK_DESTRUCTIBLE                         (1 << 3) // Destructive attacks, such as explosions
+#define OBJ_INT_ATTACK_BREAKABLE                            (1 << 4) // Fragile/Breakable objects, such as cork boxes
+#define OBJ_INT_ATTACK_FLAMES                               (1 << 5) // Flame-type objects
+#define OBJ_INT_ATTACK_KNOCKBACK                            (1 << 6) // Turn attacks into knockbacks (only for some enemies)
+#define OBJ_INT_COLLECT_COINS                               (1 << 7) // Coins
+#define OBJ_INT_COLLECT_TRIGGERS                            (1 << 8) // Water rings, secrets, 1up-mushrooms and invisible triggers
+#define OBJ_INT_COLLECT_STARS                               (1 << 9) // Stars and keys
+#define OBJ_INT_COLLECT_CAPS                                (1 << 10) // Caps
+#define OBJ_INT_GRAB_OBJECTS                                (1 << 11) // Perform a grab instead of attacking
+#define OBJ_INT_HEAL_MARIO                                  (1 << 12) // Heal Mario after attacking/destroying an enemy
+#define OBJ_INT_NOT_INTERACTED                              (1 << 13) // omm_obj_process_interactions() always returns NULL
 #define OBJ_INT_PERRY_ATTACK                                (1 << 24)
-#define OBJ_INT_PERRY_OPEN                                  (1 << 25)
+#define OBJ_INT_PERRY_SWORD                                 (1 << 25)
 #define OBJ_INT_PERRY_TRAIL                                 (1 << 26)
 
 #define OBJ_INT_PRESET_ATTACK_SURFACE                       (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_DESTRUCTIBLE)
@@ -87,19 +90,11 @@ typedef s16 Collision;
 #define OBJ_INT_PRESET_ROCK                                 (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS)
 #define OBJ_INT_PRESET_BLARGG_FIRE                          (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_DESTRUCTIBLE | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS)
 
-#define OBJ_INT_PRESET_PERRY_ATTACK                         (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_COLLECT_STARS | OBJ_INT_COLLECT_CAPS | OBJ_INT_PERRY_ATTACK)
-#define OBJ_INT_PRESET_PERRY_ATTACK_RAGE                    (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_COLLECT_STARS | OBJ_INT_COLLECT_CAPS | OBJ_INT_PERRY_ATTACK)
-#define OBJ_INT_PRESET_PERRY_ATTACK_GLOOM                   (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_ATTACK_FLAMES | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_COLLECT_STARS | OBJ_INT_COLLECT_CAPS | OBJ_INT_PERRY_ATTACK)
-#define OBJ_INT_PRESET_PERRY_COLLECT                        (OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_COLLECT_STARS | OBJ_INT_COLLECT_CAPS)
-#define OBJ_INT_PRESET_PERRY_SHOCKWAVE                      (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_PERRY_ATTACK)
-#define OBJ_INT_PRESET_PERRY_SHOCKWAVE_RAGE                 (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_PERRY_ATTACK)
-#define OBJ_INT_PRESET_PERRY_SHOCKWAVE_GLOOM                (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_ATTACK_FLAMES | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_PERRY_ATTACK)
-
 #define OBJ_INT_PRESET_PEACH_VIBE_JOY_TORNADO               (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_KNOCKBACK | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_PERRY_ATTACK)
 #define OBJ_INT_PRESET_PEACH_VIBE_JOY_GUST                  (OBJ_INT_ATTACK_WEAK | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_PERRY_ATTACK)
 #define OBJ_INT_PRESET_PEACH_VIBE_GLOOM_AURA                (OBJ_INT_ATTACK_FLAMES | OBJ_INT_PERRY_ATTACK)
-#define OBJ_INT_PRESET_PEACH_VIBE_RAGE_GROUND_POUND_LAND    (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_ATTACK_DESTRUCTIBLE)
-#define OBJ_INT_PRESET_PEACH_VIBE_RAGE_AURA                 (OBJ_INT_ATTACK_WEAK | OBJ_INT_PERRY_ATTACK)
+#define OBJ_INT_PRESET_PEACH_VIBE_RAGE_AURA                 (OBJ_INT_ATTACK_WEAK | (OBJ_INT_ATTACK_ONE_HIT * omm_mario_is_ground_pounding(gMarioState)) | OBJ_INT_PERRY_ATTACK)
+#define OBJ_INT_PRESET_PEACH_VIBE_RAGE_GROUND_POUND_LAND    (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_ONE_HIT | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_ATTACK_DESTRUCTIBLE | OBJ_INT_PERRY_ATTACK)
 #define OBJ_INT_PRESET_PEACH_VIBE_RAGE_SHOCKWAVE            (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_PERRY_ATTACK)
 
 #define OBJ_GOOMBA_STACK_MAX                                10
@@ -164,6 +159,7 @@ extern const GeoLayout omm_geo_fire_smoke_red[];
 extern const GeoLayout omm_geo_fire_smoke_blue[];
 extern const GeoLayout omm_geo_metal_sparkle[];
 extern const GeoLayout omm_geo_vanish_mist[];
+extern const GeoLayout omm_geo_sparkle[];
 extern const GeoLayout omm_geo_break_particle[];
 extern const GeoLayout omm_geo_snowball[];
 extern const GeoLayout omm_geo_mr_i_beam[];
@@ -203,6 +199,8 @@ extern const GeoLayout omm_geo_peachs_metal_cap[];
 extern const GeoLayout omm_geo_perry[];
 extern const GeoLayout omm_geo_perry_trail[];
 extern const GeoLayout omm_geo_perry_shockwave[];
+extern const GeoLayout omm_geo_perry_blast[];
+extern const GeoLayout omm_geo_perry_charge[];
 extern const GeoLayout omm_geo_peach_vibe_aura[];
 extern const GeoLayout omm_geo_peach_vibe_sparkle[];
 extern const GeoLayout omm_geo_peach_vibe_joy_tornado[];
@@ -279,6 +277,8 @@ extern const BehaviorScript omm_bhv_sparkly_star_celebration[];
 extern const BehaviorScript omm_bhv_perry[];
 extern const BehaviorScript omm_bhv_perry_trail[];
 extern const BehaviorScript omm_bhv_perry_shockwave[];
+extern const BehaviorScript omm_bhv_perry_blast[];
+extern const BehaviorScript omm_bhv_perry_charge[];
 extern const BehaviorScript omm_bhv_peach_vibe_aura[];
 extern const BehaviorScript omm_bhv_peach_vibe_sparkle[];
 extern const BehaviorScript omm_bhv_peach_vibe_joy_tornado[];

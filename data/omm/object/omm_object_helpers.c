@@ -56,16 +56,28 @@ s32 obj_get_object1_angle_yaw_to_object2(struct Object *o1, struct Object *o2) {
 
 bool obj_is_object1_facing_object2(struct Object *o1, struct Object *o2, s16 angleRange) {
     s16 yawObj1ToObj2 = obj_get_object1_angle_yaw_to_object2(o1, o2);
-    s32 yawDiff = (s32)((s16)((s32)(yawObj1ToObj2) - (s32)(o1->oMoveAngleYaw)));
+    s32 yawDiff = (s32) ((s16) ((s32) (yawObj1ToObj2) - (s32) (o1->oFaceAngleYaw)));
     return (-angleRange <= yawDiff) && (yawDiff <= angleRange);
 }
 
 bool obj_is_object2_hit_from_above(struct Object *o1, struct Object *o2) {
-    return (o1->oVelY < 0.f) && (o1->oPosY >= (o2->oPosY + (o2->hitboxHeight / 4) - o2->hitboxDownOffset));
+    f32 o1l = o1->oPosY - o1->hitboxDownOffset;
+    f32 o1u = o1l + o1->hitboxHeight;
+    f32 o2l = o2->oPosY - o2->hitboxDownOffset;
+    f32 o2u = o2l + o2->hitboxHeight;
+    return o1->oVelY < 0.f &&               // going down
+           o1u > o2u &&                     // o1's head must be above o2's head
+           o1l > o2l + 0.25f * (o2u - o2l); // o1's feet must be slightly above o2's feet
 }
 
 bool obj_is_object2_hit_from_below(struct Object *o1, struct Object *o2) {
-    return (o1->oVelY > 0.f) && (o2->oPosY >= (o1->oPosY + (o1->hitboxHeight / 4) - o1->hitboxDownOffset));
+    f32 o1l = o1->oPosY - o1->hitboxDownOffset;
+    f32 o1u = o1l + o1->hitboxHeight;
+    f32 o2l = o2->oPosY - o2->hitboxDownOffset;
+    f32 o2u = o2l + o2->hitboxHeight;
+    return o1->oVelY > 0.f &&               // going up
+           o1l < o2l &&                     // o1's feet must be below o2's feet
+           o1u < o2u - 0.25f * (o2u - o2l); // o1's head must be slightly below o2's head
 }
 
 bool obj_is_object2_pushing_object1_backwards(struct Object *o1, struct Object *o2, bool setObj1FaceYaw) {
@@ -593,6 +605,18 @@ static void obj_destroy_piranha_plant(struct Object *o, s32 soundBits) {
     obj_mark_for_deletion(o);
 }
 
+static void obj_destroy_water_bomb(struct Object *o, s32 soundBits) {
+    for_each_object_with_behavior(obj, bhvWaterBombShadow) {
+        if (obj->parentObj == o) {
+            obj_mark_for_deletion(obj);
+        }
+    }
+    o->parentObj->oWaterBombSpawnerBombActive = FALSE;
+    obj_play_sound(o, soundBits);
+    obj_spawn_particles(o, 5, MODEL_BUBBLE, 25, 20, 60, 10, 10, -2, 3.5f, 1.f);
+    obj_mark_for_deletion(o);
+}
+
 static void obj_destroy_triangle_particles(struct Object *o, s32 numCoins, s32 soundBits, s32 triCount, s32 triModel, f32 triSize, s32 triType) {
     spawn_coins(o, numCoins);
     obj_spawn_white_puff(o, soundBits);
@@ -688,6 +712,7 @@ void obj_destroy(struct Object *o) {
     destroy_preset(bhvGoomba, o->oGoombaSize == GOOMBA_SIZE_REGULAR, obj_destroy_white_puff, 1, SOUND_OBJ_ENEMY_DEATH_HIGH);
     destroy_preset(bhvGoomba, o->oGoombaSize == GOOMBA_SIZE_HUGE, obj_destroy_white_puff, -1, SOUND_OBJ_ENEMY_DEATH_LOW);
     destroy_preset(bhvBobomb, 1, obj_destroy_bobomb, 0);
+    destroy_preset(bhvWaterBomb, 1, obj_destroy_water_bomb, SOUND_OBJ_DIVING_IN_WATER);
     destroy_preset(bhvChuckya, 1, obj_destroy_white_puff, 5, SOUND_OBJ_CHUCKYA_DEATH);
     destroy_preset(bhvBowlingBall, 1, obj_destroy_break_particles, 0, SOUND_GENERAL_WALL_EXPLOSION, 0x40, 0x40, 0x40);
     destroy_preset(bhvPitBowlingBall, 1, obj_destroy_break_particles, 0, SOUND_GENERAL_WALL_EXPLOSION, 0x40, 0x40, 0x40);

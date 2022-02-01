@@ -408,6 +408,9 @@ OMM_AT_STARTUP static void omm_audio_init() {
     omm_sound_load_wav(OMM_SOUND_EFFECT_MIDAIR_SPIN,        "effect/omm_sound_effect_midair_spin",      3, 0, 0x40, 0x02);
     omm_sound_load_wav(OMM_SOUND_EFFECT_PEACH_GLIDE,        "effect/omm_sound_effect_peach_glide",      3, 0, 0x30, 0x40);
     omm_sound_load_wav(OMM_SOUND_EFFECT_PEACH_VIBE,         "effect/omm_sound_effect_peach_vibe",       3, 0, 0x30, 0xFF);
+    omm_sound_load_wav(OMM_SOUND_EFFECT_PERRY_CHARGE,       "effect/omm_sound_effect_perry_charge",     1, 0, 0x40, 0xFF); // Use Toad sound bank
+    omm_sound_load_wav(OMM_SOUND_EFFECT_PERRY_CHARGED,      "effect/omm_sound_effect_perry_charged",    1, 0, 0x40, 0xFF); // Use Toad sound bank
+    omm_sound_load_wav(OMM_SOUND_EFFECT_PERRY_BEAM,         "effect/omm_sound_effect_perry_beam",       1, 0, 0x40, 0xFF); // Use Toad sound bank
 }
 
 //
@@ -841,7 +844,7 @@ static bool omm_sound_process_character_sound(const OmmCharacterSound sound, f32
     static bool exec = false;
     if (exec) return false;
     exec = true;
-    for_each(const OmmCharacterSound *, sounds, OMM_ARRAY_SIZE(sOmmCharacterSounds), sOmmCharacterSounds) {
+    for_each_(const OmmCharacterSound *, sounds, OMM_ARRAY_SIZE(sOmmCharacterSounds), sOmmCharacterSounds) {
         for (s32 i = 0; i != OMM_ARRAY_SIZE(sOmmCharacterSoundsMarioN64); ++i) {
             if (omm_sound_compare(*sounds + i, &sound)) {
                 omm_sound_process_character_sound_from_index(i, pos, play);

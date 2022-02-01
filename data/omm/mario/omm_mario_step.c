@@ -371,7 +371,7 @@ static bool omm_mario_check_ledge_grab(struct MarioState *m, struct Surface *wal
         }
 
         // Z pressed or bounced
-        if (m->input & (INPUT_Z_PRESSED | INPUT_STOMP)) {
+        if (m->input & (INPUT_Z_PRESSED | INPUT_BOUNCE)) {
             return false;
         }
 
@@ -552,7 +552,8 @@ static void omm_mario_apply_gravity(struct MarioState *m) {
 
     // Peach air attack
     else if (m->action == ACT_OMM_PEACH_ATTACK_AIR) {
-        decV = (m->vel[1] >= 0.f ? 1.25f : 4.f);
+        static const f32 sActOmmPeachAttackAirDecV[] = { 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 4 };
+        decV = sActOmmPeachAttackAirDecV[omm_min_s(m->actionTimer, OMM_ARRAY_SIZE(sActOmmPeachAttackAirDecV) - 1)];
     }
 
     // Wall-slide

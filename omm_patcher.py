@@ -143,7 +143,9 @@ if __name__ == "__main__":
     do_patch_file("sm64.h", "SM64_H", "#include \"macros.h\"", "\n#include \"data/omm/omm_includes.h\"", +1)
     do_patch_file("levels/ttm/script.c", "level_ttm_entry", "END_AREA(),", "\n    JUMP_LINK(omm_ttm_slide_script),", +1)
     do_patch_file("levels/castle_grounds/script.c", "level_castle_grounds_entry", "END_AREA(),", "\n    JUMP_LINK(omm_bowser_4_level_script),", +1)
+    do_patch_file("levels/bowser_2/custom.script.c", "level_bowser_2_custom_entry", "WARP_NODE(2,19,1,12,0),", "WARP_NODE(2,39,1,10,0),", 0)
     do_patch_file("audio/external.c", "play_sound(s32 soundBits, f32 *pos)", "{", "\n    OMM_RETURN_IF_TRUE(omm_sound_play_character_sound_n64(soundBits, pos),,);", +1)
+    do_patch_file("audio/external.c", "stop_background_music(u16 seqId)", "foundIndex = sBackgroundMusicQueueSize;", "\n    stop_background_music_fix_boss_music();", +1)
     do_patch_file("audio/seqplayer.c", "sequence_channel_process_script(struct SequenceChannel *seqChannel)", "case 0x00: // chan_testlayerfinished", "\n                        if (loBits >= LAYERS_MAX) break;", +1)
     do_patch_file("level_script.c", "level_cmd_place_object", "struct SpawnInfo *spawnInfo;", "\n    val7 |= 0xFF * OMM_STARS_NON_STOP_NOT_ENDING_CUTSCENE;", +1)
     do_patch_file("level_script.c", "level_script_execute(struct LevelCommand *cmd)", "{", "\n    omm_update();", +1)
@@ -169,6 +171,7 @@ if __name__ == "__main__":
     do_patch_file("object_list_processor.h", "OBJECT_LIST_PROCESSOR_H", "#define OBJECT_POOL_CAPACITY 960", "#define OBJECT_POOL_CAPACITY 2048", 0)
     do_patch_file("object_list_processor.h", "OBJECT_LIST_PROCESSOR_H", "#define OBJECT_POOL_CAPACITY 240", "#define OBJECT_POOL_CAPACITY 1024", 0)
     do_patch_file("object_helpers.c", "geo_switch_area(s32 callContext, struct GraphNode *node", "if (gMarioObject == NULL) {", "gFindFloorForCutsceneStar = TRUE;\n        ", -1)
+    do_patch_file("paintings.c", "Gfx *geo_painting_update(s32 callContext,", "gLastPaintingUpdateCounter = gPaintingUpdateCounter;", "geo_painting_update_fix_floor();\n        ", -1)
     do_patch_file("rendering_graph_node.c", "geo_process_switch(struct GraphNodeSwitchCase *node)", "geo_process_node_and_siblings(selectedChild);", "\n        omm_cappy_gfx_draw_eyes(node, geo_append_display_list);", +1)
     do_patch_file("rendering_graph_node.c", "geo_process_animated_part(struct GraphNodeAnimatedPart *node)", "mtxf_rotate_xyz_and_translate(matrix, translation, rotation);", "omm_geo_fix_marios_anim_translation_y(gCurrGraphNodeObject, node, &translation[1]);\n    ", -1)
     do_patch_file("rendering_graph_node.c", "geo_process_animated_part(struct GraphNodeAnimatedPart *node)", "mtxf_rotate_xyz_and_translate(matrix, translationInterpolated, rotationInterpolated);", "omm_geo_fix_marios_anim_translation_y(gCurrGraphNodeObject, node, &translationInterpolated[1]);\n    ", -1)
@@ -178,6 +181,7 @@ if __name__ == "__main__":
     do_patch_file("rendering_graph_node.c", "geo_process_node_and_siblings(struct GraphNode *firstNode)", "do {", "\n        if (!omm_sanity_check_graph_node(curGraphNode)) break;", +1)
     do_patch_file("gd_memory.c", "#ifndef USE_SYSTEM_MALLOC", "#ifndef USE_SYSTEM_MALLOC", "#undef USE_SYSTEM_MALLOC\n", -1)
     do_patch_file("gfx_pc.c", "gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx)", "import_texture(i);", "extern bool omm_gfx_import_texture(struct GfxRenderingAPI *, void *, int, void **, const void *, int, int); if (!omm_gfx_import_texture(gfx_rapi, (void *) gfx_texture_cache_lookup, i, (void **) &rendering_state.textures[i], (const void *) rdp.loaded_texture[i].addr, rdp.texture_tile.fmt, rdp.texture_tile.siz)) { import_texture(i) ; }", 0)
+    do_patch_file("saturn_colors.cpp", "void load_cc_directory()", "fs::directory_iterator(", "string(omm_exe_path()) + \"/\" + ", +1)
     
     
     

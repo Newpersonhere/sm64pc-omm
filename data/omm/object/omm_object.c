@@ -556,8 +556,11 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
     // Spawn 5 coins when fully pounded
     if (func == bhv_wooden_post_update) {
         if (!(o->oBehParams & WOODEN_POST_BP_NO_COINS_MASK) && o->oWoodenPostOffsetY <= -190.f) {
+            o->oPosY = o->oHomeY;
             obj_spawn_loot_yellow_coins(o, 5, 20.f);
             set_object_respawn_info_bits(o, 1);
+            o->oBehParams |= WOODEN_POST_BP_NO_COINS_MASK;
+            o->oPosY = o->oHomeY + o->oWoodenPostOffsetY;
         }
         return false;
     }
@@ -677,13 +680,49 @@ bool cur_obj_update_behavior_func(void (*func)(void)) {
                                         o->oPathedPrevWaypoint = (struct Waypoint *) max((uintptr_t) o->oPathedStartWaypoint, (uintptr_t) (nearest - 1));
                                         o->oPathedPrevWaypointFlags = WAYPOINT_FLAGS_INITIALIZED;
                                     }
-                                    //o->oBehParams |= 0x100;
                                 }
                             } break;
                         }
                     } break;
                 }
             } break;
+        }
+        return false;
+    }
+
+    // bhv_king_bobomb_loop
+    // Release Mario if defeated
+    if (func == bhv_king_bobomb_loop) {
+        if (m->action == ACT_GRABBED && o->oAction >= 7) {
+            o->oInteractStatus &= ~INT_STATUS_GRABBED_MARIO;
+            omm_mario_set_action(m, ACT_FREEFALL, 0, 0);
+        }
+        return false;
+    }
+
+    // bhv_bowser_loop
+    // Change bounce direction and velocity if KOed by a OHKO attack
+    if (func == bhv_bowser_loop) {
+        if (o->oBowserCameraState == 10 && o->oAction == 4) {
+            if (o->oSubAction == 0) {
+                cur_obj_init_animation_with_sound(16);
+                obj_set_angle(o, 0, obj_get_object1_angle_yaw_to_object2(o, m->marioObj), 0);
+                obj_set_forward_and_y_vel(o, -40.f, 80.f);
+                o->oBowserActionTimer = 0;
+                o->oMoveFlags = 0;
+                o->oSubAction++;
+            } else {
+                Vec2f prevXZ = { o->oPosX, o->oPosZ };
+                func();
+                struct Surface *floor = NULL;
+                find_floor(o->oPosX, o->oPosY, o->oPosZ, &floor);
+                if (!floor || floor->type == SURFACE_BURNING || floor->type == SURFACE_DEATH_PLANE) {
+                    o->oPosX = o->oGfxPos[0] = prevXZ[0];
+                    o->oPosZ = o->oGfxPos[2] = prevXZ[1];
+                    o->oPosY = o->oGfxPos[1] = omm_max_f(o->oPosY, find_floor_height(prevXZ[0], o->oPosY + 100.f, prevXZ[1]));
+                }
+            }
+            return true;
         }
         return false;
     }

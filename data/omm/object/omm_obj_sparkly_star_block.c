@@ -175,7 +175,7 @@ static void omm_bhv_sparkly_star_block_update() {
     }
 
     // Unloads the Block if the corresponding Sparkly Stars mode is enabled
-    if (o->oAction == 0 && o->oSparklyStarMode == omm_sparkly_get_current_mode()) {
+    if (o->oAction == 0 && omm_sparkly_is_mode_selected(o->oSparklyStarMode)) {
         obj_mark_for_deletion(o);
     }
 }

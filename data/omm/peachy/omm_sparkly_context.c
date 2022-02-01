@@ -84,6 +84,9 @@ void omm_sparkly_context_set_state(s32 state, bool sound) {
 }
 
 void omm_sparkly_context_reset_data() {
+    if (sOmmSparklyContext->star) {
+        obj_mark_for_deletion(sOmmSparklyContext->star);
+    }
     sOmmSparklyContext->data = NULL;
     sOmmSparklyContext->star = NULL;
 }
@@ -240,8 +243,6 @@ void omm_sparkly_context_update_state(struct MarioState *m) {
             omm_sparkly_flags_get(OMM_SPARKLY_FLAG_MARIO_UPDATED) &&
             omm_sparkly_context_get_flag(OMM_SPARKLY_CONTEXT_FLAG_CHEAT_DETECTED)) {
             omm_sparkly_flags_set(OMM_SPARKLY_FLAG_CHEAT_DETECTED, 1);
-            omm_sparkly_flags_set(OMM_SPARKLY_FLAG_NON_STOP_MODE, OMM_STARS_NON_STOP)
-            gOmmStarsMode = 0;
             omm_sparkly_context_unset_flag(OMM_SPARKLY_CONTEXT_FLAG_CHEAT_DETECTED, 1);
             omm_sparkly_context_set_state(OMM_SPARKLY_CONTEXT_STATE_INVALID, 0);
             omm_sparkly_turn_off_cheats();
@@ -284,8 +285,8 @@ void omm_sparkly_context_update_state(struct MarioState *m) {
             omm_sparkly_context_set_state(OMM_SPARKLY_CONTEXT_STATE_INVALID, 1);
         }
 
-        // Peach and 1 HP mode required in Extreme mode
-        if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_EXTREME) && (!g1HPMode || !OMM_PLAYER_IS_PEACH)) {
+        // Peach, Non-Stop mode and 1 HP mode are required in Extreme mode
+        if (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_EXTREME) && (!OMM_PLAYER_IS_PEACH || !OMM_STARS_NON_STOP || !g1HPMode)) {
             omm_sparkly_context_set_state(OMM_SPARKLY_CONTEXT_STATE_INVALID, 1);
         }
     }

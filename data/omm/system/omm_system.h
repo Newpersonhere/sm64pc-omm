@@ -7,6 +7,8 @@
 // System
 //
 
+const char *omm_exe_path();
+const char *omm_user_path();
 void omm_add_routine(s32 type, void (*func)(void));
 void omm_select_save_file(s32 saveFileNum);
 void omm_return_to_main_menu();
@@ -269,6 +271,7 @@ DECLARE_TOGGLE_SC(gOmmExtrasRender96Peach);
 #endif
 DECLARE_TOGGLE_SC(gOmmExtrasSparklyStarsHint);
 DECLARE_TOGGLE_SC(gOmmExtrasCrystalStarsReward);
+DECLARE_TOGGLE_SC(gOmmExtrasNebulaStarsReward);
 #if OMM_CODE_DEBUG
 DECLARE_TOGGLE_SC(gOmmDebugHitbox);
 DECLARE_TOGGLE_SC(gOmmDebugHurtbox);

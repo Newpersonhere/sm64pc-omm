@@ -47,7 +47,7 @@ void omm_mario_init_next_action(struct MarioState *m) {
         (m->action == ACT_OMM_METAL_WATER_GROUND_POUND_JUMP) ||
         (m->action == ACT_OMM_GROUND_POUND_JUMP) ||
         (m->action == ACT_OMM_SPIN_JUMP) ||
-        (m->action == ACT_OMM_ROLL && (m->prevAction == ACT_GROUND_POUND_LAND || m->prevAction == ACT_OMM_SPIN_POUND_LAND)))) {
+        (m->action == ACT_OMM_ROLL && (m->prevAction != ACT_OMM_ROLL && m->prevAction != ACT_OMM_ROLL_AIR)))) {
         m->faceAngle[1] = m->intendedYaw;
     }
 
@@ -314,7 +314,8 @@ bool omm_mario_check_dead(struct MarioState *m, s16 hp) {
     }
 
     // Non-Stop mode only
-    if (OMM_STARS_CLASSIC) {
+    // Getting caught cheating also disable the SMO-style death cutscenes
+    if (OMM_STARS_CLASSIC || omm_sparkly_flags_get(OMM_SPARKLY_FLAG_CHEAT_DETECTED)) {
         return false;
     }
 
@@ -348,7 +349,7 @@ bool omm_mario_check_dead(struct MarioState *m, s16 hp) {
 }
 
 bool omm_mario_check_death_warp(struct MarioState *m, s32 warpOp) {
-    if (OMM_STARS_NON_STOP && !OMM_LEVEL_NO_WARP(gCurrLevelNum)) {
+    if (OMM_STARS_NON_STOP && !OMM_LEVEL_NO_WARP(gCurrLevelNum) && !omm_sparkly_flags_get(OMM_SPARKLY_FLAG_CHEAT_DETECTED)) {
         switch (warpOp) {
             case WARP_OP_DEATH: {
                 return omm_mario_check_dead(m, OMM_HEALTH_DEAD);
@@ -368,6 +369,28 @@ bool omm_mario_check_death_warp(struct MarioState *m, s32 warpOp) {
     return false;
 }
 
+const bool gIsBowserInteractible[] = {
+    1, // bowser_act_default
+    1, // bowser_act_thrown_dropped
+    0, // bowser_act_jump_onto_stage
+    1, // bowser_act_dance
+    0, // bowser_act_dead
+    0, // bowser_act_text_wait
+    0, // bowser_act_intro_walk
+    1, // bowser_act_charge_mario
+    1, // bowser_act_spit_fire_into_sky
+    1, // bowser_act_spit_fire_onto_floor
+    1, // bowser_act_hit_edge
+    1, // bowser_act_turn_from_edge
+    1, // bowser_act_hit_mine
+    1, // bowser_act_jump
+    1, // bowser_act_walk_to_mario
+    1, // bowser_act_breath_fire
+    0, // bowser_act_teleport
+    1, // bowser_act_jump_towards_mario
+    1, // bowser_act_unused_slow_walk
+    0, // bowser_act_ride_tilting_platform
+};
 bool omm_mario_check_grab(struct MarioState *m, struct Object *o, bool ignoreAngles) {
     if (!(o->oInteractionSubtype & INT_SUBTYPE_NOT_GRABBABLE)) {
 
@@ -383,16 +406,10 @@ bool omm_mario_check_grab(struct MarioState *m, struct Object *o, bool ignoreAng
                     return false;
                 }
 #endif
-                // Is Mario facing Bowser's tail, in a 120 deg arc?
-                if (ignoreAngles || omm_abs_s((s16) (m->faceAngle[1] - bowser->oFaceAngleYaw)) < 0x5555) {
-                    
-                    // Is Bowser's action valid for Mario to grab him?
-                    for_each(s32, grabbableAction, 12, OMM_ARRAY_OF(s32) { 0, 3, 7, 8, 9, 10, 11, 13, 14, 15, 17, 18 }) {
-                        if (bowser->oAction == *grabbableAction) {
-                            gOmmData->mario->grab.obj = bowser;
-                            return true;
-                        }
-                    }
+                // Is Bowser grabbable and is Mario facing Bowser's tail, in a 120 deg arc?
+                if (gIsBowserInteractible[bowser->oAction] && (ignoreAngles || omm_abs_s((s16) (m->faceAngle[1] - bowser->oFaceAngleYaw)) < 0x5555)) {
+                    gOmmData->mario->grab.obj = bowser;
+                    return true;
                 }
             }
         }
@@ -612,8 +629,8 @@ void omm_mario_update_spin(struct MarioState *m) {
         sSpinBufferTimer = 0;
     }
 
-    // Hidden spin shortcut (only available for controllers that have a joystick button)
-    if (SDL_GameControllerGetButton(SDL_GameControllerOpen(0), SDL_CONTROLLER_BUTTON_LEFTSTICK)) {
+    // Hidden spin shortcut (joystick button or mouse scroll click)
+    if (SDL_GameControllerGetButton(SDL_GameControllerOpen(0), SDL_CONTROLLER_BUTTON_LEFTSTICK) || (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_MIDDLE))) {
         sSpinNumHitCheckpoints = OMM_MARIO_SPIN_MIN_HIT_CHECKPOINTS;
     }
 
@@ -656,7 +673,8 @@ void omm_mario_update_fall(struct MarioState *m) {
                 (m->action == ACT_OMM_MIDAIR_SPIN) ||
                 (m->action == ACT_OMM_ROLL_AIR) ||
                 (m->action == ACT_OMM_WALL_SLIDE) ||
-                (m->action == ACT_OMM_PEACH_GLIDE)) {
+                (m->action == ACT_OMM_PEACH_GLIDE) ||
+                (m->action == ACT_OMM_PEACH_PERRY_CHARGE_AIR)) {
                 gOmmData->mario->state.peakHeight = m->pos[1];
             }
 
@@ -1127,6 +1145,7 @@ void bhv_mario_update() {
     omm_geo_preprocess_object_graph_node(gMarioObject);
 
     // Spawn particles
+    m->particleFlags &= ~(!enable_dust_particles * (PARTICLE_DUST | PARTICLE_SNOW | PARTICLE_DIRT));
     if (m->particleFlags & PARTICLE_DUST                ) spawn_particle(ACTIVE_PARTICLE_DUST,                 MODEL_MIST,                 bhvMistParticleSpawner);
     if (m->particleFlags & PARTICLE_VERTICAL_STAR       ) spawn_particle(ACTIVE_PARTICLE_V_STAR,               MODEL_NONE,                 bhvVertStarParticleSpawner);
     if (m->particleFlags & PARTICLE_HORIZONTAL_STAR     ) spawn_particle(ACTIVE_PARTICLE_H_STAR,               MODEL_NONE,                 bhvHorStarParticleSpawner);

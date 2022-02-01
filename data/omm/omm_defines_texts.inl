@@ -118,6 +118,7 @@ OMM_TEXT_(OPT_RENDER96_PEACH,                           "Render96 Peach")
 #endif
 OMM_TEXT_(OPT_SPARKLY_STARS_HINT,                       "Sparkly Stars Hint")
 OMM_TEXT_(OPT_CRYSTAL_STARS_REWARD,                     "Crystal Stars Reward")
+OMM_TEXT_(OPT_NEBULA_STARS_REWARD,                      "Nebula Stars Reward")
 OMM_TEXT_(OPT_SHORTCUTS_TITLE,                          "SHORTCUTS")
 OMM_TEXT_(OPT_SHORTCUTS_LABEL,                          "Shortcuts")
 OMM_TEXT_(OPT_SHORTCUTS_OPTION,                         "Option ")

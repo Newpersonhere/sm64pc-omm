@@ -524,7 +524,7 @@ static void omm_camera_calc_y_offsets(f32 *camPosOffsetY, f32 *camFocOffsetY) {
 }
 
 static bool omm_camera_is_bowser_fight() {
-    for_each(const BehaviorScript *, bhv, 2, OMM_ARRAY_OF(const BehaviorScript *) { bhvBowser, omm_bhv_bowser }) {
+    for_each_(const BehaviorScript *, bhv, 2, OMM_ARRAY_OF(const BehaviorScript *) { bhvBowser, omm_bhv_bowser }) {
         for_each_object_with_behavior(obj, *bhv) {
             if (!obj_is_dormant(obj)) {
 #if OMM_GAME_IS_R96A

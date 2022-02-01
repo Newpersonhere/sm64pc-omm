@@ -107,9 +107,12 @@ static bool omm_peach_vibe_check(struct MarioState *m) {
 
 static void omm_peach_vibe_update_gauge(struct MarioState *m) {
 
-    // Refill the vibe gauge by 10% per second as long as Peach is inside a recovery heart
-    if (obj_get_first_with_behavior_and_field_s32(bhvRecoveryHeart, 0x1C, 1)) {
-        omm_peach_vibe_increase(OMM_PEACH_VIBE_GAUGE_HEART_INC);
+    // Refill the vibe gauge every time a recovery heart spins
+    if (!(gTimeStopState & TIME_STOP_ENABLED)) {
+        for_each_object_with_behavior(obj, bhvRecoveryHeart) {
+            s32 recovery = omm_max_s(0, obj->oAngleVelYaw - 400) / 200;
+            omm_peach_vibe_increase(recovery);
+        }
     }
 
     // Update the vibe gauge and apply the Calm effects
