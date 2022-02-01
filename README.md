@@ -241,7 +241,7 @@ To install it and make it work, follow these steps:
 - Recovery hearts now fill the Vibe gauge as long as they spin, Peach no longer has to stand inside them.
 - More enemies spawn Vibe sparkles and some enemies spawn more sparkles when defeated with Perry and Vibe attacks.
 - *Super Mario 64 ex-alo* (`xalo`) now uses *Super Mario 64 ex-nightly* (`smex`) save data.
-- *Super Mario Star Road* (`smsr`): The player can now access to the Zero Life level, but the entrance is well hidden...
+- *Super Mario Star Road* (`smsr`): The player can now access the Zero Life level, but the entrance is well hidden...
 
 ## Version 7.0.2
 
