@@ -180,7 +180,7 @@ def fix_typo(filepath, strFrom, strTo):
 def get_exe(dir):
     for path, _, files in os.walk(f"{dir}/build/us_pc"):
         for filename in files:
-            if ".exe" in filename:
+            if ".exe" in filename or ".f3dex2e" in filename:
                 return path + "/" + filename
     return None
 
@@ -542,9 +542,9 @@ if __name__ == "__main__":
     makeCmd = "make" + BUILD_SPEEDS[speed]["jobs"] + " OMM_BUILDER=1" + " VERSION=us"
 
     # APIs
-    if version in ["rt64"]: makeCmd += " RENDER_API=RT64 WINDOW_API=SDL2 AUDIO_API=SDL2 CONTROLLER_API=SDL2"
-    elif args["DIRECT_X"]:  makeCmd += " RENDER_API=D3D11 WINDOW_API=DXGI AUDIO_API=SDL2 CONTROLLER_API=SDL2"
-    else:                   makeCmd += " RENDER_API=GL WINDOW_API=SDL2 AUDIO_API=SDL2 CONTROLLER_API=SDL2"
+    if version in ["rt64"]: makeCmd += " RENDER_API=RT64 WINDOW_API=SDL2 AUDIO_API=SDL2 CONTROLLER_API=SDL2 GRUCODE=f3dex2e"
+    elif args["DIRECT_X"]:  makeCmd += " RENDER_API=D3D11 WINDOW_API=DXGI AUDIO_API=SDL2 CONTROLLER_API=SDL2 GRUCODE=f3dex2e"
+    else:                   makeCmd += " RENDER_API=GL WINDOW_API=SDL2 AUDIO_API=SDL2 CONTROLLER_API=SDL2 GRUCODE=f3dex2e"
 
     # 60 FPS
     makeCmd += " HIGH_FPS_PC=1" if args["60_FPS"] else ""
