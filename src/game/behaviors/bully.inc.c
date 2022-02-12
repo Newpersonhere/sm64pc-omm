@@ -245,6 +245,12 @@ void bhv_bully_loop(void) {
     //  if there is nothing under the lava floor.
     bully_check_mario_collision();
 
+    // Star road fix: Kill the bully if far below his home pos
+    if (o->oAction < BULLY_ACT_LAVA_DEATH && o->oPosY < o->oHomeY - 400.f) {
+        o->oAction = BULLY_ACT_LAVA_DEATH;
+        o->oTimer = 0;
+    }
+
     switch (o->oAction) {
         case BULLY_ACT_PATROL:
             o->oForwardVel = 5.0;

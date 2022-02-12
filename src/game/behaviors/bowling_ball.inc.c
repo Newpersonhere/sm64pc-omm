@@ -151,6 +151,17 @@ void bhv_bowling_ball_initialize_loop(void) {
 }
 
 void bhv_bowling_ball_loop(void) {
+
+    // Star road fix: Unload the bowling balls in Starlight Runway
+    // after reaching some point to prevent a hardlock
+    if (gCurrLevelNum == LEVEL_RR) {
+        if (o->oPosZ < -1050.f) {
+            spawn_mist_particles();
+            obj_mark_for_deletion(o);
+            return;
+        }
+    }
+
     switch (o->oAction) {
         case BBALL_ACT_INITIALIZE:
             o->oAction = BBALL_ACT_ROLL;
