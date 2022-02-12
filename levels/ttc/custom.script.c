@@ -84,7 +84,7 @@ RETURN()
 };
 const LevelScript local_objects_ttc_1_[] = {
 OBJECT_WITH_ACTS(0,-5060,-795,5287,0,90,0,0xa0000, bhvAirborneWarp,31),
-OBJECT_WITH_ACTS(0,-340,1385,-1602,0,0,0,0x0, bhvBobBowlingBallSpawner,63),
+//OBJECT_WITH_ACTS(0,-340,1385,-1602,0,0,0,0x0, bhvBobBowlingBallSpawner,63),
 OBJECT_WITH_ACTS(0,-3263,-603,-1673,0,0,0,0x960000, bhvPoleGrabbing,63),
 OBJECT_WITH_ACTS(54,-5174,-969,-728,0,0,0,0x0, bhvControllablePlatform,63),
 OBJECT_WITH_ACTS(212,4676,-148,-7499,0,0,0,0x0, bhv1Up,63),
