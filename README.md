@@ -154,8 +154,10 @@ If it detects a new version, the builder will ask you if you want to update it w
 
 ## Known Issues
 
-- *Render96 RT64* (`rt64`):
-  - Trying to break a red exclamation box (wing cap) with Luigi results in a game crash.
+- 25/01/2022
+  - *Render96 RT64* (`rt64`):
+    - Trying to break a red exclamation box (wing cap) with Luigi results in a game crash.
+    - There is no available fix known to date.
 
 ---
 
@@ -204,7 +206,7 @@ To install it and make it work, follow these steps:
 
 -----
 
-## Version 7.0.9
+## Version 7.0.9 (01/02/2022)
 
 ### OMM Builder:
 - Added *Saturn (sm64ex-nightly)* repository: `saex`. This repository shares save data with *Super Mario 64 ex-nightly* (`smex`).
@@ -243,7 +245,7 @@ To install it and make it work, follow these steps:
 - *Super Mario 64 ex-alo* (`xalo`) now uses *Super Mario 64 ex-nightly* (`smex`) save data.
 - *Super Mario Star Road* (`smsr`): The player can now access the Zero Life level, but the entrance is well hidden...
 
-## Version 7.0.2
+## Version 7.0.2 (17/01/2022)
 
 ### OMM Builder:
 - Added a fix for the `undefined reference to 'gMusicData'` error.
@@ -262,7 +264,7 @@ To install it and make it work, follow these steps:
   - Increased charge duration from 2 to 3 seconds.
   - New ability: Press **(B)** while airborne to perform a powerful ground pound, similar to captured Whomp's attack.
 
-## Version 7.0.0
+## Version 7.0.0 (14/01/2022)
 
 ### Bug fixes:
 - Fixed a bug where the red coin radar didn't show the red coins in Bowser levels.<br>Additionally, the red coin radar now indicates the red coin star when all red coins have been collected.
@@ -324,7 +326,7 @@ These animations can be toggled on/off with the option `Super Mario Odyssey Anim
     - Languages are supported, but only the file `AM_us.omm.json` is generated automatically. For more languages, you must provide the files yourself.
     - If the game crashes at launch, make sure the selected language is English. To do that, open `sm64config.txt` and set the `language` value to `0`.
 
-## Version 6.1.2
+## Version 6.1.2 (14/12/2021)
 
 ### OMM Builder:
 - The `clear` command now deletes only the `build` directory.
@@ -336,7 +338,7 @@ These animations can be toggled on/off with the option `Super Mario Odyssey Anim
 - Fixed a bug where the kickable board in WF couldn't be *attacked* by Cappy and Perry.
 - The three parts of the TTM slide are now in a single area (instead of 3).
 
-## Version 6.1.0
+## Version 6.1.0 (11/12/2021)
 
 ### OMM Builder:
 - The `star_road.patch` file is no longer needed to build *Super Mario Star Road*.
@@ -410,7 +412,7 @@ These animations can be toggled on/off with the option `Super Mario Odyssey Anim
   - Bob-omb
   - Spindrift
 
-## Version 6.0.6
+## Version 6.0.6 (20/11/2021)
 
 ### Changes and fixes:
 - The `Red Coins Radar` and red coins counter are disabled if the red coins star is already collected.
@@ -427,7 +429,7 @@ These animations can be toggled on/off with the option `Super Mario Odyssey Anim
   - You can fire Bob-omb buddies' cannons with **(B)**.
   - Thwomp's collision changed to a cube (like Grindels), as it should be.
 
-## Version 6.0.5
+## Version 6.0.5 (05/11/2021)
 
 ### Bug fixes:
 - Fixed a bug where spawning directly inside the JRB sunken ship activated the low visibility mode if Crystal Stars (Sparkly Stars - Hard mode) were enabled.
@@ -441,7 +443,7 @@ These animations can be toggled on/off with the option `Super Mario Odyssey Anim
 - Added the `Red Coins Radar` in `Extras`. When enabled, it indicates the direction of the nearest red coin in the bottom-left corner of the screen.
 - Added the `Show Star Number` toggle in `Extras`. When enabled, a floating number appears above every visible star to indicate which star of the current level it is.
 
-## Version 6.0.3/6.0.4
+## Version 6.0.3/6.0.4 (31/10/2021)
 
 ### Builder update:
 - The builder will now ask to update if a new version is detected.
@@ -450,7 +452,7 @@ These animations can be toggled on/off with the option `Super Mario Odyssey Anim
 - Fixed a bug where Mario couldn't grab Bowser's tail.
 - Fixed a bug where the ending star appeared already collected, making the 120 stars impossible to collect.
 
-## Version 6.0.2
+## Version 6.0.2 (28/10/2021)
 
 ### Builder update:
 - The building process now generates a `logs.txt` file, similarly to **sm64pcBuilder2**.
@@ -468,7 +470,7 @@ These animations can be toggled on/off with the option `Super Mario Odyssey Anim
 - Debug is no longer needed to make the game work properly.
 - Puppycam, 60 FPS and External Data are now fully functional with SM74.
 
-## Version 6.0.1
+## Version 6.0.1 (24/10/2021)
 **From now on, you no longer have to update your version of OMM yourself.**<br>**However, if the changelog mentions a *Builder update* (like this one), you have to run the following command where the builder is to update it:**<br>`git checkout .; git pull -q`
 
 ### Builder update:
@@ -532,7 +534,7 @@ Controls have been redesigned to be less confusing and to prevent annoying softl
   - When saving, the game creates a back-up, then write the savefile.
   - If the savefile is missing or gets corrupted/erased, the back-up will replace it.
 
-## Version 6.0.0
+## Version 6.0.0 (17/10/2021)
 
 ### Bug fixes:
 - Fixed a bug where blue coins dropped by Boos acted like yellow coins.
@@ -810,7 +812,7 @@ Controls have been redesigned to be less confusing and to prevent annoying softl
   - Character select button (Luigi): `omm_geo_menu_button_luigi`
   - Character select button (Wario): `omm_geo_menu_button_wario`
 
-## Version 5.1.2
+## Version 5.1.2 (02/05/2021)
 
 ### Bug fixes:
 - Fixed a bug where the midair spin prevented Mario from doing a triple jump if it was performed after a double jump.
@@ -840,7 +842,7 @@ Controls have been redesigned to be less confusing and to prevent annoying softl
 - Improved Metal Mario is completely immune to both of the effects.
 - The anti-cheat is not triggered anymore after collecting all 30 Crystal Stars.
 
-## Version 5.1.0
+## Version 5.1.0 (28/04/2021)
 
 ### Bug fixes:
 - Fixed a frame perfect softlock that happened when reading a sign as soon as the capture animation starts playing.
@@ -964,18 +966,18 @@ Controls have been redesigned to be less confusing and to prevent annoying softl
   - Render96 2.2 Mario/Luigi/Wario
   - VaniLla96 Mario/Luigi/Wario
 
-## Version 5.0.2
+## Version 5.0.2 (10/04/2021)
 
 ### Bug fixes:
 - Fixed the infinite Cappy jump glitch.
 - Fixed the infinite stairs bypass glitch.
 
-## Version 5.0.1
+## Version 5.0.1 (03/04/2021)
 
 ### Bug fixes:
 - Fixed the bad/secret endings.
 
-## Version 5.0.0
+## Version 5.0.0 (01/04/2021)
 
 ### Bug fixes:
 - Fixed a bug where OMM Bowser could get hit at the start of his jump action, resulting in a premature knockback action that could lead to a crash.
@@ -1110,7 +1112,7 @@ Controls have been redesigned to be less confusing and to prevent annoying softl
 - They are incredibly hard to find and collect, but gathering them all unlocks something really worth...
 - Added two new endings, the bad ending and the secret ending.
 
-## Version 4.1.4
+## Version 4.1.4 (25/01/2021)
 
 ### Changes and fixes:
 - JRB/DDD: Fixed a bug where the whirlpools were more attractive/repulsive than intended.
@@ -1126,7 +1128,7 @@ Controls have been redesigned to be less confusing and to prevent annoying softl
   - You can now select the island you want to spawn in and choose if the top has been drained or not before warping to THI.
   - You can now select the clock speed before warping to TTC.
 
-## Version 4.1.3
+## Version 4.1.3 (16/01/2021)
 
 ### Changes and fixes:
 - Fixed a bug where the player could pause the game during the star dance animation.
@@ -1138,7 +1140,7 @@ Controls have been redesigned to be less confusing and to prevent annoying softl
 - Air roll turns into a freefall as soon as Mario's forward velocity goes under 45, only if **(Z)** is not held.
 - Added an enhanced version of the 8-directions camera. This camera can replace the vanilla camera inside courses by setting `Mario's Camera` to `8-Directions` from the `Mario` submenu.
 
-## Version 4.1.2
+## Version 4.1.2 (10/01/2021)
 
 ### Changes and fixes:
 - Fixed a crash that happens when collecting a Castle star after completing a course (7 stars).
@@ -1169,7 +1171,7 @@ Added a LiveSplit Auto-Splitter script: `omm.4.1.2.asl`.<br>If you don't use Liv
   - For 120 star runs, the array must end with 120
   - Make sure your exe is named `sm64.us.f3dex2e.exe`
 
-## Version 4.1.1
+## Version 4.1.1 (28/12/2020)
 
 ### Changes and fixes:
 - Fixed a bug when Mario could die after a level exit if he triggered a death warp at the same time.
@@ -1188,7 +1190,7 @@ Added a LiveSplit Auto-Splitter script: `omm.4.1.2.asl`.<br>If you don't use Liv
   - Delays have been reduced and animations have been shortened to reduce at most the waiting time between actions.
   - The collision is left untouched, only the visuals are modified.
 
-## Version 4.1.0
+## Version 4.1.0 (23/12/2020)
 
 ### Changes and fixes:
 - Cappy can open treasure chests (JRB, DDD).
@@ -1270,7 +1272,7 @@ Added a LiveSplit Auto-Splitter script: `omm.4.1.2.asl`.<br>If you don't use Liv
   - Both cheats `Unlimited Cappy Jumps` and `Cappy Stays Forever` must be set to `Disabled`
 - Mandatory options, as well as key/button binds, must be set before the start of the run.
 
-## Version 4.0.0
+## Version 4.0.0 (09/12/2020)
 
 ### Changes and fixes:
 - Cappy is now always summoned when pressing the Cappy Throw button, even if Mario's throw animation is interrupted.
@@ -1364,7 +1366,7 @@ Added a LiveSplit Auto-Splitter script: `omm.4.1.2.asl`.<br>If you don't use Liv
   - And because Peach gave him the Castle master key, he can open Star doors without the need of Power Stars, but can't open the doors locked by Bowser.
 - Speaking of Bowser, he learnt some moves from his Odyssey counterpart, and is now waiting for Mario and Cappy to face him in the Dark World arena.
 
-## Version 3.1.0
+## Version 3.1.0 (03/11/2020)
 
 ### Changes and fixes:
 - Removed turning while backflipping.
@@ -1441,7 +1443,7 @@ Added a LiveSplit Auto-Splitter script: `omm.4.1.2.asl`.<br>If you don't use Liv
     - A one-way warp pipe has been added inside Wiggler's room to allow Mario to return to the main area.<br>This pipe only appears after defeating Wiggler.
 - Non-Stop mode is completely disabled if the game is compiled with the Time Trials patch.
 
-## Version 3.0.1
+## Version 3.0.1 (18/10/2020)
 
 ### Changes and fixes:
 - Fixed a bug that locked Mario in an infinite loop of death if Non-Stop mode was deactivated
@@ -1449,7 +1451,7 @@ Added a LiveSplit Auto-Splitter script: `omm.4.1.2.asl`.<br>If you don't use Liv
 - Fixed a bug that prevented the SM64 power meter from being displayed if SMO-Health was deactivated
 - Fixed a bug that drew Cappy's eyes over wings on Render96 Mario's wing cap
 
-## Version 3.0.0
+## Version 3.0.0 (16/10/2020)
 
 ### Changes and fixes:
 - Better ground/air movement
@@ -1536,7 +1538,7 @@ Added a LiveSplit Auto-Splitter script: `omm.4.1.2.asl`.<br>If you don't use Liv
 ### Last but not least, Cappy:
 - Cappy now has eyes, but only with SM64 Mario, HD Mario, Render96 Mario and Render96 Luigi. They show up with regular Mario, Vanish-cap Mario and Winged-cap Mario, but not Metal Mario.
 
-## Version 2.0.2
+## Version 2.0.2 (14/09/2020)
 
 ### Changes and fixes:
 - Fixed a crash that happened when throwing Cappy 64 times in a row, without grabbing it or bouncing on it.
@@ -1549,13 +1551,13 @@ Added a LiveSplit Auto-Splitter script: `omm.4.1.2.asl`.<br>If you don't use Liv
   - Mario uses the 3-Health system from Odyssey
 - Cappy now unloads if Mario has his cap in his hand or if he loses his cap (ukiki, big snowman, fwoosh).
 
-## Version 2.0.1
+## Version 2.0.1 (10/09/2020)
 
 ### Changes and fixes:
 - Time Trials
   - Fixed a bug when generated ghost data would produce abnormally large .txt files under certain circumstances.<br>The new time trials data files use a different file format, so older files are incompatible with 2.0.1.
   
-## Version 2.0.0
+## Version 2.0.0 (08/09/2020)
 
 ### Changes and fixes:
 - Mario's moveset
@@ -1613,14 +1615,14 @@ These include Bullet Bill, Hoot, Whomp and Whomp King.
 - Whomp King
   - First you try to step on him, now you want to capture it. It makes him so mad.
     
-## Version 1.5.8
+## Version 1.5.8 (28/08/2020)
 
 ### Hotfixes:
 - SMO HUD
   - Hide the coin counter inside the castle walls
   - Properly shows collected keys (below star count) with the SGI v1.4.2 pack
 
-## Version 1.5.7
+## Version 1.5.7 (27/08/2020)
 
 ### Changes and fixes:
 - Roll speed has been slightly reduced.
@@ -1650,17 +1652,17 @@ These include Bullet Bill, Hoot, Whomp and Whomp King.
   - The sound when Mario takes damage.
   - The sound when Mario regains 1 health point.
 
-## Version 1.4.2
+## Version 1.4.2 (22/08/2020)
 
 ### Changes and fixes:
 - Now compatible with SGI v1.4.2 (Credits to DorfDork).
 
-## Version 1.0.1
+## Version 1.0.1 (14/08/2020)
 
 ### Changes and fixes:
 - Fixed a crash that occured when trying to capture an enemy, if a custom sound pack was loaded.
 
-## Version 1.0.0
+## Version 1.0.0 (12/08/2020)
 
 ### Changes and fixes:
 - Mario takes off his cap when Cappy is thrown. (Thanks to s4ys)
@@ -1700,7 +1702,7 @@ You wanted it, here it is. Now, Mario can capture and possess his enemies! (Well
   - When freed, this massive iron ball is invulnerable and knockbacks enemies on contact, and can even break brick blocks and some walls by biting them.
   - Note: Freed chain chomp has a new behavior when Mario leaves it: he will start to chase Mario if he is too close to him.
 
-## Version 0.11.0
+## Version 0.11.0 (27/07/2020)
 
 ### Changes and fixes:
 - Mario wall-slides automatically when touching a wall, making wall jumps easier.<br>Additionally, press **(Z)** on a wall to stop wall-sliding.
