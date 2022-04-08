@@ -1958,6 +1958,7 @@ const BehaviorScript bhvGrandStar[] = {
     SET_HOME(),
     BEGIN_LOOP(),
         CALL_NATIVE(bhv_warp_loop),
+        SET_HITBOX(160, 100),
         CALL_NATIVE(bhv_grand_star_loop),
     END_LOOP(),
 };
