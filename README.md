@@ -64,7 +64,6 @@ The `[version]` parameter must be one of the following:
 | `sm74` | Super Mario 74 |
 | `smsr` | Super Mario Star Road |
 | `r96a` | Render96 ex-alpha |
-| `rt64` | Render96 RT64 |
 
 The `[build_speed]` parameter must be one of the following:
 
@@ -79,21 +78,18 @@ The `[args...]` parameters can be any of the following:
 
 |||
 |:-|:-|
-| `60_FPS` | Enable the 60 FPS interpolation. |
 | `DYNOS` | Download and install the latest version of DynOS. |
 | `PATCHES` | Apply patches from the 'custom/patches' directory. |
-| `EXT_DATA` | Install texture and sound packs from the 'custom/res' directory. |
 | `DIRECT_X` | Replace SDL/OpenGL APIs by DirectX APIs. |
 | `AUTO_RUN` | Start the game after building. |
 
-For instance, if you want to build and play *Star Road* with 60 FPS and External data, run the command:<br>`python3 omm_builder.py smsr faster 60_FPS EXT_DATA AUTO_RUN`<br>Additionally, the builder is case-insensitive, meaning you can also write the previous command as:<br>`python3 omm_builder.py smsr faster 60fps extdata autorun`
+For instance, if you want to build and play *Star Road* with 60 FPS and External data, run the command:<br>`python3 omm_builder.py smsr faster DIRECT_X AUTO_RUN`<br>Additionally, the builder is case-insensitive, meaning you can also write the previous command as:<br>`python3 omm_builder.py smsr faster directx autorun`
 
 ---
 
 ### Requirements
 
 - To build *Super Mario 64 Moonshine*, you must extract the mod archive (`MOONSHINE_FINALUPDATE.rar`) into a directory named `moonshine`.
-- To run *Render96 RT64*, an **NVIDIA GPU with DXR support (RTX or GTX > 1060) is required**. You can build the game without this requirement, but you won't be able to open it.
 
 ### Custom patches
 
@@ -102,7 +98,7 @@ For instance, if you want to build and play *Star Road* with 60 FPS and External
 
 ### Texture and sound packs
 
-- Customize your game's textures and sounds by placing your packs `.zip` archives inside the `custom/res` directory and run the command with the `EXT_DATA` option.
+- Customize your game's textures and sounds by placing your packs `.zip` archives inside the `custom/res` directory.
 - Texture packs must be `.zip` archives with a `gfx` directory inside them.
 - Sound packs must be `.zip` archives with a `sound` directory inside them.
 
@@ -152,15 +148,6 @@ If it detects a new version, the builder will ask you if you want to update it w
 
 ---
 
-## Known Issues
-
-- 25/01/2022
-  - *Render96 RT64* (`rt64`):
-    - Trying to break a red exclamation box (wing cap) with Luigi results in a game crash.
-    - There is no available fix known to date.
-
----
-
 ## Speedrunning
 
 For speedrunners, OMM comes with a LiveSplit auto-splitter.<br>It works with every game that can be built with OMM.
@@ -205,6 +192,17 @@ To install it and make it work, follow these steps:
 - [Sound packs](https://sm64pc.info/downloads/sound_pack/)
 
 -----
+
+## Version 7.1.0 (??/04/2022)
+
+### OMM Builder:
+- Fixed DynOS compilation on Linux-based systems.
+- `r96a` now uses the repository `Render96ex-tester_rt64alpha`.<br>Note 1: You don't need an RTX card to build this branch.<br>Note 2: The new audio system in the `tester` branch is not supported yet.
+- Removed options: `60_FPS` and `EXT_DATA`.
+- Removed `rt64` from version list.
+
+### OMM:
+- ???
 
 ## Version 7.0.9 (01/02/2022)
 

@@ -4,6 +4,7 @@ import stat
 import shutil
 import filecmp
 from distutils.dir_util import copy_tree
+from xml.etree.ElementTree import VERSION
 
 def usage_info():
     print("")
@@ -25,7 +26,7 @@ def usage_info():
     print("  sm74  | Super Mario 74")
     print("  smsr  | Super Mario Star Road")
     print("  r96a  | Render96 ex-alpha")
-    print("  rt64  | Render96 RT64")
+  # print("  rt64  | Render96 RT64")
     print("  saex  | Saturn (sm64ex-nightly)")
     print("")
     print("[build_speed] must be one of the following:")
@@ -35,23 +36,21 @@ def usage_info():
     print("  fastest  | Use 100% of CPU to build the game as fast as possible.")
     print("")
     print("[args...] can be any of the following:")
-    print("  60_FPS    | Enable the 60 FPS interpolation.")
     print("  DYNOS     | Download and install the latest version of DynOS.")
     print("  PATCHES   | Apply patches from the 'custom/patches' directory.")
-    print("  EXT_DATA  | Install texture and sound packs from the 'custom/res' directory.")
     print("  DIRECT_X  | Replace SDL/OpenGL APIs by DirectX APIs.")
     print("  AUTO_RUN  | Start the game after building.")
     print("")
     print("Requirements:")
     print("- To build Super Mario 64 Moonshine, you must extract the mod archive ('MOONSHINE_FINALUPDATE.rar') into a directory named 'moonshine'.")
-    print("- To run Render96 RT64, an NVIDIA GPU with DXR support (RTX or GTX > 1060) is required.")
+  # print("- To run Render96 RT64, an NVIDIA GPU with DXR support (RTX or GTX > 1060) is required.")
     print("")
     print("Custom patches:")
     print("- To build the game with custom patches, place a copy of your '.patch' files inside the 'custom/patches' directory and run the command with the 'PATCHES' option.")
     print("- Not all patches or combination of patches are supported.")
     print("")
     print("Texture and sound packs:")
-    print("- Customize your game's textures and sounds by placing your packs '.zip' archives inside the 'custom/res' directory and run the command with the 'EXT_DATA' option.")
+    print("- Customize your game's textures and sounds by placing your packs '.zip' archives inside the 'custom/res' directory.")
     print("- Texture packs must be '.zip' archives with a 'gfx' directory inside them.")
     print("- Sound packs must be '.zip' archives with a 'sound' directory inside them.")
     print("")
@@ -200,12 +199,12 @@ if __name__ == "__main__":
     # Constants
     VERSIONS = {
         "smex": { "name": "Super Mario 64 ex-nightly", "repo": "https://github.com/sm64pc/sm64ex.git -b nightly",                "dependency": "",          "args": [] },
-        "smms": { "name": "Super Mario 64 Moonshine",  "repo": "https://github.com/sm64pc/sm64ex.git -b nightly",                "dependency": "moonshine", "args": ["EXT_DATA"] },
+        "smms": { "name": "Super Mario 64 Moonshine",  "repo": "https://github.com/sm64pc/sm64ex.git -b nightly",                "dependency": "moonshine", "args": [] },
         "xalo": { "name": "Super Mario 64 ex-alo",     "repo": "https://github.com/AloXado320/sm64ex-alo.git -b master",         "dependency": "",          "args": [] },
         "sm74": { "name": "Super Mario 74",            "repo": "https://github.com/PeachyPeachSM64/sm64pc-omm.git -b sm74",      "dependency": "",          "args": [] },
         "smsr": { "name": "Super Mario Star Road",     "repo": "https://github.com/PeachyPeachSM64/sm64pc-omm.git -b smsr",      "dependency": "",          "args": [] },
-        "r96a": { "name": "Render96 ex-alpha",         "repo": "https://github.com/Render96/Render96ex.git -b alpha",            "dependency": "",          "args": ["DYNOS"] },
-        "rt64": { "name": "Render96 RT64",             "repo": "https://github.com/Render96/Render96ex.git -b tester_rt64alpha", "dependency": "",          "args": ["DYNOS"] },
+        "r96a": { "name": "Render96 ex-alpha",         "repo": "https://github.com/Render96/Render96ex.git -b tester_rt64alpha", "dependency": "",          "args": ["DYNOS"] },
+      # "rt64": { "name": "Render96 RT64",             "repo": "https://github.com/Render96/Render96ex.git -b tester_rt64alpha", "dependency": "",          "args": ["DYNOS"] },
         "saex": { "name": "Saturn (sm64ex-nightly)",   "repo": "https://github.com/Llennpie/Saturn -b legacy",                   "dependency": "",          "args": ["DYNOS"] },
     }
     BUILD_SPEEDS = {
@@ -220,10 +219,8 @@ if __name__ == "__main__":
     }
     ARGUMENTS = {
         "DEBUG"    : ["debug"],
-        "60_FPS"   : ["60_fps", "60fps"],
         "DYNOS"    : ["dynos"],
         "PATCHES"  : ["patches"],
-        "EXT_DATA" : ["ext_data", "extdata", "external_data", "externaldata"],
         "DIRECT_X" : ["direct_x", "directx", "dx"],
         "AUTO_RUN" : ["auto_run", "autorun"],
         "NO_UPDATE": ["no_update", "noupdate"],
@@ -473,14 +470,11 @@ if __name__ == "__main__":
             f.write('unsigned char gBankSetsData[] = {\n')
             f.write('#include "sound/bank_sets.inc.c"\n')
             f.write('};\n')
-
-    # Apply the 60 FPS patch
-    if args["60_FPS"]:
-        if version in ["smex", "smms"]:
-            print("--- Applying 60 FPS patch...")
-            if not check_patched("60fps_ex.patch"):
-                apply_patch("enhancements/60fps_ex.patch")
-                set_patched("60fps_ex.patch")
+    if os.path.isfile("Makefile"):
+        fix_typo("Makefile",
+            "$(GODDARD_O_FILES) $(LDFLAGS)",
+            "$(GODDARD_O_FILES) -lstdc++ $(LDFLAGS)"
+        )
 
     # Download and apply the DynOS patch
     if args["DYNOS"] and not version in ["r96a", "rt64", "saex"]:
@@ -530,7 +524,9 @@ if __name__ == "__main__":
             file.close()
 
         # Run patcher
-        os.system("python3 omm_patcher.py -p")
+        ommPatcherArgs = "-p " + version + (" dynos" if args["DYNOS"] else "")
+        print("python3 omm_patcher.py " + ommPatcherArgs)
+        os.system("python3 omm_patcher.py " + ommPatcherArgs)
         set_patched(OMM_PATCH_NAME)
 
     # Copy the baserom and build the game
@@ -546,14 +542,8 @@ if __name__ == "__main__":
     elif args["DIRECT_X"]:  makeCmd += " RENDER_API=D3D11 WINDOW_API=DXGI AUDIO_API=SDL2 CONTROLLER_API=SDL2 GRUCODE=f3dex2e"
     else:                   makeCmd += " RENDER_API=GL WINDOW_API=SDL2 AUDIO_API=SDL2 CONTROLLER_API=SDL2 GRUCODE=f3dex2e"
 
-    # 60 FPS
-    makeCmd += " HIGH_FPS_PC=1" if args["60_FPS"] else ""
-
     # Debug
     makeCmd += " DEBUG=1" if args["DEBUG"] else ""
-
-    # External data
-    makeCmd += " EXTERNAL_DATA=1" if args["EXT_DATA"] else ""
 
     # OMM flags
     for arg in sys.argv:
@@ -598,7 +588,7 @@ if __name__ == "__main__":
         raise_error("Something went wrong. Aborting building process...", False)
 
     # Copy external resources to the build res directory
-    if args["EXT_DATA"] and os.path.isdir(DIRECTORIES["resources"]) and os.path.isdir("build/us_pc/res"):
+    if os.path.isdir(DIRECTORIES["resources"]) and os.path.isdir("build/us_pc/res"):
         print("--- Installing external resources...")
         copy_tree(DIRECTORIES["resources"], "build/us_pc/res")
 
