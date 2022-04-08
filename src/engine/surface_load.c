@@ -221,7 +221,7 @@ static s16 max_3(s16 a0, s16 a1, s16 a2) {
  * time). This function determines the lower cell for a given x/z position.
  * @param coord The coordinate to test
  */
-static s16 lower_cell_index(s16 coord) {
+static s16 lower_cell_index(s32 coord) {
     s16 index;
 
     // Move from range [-0x2000, 0x2000) to [0, 0x4000)
@@ -253,7 +253,7 @@ static s16 lower_cell_index(s16 coord) {
  * time). This function determines the upper cell for a given x/z position.
  * @param coord The coordinate to test
  */
-static s16 upper_cell_index(s16 coord) {
+static s16 upper_cell_index(s32 coord) {
     s16 index;
 
     // Move from range [-0x2000, 0x2000) to [0, 0x4000)
@@ -331,7 +331,7 @@ static struct Surface *read_surface_data(s16 *vertexData, s16 **vertexIndices) {
     s32 maxY, minY;
     f32 nx, ny, nz;
     f32 mag;
-    s16 offset1, offset2, offset3;
+    s32 offset1, offset2, offset3;
 
     offset1 = 3 * (*vertexIndices)[0];
     offset2 = 3 * (*vertexIndices)[1];
@@ -553,9 +553,11 @@ void alloc_surface_pools(void) {
     sDynamicSurfaceNodePool = alloc_only_pool_init();
     sDynamicSurfacePool = alloc_only_pool_init();
 #else
-    sSurfacePoolSize = 2300;
-    sSurfaceNodePool = main_pool_alloc(7000 * sizeof(struct SurfaceNode), MEMORY_POOL_LEFT);
-    sSurfacePool = main_pool_alloc(sSurfacePoolSize * sizeof(struct Surface), MEMORY_POOL_LEFT);
+    static struct SurfaceNode sSurfNodePool[0x10000];
+    static struct Surface sSurfPool[0x4000];
+    sSurfacePoolSize = 0x4000;
+    sSurfaceNodePool = sSurfNodePool;//main_pool_alloc(7000 * sizeof(struct SurfaceNode), MEMORY_POOL_LEFT);
+    sSurfacePool = sSurfPool;//main_pool_alloc(sSurfacePoolSize * sizeof(struct Surface), MEMORY_POOL_LEFT);
 #endif
 }
 
