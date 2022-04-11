@@ -27,7 +27,7 @@ def usage_info():
     print("  smsr  | Super Mario Star Road")
     print("  r96a  | Render96 ex-alpha")
   # print("  rt64  | Render96 RT64")
-    print("  saex  | Saturn (sm64ex-nightly)")
+  # print("  saex  | Saturn (sm64ex-nightly)")
     print("")
     print("[build_speed] must be one of the following:")
     print("  slow     | Build the game by compiling files one by one.")
@@ -205,7 +205,7 @@ if __name__ == "__main__":
         "smsr": { "name": "Super Mario Star Road",     "repo": "https://github.com/PeachyPeachSM64/sm64pc-omm.git -b smsr",      "dependency": "",          "args": [] },
         "r96a": { "name": "Render96 ex-alpha",         "repo": "https://github.com/Render96/Render96ex.git -b tester_rt64alpha", "dependency": "",          "args": ["DYNOS"] },
       # "rt64": { "name": "Render96 RT64",             "repo": "https://github.com/Render96/Render96ex.git -b tester_rt64alpha", "dependency": "",          "args": ["DYNOS"] },
-        "saex": { "name": "Saturn (sm64ex-nightly)",   "repo": "https://github.com/Llennpie/Saturn -b legacy",                   "dependency": "",          "args": ["DYNOS"] },
+      # "saex": { "name": "Saturn (sm64ex-nightly)",   "repo": "https://github.com/Llennpie/Saturn -b legacy",                   "dependency": "",          "args": ["DYNOS"] },
     }
     BUILD_SPEEDS = {
         "slow"   : { "name": "Slow",    "jobs": "" },
