@@ -105,7 +105,7 @@ static const OmmBowserAction sOmmBowserActions[5][3][4][36] = {
 {
 ACTION_START(),
 ACTION_JUMP(30, 0, 35),
-ACTION_BOMBS(10, 45),
+ACTION_BOMBS(1, 45),
 ACTION_END_LOOP(),
 },
 {
