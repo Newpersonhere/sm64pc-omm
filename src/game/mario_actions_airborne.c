@@ -180,7 +180,6 @@ s32 check_horizontal_wind(struct MarioState *m) {
 }
 
 void update_air_with_turn(struct MarioState *m) {
-    OMM_RETURN_IF_TRUE(OMM_LIKELY(omm_mario_update_air_with_turn(m)),,);
     f32 dragThreshold;
     s16 intendedDYaw;
     f32 intendedMag;
@@ -211,7 +210,6 @@ void update_air_with_turn(struct MarioState *m) {
 }
 
 void update_air_without_turn(struct MarioState *m) {
-    OMM_RETURN_IF_TRUE(OMM_LIKELY(omm_mario_update_air_without_turn(m)),,);
     f32 sidewaysSpeed = 0.0f;
     f32 dragThreshold;
     s16 intendedDYaw;
@@ -384,7 +382,6 @@ u32 common_air_action_step(struct MarioState *m, u32 landAction, s32 animation, 
             break;
 
         case AIR_STEP_HIT_WALL:
-            OMM_RETURN_IF_TRUE(omm_mario_try_to_perform_wall_slide(m), AIR_STEP_NONE, set_mario_animation(m, animation););
             set_mario_animation(m, animation);
 
             if (m->forwardVel > 16.0f) {

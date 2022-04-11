@@ -178,7 +178,6 @@ Gfx *geo_switch_area(s32 callContext, struct GraphNode *node) {
     struct GraphNodeSwitchCase *switchCase = (struct GraphNodeSwitchCase *) node;
 
     if (callContext == GEO_CONTEXT_RENDER) {
-        gFindFloorForCutsceneStar = TRUE;
         if (gMarioObject == NULL) {
             switchCase->selectedCase = 0;
         } else {

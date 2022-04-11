@@ -876,6 +876,7 @@ void find_surface_on_ray(Vec3f orig, Vec3f dir, struct Surface **hitSurface, Vec
         *hitSurface = hits.hits[0].surf;
         vec3f_copy(hitPos, hits.hits[0].pos);
     } else {
+        *hitSurface = NULL;
         vec3f_sum(hitPos, orig, dir);
     }
 }

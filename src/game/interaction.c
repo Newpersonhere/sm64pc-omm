@@ -178,7 +178,6 @@ s16 mario_obj_angle_to_object(struct MarioState *m, struct Object *o) {
  * Determines Mario's interaction with a given object depending on their proximity,
  * action, speed, and position.
  */
-#if 0 // interaction.c [0]
 u32 determine_interaction(struct MarioState *m, struct Object *o) {
     u32 interaction = 0;
     u32 action = m->action;
@@ -247,7 +246,6 @@ u32 determine_interaction(struct MarioState *m, struct Object *o) {
 /**
  * Sets the interaction types for INT_STATUS_INTERACTED, INT_STATUS_WAS_ATTACKED
  */
-#endif // interaction.c [0]
 u32 attack_object(struct Object *o, s32 interaction) {
     u32 attackType = 0;
 
@@ -1779,7 +1777,6 @@ void mario_process_interactions(struct MarioState *m) {
 }
 
 void check_death_barrier(struct MarioState *m) {
-    OMM_RETURN_IF_TRUE(OMM_CHEAT_WALK_ON_DEATH_BARRIER,,);
     if (m->pos[1] < m->floorHeight + 2048.0f) {
         if (level_trigger_warp(m, WARP_OP_WARP_FLOOR) == 20 && !(m->flags & MARIO_UNKNOWN_18)) {
             play_sound(SOUND_MARIO_WAAAOOOW, m->marioObj->header.gfx.cameraToObject);
@@ -1788,7 +1785,6 @@ void check_death_barrier(struct MarioState *m) {
 }
 
 void check_lava_boost(struct MarioState *m) {
-    OMM_RETURN_IF_TRUE(OMM_CHEAT_WALK_ON_LAVA,,);
     if (!(m->action & ACT_FLAG_RIDING_SHELL) && m->pos[1] < m->floorHeight + 10.0f) {
         if (!(m->flags & MARIO_METAL_CAP)) {
             m->hurtCounter += (m->flags & MARIO_CAP_ON_HEAD) ? 12 : 18;

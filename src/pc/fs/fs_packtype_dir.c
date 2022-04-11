@@ -40,7 +40,7 @@ static fs_walk_result_t pack_dir_walk(void *pack, const char *base, walk_fn_t wa
         return FS_WALK_NOTFOUND;
 
     struct walkdata_s walkdata = { strlen((const char *)pack) + 1, walkfn, user };
-    return fs_sys_walk(path, packdir_walkfn, &walkdata, recur) ? FS_WALK_SUCCESS : FS_WALK_INTERRUPTED;
+    return fs_sys_walk(path, packdir_walkfn, &walkdata, recur);
 }
 
 static bool pack_dir_is_file(void *pack, const char *fname) {
