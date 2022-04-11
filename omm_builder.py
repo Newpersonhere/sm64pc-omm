@@ -343,7 +343,7 @@ if __name__ == "__main__":
                 raise_error("Cannot retrieve remote OMM version number.", False)
             OMM_VERSION_NUMBER = versionRemote["OMM_VERSION_NUMBER"]
             OMM_VERSION_REVISION = versionRemote["OMM_VERSION_REVISION"]
-            OMM_PATCH_DIR = "omm." + OMM_VERSION_NUMBER
+            OMM_PATCH_DIR = "omm." + OMM_VERSION_NUMBER + "." + OMM_VERSION_REVISION
             os.remove("omm.version")
         else:
             print("Unable to retrieve remote OMM version number.")
