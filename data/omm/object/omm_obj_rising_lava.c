@@ -62,13 +62,13 @@ static void omm_bhv_rising_lava_update() {
 
         // Idle
         case 0: {
-            o->oPosY = omm_clamp_f(o->oPosY, o->oRisingLavaMinY, o->oRisingLavaMaxY);
+            o->oPosY = clamp_f(o->oPosY, o->oRisingLavaMinY, o->oRisingLavaMaxY);
         } break;
 
         // Rising
         case 1: {
             set_environmental_camera_shake(o->oRisingLavaShake);
-            o->oPosY += omm_abs_f(o->oRisingLavaVelY);
+            o->oPosY += abs_f(o->oRisingLavaVelY);
             if (o->oPosY >= o->oRisingLavaMaxY) {
                 o->oPosY = o->oRisingLavaMaxY;
                 o->oAction = 3;
@@ -77,7 +77,7 @@ static void omm_bhv_rising_lava_update() {
 
         // Decreasing
         case 2: {
-            o->oPosY -= omm_abs_f(o->oRisingLavaVelY);
+            o->oPosY -= abs_f(o->oRisingLavaVelY);
             if (o->oPosY <= o->oRisingLavaMinY) {
                 o->oPosY = o->oRisingLavaMinY;
                 o->oAction = 4;

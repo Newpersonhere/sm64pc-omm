@@ -49,6 +49,7 @@ struct OmmData {
             s32 joySpinYaw;
             s32 perryCharge;
             bool perryBlast;
+            struct Object *perry;
         } peach;
 
         // Wall-slide moves data
@@ -80,6 +81,7 @@ struct OmmData {
         // Cappy data
         struct {
             bool bounced;
+            struct Object *cappy;
         } cappy;
     
         // Capture data
@@ -124,7 +126,7 @@ struct OmmData {
             s32 actionTimer;
             s32 squishTimer;
             s32 bullyTimer;
-            s32 interactTimer;
+            s32 invincTimer;
             f32 walkDistance;
             Vec3f initialPos;
             bool camBehindMario;
@@ -211,5 +213,8 @@ struct OmmData {
     } object[1];
 };
 extern struct OmmData *gOmmData;
+#define gOmmCappy gOmmData->mario->cappy.cappy
+#define gOmmPerry gOmmData->mario->peach.perry
+#define gOmmCapture gOmmData->mario->capture.obj
 
 #endif // OMM_OBJECT_FIELDS_H

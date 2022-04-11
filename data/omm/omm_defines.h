@@ -7,7 +7,7 @@
 
 #define OMM_EXE_FOLDER                                  omm_exe_path()
 #define OMM_USER_FOLDER                                 omm_user_path()
-#define OMM_RES_FOLDER                                  "omm"
+#define OMM_RES_FOLDER                                  FS_BASEDIR
 #define OMM_GFX_FOLDER                                  OMM_RES_FOLDER "/gfx"
 #define OMM_SOUND_FOLDER                                OMM_RES_FOLDER "/sound"
 #define OMM_CAPPY_FOLDER                                OMM_GFX_FOLDER "/cappy"
@@ -15,8 +15,8 @@
 #define OMM_AT_EXIT                                     __attribute__((destructor))
 #define OMM_LIKELY(expr)                                (__builtin_expect(!!(expr), 1))
 #define OMM_UNLIKELY(expr)                              (__builtin_expect(!!(expr), 0))
+#define OMM_INLINE                                      static inline
 #define OMM_UNUSED(x)                                   (void) x
-#define OMM_IS_60_FPS                                   (sizeof(struct GraphNodeObject) > 180)
 #define OMM_LEVEL_NO_WARP(level)                        (omm_level_get_course(level) == COURSE_NONE)
 #define OMM_BOWSER_IN_THE_LEVEL(level)                  (level == LEVEL_BOWSER_1 ? LEVEL_BITDW : (level == LEVEL_BOWSER_2 ? LEVEL_BITFS : (level == LEVEL_BOWSER_3 ? LEVEL_BITS : level)))
 #define OMM_STRING(str, size, fmt, ...)                 char str[size]; snprintf(str, size, fmt, __VA_ARGS__);
@@ -26,76 +26,34 @@
 #define OMM_GET_FLAG(x, f)                              (((x) & (f)) != 0)
 #define OMM_SET_FLAG(x, f, v)                           { if (v) { x |= (f); } else { x &= ~(f); } }
 #define OMM_RETURN_IF_TRUE(cond, ret, ...)              { if (cond) { __VA_ARGS__; return ret; } }
-enum { LEVEL_GROUNDS =                                  LEVEL_CASTLE_GROUNDS };
-enum { LEVEL_COURT =                                    LEVEL_CASTLE_COURTYARD };
+#define LEVEL_GROUNDS                                   LEVEL_CASTLE_GROUNDS
+#define LEVEL_COURT                                     LEVEL_CASTLE_COURTYARD
 
 //
 // Memory wrappers
 //
 
 #define OMM_MEMNEW(typ, cnt)                            calloc(sizeof(typ), cnt)
-#define OMM_MEMDEL(ptr)                                 { if (ptr) { free(ptr); ptr = NULL; } }
+#define OMM_MEMDEL(dst)                                 { if (dst) { free((void *) dst); dst = NULL; } }
 #define OMM_MEMSET(dst, val, siz)                       memset(dst, val, siz)
 #define OMM_MEMCPY(dst, src, siz)                       memcpy(dst, src, siz)
 #define OMM_MEMMOV(dst, src, siz)                       memmove(dst, src, siz)
-#define OMM_MEMDUP(ptr, siz)                            memcpy(calloc(1, siz), ptr, siz)
+#define OMM_MEMDUP(src, siz)                            memcpy(calloc(1, siz), src, siz)
 #define OMM_MEMCMP(pt1, pt2, siz)                       (memcmp(pt1, pt2, siz) == 0)
 #define OMM_MEMSWP(pt1, pt2, siz)                       { unsigned char _temp_[siz]; memcpy(&_temp_, &(pt1), siz); memcpy(&(pt1), &(pt2), siz); memcpy(&(pt2), &_temp_, siz); }
 #define OMM_MEMREL(dst, src, from, to, typ)             { dst = (typ) (((uintptr_t) (src)) + (((uintptr_t) (to)) - ((uintptr_t) (from)))); }
 
 //
-// Inlines
-//
-
-static inline s32 omm_min_s         (s32 a, s32 b)                      { return (a < b ? a : b); }
-static inline f32 omm_min_f         (f32 a, f32 b)                      { return (a < b ? a : b); }
-static inline s32 omm_max_s         (s32 a, s32 b)                      { return (a > b ? a : b); }
-static inline f32 omm_max_f         (f32 a, f32 b)                      { return (a > b ? a : b); }
-static inline s32 omm_near_s        (s32 x, s32 a, s32 b)               { return (x - a < b - x ? a : b); }
-static inline f32 omm_near_f        (f32 x, f32 a, f32 b)               { return (x - a < b - x ? a : b); }
-static inline s32 omm_far_s         (s32 x, s32 a, s32 b)               { return (x - a > b - x ? a : b); }
-static inline f32 omm_far_f         (f32 x, f32 a, f32 b)               { return (x - a > b - x ? a : b); }
-static inline s32 omm_min_3_s       (s32 a, s32 b, s32 c)               { return omm_min_s(omm_min_s(a, b), c); }
-static inline f32 omm_min_3_f       (f32 a, f32 b, f32 c)               { return omm_min_f(omm_min_f(a, b), c); }
-static inline s32 omm_max_3_s       (s32 a, s32 b, s32 c)               { return omm_max_s(omm_max_s(a, b), c); }
-static inline f32 omm_max_3_f       (f32 a, f32 b, f32 c)               { return omm_max_f(omm_max_f(a, b), c); }
-static inline s32 omm_clamp_s       (s32 x, s32 a, s32 b)               { return (x < a ? a : (x > b ? b : x)); }
-static inline f32 omm_clamp_f       (f32 x, f32 a, f32 b)               { return (x < a ? a : (x > b ? b : x)); }
-static inline s32 omm_clamp_0_1_s   (s32 x)                             { return omm_clamp_s(x, 0, 1); }
-static inline f32 omm_clamp_0_1_f   (f32 x)                             { return omm_clamp_f(x, 0.f, 1.f); }
-static inline s32 omm_lerp_s        (f32 t, s32 a, s32 b)               { return (a + (s32) (((f32) (b - a)) * t)); }
-static inline f32 omm_lerp_f        (f32 t, f32 a, f32 b)               { return (a + (b - a) * t); }
-static inline f32 omm_invlerp_s     (s32 x, s32 a, s32 b)               { return (f32) (x - a) / (f32) (b - a); }
-static inline f32 omm_invlerp_f     (f32 x, f32 a, f32 b)               { return (x - a) / (b - a); }
-static inline f32 omm_invlerp_0_1_s (s32 x, s32 a, s32 b)               { return omm_clamp_f(omm_invlerp_s(x, a, b), 0.f, 1.f); }
-static inline f32 omm_invlerp_0_1_f (f32 x, f32 a, f32 b)               { return omm_clamp_f(omm_invlerp_f(x, a, b), 0.f, 1.f); }
-static inline s32 omm_relerp_s      (s32 x, s32 a, s32 b, s32 c, s32 d) { return omm_lerp_s(omm_invlerp_s(x, a, b), c, d); }
-static inline f32 omm_relerp_f      (f32 x, f32 a, f32 b, f32 c, f32 d) { return omm_lerp_f(omm_invlerp_f(x, a, b), c, d); }
-static inline s32 omm_relerp_0_1_s  (s32 x, s32 a, s32 b, s32 c, s32 d) { return omm_lerp_s(omm_invlerp_0_1_s(x, a, b), c, d); }
-static inline f32 omm_relerp_0_1_f  (f32 x, f32 a, f32 b, f32 c, f32 d) { return omm_lerp_f(omm_invlerp_0_1_f(x, a, b), c, d); }
-static inline s32 omm_abs_s         (s32 x)                             { return (x < 0 ? -x : x); }
-static inline f32 omm_abs_f         (f32 x)                             { return (x < 0.f ? -x : x); }
-static inline s32 omm_sign_s        (s32 x)                             { return (x < 0 ? -1 : +1); }
-static inline f32 omm_sign_f        (f32 x)                             { return (x < 0.f ? -1.f : +1.f); }
-static inline s32 omm_sign_0_s      (s32 x)                             { return (x == 0 ? 0 : omm_sign_s(x)); }
-static inline f32 omm_sign_0_f      (f32 x)                             { return (x == 0.f ? 0.f : omm_sign_f(x)); }
-static inline s32 omm_sqr_s         (s32 x)                             { return x * x; }
-static inline f32 omm_sqr_f         (f32 x)                             { return x * x; }
-
-//
 // Physics
 //
 
-#define OMM_COLLISION_LEVEL_BOUNDARY                    0x8000  // [-32768, +32767], Vanilla is [-8192, +8191]
-#define OMM_COLLISION_CELL_SIZE                         0x400   // 1024, Vanilla is 1024
-#define OMM_COLLISION_CELL_COUNT                        (2 * (OMM_COLLISION_LEVEL_BOUNDARY / OMM_COLLISION_CELL_SIZE))
-#define OMM_COLLISION_CELL_BITS                         (OMM_COLLISION_CELL_COUNT - 1)
 #define OMM_COLLISION_CHECK_PUS                         OMM_MOVESET_ODYSSEY
-#define OMM_COLLISION_CHECK_FLOOR_SQUARE                OMM_MOVESET_ODYSSEY
 #define OMM_COLLISION_CHECK_NEIGHBOR_CELLS              OMM_MOVESET_ODYSSEY
 #define OMM_COLLISION_FIX_UNREFERENCED_WALLS            OMM_MOVESET_ODYSSEY
 #define OMM_STEP_NUM_SUB_STEPS                          (OMM_MOVESET_ODYSSEY ? 16 : 4)
 #define OMM_STEP_NUM_SUB_STEPS_WATER                    (OMM_MOVESET_ODYSSEY ? 16 : 1)
+#define OMM_STEP_NUM_SUB_STEPS_CAPTURE                  (OMM_MOVESET_ODYSSEY ? 8 : 4)
+#define OMM_STEP_NUM_SUB_STEPS_OBJECT                   (OMM_MOVESET_ODYSSEY ? 4 : 1)
 #define OMM_STEP_FIX_EXPOSED_CEILINGS                   OMM_MOVESET_ODYSSEY
 #define OMM_STEP_FIX_OUT_OF_BOUNDS_BONK                 OMM_MOVESET_ODYSSEY
 #define OMM_STEP_FIX_CEILINGS_BONK                      OMM_MOVESET_ODYSSEY
@@ -138,6 +96,9 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 #define OMM_CAMERA_CLASSIC                              (gOmmCameraMode == 0)
 #define OMM_CAMERA_8_DIRECTIONS                         (gOmmCameraMode == 1)
 #define OMM_CAMERA_16_DIRECTIONS                        (gOmmCameraMode == 2)
+#define OMM_SPARKLY_STARS_MODE                          (gOmmSparklyStarsMode)
+#define OMM_SPARKLY_STARS_ASSIST                        (gOmmSparklyStarsAssist)
+#define OMM_SPARKLY_STARS_HINT                          (gOmmSparklyStarsHint)
 #define OMM_EXTRAS_SMO_ANIMATIONS                       (gOmmExtrasSMOAnimations && OMM_MOVESET_ODYSSEY)
 #define OMM_EXTRAS_CAPPY_AND_TIARA                      (gOmmExtrasCappyAndTiara && !OMM_CAP_CLASSIC)
 #define OMM_EXTRAS_COLORED_STARS                        (gOmmExtrasColoredStars && !OMM_GAME_IS_SMMS)
@@ -146,9 +107,8 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 #define OMM_EXTRAS_RED_COINS_RADAR                      (gOmmExtrasRedCoinsRadar)
 #define OMM_EXTRAS_SHOW_STAR_NUMBER                     (gOmmExtrasShowStarNumber && !omm_is_ending_cutscene() && (!OMM_GAME_IS_SMSR || (gCurrLevelNum != LEVEL_ENDING)))
 #define OMM_EXTRAS_INVISIBLE_MODE                       (gOmmExtrasInvisibleMode)
-#define OMM_EXTRAS_SPARKLY_STARS_HINT                   (gOmmExtrasSparklyStarsHint)
-#define OMM_EXTRAS_CRYSTAL_STARS_REWARD                 (gOmmExtrasCrystalStarsReward && omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_HARD))
-#define OMM_EXTRAS_NEBULA_STARS_REWARD                  (gOmmExtrasNebulaStarsReward && omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_EXTREME))
+#define OMM_EXTRAS_CRYSTAL_STARS_REWARD                 (gOmmExtrasCrystalStarsReward && omm_ssd_is_completed(OMM_SSM_HARD))
+#define OMM_EXTRAS_NEBULA_STARS_REWARD                  (gOmmExtrasNebulaStarsReward && omm_ssd_is_completed(OMM_SSM_LUNATIC))
 #define OMM_CHEAT_UNLIMITED_CAPPY_BOUNCES               (gOmmCheatUnlimitedCappyBounces == 1)
 #define OMM_CHEAT_CAPPY_STAYS_FOREVER                   (gOmmCheatCappyStaysForever == 1)
 #define OMM_CHEAT_HOMING_ATTACK_GLOBAL_RANGE            (gOmmCheatHomingAttackGlobalRange == 1)
@@ -156,21 +116,93 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 #define OMM_CHEAT_CAPPY_CAN_COLLECT_STARS               (gOmmCheatCappyCanCollectStars == 1)
 #define OMM_CHEAT_PLAY_AS_CAPPY                         (gOmmCheatPlayAsCappy == 1)
 #define OMM_CHEAT_PEACH_ENDLESS_VIBE_GAUGE              (gOmmCheatPeachEndlessVibeGauge == 1)
-#define OMM_CHEAT_GOD_MODE                              (Cheats.EnableCheats && GodModeCheat)
-#define OMM_CHEAT_MOON_JUMP                             (Cheats.EnableCheats && Cheats.MoonJump)
-#define OMM_CHEATS_ENABLED                              (OMM_CHEAT_UNLIMITED_CAPPY_BOUNCES || \
+#if OMM_GAME_IS_R96A
+#define OMM_CHEAT_MOON_JUMP                             (Cheats.EnableCheats && (Cheats.MoonJump && !Cheats.ChaosMode))
+#define OMM_CHEAT_GOD_MODE                              (Cheats.EnableCheats && (Cheats.GodMode && !Cheats.ChaosMode))
+#define OMM_CHEAT_INVINCIBLE                            (false) // Not implemented in R96A
+#define OMM_CHEAT_SUPER_SPEED                           (false) // Handled by R96A
+#define OMM_CHEAT_SUPER_RESPONSIVE                      (Cheats.EnableCheats && ((Cheats.Responsive && !Cheats.ChaosMode) || ((Cheats.ChaosControls >> 0) & 1)))
+#define OMM_CHEAT_NO_FALL_DAMAGE                        (Cheats.EnableCheats && (Cheats.GodMode && !Cheats.ChaosMode))
+#define OMM_CHEAT_WALK_ON_LAVA                          (Cheats.EnableCheats && (Cheats.WalkOnHazards && !Cheats.ChaosMode))
+#define OMM_CHEAT_WALK_ON_QUICKSAND                     (Cheats.EnableCheats && (Cheats.WalkOnHazards && !Cheats.ChaosMode))
+#define OMM_CHEAT_WALK_ON_WATER                         (false) // Not implemented in R96A
+#define OMM_CHEAT_WALK_ON_GAS                           (false) // Not implemented in R96A
+#define OMM_CHEAT_WALK_ON_SLOPE                         (false) // Not implemented in R96A
+#define OMM_CHEAT_WALK_ON_DEATH_BARRIER                 (Cheats.EnableCheats && (Cheats.NoDeathBarrier && !Cheats.ChaosMode))
+#define OMM_CHEAT_BLJ_ANYWHERE                          (Cheats.EnableCheats && (Cheats.BLJAnywhere && !Cheats.ChaosMode))
+#else
+#define OMM_CHEAT_MOON_JUMP                             (gOmmCheatEnable && gOmmCheatMoonJump)
+#define OMM_CHEAT_GOD_MODE                              (gOmmCheatEnable && gOmmCheatGodMode)
+#define OMM_CHEAT_INVINCIBLE                            (gOmmCheatEnable && gOmmCheatInvincible)
+#define OMM_CHEAT_SUPER_SPEED                           (gOmmCheatEnable && gOmmCheatSuperSpeed)
+#define OMM_CHEAT_SUPER_RESPONSIVE                      (gOmmCheatEnable && gOmmCheatSuperResponsive)
+#define OMM_CHEAT_NO_FALL_DAMAGE                        (gOmmCheatEnable && gOmmCheatNoFallDamage)
+#define OMM_CHEAT_WALK_ON_LAVA                          (gOmmCheatEnable && gOmmCheatWalkOnLava)
+#define OMM_CHEAT_WALK_ON_QUICKSAND                     (gOmmCheatEnable && gOmmCheatWalkOnQuicksand)
+#define OMM_CHEAT_WALK_ON_WATER                         (gOmmCheatEnable && gOmmCheatWalkOnWater)
+#define OMM_CHEAT_WALK_ON_GAS                           (gOmmCheatEnable && gOmmCheatWalkOnGas)
+#define OMM_CHEAT_WALK_ON_SLOPE                         (gOmmCheatEnable && gOmmCheatWalkOnSlope)
+#define OMM_CHEAT_WALK_ON_DEATH_BARRIER                 (gOmmCheatEnable && gOmmCheatWalkOnDeathBarrier)
+#define OMM_CHEAT_BLJ_ANYWHERE                          (gOmmCheatEnable && gOmmCheatBljAnywhere)
+#endif
+#define OMM_CHEAT_BLJ_ANYWHERE_REQ                      (OMM_CHEAT_BLJ_ANYWHERE && (m->forwardVel < -10.f) && (m->controller->buttonDown & Z_TRIG))
+#define OMM_CHEATS_ENABLED                              (OMM_CHEAT_MOON_JUMP || \
+                                                         OMM_CHEAT_GOD_MODE || \
+                                                         OMM_CHEAT_INVINCIBLE || \
+                                                         OMM_CHEAT_SUPER_SPEED || \
+                                                         OMM_CHEAT_SUPER_RESPONSIVE || \
+                                                         OMM_CHEAT_NO_FALL_DAMAGE || \
+                                                         OMM_CHEAT_WALK_ON_LAVA || \
+                                                         OMM_CHEAT_WALK_ON_QUICKSAND || \
+                                                         OMM_CHEAT_WALK_ON_WATER || \
+                                                         OMM_CHEAT_WALK_ON_GAS || \
+                                                         OMM_CHEAT_WALK_ON_SLOPE || \
+                                                         OMM_CHEAT_WALK_ON_DEATH_BARRIER || \
+                                                         OMM_CHEAT_BLJ_ANYWHERE || \
+                                                         OMM_CHEAT_UNLIMITED_CAPPY_BOUNCES || \
                                                          OMM_CHEAT_CAPPY_STAYS_FOREVER || \
                                                          OMM_CHEAT_HOMING_ATTACK_GLOBAL_RANGE || \
                                                          OMM_CHEAT_MARIO_TELEPORTS_TO_CAPPY || \
                                                          OMM_CHEAT_CAPPY_CAN_COLLECT_STARS || \
                                                          OMM_CHEAT_PLAY_AS_CAPPY || \
                                                          OMM_CHEAT_PEACH_ENDLESS_VIBE_GAUGE)
+#if OMM_GAME_IS_R96A
+#define OMM_CHEATS_DISABLE                              {gOmmCheatUnlimitedCappyBounces = false; \
+                                                         gOmmCheatCappyStaysForever = false; \
+                                                         gOmmCheatHomingAttackGlobalRange = false; \
+                                                         gOmmCheatMarioTeleportsToCappy = false; \
+                                                         gOmmCheatCappyCanCollectStars = false; \
+                                                         gOmmCheatPlayAsCappy = false; \
+                                                         gOmmCheatPeachEndlessVibeGauge = false;}
+#else
+#define OMM_CHEATS_DISABLE                              {gOmmCheatEnable = false; \
+                                                         gOmmCheatMoonJump = false; \
+                                                         gOmmCheatGodMode = false; \
+                                                         gOmmCheatInvincible = false; \
+                                                         gOmmCheatSuperSpeed = false; \
+                                                         gOmmCheatSuperResponsive = false; \
+                                                         gOmmCheatNoFallDamage = false; \
+                                                         gOmmCheatWalkOnLava = false; \
+                                                         gOmmCheatWalkOnQuicksand = false; \
+                                                         gOmmCheatWalkOnWater = false; \
+                                                         gOmmCheatWalkOnGas = false; \
+                                                         gOmmCheatWalkOnSlope = false; \
+                                                         gOmmCheatWalkOnDeathBarrier = false; \
+                                                         gOmmCheatBljAnywhere = false; \
+                                                         gOmmCheatUnlimitedCappyBounces = false; \
+                                                         gOmmCheatCappyStaysForever = false; \
+                                                         gOmmCheatHomingAttackGlobalRange = false; \
+                                                         gOmmCheatMarioTeleportsToCappy = false; \
+                                                         gOmmCheatCappyCanCollectStars = false; \
+                                                         gOmmCheatPlayAsCappy = false; \
+                                                         gOmmCheatPeachEndlessVibeGauge = false;}
+#endif
 
 //
 // Dialogs
 //
 
-#define OMM_DIALOG_START_INDEX                          DIALOG_COUNT
+#define OMM_DIALOG_START_INDEX                          (DIALOG_COUNT + 10)
 #define OMM_DIALOG_BOWSER_1_INTRO                       (OMM_DIALOG_START_INDEX + 0)
 #define OMM_DIALOG_BOWSER_1_HINT_1                      (OMM_DIALOG_START_INDEX + 1)
 #define OMM_DIALOG_BOWSER_1_HINT_2                      (OMM_DIALOG_START_INDEX + 2)
@@ -238,26 +270,25 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 // Texts
 //
 
-#include "omm_defines_texts.inl"
+#define OMM_TEXT_(id, str) extern const char OMM_TEXT_##id[];
+#include "data/omm/omm_defines_texts.inl"
+#undef OMM_TEXT_
 
 //
 // Textures
 //
 
-#define OMM_GFX                                         "OMM_GFX/"
-#define OMM_TEXTURE_(id, name)                          static const char OMM_TEXTURE_##id[] = OMM_GFX name;
-#include "omm_defines_textures.inl"
+#define OMM_TEXTURE_(id, str) extern const char OMM_TEXTURE_##id[];
+#include "data/omm/omm_defines_textures.inl"
+#undef OMM_TEXTURE_
 
 //
 // Assets
 //
 
-#if defined(EXTERNAL_DATA) || OMM_GAME_IS_R96A
-#define OMM_ASSET_(id, name)                            static const char OMM_ASSET_##id[] = name;
-#else
-#define OMM_ASSET_(id, name)                            static const char OMM_ASSET_##id[] = OMM_GFX "assets/" name;
-#endif
-#include "omm_defines_assets.inl"
+#define OMM_ASSET_(id, str) extern const char OMM_ASSET_##id[];
+#include "data/omm/omm_defines_assets.inl"
+#undef OMM_ASSET_
 
 //
 // Sounds
@@ -365,20 +396,11 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 
 #define OMM_ROUTINE_TYPE_LEVEL_ENTRY                    0
 #define OMM_ROUTINE_TYPE_UPDATE                         1
-#define OMM_ROUTINE_TYPE_GFX                            2
+#define OMM_ROUTINE_TYPE_PRE_RENDER                     2
 #define OMM_ROUTINE_TYPES                               3
 #define OMM_ROUTINE_LEVEL_ENTRY(func)                   static void func(void); OMM_AT_STARTUP static void func##_init() { omm_add_routine(OMM_ROUTINE_TYPE_LEVEL_ENTRY, func); } static void func(void)
 #define OMM_ROUTINE_UPDATE(func)                        static void func(void); OMM_AT_STARTUP static void func##_init() { omm_add_routine(OMM_ROUTINE_TYPE_UPDATE, func); } static void func(void)
-#define OMM_ROUTINE_GFX(func)                           static void func(void); OMM_AT_STARTUP static void func##_init() { omm_add_routine(OMM_ROUTINE_TYPE_GFX, func); } static void func(void)
-
-//
-// Level script
-//
-
-#define OMM_LEVEL_SCRIPT_CONTINUE                       0
-#define OMM_LEVEL_SCRIPT_NEXT_CMD                       1
-#define OMM_LEVEL_SCRIPT_RETURN                         2
-#define OMM_LEVEL_SCRIPT_STOP                           3
+#define OMM_ROUTINE_PRE_RENDER(func)                    static void func(void); OMM_AT_STARTUP static void func##_init() { omm_add_routine(OMM_ROUTINE_TYPE_PRE_RENDER, func); } static void func(void)
 
 //
 // Custom object fields
@@ -389,6 +411,7 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 #define oThrowMatrix                                    header.gfx.throwMatrix
 #define oGraphNode                                      header.gfx.sharedChild
 #define oNodeFlags                                      header.gfx.node.flags
+#define oAreaIndex                                      header.gfx.mAreaIndex
 #define oGfxPos                                         header.gfx.pos
 #define oGfxAngle                                       header.gfx.angle
 #define oGfxScale                                       header.gfx.scale
@@ -398,7 +421,8 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 #define oAnimInfo                                       header.gfx.mAnimInfo
 #define oAnimID                                         header.gfx.mAnimInfo.animID
 #define oCurrAnim                                       header.gfx.mAnimInfo.curAnim
-#define oWall                                           OBJECT_FIELD_SURFACE(0x19)
+#define oWall                                           OBJECT_FIELD_SURFACE(0x03)
+#define oCeil                                           OBJECT_FIELD_SURFACE(0x04)
 #define oGeoData                                        OBJECT_FIELD_VPTR(0x47)
 #define oBehaviorCommand                                OBJECT_FIELD_CVPTR(0x47)
 #define oBehaviorStackIndex                             OBJECT_FIELD_U32(0x48)
@@ -408,6 +432,9 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 #define oCappyYaw                                       OBJECT_FIELD_S16(0x1D, 0)
 #define oCappyThrowStrength                             OBJECT_FIELD_S16(0x1D, 1)
 #define oGoombaStackParent                              OBJECT_FIELD_OBJ(0x00)
+#define oMrIBeamPower                                   OBJECT_FIELD_F32(0x17)
+#define oSnufitBallStrong                               OBJECT_FIELD_S32(0x17)
+#define oMenuButtonCharacterIndex                       OBJECT_FIELD_S32(0x21)
 #define oMipsCurrentWaypoint                            OBJECT_FIELD_S32(0x1D)
 #define oMipsTargetWaypoint                             OBJECT_FIELD_S32(0x1E)
 #define oMipsGrabbedCounter                             OBJECT_FIELD_S32(0x1F)
@@ -417,7 +444,9 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 #define oCelebStarHeight                                OBJECT_FIELD_F32(0x1C)
 #define oFlamingBobombAura                              OBJECT_FIELD_OBJ(0x00)
 #define oFlamingBobombIndex                             OBJECT_FIELD_S32(0x1B)
-#define oFlamingBobombMaxHeight                         OBJECT_FIELD_F32(0x1C)
+#define oFlamingBobombCount                             OBJECT_FIELD_S32(0x1C)
+#define oFlamingBobombMaxRadius                         OBJECT_FIELD_F32(0x1D)
+#define oFlamingBobombMaxHeight                         OBJECT_FIELD_F32(0x1E)
 #define oBowserMine                                     OBJECT_FIELD_VPTR(0x1B)
 #define oBowserHit                                      OBJECT_FIELD_S32(0x1C)
 #define oBowserFireDuration                             OBJECT_FIELD_S32(0x1B)
@@ -449,9 +478,7 @@ static inline f32 omm_sqr_f         (f32 x)                             { return
 #define oPerryShockwaveBaseScale                        OBJECT_FIELD_F32(0x1E)
 #define oPerryChargeSwordTimer                          OBJECT_FIELD_S32(0x1C)
 #define oPerryChargeHandTimer                           OBJECT_FIELD_S32(0x1D)
-#define oMrIBeamPower                                   OBJECT_FIELD_F32(0x17)
-#define oSnufitBallStrong                               OBJECT_FIELD_S32(0x17)
-#define oMenuButtonCharacterIndex                       OBJECT_FIELD_S32(0x21)
+#define oPerryType                                      oAnimState
 #define oBehaviorTypes                                  unused1
 #define oBehaviorRef                                    unused2
 #define oDistToFloor                                    oPosY - o->oFloorHeight

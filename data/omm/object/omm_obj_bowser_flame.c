@@ -135,7 +135,7 @@ static void bhv_omm_bowser_flame_loop() {
 
         // Gets bigger
         case 0: {
-            f32 t = omm_clamp_0_1_f(o->oTimer / 30.f);
+            f32 t = clamp_0_1_f(o->oTimer / 30.f);
             o->oScaleX = 3.f * t;
             o->oScaleY = 4.f * t;
             o->oScaleZ = 3.f * t;
@@ -158,7 +158,7 @@ static void bhv_omm_bowser_flame_loop() {
 
         // Gets smaller and vanishes
         case 2: {
-            f32 t = 1.f - omm_clamp_0_1_f(o->oTimer / 20.f);
+            f32 t = 1.f - clamp_0_1_f(o->oTimer / 20.f);
             o->oScaleX = 3.f * t;
             o->oScaleY = 4.f * t;
             o->oScaleZ = 3.f * t;

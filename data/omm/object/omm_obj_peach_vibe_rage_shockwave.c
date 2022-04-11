@@ -19,7 +19,7 @@ static const Gfx omm_peach_vibe_rage_shockwave_gfx[] = {
     gsSPClearGeometryMode(G_LIGHTING | G_CULL_BOTH),
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, SHADE, 0),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
-    gsSPDisplayList(NULL_dl),
+    gsSPDisplayList(null),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
     gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPSetGeometryMode(G_LIGHTING | G_CULL_BACK),
@@ -50,7 +50,7 @@ typedef struct {
 const GeoLayout omm_geo_peach_vibe_rage_shockwave[] = {
     GEO_NODE_START(),
     GEO_OPEN_NODE(),
-        GEO_ASM(0, omm_geo_link_geo_data),
+        GEO_ASM(0, geo_link_geo_data),
         GEO_DISPLAY_LIST(LAYER_TRANSPARENT, NULL),
     GEO_CLOSE_NODE(),
     GEO_END(),
@@ -62,7 +62,7 @@ const GeoLayout omm_geo_peach_vibe_rage_shockwave[] = {
 
 static void omm_bhv_peach_vibe_rage_shockwave_update() {
     struct Object *o = gCurrentObject;
-    OmmPeachVibeRageShockwaveGeoData *data = omm_geo_get_geo_data(o, sizeof(OmmPeachVibeRageShockwaveGeoData), omm_peach_vibe_rage_shockwave_gfx, sizeof(omm_peach_vibe_rage_shockwave_gfx));
+    OmmPeachVibeRageShockwaveGeoData *data = geo_get_geo_data(o, sizeof(OmmPeachVibeRageShockwaveGeoData), omm_peach_vibe_rage_shockwave_gfx, sizeof(omm_peach_vibe_rage_shockwave_gfx));
     f32 r = o->oTimer * OMM_PEACH_VIBE_RAGE_SHOCKWAVE_SPEED;
 
     // Update state
@@ -114,7 +114,7 @@ static void omm_bhv_peach_vibe_rage_shockwave_update() {
                         // Interpolate between the two points
                         for (s32 j = (g0 + 1) % OMM_PEACH_VIBE_RAGE_SHOCKWAVE_POINTS; j != g1; j = (j + 1) % OMM_PEACH_VIBE_RAGE_SHOCKWAVE_POINTS) {
                             if (!data->state[j].processed) {
-                                data->state[j].y = omm_relerp_0_1_f(
+                                data->state[j].y = relerp_0_1_f(
                                     j + (j < g0) * OMM_PEACH_VIBE_RAGE_SHOCKWAVE_POINTS,
                                     g0, g1 + (g1 < g0) * OMM_PEACH_VIBE_RAGE_SHOCKWAVE_POINTS,
                                     data->state[g0].y, data->state[g1].y
@@ -138,11 +138,11 @@ static void omm_bhv_peach_vibe_rage_shockwave_update() {
     f32 flameHeight = OMM_PEACH_VIBE_RAGE_SHOCKWAVE_HEIGHT;
     f32 flameWidth = 2.f * (flameTexWidth * flameHeight / flameTexHeight);
     f32 perimeter = 2.f * M_PI * r;
-    s32 nbFlames = omm_max_s(1, (s32) (0.5f + (perimeter / flameWidth)));
+    s32 nbFlames = max_s(1, (s32) (0.5f + (perimeter / flameWidth)));
     f32 du = (nbFlames * flameTexWidth) / OMM_PEACH_VIBE_RAGE_SHOCKWAVE_POINTS;
     f32 v0 = ((o->oTimer % 20) + 0.95f) * flameTexHeight;
     f32 v1 = ((o->oTimer % 20) + 0.05f) * flameTexHeight;
-    f32 alpha = omm_relerp_0_1_f(o->oTimer, OMM_PEACH_VIBE_RAGE_SHOCKWAVE_DURATION - 15, OMM_PEACH_VIBE_RAGE_SHOCKWAVE_DURATION, 1.f, 0.f);
+    f32 alpha = relerp_0_1_f(o->oTimer, OMM_PEACH_VIBE_RAGE_SHOCKWAVE_DURATION - 15, OMM_PEACH_VIBE_RAGE_SHOCKWAVE_DURATION, 1.f, 0.f);
     Vtx *vtx = data->vtx;
     Gfx *tri = data->tri;
 

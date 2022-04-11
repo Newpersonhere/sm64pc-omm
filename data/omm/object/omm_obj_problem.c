@@ -108,8 +108,8 @@ const GeoLayout omm_geo_problem[] = {
 
 static void omm_bhv_problem_update() {
     struct Object *o = gCurrentObject;
-    f32 t = omm_clamp_0_1_f(o->oTimer / 20.f);
-    o->oOpacity = 255.f * omm_sqr_f(1.f - t);
+    f32 t = clamp_0_1_f(o->oTimer / 20.f);
+    o->oOpacity = 255.f * sqr_f(1.f - t);
     obj_scale(o, 2.5f * sqrt(t));
     if (t == 1.f) {
         obj_mark_for_deletion(o);

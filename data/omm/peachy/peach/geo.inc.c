@@ -1,3 +1,7 @@
+#ifdef VSCODE
+#include "model.inc.c"
+#endif
+
 static const GeoLayout omm_geo_peach_axes[] = {
     GEO_OPEN_NODE(),
         GEO_TRANSLATE_NODE(LAYER_OPAQUE, 10, 0, 0),
@@ -59,14 +63,14 @@ static const GeoLayout omm_geo_peach_normal_cap_on_off[] = {
 static const GeoLayout omm_geo_peach_normal_eyes[] = {
     GEO_SWITCH_CASE(0, geo_switch_mario_eyes),
     GEO_OPEN_NODE(),
-        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_normal_face_open_gfx),
-        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_normal_face_half_gfx),
-        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_normal_face_close_gfx),
-        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_normal_face_joy_gfx),
-        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_normal_face_rage_gfx),
-        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_normal_face_gloom_gfx),
-        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_normal_face_yeah_gfx),
-        GEO_DISPLAY_LIST(LAYER_OPAQUE, omm_peach_normal_face_hurt_gfx),
+        GEO_DISPLAY_LIST(LAYER_ALPHA, omm_peach_normal_face_open_gfx),
+        GEO_DISPLAY_LIST(LAYER_ALPHA, omm_peach_normal_face_half_gfx),
+        GEO_DISPLAY_LIST(LAYER_ALPHA, omm_peach_normal_face_close_gfx),
+        GEO_DISPLAY_LIST(LAYER_ALPHA, omm_peach_normal_face_joy_gfx),
+        GEO_DISPLAY_LIST(LAYER_ALPHA, omm_peach_normal_face_rage_gfx),
+        GEO_DISPLAY_LIST(LAYER_ALPHA, omm_peach_normal_face_gloom_gfx),
+        GEO_DISPLAY_LIST(LAYER_ALPHA, omm_peach_normal_face_yeah_gfx),
+        GEO_DISPLAY_LIST(LAYER_ALPHA, omm_peach_normal_face_hurt_gfx),
     GEO_CLOSE_NODE(),
     GEO_RETURN(),
 };
@@ -304,7 +308,7 @@ static const GeoLayout omm_geo_peach_normal[] = {
             GEO_ROTATION_NODE(LAYER_OPAQUE, 0, 0, 0),
             GEO_OPEN_NODE(),
                 GEO_BRANCH(1, omm_geo_peach_axes),
-                GEO_ANIMATED_PART(LAYER_OPAQUE, 29, 0, 0, omm_peach_normal_chest_gfx),
+                GEO_ANIMATED_PART(LAYER_ALPHA, 29, 0, 0, omm_peach_normal_chest_gfx),
                 GEO_OPEN_NODE(),
                     GEO_CULLING_RADIUS(11), // Compute Peach's head rotation
                     GEO_ANIMATED_PART(LAYER_OPAQUE, 101, 0, 0, NULL),

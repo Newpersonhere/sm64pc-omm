@@ -23,14 +23,9 @@ static bool is_object_destructible(struct Object *o) {
 }
 
 static void omm_mario_destroy_or_push_away_object(struct MarioState *m, struct Object *o) {
-    
-    // Destroy
     if (is_object_destructible(o)) {
         obj_destroy(o);
-    }
-    
-    // Push away
-    else {
+    } else {
         f32 x = m->pos[0];
         f32 z = m->pos[2];
         push_mario_out_of_object(m, o, 0);
@@ -55,19 +50,10 @@ u32 determine_interaction(struct MarioState *m, struct Object *o) {
 
     // Bounces
     if (m->action & ACT_FLAG_AIR) {
-
-        // From above
-        if (m->vel[1] < 0.f) {
-            if (m->pos[1] > o->oPosY) {
-                interaction = INT_HIT_FROM_ABOVE;
-            }
-        }
-        
-        // From below
-        else {
-            if (m->pos[1] < o->oPosY) {
-                interaction = INT_HIT_FROM_BELOW;
-            }
+        if (m->vel[1] < 0.f && m->pos[1] > o->oPosY) {
+            interaction = INT_HIT_FROM_ABOVE;
+        } else if (m->vel[1] > 0.f && m->pos[1] < o->oPosY) {
+            interaction = INT_HIT_FROM_BELOW;
         }
     }
 
@@ -77,13 +63,13 @@ u32 determine_interaction(struct MarioState *m, struct Object *o) {
         // Punching / Kicking
         if (omm_mario_is_punching(m) || omm_mario_is_kicking(m)) {
             s16 dYawToObject = mario_obj_angle_to_object(m, o) - m->faceAngle[1];
-            if (sMarioIsPunching && omm_abs_s(dYawToObject) <= 0x2AAA) {
+            if (sMarioIsPunching && abs_s(dYawToObject) <= 0x2AAA) {
                 interaction = INT_PUNCH;
             }
-            if (sMarioIsKicking && omm_abs_s(dYawToObject) <= 0x2AAA) {
+            if (sMarioIsKicking && abs_s(dYawToObject) <= 0x2AAA) {
                 interaction = INT_KICK;
             }
-            if (sMarioIsTripping && omm_abs_s(dYawToObject) <= 0x4000) {
+            if (sMarioIsTripping && abs_s(dYawToObject) <= 0x4000) {
                 interaction = INT_TRIP;
             }
         }
@@ -113,7 +99,7 @@ u32 determine_interaction(struct MarioState *m, struct Object *o) {
         }
         
         // Going fast?
-        else if (omm_abs_f(m->forwardVel) >= 26.f) {
+        else if (abs_f(m->forwardVel) >= 26.f) {
             interaction = INT_FAST_ATTACK_OR_SHELL;
         }
     }
@@ -122,10 +108,10 @@ u32 determine_interaction(struct MarioState *m, struct Object *o) {
 }
 
 bool omm_mario_interact_coin(struct MarioState *m, struct Object *o) {
-    if (o->respawnInfoType == OMM_OBJECT_LOST_COIN) omm_sparkly_context_update(OMM_SPARKLY_CONTEXT_UPDATE_LOST_COIN);
-    else if (o->oDamageOrCoinValue == 1) omm_sparkly_context_update(OMM_SPARKLY_CONTEXT_UPDATE_YELLOW_COIN);
-    else if (o->oDamageOrCoinValue == 5) omm_sparkly_context_update(OMM_SPARKLY_CONTEXT_UPDATE_BLUE_COIN);
-    else if (o->oDamageOrCoinValue == 2) omm_sparkly_context_update(OMM_SPARKLY_CONTEXT_UPDATE_RED_COIN);
+    if (o->respawnInfoType == OMM_OBJECT_LOST_COIN) omm_ssc_inc(OMM_SSC_C_COIN_L, 1);
+    else if (o->oDamageOrCoinValue == 1) omm_ssc_inc(OMM_SSC_C_COIN_Y, 1);
+    else if (o->oDamageOrCoinValue == 2) omm_ssc_inc(OMM_SSC_C_COIN_R, 1);
+    else if (o->oDamageOrCoinValue == 5) omm_ssc_inc(OMM_SSC_C_COIN_B, 1);
     interact_coin(m, INTERACT_COIN, o);
     return true;
 }
@@ -134,12 +120,12 @@ bool omm_mario_interact_star_or_key(struct MarioState *m, struct Object *o) {
     if (m->health > OMM_HEALTH_DEAD && o != NULL) {
 
         // Sparkly star
-        if (omm_sparkly_interact_star(m, o)) {
+        if (omm_ssi_star(m, o)) {
             return true;
         }
         
         // Collect star or key
-        omm_sparkly_interact_grand_star(m, o);
+        omm_ssi_grand_star(m, o);
         save_file_collect_star_or_key(m->numCoins, (o->oBehParams >> 24) & 0x1F);
         m->numStars = save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1);
 
@@ -170,7 +156,7 @@ bool omm_mario_interact_star_or_key(struct MarioState *m, struct Object *o) {
         if (!noExit) {
             m->hurtCounter = 0;
             m->healCounter = 0;
-            m->capTimer = omm_min_s(m->capTimer, 1);
+            m->capTimer = min_s(m->capTimer, 1);
             drop_queued_background_music();
             fadeout_level_music(126);
         } else if (m->action == ACT_OMM_POSSESSION) {
@@ -244,18 +230,24 @@ static bool omm_mario_interact_strong_wind(struct MarioState *m, UNUSED struct O
     return omm_mario_has_metal_cap(m);
 }
 
-static bool omm_mario_interact_flame(UNUSED struct MarioState *m, struct Object *o) {
+static bool omm_mario_interact_flame(struct MarioState *m, struct Object *o) {
     if (omm_peach_vibe_is_gloom() && omm_obj_is_flame(o)) {
         obj_spawn_white_puff(o, SOUND_GENERAL_FLAME_OUT);
         obj_mark_for_deletion(o);
         return true;
     }
 #if OMM_GAME_IS_R96A
-    if (omm_sparkly_is_enabled() && omm_sparkly_is_bowser_4() && m->action == ACT_WARIO_CHARGE) {
-        sInvulnerable = 0;
-        interact_flame(m, INTERACT_FLAME, o);
+    if (OMM_SSM_IS_ENABLED && omm_ssd_is_bowser_4() && m->action == ACT_WARIO_CHARGE) {
+        o->oInteractStatus = INT_STATUS_INTERACTED;
+        m->interactObj = o;
+        m->marioObj->oMarioBurnTimer = 0;
+        update_mario_sound_and_camera(m);
+        drop_and_set_mario_action(m, ACT_BURNING_JUMP, 1);
+        play_sound(SOUND_MARIO_ON_FIRE, m->marioObj->oCameraToObject);
         return true;
     }
+#else
+    OMM_UNUSED(m);
 #endif
     return false;
 }
@@ -311,9 +303,9 @@ bool omm_mario_interact_cap(struct MarioState *m, struct Object *o) {
         m->flags |= cap;
         switch (cap) {
             case MARIO_NORMAL_CAP: audio_stop_cap_music();        m->capTimer = 1; break;
-            case MARIO_WING_CAP:   audio_play_wing_cap_music();   m->capTimer = omm_max_s(m->capTimer, OMM_IMPROVED_WING_CAP_DURATION); break;
-            case MARIO_METAL_CAP:  audio_play_metal_cap_music();  m->capTimer = omm_max_s(m->capTimer, OMM_IMPROVED_METAL_CAP_DURATION); break;
-            case MARIO_VANISH_CAP: audio_play_vanish_cap_music(); m->capTimer = omm_max_s(m->capTimer, OMM_IMPROVED_VANISH_CAP_DURATION); break;
+            case MARIO_WING_CAP:   audio_play_wing_cap_music();   m->capTimer = max_s(m->capTimer, OMM_IMPROVED_WING_CAP_DURATION); break;
+            case MARIO_METAL_CAP:  audio_play_metal_cap_music();  m->capTimer = max_s(m->capTimer, OMM_IMPROVED_METAL_CAP_DURATION); break;
+            case MARIO_VANISH_CAP: audio_play_vanish_cap_music(); m->capTimer = max_s(m->capTimer, OMM_IMPROVED_VANISH_CAP_DURATION); break;
         }
         
         play_sound(SOUND_MENU_STAR_SOUND, m->marioObj->oCameraToObject);

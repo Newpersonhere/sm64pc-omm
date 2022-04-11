@@ -175,7 +175,7 @@ const BehaviorScript omm_bhv_sparkly_star_sparkle_mario[] = {
 //
 
 struct Object *omm_spawn_sparkly_star_sparkle(struct Object *o, s32 mode, f32 yOffset, f32 vel, f32 scale, f32 offset) {
-    struct Object *sparkle = obj_spawn_from_geo(o, OMM_SPARKLY_STAR_SPARKLE_GEO[mode], omm_bhv_sparkly_star_sparkle);
+    struct Object *sparkle = obj_spawn_from_geo(o, OMM_SSX_SPARKLE_GEO[mode], omm_bhv_sparkly_star_sparkle);
     f32 vx = vel * (random_float() - 0.5f);
     f32 vy = vel * (random_float() - 0.5f);
     f32 vz = vel * (random_float() - 0.5f);
@@ -183,7 +183,7 @@ struct Object *omm_spawn_sparkly_star_sparkle(struct Object *o, s32 mode, f32 yO
     sparkle->oVelX = vx;
     sparkle->oVelY = vy;
     sparkle->oVelZ = vz;
-    f32 dv = sqrtf(omm_sqr_f(vx) + omm_sqr_f(vy) + omm_sqr_f(vz));
+    f32 dv = sqrtf(sqr_f(vx) + sqr_f(vy) + sqr_f(vz));
     if (dv != 0.f) {
         sparkle->oPosX += offset * (vx / dv);
         sparkle->oPosY += offset * (vy / dv);

@@ -173,7 +173,7 @@ const BehaviorScript omm_bhv_sparkly_star_hint[] = {
 //
 
 struct Object *omm_spawn_sparkly_star_hint(struct Object *o, s32 mode, f32 x, f32 y, f32 z, s16 yaw, s32 dialogId) {
-    struct Object *sign = obj_spawn_from_geo(o, OMM_SPARKLY_STAR_HINT_GEO[mode], omm_bhv_sparkly_star_hint);
+    struct Object *sign = obj_spawn_from_geo(o, OMM_SSX_HINT_GEO[mode], omm_bhv_sparkly_star_hint);
     obj_set_pos(sign, x, y, z);
     obj_set_angle(sign, 0, yaw, 0);
     obj_drop_to_floor(sign);

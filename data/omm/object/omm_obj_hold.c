@@ -130,10 +130,10 @@ static void omm_bhv_hold_update() {
                 obj_anim_play(o, bhv->thrownAnim, 1.f);
             }
             if (o->oWallHitboxRadius == 0.f) {
-                o->oWallHitboxRadius = omm_max_s(o->hitboxRadius, o->hurtboxRadius);
+                o->oWallHitboxRadius = max_s(o->hitboxRadius, o->hurtboxRadius);
             }
             f32 velY = o->oVelY;
-            obj_update_pos_and_vel(o, false, false, false, false, NULL);
+            perform_object_step(o, 0);
             o->oVelY -= 4.f;
             obj_update_gfx(o);
             
@@ -167,7 +167,7 @@ static void omm_bhv_hold_update() {
 
                     // Make the object bounce
                     case ACT_BOUNCE: {
-                        obj_set_forward_and_y_vel(o, o->oForwardVel / 3.f, omm_abs_f(velY) / 3.f);
+                        obj_set_forward_and_y_vel(o, o->oForwardVel / 3.f, abs_f(velY) / 3.f);
                         o->oHeldState = HELD_DROPPED;
                     } break;
                     
@@ -191,16 +191,16 @@ static void omm_bhv_hold_update() {
                 obj_anim_play(o, bhv->thrownAnim, 1.f);
             }
             if (o->oWallHitboxRadius == 0.f) {
-                o->oWallHitboxRadius = omm_max_s(o->hitboxRadius, o->hurtboxRadius);
+                o->oWallHitboxRadius = max_s(o->hitboxRadius, o->hurtboxRadius);
             }
             f32 velY = o->oVelY;
-            obj_update_pos_and_vel(o, false, false, false, false, NULL);
+            perform_object_step(o, 0);
             o->oVelY -= 4.f;
             obj_update_gfx(o);
 
             // Check floor collision
             if (o->oPosY <= o->oFloorHeight) {
-                obj_set_forward_and_y_vel(o, o->oForwardVel / 2.f, omm_abs_f(velY) / 2.f);
+                obj_set_forward_and_y_vel(o, o->oForwardVel / 2.f, abs_f(velY) / 2.f);
                 if (o->oVelY < 4.f || o->oForwardVel < 1.f) {
                     gCurBhvCommand = ((const BehaviorScript *) o->oBehaviorCommand) - 2;
                     o->curBhvCommand = ((const BehaviorScript *) o->oBehaviorCommand);
@@ -278,14 +278,12 @@ bool omm_obj_throw(struct Object *o, f32 forwardVel, f32 yVel) {
     return false;
 }
 
-const BehaviorScript **omm_obj_get_holdable_behaviors() {
-    static OmmArray sOmmHoldBehaviors = NULL;
-    if (!sOmmHoldBehaviors) {
-        omm_array_init(sOmmHoldBehaviors, const BehaviorScript *);
+OmmArray omm_obj_get_holdable_behaviors() {
+    static OmmArray sOmmHoldBehaviors = omm_array_zero;
+    if (!sOmmHoldBehaviors.p) {
         for (s32 i = 0; i != (s32) OMM_ARRAY_SIZE(sOmmHoldBehaviorList); ++i) {
-            omm_array_add(sOmmHoldBehaviors, sOmmHoldBehaviorList[i].behavior);
+            omm_array_add(sOmmHoldBehaviors, ptr, sOmmHoldBehaviorList[i].behavior);
         }
-        omm_array_add_inplace(sOmmHoldBehaviors, const BehaviorScript *, NULL);
     }
-    return (const BehaviorScript **) omm_array_data(sOmmHoldBehaviors);
+    return sOmmHoldBehaviors;
 }

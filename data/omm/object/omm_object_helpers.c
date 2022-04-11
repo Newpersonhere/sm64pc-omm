@@ -3,11 +3,11 @@
 #undef OMM_ALL_HEADERS
 
 f32 obj_get_horizontal_distance(struct Object *o1, struct Object *o2) {
-    return sqrtf(omm_sqr_f(o1->oPosX - o2->oPosX) + omm_sqr_f(o1->oPosZ - o2->oPosZ));
+    return sqrtf(sqr_f(o1->oPosX - o2->oPosX) + sqr_f(o1->oPosZ - o2->oPosZ));
 }
 
 f32 obj_get_distance(struct Object *o1, struct Object *o2) {
-    return sqrtf(omm_sqr_f(o1->oPosX - o2->oPosX) + omm_sqr_f(o1->oPosY - o2->oPosY) + omm_sqr_f(o1->oPosZ - o2->oPosZ));
+    return sqrtf(sqr_f(o1->oPosX - o2->oPosX) + sqr_f(o1->oPosY - o2->oPosY) + sqr_f(o1->oPosZ - o2->oPosZ));
 }
 
 bool obj_check_model(struct Object *o, s32 modelId) {
@@ -35,19 +35,30 @@ bool obj_is_surface(struct Object *o) {
 }
 
 bool obj_is_on_ground(struct Object *o) {
-    return (o->oFloor != NULL) && (o->oDistToFloor <= 0.f);
+    return o->oFloor && (o->oDistToFloor <= 0.f);
 }
 
 // Goomba has to be handled separately due to the Goomba stack
 // Return true only if the bottom Goomba is completely submerged
 bool obj_is_underwater(struct Object *o, f32 waterLevel) {
     if (omm_obj_is_goomba(o)) {
-        if (gMarioState->action == ACT_OMM_POSSESSION && gOmmData->mario->capture.obj == o) {
+        if (gMarioState->action == ACT_OMM_POSSESSION && gOmmCapture == o) {
             return (o->oPosY + (omm_capture_get_hitbox_height(o)) - (omm_capture_get_hitbox_down_offset(o))) < waterLevel;        
         }
         return (o->oPosY + o->hitboxHeight - o->hitboxDownOffset) < waterLevel;
     }
     return (o->oPosY + (o->hitboxHeight / 2) - o->hitboxDownOffset) < waterLevel;
+}
+
+s32 obj_get_room(struct Object *o) {
+    if (o) {
+        struct Surface *floor = NULL;
+        find_floor(o->oPosX, o->oPosY, o->oPosZ, &floor);
+        if (floor) {
+            return floor->room;
+        }
+    }
+    return -1;
 }
 
 s32 obj_get_object1_angle_yaw_to_object2(struct Object *o1, struct Object *o2) {
@@ -96,8 +107,8 @@ static struct Box obj_get_box_for_overlap_check(struct Object *o, u32 flags) {
     f32 hurtboxHeight = o->hurtboxHeight;
 
     if (flags & OBJ_OVERLAP_FLAG_HITBOX_HURTBOX_MAX) {
-        box.radius = omm_max_f(hitboxRadius, hurtboxRadius);
-        box.height = omm_max_f(hitboxHeight, hurtboxHeight);
+        box.radius = max_f(hitboxRadius, hurtboxRadius);
+        box.height = max_f(hitboxHeight, hurtboxHeight);
     } else if (flags & OBJ_OVERLAP_FLAG_HURTBOX_HITBOX_IF_ZERO) {
         box.radius = hurtboxRadius;
         box.height = hurtboxHeight;
@@ -137,8 +148,8 @@ bool obj_detect_hitbox_overlap(struct Object *o1, struct Object *o2, u32 obj1Fla
     }
 
     // Radius check
-    f32 r2 = omm_sqr_f(box1.radius + box2.radius);
-    f32 d2 = omm_sqr_f(o1->oPosX - o2->oPosX) + omm_sqr_f(o1->oPosZ - o2->oPosZ);
+    f32 r2 = sqr_f(box1.radius + box2.radius);
+    f32 d2 = sqr_f(o1->oPosX - o2->oPosX) + sqr_f(o1->oPosZ - o2->oPosZ);
     if (d2 > r2) {
         return false;
     }
@@ -167,7 +178,7 @@ void obj_set_vel(struct Object *o, f32 x, f32 y, f32 z) {
     o->oVelX = x;
     o->oVelY = y;
     o->oVelZ = z;
-    o->oForwardVel = sqrtf(omm_sqr_f(x) + omm_sqr_f(z));
+    o->oForwardVel = sqrtf(sqr_f(x) + sqr_f(z));
 }
 
 void obj_set_forward_vel(struct Object *o, s16 yaw, f32 mag, f32 velMax) {
@@ -195,194 +206,35 @@ void obj_set_scale(struct Object *o, f32 x, f32 y, f32 z) {
     o->oScaleZ = z;
 }
 
-#define STEPS 16
-static bool obj_go_through_wall(struct Object *o, f32 offsetY, f32 radius, f32 height) {
-    f32 vx = o->oVelX;
-    f32 vz = o->oVelZ;
-    f32 vn = sqrtf(omm_sqr_f(vx) + omm_sqr_f(vz));
-    if (vn > 0.f) {
-        vx /= vn;
-        vz /= vn;
-        f32 dStart = ((2.f * vn) / STEPS);
-        f32 dEnd = (120.f + 2 * radius);
-        f32 dStep = radius / 50.f;
-        for (f32 d = dStart; d <= dEnd; d += dStep) {
-            Vec3f targetPos = { o->oPosX + vx * d, o->oPosY, o->oPosZ + vz * d };
-
-            // Walls
-            if (resolve_and_return_wall_collisions(targetPos, offsetY, radius)) {
-                continue;
-            }
-
-            // Floor
-            struct Surface *floor = NULL;
-            f32 floorY = find_floor(targetPos[0], targetPos[1], targetPos[2], &floor);
-            if (!floor || floor->type == SURFACE_DEATH_PLANE) {
-                continue;
-            }
-
-            // Ceiling
-            struct Surface *ceil = NULL;
-            f32 ceilY = find_ceil(targetPos[0], targetPos[1], targetPos[2], &ceil);
-            if (ceil && targetPos[1] <= ceilY && targetPos[1] + height > ceilY) {
-                continue;
-            }
-
-            // OK
-            o->oPosX = targetPos[0];
-            o->oPosY = omm_max_f(targetPos[1], floorY);
-            o->oPosZ = targetPos[2];
-            o->oWall = NULL;
-            play_sound(SOUND_ACTION_TELEPORT, o->oCameraToObject);
-            return true;
-        }
-    }
-    return false;
-}
-#undef STEPS
-
-#define Y_START_OFFSET 30.f
-static bool obj_process_surface_collisions(struct Object *o, bool moveThroughWalls, bool stickyFeet, bool onGround) {
-
-    // Wall collision
-    // Breaks after the first collision
-    struct Surface *wall = NULL;
-    f32 boxHeight = omm_max_f(0.f, o->hitboxHeight - Y_START_OFFSET);
-    s32 numSteps = omm_max_s(1, boxHeight / 50);
-    f32 dy = boxHeight / numSteps;
-    for (s32 i = 0; i != numSteps; ++i) {
-        struct WallCollisionData hitbox;
-        hitbox.x = o->oPosX;
-        hitbox.y = o->oPosY;
-        hitbox.z = o->oPosZ;
-        hitbox.offsetY = Y_START_OFFSET + (dy * i) - o->hitboxDownOffset;
-        hitbox.radius = o->oWallHitboxRadius;
-        if (find_wall_collisions(&hitbox) != 0) {
-            if (!moveThroughWalls || !obj_go_through_wall(o, hitbox.offsetY, hitbox.radius, o->hitboxHeight)) {
-                o->oPosX = hitbox.x;
-                o->oPosY = hitbox.y;
-                o->oPosZ = hitbox.z;
-                wall = hitbox.walls[0];
-            }
-            break;
-        }
-    }
-
-    // Floor collision
-    // If the floor is too steep, acts as a wall and push the object out of it
-    struct Surface *floor = NULL;
-    f32 floorY = find_floor(o->oPosX, o->oPosY - o->hitboxDownOffset, o->oPosZ, &floor) + o->hitboxDownOffset;
-    if (floor != NULL) {
-        if (o->oPosY <= floorY + (onGround ? 40.0f : 0.0f)) {
-            o->oPosY = floorY;
-            if ((!stickyFeet) &&
-                (floor->normal.y <= 0.6f) &&
-                (floor->type != SURFACE_SWITCH) &&
-                (floor->type != SURFACE_NOT_SLIPPERY) &&
-                (floor->type != SURFACE_HARD_NOT_SLIPPERY)) { // >= ~53 deg, not sticky
-                o->oPosX += floor->normal.x * o->oWallHitboxRadius;
-                o->oPosZ += floor->normal.z * o->oWallHitboxRadius;
-                floorY -= (1.f - floor->normal.y) * o->oWallHitboxRadius;
-            } else {
-                o->oVelY = omm_max_f(o->oVelY, 0.f);
-            }
-        }
-        o->oFloor = floor;
-        o->oFloorHeight = floorY;
-    }
-    
-    // Out of bounds
-    else {
-        o->oVelX = 0;
-        o->oVelZ = 0;
-        return false;
-    }
-
-    // Ceiling collision
-    // Treat floor + ceiling collision as OOB to cancel out step
-    struct Surface *ceil = NULL;
-    f32 ceilY = find_ceil(o->oPosX, o->oPosY, o->oPosZ, &ceil);
-    if (ceil != NULL) {
-        f32 h = (o->hitboxHeight - o->hitboxDownOffset);
-        if (o->oPosY <= ceilY && o->oPosY + h > ceilY) {
-            o->oPosY = omm_max_f(ceilY - h, floorY);
-            o->oVelY = omm_min_f(o->oVelY, 0.f);
-            if (o->oPosY == floorY) {
-                return false;
-            }
-            o->oWall = ceil;
-        }
-    }
-
-    // A solid wall is hit
-    if (wall) {
-        o->oWall = wall;
-    }
-    return true;
-}
-#undef Y_START_OFFSET
-
-#define STEPS 16
-void obj_update_pos_and_vel(struct Object *o, bool updateHome, bool moveThroughWalls, bool stickyFeet, bool onGround, s32 *squishTimer) {
-    o->oFloor = NULL;
-    o->oWall = NULL;
-    bool isCapture = (o == gOmmData->mario->capture.obj);
-
-    // Movement
-#if OMM_GAME_IS_R96A
-    s32 hSteps = (isCapture ? cheats_speed_modifier(gMarioState) : 1);
-    s32 ySteps = (isCapture && o->oVelY > 0.f ? cheats_jump_modifier(gMarioState) : 1);
-#else
-    s32 hSteps = 1;
-    s32 ySteps = 1;
-#endif
-    s32 subSteps = STEPS * hSteps * ySteps;
-    f32 velMultiplier = (isCapture ? (onGround ? POBJ_GROUND_SPEED_MULTIPLIER : POBJ_AIR_SPEED_MULTIPLIER) : 1.f);
-    for (s32 i = 0; i != subSteps; ++i) {
-        f32 x = o->oPosX;
-        f32 y = o->oPosY;
-        f32 z = o->oPosZ;
-        o->oPosX += (o->oVelX * velMultiplier) / (STEPS * ySteps);
-        o->oPosY += (o->oVelY                ) / (STEPS * hSteps);
-        o->oPosZ += (o->oVelZ * velMultiplier) / (STEPS * ySteps);
-
-        if (!obj_process_surface_collisions(o, moveThroughWalls, stickyFeet, onGround)) {
-            // Out of bounds, cancel out step
-            o->oPosX = x;
-            o->oPosY = y;
-            o->oPosZ = z;
-        } else {
-            onGround = (obj_is_on_ground(o) && o->oVelY <= 0.f);
-        }
-    }
-
-    // Squish test
-    if (squishTimer != NULL) {
-        bool squished = false;
-        struct Surface *floor = NULL;
-        f32 floorY = find_floor(o->oPosX, o->oPosY - o->hitboxDownOffset, o->oPosZ, &floor) + o->hitboxDownOffset;
-        if (floor != NULL) {
-            struct Surface *ceil = NULL;
-            f32 ceilY = find_ceil(o->oPosX, o->oPosY, o->oPosZ, &ceil);
-            if (ceil != NULL) {
-                f32 h = (o->hitboxHeight - o->hitboxDownOffset);
-                if ((o->oPosY <= ceilY) && (o->oPosY + h > ceilY) && (ceilY - floorY < h)) {
-                    squished = true;
+void obj_safe_step(struct Object *o, s32 update) {
+    static Vec3f sLastValidPos[OBJECT_POOL_CAPACITY];
+    s32 objIndex = (s32) (o - gObjectPool);
+    o->oFloorHeight = find_floor(o->oPosX, o->oPosY, o->oPosZ, &o->oFloor);
+    if (update) {
+        if (o->oFloorHeight - sLastValidPos[objIndex][1] < -100.f) {
+            o->oPosX = sLastValidPos[objIndex][0];
+            o->oPosZ = sLastValidPos[objIndex][2];
+            o->oFloorHeight = find_floor(o->oPosX, o->oPosY, o->oPosZ, &o->oFloor);
+            if (o->oPosY < o->oFloorHeight) {
+                o->oPosY = o->oFloorHeight;
+                o->oVelY *= o->oBounciness;
+                if (o->oVelY > 5.f) {
+                    o->oMoveFlags |= OBJ_MOVE_BOUNCE;
+                } else {
+                    o->oVelY = 0;
+                    o->oMoveFlags |= OBJ_MOVE_ON_GROUND;
                 }
             }
         }
-        *squishTimer = squished * (*squishTimer + 1);
+    } else {
+        sLastValidPos[objIndex][0] = o->oPosX;
+        sLastValidPos[objIndex][1] = o->oFloorHeight;
+        sLastValidPos[objIndex][2] = o->oPosZ;
     }
-
-    // Update home and forward vel
-    if (updateHome) {
-        o->oHomeX = o->oPosX;
-        o->oHomeY = o->oPosY;
-        o->oHomeZ = o->oPosZ;
+    if (o->oVelY <= 0.f && (o->oNodeFlags & GRAPH_RENDER_ACTIVE) && !(o->oNodeFlags & GRAPH_RENDER_INVISIBLE)) {
+        o->oIntangibleTimer = 0;
     }
-    o->oForwardVel = sqrtf(omm_sqr_f(o->oVelX) + omm_sqr_f(o->oVelZ));
 }
-#undef STEPS
 
 void obj_update_blink_state(struct Object *o, s32 *timer, s16 base, s16 range, s16 length) {
     if (*timer != 0) {
@@ -425,26 +277,26 @@ void obj_make_step_sound_and_particle(struct Object *o, f32 *dist, f32 distMin, 
         *dist -= distMin;
 
         // Particles
-        if (particles & OBJ_STEP_PARTICLE_MIST) {
+        if (particles & OBJ_PARTICLE_MIST) {
             spawn_object(o, MODEL_NONE, bhvMistParticleSpawner);
         }
-        if (particles & OBJ_STEP_PARTICLE_SMOKE) {
+        if (particles & OBJ_PARTICLE_SMOKE) {
             spawn_object(o, MODEL_SMOKE, bhvWhitePuffSmoke);
         }
-        if (particles & OBJ_STEP_PARTICLE_WATER_TRAIL) {
+        if (particles & OBJ_PARTICLE_WATER_TRAIL) {
             spawn_object(o, MODEL_WAVE_TRAIL, bhvObjectWaveTrail);
         }
-        if (particles & OBJ_STEP_PARTICLE_WATER_DROPLET) {
+        if (particles & OBJ_PARTICLE_WATER_DROPLET) {
             for (s32 i = 0; i != 2; ++i) {
                 struct Object *drop = spawn_object_with_scale(o, MODEL_WHITE_PARTICLE_SMALL, bhvWaterDroplet, 1.5f);
                 drop->oVelY = random_float() * 30.0f;
                 obj_translate_xz_random(drop, 110.0f);
             }
         }
-        if (particles & OBJ_STEP_PARTICLE_FIRE) {
+        if (particles & OBJ_PARTICLE_FIRE) {
             omm_spawn_fire_smoke(o, 0);
         }
-        if (particles & OBJ_STEP_PARTICLE_FLAME) {
+        if (particles & OBJ_PARTICLE_FLAME) {
             for (s32 i = 0; i != 2; ++i) {
                 spawn_object(o, MODEL_RED_FLAME, bhvKoopaShellFlame);
             }
@@ -456,8 +308,8 @@ void obj_make_step_sound_and_particle(struct Object *o, f32 *dist, f32 distMin, 
 }
 
 void obj_play_sound(struct Object *o, s32 soundBits) {
-    if (soundBits != 0) {
-        if (o != NULL) {
+    if (soundBits) {
+        if (o) {
             play_sound(soundBits, o->oCameraToObject);
         } else {
             play_sound(soundBits, gGlobalSoundArgs);
@@ -513,7 +365,7 @@ void obj_spawn_white_puff(struct Object *o, s32 soundBits) {
 void obj_spawn_white_puff_at(f32 x, f32 y, f32 z, s32 soundBits) {
     for (s32 i = 0; i < 16; ++i) {
         struct Object *particle = spawn_object(gMarioObject, MODEL_MIST, bhvWhitePuffExplosion);
-        if (particle != NULL) {
+        if (particle) {
             particle->oPosX = x;
             particle->oPosY = y;
             particle->oPosZ = z;
@@ -529,11 +381,11 @@ void obj_spawn_white_puff_at(f32 x, f32 y, f32 z, s32 soundBits) {
     }
     if (soundBits != -1) {
         struct Object *sound = spawn_object(gMarioObject, 0, bhvSoundSpawner);
-        if (sound != NULL) {
+        if (sound) {
             sound->oPosX = x;
             sound->oPosY = y;
             sound->oPosZ = z;
-            if (soundBits == 0) {
+            if (!soundBits) {
                 sound->oSoundEffectUnkF4 = SOUND_OBJ_DEFAULT_DEATH;
             } else {
                 sound->oSoundEffectUnkF4 = soundBits;
@@ -763,7 +615,7 @@ void obj_destroy(struct Object *o) {
 #endif
 
     // Default (white puff)
-    if (o->oDeathSound != 0) {
+    if (o->oDeathSound) {
         obj_destroy_white_puff(o, o->oNumLootCoins, o->oDeathSound);
     } else {
         obj_destroy_white_puff(o, o->oNumLootCoins, SOUND_OBJ_DEFAULT_DEATH);
@@ -812,22 +664,22 @@ void obj_reset_hitbox(struct Object *o, f32 hitboxRadius, f32 hitboxHeight, f32 
     o->oInteractionSubtype = 0;
 }
 
-static OmmArray sShadowObjects = NULL;
+static OmmArray sShadowObjects = omm_array_zero;
 void obj_set_shadow_pos_to_object_pos(struct Object *o) {
-    omm_array_init(sShadowObjects, struct Object *);
-    if (omm_array_find(sShadowObjects, o) == -1) {
-        omm_array_add(sShadowObjects, o);
+    if (omm_array_find(sShadowObjects, ptr, o) == -1) {
+        omm_array_add(sShadowObjects, ptr, o);
     }
 }
 
 // Called only once, in rendering_graph_node.c
 void obj_fix_shadow_pos(struct GraphNodeObject *gfx, Vec3f shadowPos) {
-    omm_array_for_each(sShadowObjects, struct Object *, obj) {
-        if (&(*obj)->header.gfx == gfx) {
-            shadowPos[0] = (*obj)->oPosX;
-            shadowPos[1] = (*obj)->oPosY;
-            shadowPos[2] = (*obj)->oPosZ;
-            omm_array_remove(sShadowObjects, index_obj);
+    omm_array_for_each(sShadowObjects, p) {
+        struct Object *obj = (struct Object *) p->as_ptr;
+        if (&obj->header.gfx == gfx) {
+            shadowPos[0] = obj->oPosX;
+            shadowPos[1] = obj->oPosY;
+            shadowPos[2] = obj->oPosZ;
+            omm_array_remove(sShadowObjects, i_p);
             return;
         }
     }
@@ -915,9 +767,9 @@ struct Waypoint *obj_path_get_nearest_waypoint(struct Object *o, struct Waypoint
     f32 nearestDist;
     for (; list->flags != WAYPOINT_FLAGS_END; list++) {
         f32 dist = sqrtf(
-            omm_sqr_f(list->pos[0] - o->oPosX) +
-            omm_sqr_f(list->pos[1] - o->oPosY) +
-            omm_sqr_f(list->pos[2] - o->oPosZ)
+            sqr_f(list->pos[0] - o->oPosX) +
+            sqr_f(list->pos[1] - o->oPosY) +
+            sqr_f(list->pos[2] - o->oPosZ)
         );
         if ((radiusMax <= 0.f || dist < radiusMax) && (!nearest || dist < nearestDist)) {
             nearest = list;
@@ -927,6 +779,33 @@ struct Waypoint *obj_path_get_nearest_waypoint(struct Object *o, struct Waypoint
     return nearest;
 }
 
+struct Object *obj_get_red_coin_star() {
+
+    // Hidden red coin star
+    struct Object *hiddenRedCoinStar = obj_get_first_with_behavior(bhvHiddenRedCoinStar);
+    if (hiddenRedCoinStar) {
+        return hiddenRedCoinStar;
+    }
+
+    // Bowser red coin star
+    struct Object *bowserRedCoinStar = obj_get_first_with_behavior(bhvBowserCourseRedCoinStar);
+    if (bowserRedCoinStar) {
+        return bowserRedCoinStar;
+    }
+
+    // Actual red coin star
+    for_each_until_null(const BehaviorScript *, bhv, OMM_ARRAY_OF(const BehaviorScript *) { bhvStar, bhvStarSpawnCoordinates, NULL }) {
+        for_each_object_with_behavior(star, *bhv) {
+            if (star->activeFlags & ACTIVE_FLAG_RED_COIN_STAR) {
+                return star;
+            }
+        }
+    }
+
+    // No red coin star
+    return NULL;
+}
+
 static struct {
     struct Object *obj;
     Vec3f vel;
@@ -934,7 +813,7 @@ static struct {
 } sOmmDoor[2];
 
 static void open_door(struct Object *o, struct Object *door1, struct Object *door2, s32 duration) {
-    if (o == gOmmData->mario->capture.obj) {
+    if (o == gOmmCapture) {
         omm_mario_lock(gMarioState, -1);
     }
 
@@ -948,7 +827,7 @@ static void open_door(struct Object *o, struct Object *door1, struct Object *doo
     f32 dX = o->oPosX - cX;
     f32 dZ = o->oPosZ - cZ;
     s16 dY = atan2s(dZ, dX);
-    s16 dA = omm_min_s((u16) (cY - dY), (u16) (dY - cY));
+    s16 dA = min_s((u16) (cY - dY), (u16) (dY - cY));
     f32 dS = (dA < 0x4000 ? -1.f : +1.f);
     Vec2f pA = { cX, cZ };
     Vec2f pB = { cX + vX, cZ + vZ };
@@ -1008,7 +887,7 @@ bool obj_update_door(struct Object *o) {
 
     // Close door
     else {
-        if (o == gOmmData->mario->capture.obj) {
+        if (o == gOmmCapture) {
             omm_mario_unlock(gMarioState);
         }
         sOmmDoor[0].obj->oAction = 0;
@@ -1022,7 +901,7 @@ bool obj_update_door(struct Object *o) {
     }
 
     // Update
-    f32 forwardVel      = sqrtf(omm_sqr_f(o->oVelX) + omm_sqr_f(o->oVelZ));
+    f32 forwardVel      = sqrtf(sqr_f(o->oVelX) + sqr_f(o->oVelZ));
     s16 faceAngleYaw    = (forwardVel == 0.f ? o->oFaceAngleYaw : atan2s(o->oVelZ, o->oVelX));
     o->oForwardVel      = forwardVel;
     o->oFaceAngleYaw    = faceAngleYaw;
@@ -1078,7 +957,7 @@ static s32 sObjCutsceneState = 0;
 static struct Object *sObjCutsceneObj = NULL;
 
 bool obj_cutscene_start(u8 cutsceneId, struct Object *o) {
-    if (sObjCutsceneState != 0 || cutsceneId == 0 || o == NULL) {
+    if (sObjCutsceneState || !cutsceneId || !o) {
         return false;
     }
     sObjCutsceneId = cutsceneId;
@@ -1121,13 +1000,15 @@ bool obj_cutscene_update() {
 // Animation
 //
 
-static void obj_anim_sync_frame_counters(struct Object *o) {
-    if (!o->oAnimInfo.animAccel) {
-        o->oAnimInfo.animFrameAccelAssist = (o->oAnimInfo.animFrame << 16);
-        o->oAnimInfo.animAccel = 0x10000;
-    } else {
-        o->oAnimInfo.animFrame = (o->oAnimInfo.animFrameAccelAssist >> 16);
-    }
+static void obj_anim_update_frame_from_accel_assist(struct AnimInfoStruct *animInfo) {
+    animInfo->animFrame = (s16) (animInfo->animFrameAccelAssist >> 16);
+}
+
+void obj_anim_sync_frame_counters(struct AnimInfoStruct *animInfo) {
+    if (!animInfo->animAccel) animInfo->animAccel = 0x10000;
+    s32 animFrameH = ((s32) animInfo->animFrame) << 16;
+    s32 animFrameL = animInfo->animFrameAccelAssist & 0xFFFF;
+    animInfo->animFrameAccelAssist = animFrameH | animFrameL;
 }
 
 s32 obj_anim_get_id(struct Object *o) {
@@ -1135,7 +1016,7 @@ s32 obj_anim_get_id(struct Object *o) {
 }
 
 f32 obj_anim_get_frame(struct Object *o) {
-    obj_anim_sync_frame_counters(o);
+    obj_anim_sync_frame_counters(&o->oAnimInfo);
     return (o->oAnimInfo.animFrameAccelAssist / 65536.f);
 }
 
@@ -1155,7 +1036,7 @@ void obj_anim_play_with_sound(struct Object *o, s32 animID, f32 animAccel, s32 s
         o->oAnimID = animID;
         o->oSoundStateID = animID;
     }
-    obj_anim_sync_frame_counters(o);
+    obj_anim_sync_frame_counters(&o->oAnimInfo);
     obj_play_sound(o, soundBits);
 }
 
@@ -1172,7 +1053,7 @@ void obj_anim_extend(struct Object *o) {
 }
 
 void obj_anim_advance(struct Object *o, f32 frames) {
-    obj_anim_sync_frame_counters(o);
+    obj_anim_sync_frame_counters(&o->oAnimInfo);
     if (o->oCurrAnim) {
         if (o->oCurrAnim->flags & ANIM_FLAG_FORWARD) {
             o->oAnimInfo.animFrameAccelAssist = (s32) ((f32) o->oAnimInfo.animFrameAccelAssist - frames * (f32) o->oAnimInfo.animAccel);
@@ -1194,14 +1075,13 @@ void obj_anim_advance(struct Object *o, f32 frames) {
             }
         }
     }
+    obj_anim_update_frame_from_accel_assist(&o->oAnimInfo);
 }
 
 void obj_anim_set_frame(struct Object *o, f32 frame) {
-    o->oAnimInfo.animFrame = (s16) frame;
     o->oAnimInfo.animFrameAccelAssist = (s32) (frame * 65536.f);
-    if (!o->oAnimInfo.animAccel) {
-        o->oAnimInfo.animAccel = 0x10000;
-    }
+    if (!o->oAnimInfo.animAccel) o->oAnimInfo.animAccel = 0x10000;
+    obj_anim_update_frame_from_accel_assist(&o->oAnimInfo);
 }
 
 void obj_anim_clamp_frame(struct Object *o, f32 frameMin, f32 frameMax) {

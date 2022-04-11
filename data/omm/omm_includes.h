@@ -2,26 +2,19 @@
 #define OMM_INCLUDES_H
 
 // Required headers
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <math.h>
 #include <limits.h>
 #include <dirent.h>
 #include <SDL2/SDL.h>
 #include "types.h"
 #include "libc/math.h"
+#include "game/memory.h"
 #include "game/camera.h"
 #include "game/ingame_menu.h"
 #include "game/mario_step.h"
 #include "game/object_list_processor.h"
-#include "engine/graph_node.h"
-#include "engine/surface_collision.h"
+#include "pc/fs/fs.h"
 #include "pc/configfile.h"
-#undef STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
 // OMM headers
@@ -30,6 +23,7 @@
 #include "data/omm/omm_patches.h"
 #include "data/omm/system/omm_memory.h"
 #include "data/omm/system/omm_system.h"
+#include "data/omm/engine/omm_engine.h"
 #include "data/omm/object/omm_object.h"
 #include "data/omm/mario/omm_mario.h"
 #include "data/omm/mario/omm_mario_actions.h"
@@ -77,6 +71,7 @@
 #include "actors/group17.h"
 #include "game/behavior_actions.h"
 #include "game/game_init.h"
+#include "game/geo_misc.h"
 #include "game/hud.h"
 #include "game/interaction.h"
 #include "game/level_geo.h"
@@ -95,17 +90,12 @@
 #include "game/obj_behaviors.h"
 #include "game/object_helpers.h"
 #include "game/print.h"
-#include "game/rendering_graph_node.h"
 #include "game/save_file.h"
 #include "game/screen_transition.h"
 #include "game/segment2.h"
 #include "game/sound_init.h"
 #include "game/spawn_object.h"
 #include "game/spawn_sound.h"
-#include "engine/behavior_script.h"
-#include "engine/level_script.h"
-#include "engine/math_util.h"
-#include "engine/surface_load.h"
 #include "audio/external.h"
 #include "audio/load.h"
 #include "menu/file_select.h"
@@ -116,10 +106,13 @@
 #include "levels/scripts.h"
 #include "pc/cliopts.h"
 #include "pc/platform.h"
+#include "pc/configfile.h"
+#include "pc/gfx/gfx_pc.h"
+#include "pc/gfx/gfx_cc.h"
+#include "pc/gfx/gfx_window_manager_api.h"
+#include "pc/gfx/gfx_rendering_api.h"
 #include "pc/controller/controller_api.h"
 #include "pc/controller/controller_sdl.h"
-#include "pc/gfx/gfx_rendering_api.h"
-#include "pc/fs/fs.h"
 #include FILE_OPTIONS_H
 #include FILE_SOUNDS_H
 #include FILE_CHEATS_H
@@ -132,36 +125,25 @@
 #endif
 
 // SM64 globals
-extern s8 gDialogType;
-extern s8 gDialogState;
+extern s8 gDialogBoxState;
 extern s8 gDialogLineIndex;
-extern s8 gDialogChoice;
-extern u8 gCurrentAnimType;
 extern u8 sFramesSinceCutsceneEnded;
 extern u8 sSpawnTypeFromWarpBhv[];
 extern u8 gDialogCharWidths[];
 extern u8 texture_hud_char_puppycam[];
 extern u8 *gEndCutsceneStringsEn[];
-extern s16 *gCurrentAnimData;
-extern s16 gCurrAnimFrame;
 extern s16 gCutsceneMsgIndex;
 extern s16 gDialogID;
-extern s16 gDialogScrollOffsetY;
-extern s16 gDialogPageStart;
-extern s16 gDialogPageStartNext;
 extern s16 gMenuMode;
 extern s16 g1HPMode;
-extern s16 sInvulnerable;
 extern s16 sStatusFlags;
 extern s16 sYawSpeed;
 extern u16 sAcousticReachPerLevel[];
-extern u16 *gCurrAnimAttribute;
 extern s32 gFindFloorForCutsceneStar;
 extern s32 sNumKilledFirePiranhaPlants;
 extern u32 gKeyPressed;
-extern f32 gDialogAngle;
-extern f32 gDialogScale;
-extern const Gfx NULL_dl[];
+extern f32 gDialogBoxAngle;
+extern const Gfx null[];
 extern const bool gIsBowserInteractible[];
 extern const BehaviorScript *sWarpBhvSpawnTable[];
 extern struct PlayerGeometry sMarioGeometry;
@@ -176,6 +158,7 @@ extern s32 check_horizontal_wind(struct MarioState *m);
 extern s32 lava_boost_on_wall(struct MarioState *);
 extern s32 perform_hang_step(struct MarioState *m);
 extern s32 perform_water_step(struct MarioState *m);
+extern s32 perform_object_step(struct Object *o, u32 flags);
 extern s32 should_begin_sliding(struct MarioState *m);
 extern u32 common_air_action_step(struct MarioState *, u32, s32, u32);
 extern u32 determine_interaction(struct MarioState *m, struct Object *o);
@@ -184,13 +167,10 @@ extern u32 interact_coin(struct MarioState *m, u32 interactType, struct Object *
 extern u32 interact_flame(struct MarioState *m, u32 interactType, struct Object *o);
 extern u32 interact_warp(struct MarioState *m, u32 interactType, struct Object *o);
 extern f32 get_buoyancy(struct MarioState *m);
-extern bool cur_obj_update_behavior_func(void (*func)(void));
 extern void apply_slope_accel(struct MarioState *m);
-extern void obj_safe_step(struct Object *o, s32 update);
 extern void bhv_chain_chomp_update_chain_parts(struct Object *o, bool isFreed);
-extern void change_and_flash_dialog_text_color_lines(s8 colorMode, s8 lineNum);
 extern void check_ledge_climb_down(struct MarioState *m);
-extern void create_dl_translation_matrix(s8 pushOp, f32 x, f32 y, f32 z);
+extern void create_dl_rotation_matrix(s8 pushOp, f32 a, f32 x, f32 y, f32 z);
 extern void create_dl_scale_matrix(s8 pushOp, f32 x, f32 y, f32 z);
 extern void cutscene_ending_look_at_sky(struct Camera *);
 extern void cutscene_ending_mario_fall(struct Camera *);
@@ -200,9 +180,8 @@ extern void cutscene_ending_reset_spline(struct Camera *);
 extern void cutscene_ending_stars_free_peach(struct Camera *);
 extern void cutscene_ending_stop(struct Camera *);
 extern void cutscene_ending_zoom_fov(struct Camera *);
-extern void handle_dialog_scroll_page_state(s8 lineNum, s8 totalLines, s8 *pageState, s8 *xMatrix, s16 *linePos);
+extern void debug_surface_list_info(f32 x, f32 z);
 extern void handle_power_meter_actions(s16);
-extern void handle_special_dialog_text(s16);
 extern void initiate_warp(s16, s16, s16, s32);
 extern void mario_reset_bodystate(struct MarioState *m);
 extern void mario_update_hitbox_and_cap_model(struct MarioState *m);
@@ -210,21 +189,13 @@ extern void monty_mole_spawn_dirt_particles(s8 offsetY, s8 velYBase);
 extern void obj_orient_graph(struct Object *obj, f32 normalX, f32 normalY, f32 normalZ);
 extern void play_flip_sounds(struct MarioState *m, s16 frame1, s16 frame2, s16 frame3);
 extern void play_sequence(u8, u8, u16);
-extern void print_peach_letter_message(void);
 extern void push_mario_out_of_object(struct MarioState *, struct Object *, f32);
 extern void push_or_sidle_wall(struct MarioState *m, Vec3f startPos);
-extern void render_dialog_box_type(struct DialogEntry *, s8);
-extern void render_dialog_entries(void);
-extern void render_dialog_triangle_choice(void);
-extern void render_dialog_triangle_page(s8);
-extern void render_dialog_triangle_next(s8);
-extern void render_generic_char(u8 c);
-extern void render_multi_text_string_lines(s8 multiTextId, s8 lineNum, s16 *linePos, s8 linesPerBox, s8 xMatrix, s8 lowerBound);
-extern void render_star_count_dialog_text(s8 *xMatrix, s16 *linePos);
+extern void render_dialog_box_type(struct DialogEntry *dialog, s8 linesPerBox);
+extern void run_display_list(struct SPTask *spTask);
 extern void set_mario_initial_action(struct MarioState *, u32, u32);
 extern void set_play_mode(s16);
 extern void set_submerged_cam_preset_and_spawn_bubbles(struct MarioState *m);
-extern void shade_screen();
 extern void sink_mario_in_quicksand(struct MarioState *m);
 extern void spawn_particle(u32 activeParticleFlag, s16 model, const BehaviorScript *behavior);
 extern void squish_mario_model(struct MarioState *m);
@@ -235,6 +206,5 @@ extern void update_mario_info_for_cam(struct MarioState *m);
 extern void update_mario_inputs(struct MarioState *m);
 extern void update_walking_speed(struct MarioState *m);
 extern void warp_special(s32 arg);
-extern struct Surface *get_pseudo_floor_at_pos(f32 x, f32 y, f32 z);
 
 #endif // OMM_INCLUDES_H

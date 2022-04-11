@@ -18,8 +18,8 @@ static s32 omm_act_holding_bowser(struct MarioState *m) {
     bool aDown = (gPlayer1Controller->buttonDown & A_BUTTON) != 0;
 
     // If A is down, B is pressed and Mario spins fast enough, try to locate the nearest bomb
-    if (!m->actionState && aDown && bPressed && omm_abs_s(m->angleVel[1]) >= 0xE00) {
-        f32 distTarget = OMM_COLLISION_LEVEL_BOUNDARY;
+    if (!m->actionState && aDown && bPressed && abs_s(m->angleVel[1]) >= 0xE00) {
+        f32 distTarget = LEVEL_BOUNDS;
         sTargetBomb = NULL;
         for_each_object_with_behavior(obj, bhvBowserBomb) {
             f32 distToObj = obj_get_horizontal_distance(m->marioObj, obj);
@@ -35,11 +35,11 @@ static s32 omm_act_holding_bowser(struct MarioState *m) {
     if (m->actionState && sTargetBomb) {
         if (aDown) {
             s16 angleToTarget = obj_get_object1_angle_yaw_to_object2(m->marioObj, sTargetBomb);
-            if (omm_abs_s((s16) (angleToTarget - m->faceAngle[1])) <= omm_abs_s(m->angleVel[1]) / 2) {
+            if (abs_s((s16) (angleToTarget - m->faceAngle[1])) <= abs_s(m->angleVel[1]) / 2) {
                 m->faceAngle[1] = angleToTarget;
                 m->input |= INPUT_B_PRESSED;
             } else {
-                m->intendedMag = omm_max_f(21.f, m->intendedMag);
+                m->intendedMag = max_f(21.f, m->intendedMag);
                 m->twirlYaw = m->intendedYaw;
                 m->input &= ~INPUT_B_PRESSED;
             }

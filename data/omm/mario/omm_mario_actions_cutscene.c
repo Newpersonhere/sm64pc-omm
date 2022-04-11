@@ -12,7 +12,7 @@ static s32 sOmmLostCoinsCount = 0;
 static u8 sOmmCurrStarBits = 0;
 
 static void omm_lost_coins_spawn(struct MarioState *m) {
-    sOmmLostCoinsCount = (s32) omm_clamp_s(m->numCoins, 0, 20);
+    sOmmLostCoinsCount = (s32) clamp_s(m->numCoins, 0, 20);
     for (s32 i = 0; i != sOmmLostCoinsCount; ++i) {
         struct Object *coin   = spawn_object(m->marioObj, MODEL_YELLOW_COIN, bhvYellowCoin);
         coin->oHomeX          = m->pos[0];
@@ -35,7 +35,7 @@ static void omm_lost_coins_update() {
         OmmLostCoin *coin = &sOmmLostCoins[i];
         f32 angle = 65536.f * (f32) i / (f32) sOmmLostCoinsCount;
         coin->obj->oVelX = coin->obj->oForwardVel * coss(angle);
-        coin->obj->oVelY = omm_max_f(coin->obj->oVelY - 4.f, -72.f);
+        coin->obj->oVelY = max_f(coin->obj->oVelY - 4.f, -72.f);
         coin->obj->oVelZ = coin->obj->oForwardVel * sins(angle);
 
         // Move coin
@@ -98,7 +98,7 @@ static void omm_lost_coins_save() {
 }
 
 static void omm_lost_coins_respawn() {
-    if (OMM_STARS_NON_STOP && !omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_EXTREME)) {
+    if (OMM_STARS_NON_STOP && !OMM_SSM_IS_LUNATIC) {
 #if OMM_CODE_TIME_TRIALS
         if (!time_trials_enabled()) omm_stars_set_bits(sOmmCurrStarBits);
 #else
@@ -210,7 +210,7 @@ static void omm_act_death_handler(struct MarioState *m, s32 type, bool lookAtCam
             m->faceAngle[1] = m->area->camera->yaw;
             mGfx.angle[1] = m->area->camera->yaw;
         }
-        m->health = OMM_HEALTH_DEAD;
+        m->health = OMM_HEALTH_ODYSSEY_DEAD;
         omm_lost_coins_spawn(m);
         sAnim2Vel = anim2_yVelInit;
         sMarioPosY = m->pos[1] + anim1_yOffset;
@@ -236,7 +236,7 @@ static void omm_act_death_handler(struct MarioState *m, s32 type, bool lookAtCam
         obj_anim_clamp_frame(m->marioObj, anim2_frameMin, anim2_frameMax);
         mGfx.angle[0] = anim2_anglePitch;
         sMarioPosY += sAnim2Vel;
-        sAnim2Vel = omm_max_f(sAnim2Vel + anim2_yVelDec, anim2_yVelLimit);
+        sAnim2Vel = max_f(sAnim2Vel + anim2_yVelDec, anim2_yVelLimit);
     }
     m->marioBodyState->eyeState = MARIO_EYES_DEAD;
     m->marioObj->oNodeFlags &= ~GRAPH_RENDER_INVISIBLE;
@@ -267,7 +267,7 @@ static void omm_act_death_handler(struct MarioState *m, s32 type, bool lookAtCam
 
         // Restore Mario's health
         if (OMM_MOVESET_ODYSSEY) {
-            m->health = OMM_HEALTH_DEAD;
+            m->health = OMM_HEALTH_ODYSSEY_DEAD;
             omm_health_fully_heal_mario(m);
             omm_health_set(m, m->health);
         } else {
@@ -496,7 +496,7 @@ static bool omm_update_star_dance(struct MarioState *m) {
 #if OMM_GAME_IS_SMSR
 #define gLastCompletedStarNum (gLastCompletedStarNum * (starBehavior != bhvCustomSMSRStarReplica))
 #endif
-        omm_render_start_you_got_a_star(OMM_TEXT_YOU_GOT_A_STAR, omm_level_get_name(gCurrLevelNum, false, false), omm_level_get_act_name(gCurrLevelNum, gLastCompletedStarNum, false, false));
+        omm_render_effect_you_got_a_star_begin(OMM_TEXT_YOU_GOT_A_STAR, omm_level_get_name(gCurrLevelNum, false, false), omm_level_get_act_name(gCurrLevelNum, gLastCompletedStarNum, false, false));
     }
     
     // Here we go!
@@ -512,7 +512,7 @@ static bool omm_update_star_dance(struct MarioState *m) {
         clear_time_stop_flags(TIME_STOP_ENABLED | TIME_STOP_MARIO_AND_DOORS);
         enable_background_sound();
         audio_stop_course_clear();
-        omm_render_stop_you_got_a_star();
+        omm_render_effect_you_got_a_star_end();
         omm_health_fully_heal_mario(m);
         m->healCounter = OMM_O2_REFILL;
         starBehavior = NULL;
@@ -523,7 +523,7 @@ static bool omm_update_star_dance(struct MarioState *m) {
     omm_mario_lock_camera(m, true);
 
     // Animation
-    const OmmStarDanceAnimFrame *frame = &sOmmStarDanceAnimFrames[OMM_EXTRAS_SMO_ANIMATIONS][omm_min_s(m->actionTimer, 47)];
+    const OmmStarDanceAnimFrame *frame = &sOmmStarDanceAnimFrames[OMM_EXTRAS_SMO_ANIMATIONS][min_s(m->actionTimer, 47)];
     obj_anim_play(m->marioObj, frame->animID, 1.f);
     m->marioBodyState->handState = frame->handState;
     m->marioObj->oGfxPos[1] = m->pos[1] + frame->yOffset;
@@ -672,7 +672,7 @@ static s32 omm_act_death_exit(struct MarioState *m) {
         omm_health_fully_heal_mario(m);
         m->healCounter = 31;
     } else {
-        omm_health_set(m, OMM_HEALTH_DEAD + 1);
+        omm_health_set(m, OMM_HEALTH_1_HP);
     }
     return OMM_MARIO_ACTION_RESULT_BREAK;
 }
@@ -683,7 +683,7 @@ static s32 omm_act_unused_death_exit(struct MarioState *m) {
         omm_health_fully_heal_mario(m);
         m->healCounter = 31;
     } else {
-        omm_health_set(m, OMM_HEALTH_DEAD + 1);
+        omm_health_set(m, OMM_HEALTH_1_HP);
     }
     return OMM_MARIO_ACTION_RESULT_BREAK;
 }
@@ -694,7 +694,7 @@ static s32 omm_act_falling_death_exit(struct MarioState *m) {
         omm_health_fully_heal_mario(m);
         m->healCounter = 31;
     } else {
-        omm_health_set(m, OMM_HEALTH_DEAD + 1);
+        omm_health_set(m, OMM_HEALTH_1_HP);
     }
     return OMM_MARIO_ACTION_RESULT_BREAK;
 }
@@ -704,7 +704,7 @@ static s32 omm_act_special_death_exit(struct MarioState *m) {
         omm_health_fully_heal_mario(m);
         m->healCounter = 31;
     } else {
-        omm_health_set(m, OMM_HEALTH_DEAD + 1);
+        omm_health_set(m, OMM_HEALTH_1_HP);
     }
     return OMM_MARIO_ACTION_RESULT_BREAK;
 }
@@ -744,8 +744,8 @@ s32 omm_mario_execute_cutscene_action(struct MarioState *m) {
         case ACT_UNUSED_DEATH_EXIT:         return omm_act_unused_death_exit(m);
         case ACT_FALLING_DEATH_EXIT:        return omm_act_falling_death_exit(m);
         case ACT_SPECIAL_DEATH_EXIT:        return omm_act_special_death_exit(m);
-        case ACT_END_PEACH_CUTSCENE:        return omm_sparkly_act_end_cutscene_1(m);
-        case ACT_END_WAVING_CUTSCENE:       return omm_sparkly_act_end_cutscene_2(m);
+        case ACT_END_PEACH_CUTSCENE:        return omm_ssa_end_cutscene_1(m);
+        case ACT_END_WAVING_CUTSCENE:       return omm_ssa_end_cutscene_2(m);
 
         case ACT_OMM_POSSESSION:            return omm_act_possession(m);
         case ACT_OMM_DEATH:                 return omm_act_death(m);
@@ -756,7 +756,7 @@ s32 omm_mario_execute_cutscene_action(struct MarioState *m) {
         case ACT_OMM_DEATH_QUICKSAND:       return omm_act_death_quicksand(m);
         case ACT_OMM_DEATH_SQUISHED:        return omm_act_death_squished(m);
         case ACT_OMM_STAR_DANCE:            return omm_act_star_dance(m);
-        case ACT_OMM_SPARKLY_STAR_DANCE:    return omm_sparkly_act_star_dance(m);
+        case ACT_OMM_SPARKLY_STAR_DANCE:    return omm_ssa_star_dance(m);
         case ACT_OMM_TRANSITION_WF_TOWER:   return omm_act_transition_wf_tower(m);
         case ACT_OMM_WARPING:               return omm_act_warping(m);
     }

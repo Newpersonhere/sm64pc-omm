@@ -3,11 +3,6 @@
 #undef OMM_ALL_HEADERS
 
 typedef struct {
-    u32 id;
-    void *ptr;
-} IdPtr;
-
-typedef struct {
     f32 x, y, z;
 } v3f;
 
@@ -16,8 +11,8 @@ typedef struct {
     s32 count;
 } v3fa;
 
-inline static f32 v3f_mag(v3f v) {
-    return sqrtf(omm_sqr_f(v.x) + omm_sqr_f(v.y) + omm_sqr_f(v.z));
+OMM_INLINE f32 v3f_mag(v3f v) {
+    return sqrtf(sqr_f(v.x) + sqr_f(v.y) + sqr_f(v.z));
 }
 
 //
@@ -92,7 +87,7 @@ static bool omm_cappy_gfx_read_data_from_file(u32 id, v3fa *points, v3fa *normal
 
             case 'c': {
                 sscanf(buffer + 1, "%d", count);
-                *count = omm_clamp_s(*count, 4, 64);
+                *count = clamp_s(*count, 4, 64);
             } break;
 
             case 'r': {
@@ -293,34 +288,26 @@ static Gfx *omm_cappy_gfx_get_display_list(u32 id, bool metal, bool mirror) {
     return gfx;
 }
 
-static bool omm_cappy_gfx_draw(u32 id, u8 alpha, bool metal, bool mirror, void (*append)(void *, s16)) {
-    static OmmArray sIdDisplayLists = NULL;
-    omm_array_init(sIdDisplayLists, IdPtr);
-    Gfx *displayList = NULL;
+static void omm_cappy_gfx_draw(u32 id, u8 alpha, bool metal, bool mirror, void (*append)(void *, s16)) {
+    static OmmMap sDisplayLists = omm_map_zero;
     u32 displayListId = (id & ~3) | (metal << 0) | (mirror << 1);
 
-    // Find existing display list
-    omm_array_for_each(sIdDisplayLists, IdPtr, idptr) {
-        if (idptr->id == displayListId) {
-            displayList = (Gfx *) idptr->ptr;
-            break;
-        }
-    }
-
-    // Create new display list if not found
-    if (!displayList) {
-        displayList = omm_cappy_gfx_get_display_list(id, metal, mirror);
-        if (!displayList) return false;
-        omm_array_add_inplace(sIdDisplayLists, IdPtr, { displayListId, displayList });
+    // Retrieve existing display list, or create new display list if not found
+    s32 i = omm_map_find_key(sDisplayLists, u32, displayListId);
+    if (OMM_UNLIKELY(i == -1)) {
+        i = omm_map_count(sDisplayLists);
+        omm_map_add(sDisplayLists, u32, displayListId, ptr, omm_cappy_gfx_get_display_list(id, metal, mirror));
     }
 
     // Draw display list
-    gDPSetEnvColor(displayList, 0xFF, 0xFF, 0xFF, alpha);
-    append(displayList, (alpha != 0xFF) ? LAYER_TRANSPARENT : LAYER_OPAQUE);
-    return true;
+    Gfx *displayList = omm_map_get_val(sDisplayLists, ptr, i);
+    if (displayList) {
+        gDPSetEnvColor(displayList, 0xFF, 0xFF, 0xFF, alpha);
+        append(displayList, (alpha != 0xFF) ? LAYER_TRANSPARENT : LAYER_OPAQUE);
+    }
 }
 
-bool omm_cappy_gfx_draw_eyes(struct GraphNodeSwitchCase *node, void (*append)(void *, s16)) {
+void omm_cappy_gfx_draw_eyes(struct GraphNodeSwitchCase *node, void (*append)(void *, s16)) {
     if (OMM_EXTRAS_CAPPY_AND_TIARA && gCurGraphNodeObject) {
 
         // Mario's cap
@@ -329,7 +316,7 @@ bool omm_cappy_gfx_draw_eyes(struct GraphNodeSwitchCase *node, void (*append)(vo
             // Cap must be on Mario's head
             struct MarioBodyState *bodyState = gMarioState->marioBodyState;
             if (bodyState->capState & 1) {
-                return false;
+                return;
             }
 
             // States
@@ -337,7 +324,8 @@ bool omm_cappy_gfx_draw_eyes(struct GraphNodeSwitchCase *node, void (*append)(vo
             u8 alpha = ((bodyState->modelState & 0x100) ? (bodyState->modelState & 0xFF) : 0xFF);
             bool metal = (bodyState->modelState & MODEL_STATE_METAL) != 0;
             bool mirror = (gCurGraphNodeObject == &gMirrorMario);
-            return omm_cappy_gfx_draw(id, alpha, metal, mirror, append);
+            omm_cappy_gfx_draw(id, alpha, metal, mirror, append);
+            return;
         }
 
         // Cap object
@@ -353,12 +341,12 @@ bool omm_cappy_gfx_draw_eyes(struct GraphNodeSwitchCase *node, void (*append)(vo
 
                     // States
                     u32 id = omm_cappy_gfx_get_graph_node_identifier(gCurGraphNodeObject->sharedChild);
-                    return omm_cappy_gfx_draw(id, o->oOpacity, false, false, append);
+                    omm_cappy_gfx_draw(id, o->oOpacity, false, false, append);
+                    return;
                 }
             }
         }
     }
-    return false;
 }
 
 //
@@ -438,21 +426,15 @@ static void omm_cappy_gfx_process_graph_node(struct GraphNode *node) {
 }
 
 u32 omm_cappy_gfx_get_graph_node_identifier(struct GraphNode *node) {
-    static OmmArray sIdGraphNodes = NULL;
-    omm_array_init(sIdGraphNodes, IdPtr);
-
-    // Find the graph node and return its identifier
-    omm_array_for_each(sIdGraphNodes, IdPtr, idptr) {
-        if (idptr->ptr == node) {
-            return idptr->id;
-        }
+    static OmmMap sGraphNodes = omm_map_zero;
+    s32 i = omm_map_find_key(sGraphNodes, ptr, node);
+    if (OMM_UNLIKELY(i == -1)) {
+        i = omm_map_count(sGraphNodes);
+        sVtxCount = 0;
+        sTriCount = 0;
+        omm_cappy_gfx_process_graph_node(node);
+        u32 identifier = (u32) ((sVtxCount << 16u) | (sTriCount << 0u));
+        omm_map_add(sGraphNodes, ptr, node, u32, identifier);
     }
-    
-    // Compute the graph node identifier and add it to the look-up table
-    sVtxCount = 0;
-    sTriCount = 0;
-    omm_cappy_gfx_process_graph_node(node);
-    u32 identifier = (u32) ((sVtxCount << 16u) | (sTriCount << 0u));
-    omm_array_add_inplace(sIdGraphNodes, IdPtr, { identifier, node });
-    return identifier;
+    return omm_map_get_val(sGraphNodes, u32, i);
 }

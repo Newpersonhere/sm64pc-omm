@@ -20,9 +20,8 @@ static void omm_bhv_flaming_bobomb_update() {
 
         // Grow
         case 0: {
-            f32 t = omm_clamp_0_1_f(o->oTimer / 30.f);
-            f32 scale = 1.2f * omm_clamp_0_1_f((2.f * t) - (0.1f * o->oFlamingBobombIndex));
-            obj_scale(o, scale);
+            f32 t = (o->oTimer / 20.f) - (o->oFlamingBobombCount - o->oFlamingBobombIndex) * clamp_f(1.f / o->oFlamingBobombCount, 0.f, 0.2f);
+            obj_scale(o, 1.2f * clamp_0_1_f(t));
         } break;
 
         // Fly to the sky
@@ -68,7 +67,38 @@ static void omm_bhv_flaming_bobomb_update() {
             omm_spawn_shockwave_fire(o, 100, 80, 120, 40, 5000, OMM_TEXTURE_BOWSER_FIRE_BLUE_1, OMM_TEXTURE_BOWSER_FIRE_BLUE_2);
             obj_mark_for_deletion(o->oFlamingBobombAura);
             obj_mark_for_deletion(o);
-            return;
+        } return;
+
+        // Fly to the sky (faster)
+        case 5: {
+            obj_scale(o, 1.2f);
+            o->oPosY += 4.f * o->oTimer;
+            if (o->oPosY >= o->oFlamingBobombMaxHeight) {
+                o->oNodeFlags |= GRAPH_RENDER_INVISIBLE;
+                o->oFlamingBobombAura->oNodeFlags |= GRAPH_RENDER_INVISIBLE;
+                o->oAction = 6;
+                o->oTimer = 0;
+            }
+        } break;
+
+        // Focus a random point and start falling
+        case 6: {
+            o->oNodeFlags &= ~GRAPH_RENDER_INVISIBLE;
+            o->oFlamingBobombAura->oNodeFlags &= ~GRAPH_RENDER_INVISIBLE;
+            for (;;) {
+                f32 r = random_float() * o->oFlamingBobombMaxRadius;
+                s16 a = random_u16();
+                o->oPosX = r * sins(a);
+                o->oPosY = o->oFlamingBobombMaxHeight;
+                o->oPosZ = r * coss(a);
+                struct Surface *floor = NULL;
+                find_floor(o->oPosX, o->oPosY, o->oPosZ, &floor);
+                if (floor && floor->type != SURFACE_BURNING && floor->type != SURFACE_DEATH_PLANE) {
+                    break;
+                }
+            }
+            o->oAction = 3;
+            o->oTimer = 0;
         } break;
     }
 
@@ -104,10 +134,12 @@ const BehaviorScript omm_bhv_flaming_bobomb[] = {
 // Spawner
 //
 
-struct Object *omm_spawn_flaming_bobomb(struct Object *o, f32 x, f32 y, f32 z, s32 index, f32 maxHeight) {
+struct Object *omm_spawn_flaming_bobomb(struct Object *o, f32 x, f32 y, f32 z, s32 index, s32 count, f32 maxRadius, f32 maxHeight) {
     struct Object *bobomb           = obj_spawn_from_geo(o, omm_geo_flaming_bobomb, omm_bhv_flaming_bobomb);
     bobomb->oFlamingBobombAura      = obj_spawn_from_geo(bobomb, omm_geo_flaming_bobomb_aura, omm_bhv_flaming_bobomb_aura);
     bobomb->oFlamingBobombIndex     = index;
+    bobomb->oFlamingBobombCount     = count;
+    bobomb->oFlamingBobombMaxRadius = maxRadius;
     bobomb->oFlamingBobombMaxHeight = maxHeight;
     bobomb->oPosX                   = x;
     bobomb->oPosY                   = y;

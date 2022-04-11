@@ -63,7 +63,7 @@ void omm_cappy_init_behavior(struct Object *cappy, struct MarioState *m) {
 //
 
 static bool omm_cappy_collision_handler_floor_ceil_slowdown(struct Object *cappy, f32 *velX, f32 *velY, f32 *velZ, struct Surface *srf) {
-    f32 nny = 1.f - omm_abs_f(srf->normal.y);
+    f32 nny = 1.f - abs_f(srf->normal.y);
     f32 slowdown = nny * nny * nny;
     cappy->oVelX /= (1.f + slowdown);
     cappy->oVelZ /= (1.f + slowdown);
@@ -76,8 +76,8 @@ static bool omm_cappy_collision_handler_floor_ceil_slowdown(struct Object *cappy
 
 static bool omm_cappy_collision_handler_floor_change_behavior(struct Object *cappy, f32 *velX, f32 *velY, f32 *velZ, UNUSED struct Surface *srf) {
     if (cappy->oVelY != 0.f) {
-        cappy->oVelX = (CAPPY_BHV_DEFAULT_VEL / CAPPY_BHV_DOWNWARDS_VEL) * sins(cappy->oCappyYaw) * omm_abs_f(cappy->oVelY);
-        cappy->oVelZ = (CAPPY_BHV_DEFAULT_VEL / CAPPY_BHV_DOWNWARDS_VEL) * coss(cappy->oCappyYaw) * omm_abs_f(cappy->oVelY);
+        cappy->oVelX = (CAPPY_BHV_DEFAULT_VEL / CAPPY_BHV_DOWNWARDS_VEL) * sins(cappy->oCappyYaw) * abs_f(cappy->oVelY);
+        cappy->oVelZ = (CAPPY_BHV_DEFAULT_VEL / CAPPY_BHV_DOWNWARDS_VEL) * coss(cappy->oCappyYaw) * abs_f(cappy->oVelY);
         cappy->oVelY = 0;
         *velX = cappy->oVelX;
         *velY = cappy->oVelY;
@@ -178,7 +178,7 @@ static void omm_cappy_perform_step(struct Object *cappy, struct MarioState *m, f
 
                 // Improved Vanish cap makes Cappy ignore ceiling collisions
                 if (!omm_mario_has_vanish_cap(m)) {
-                    cappy->oPosY = omm_max_f(ceilY - h, floorY);
+                    cappy->oPosY = max_f(ceilY - h, floorY);
                     if (ceilCollisionHandle && ceilCollisionHandle(cappy, &velX, &velY, &velZ, ceil)) {
                         return;
                     }
@@ -218,7 +218,7 @@ bool omm_cappy_perform_step_return_to_mario(struct Object *cappy, struct MarioSt
     f32 dx = (m->pos[0] - cappy->oPosX);
     f32 dy = (m->pos[1] - cappy->oPosY) + (0.4f * m->marioObj->hitboxHeight * m->marioObj->oScaleY);
     f32 dz = (m->pos[2] - cappy->oPosZ);
-    f32 dv = sqrtf(omm_sqr_f(dx) + omm_sqr_f(dy) + omm_sqr_f(dz));
+    f32 dv = sqrtf(sqr_f(dx) + sqr_f(dy) + sqr_f(dz));
     if (dv > CAPPY_RETURN_VEL) {
         cappy->oPosX += (dx / dv) * CAPPY_RETURN_VEL;
         cappy->oPosY += (dy / dv) * CAPPY_RETURN_VEL;
@@ -258,18 +258,11 @@ static void omm_cappy_call_back(struct Object *cappy, struct MarioState *m, s32 
                     f32 dx = target->oPosX - cappy->oPosX;
                     f32 dy = target->oPosY - cappy->oPosY;
                     f32 dz = target->oPosZ - cappy->oPosZ;
-                    f32 dv = sqrtf(omm_sqr_f(dx) + omm_sqr_f(dy) + omm_sqr_f(dz));
+                    f32 dv = sqrtf(sqr_f(dx) + sqr_f(dy) + sqr_f(dz));
                     if (dv != 0) {
-                        f32 dm = CAPPY_HOMING_ATTACK_VEL * cappyHomingAttackDuration;
-                        if (dm >= dv) {
-                            cappy->oVelX = CAPPY_HOMING_ATTACK_VEL * (dx / dv);
-                            cappy->oVelY = CAPPY_HOMING_ATTACK_VEL * (dy / dv);
-                            cappy->oVelZ = CAPPY_HOMING_ATTACK_VEL * (dz / dv);
-                        } else {
-                            cappy->oVelX = (dx / cappyHomingAttackDuration);
-                            cappy->oVelY = (dy / cappyHomingAttackDuration);
-                            cappy->oVelZ = (dz / cappyHomingAttackDuration);
-                        }
+                        cappy->oVelX = CAPPY_HOMING_ATTACK_VEL * (dx / dv);
+                        cappy->oVelY = CAPPY_HOMING_ATTACK_VEL * (dy / dv);
+                        cappy->oVelZ = CAPPY_HOMING_ATTACK_VEL * (dz / dv);
                     } else {
                         omm_cappy_return_to_mario(cappy);
                     }
@@ -384,7 +377,7 @@ void omm_cappy_update_behavior(struct Object *cappy, struct MarioState *m) {
                 omm_cappy_perform_step(cappy, m, cappy->oVelX, cappy->oVelY, cappy->oVelZ, NULL, omm_cappy_collision_handler_floor_change_behavior, NULL);
                 omm_cappy_slowdown(cappy);
                 if (cappy->oVelY == 0.f) {
-                    cappy->oVelY = -sqrtf(omm_sqr_f(cappy->oVelX) + omm_sqr_f(cappy->oVelZ)) / (CAPPY_BHV_DEFAULT_VEL / CAPPY_BHV_DOWNWARDS_VEL);
+                    cappy->oVelY = -sqrtf(sqr_f(cappy->oVelX) + sqr_f(cappy->oVelZ)) / (CAPPY_BHV_DEFAULT_VEL / CAPPY_BHV_DOWNWARDS_VEL);
                     cappy->oVelX = 0;
                     cappy->oVelZ = 0;
                 }
@@ -397,7 +390,7 @@ void omm_cappy_update_behavior(struct Object *cappy, struct MarioState *m) {
 
         case OMM_CAPPY_BHV_SPIN_GROUND:
         case OMM_CAPPY_BHV_SPIN_AIR: {
-            f32 r = omm_min_f(cappy->oCappyLifeTimer * CAPPY_BHV_SPIN_RADIUS_GROWTH, CAPPY_BHV_SPIN_RADIUS_MAX);
+            f32 r = min_f(cappy->oCappyLifeTimer * CAPPY_BHV_SPIN_RADIUS_GROWTH, CAPPY_BHV_SPIN_RADIUS_MAX);
             s16 a = (s16) (cappy->oFaceAngleYaw + (s32) (cappy->oCappyLifeTimer) * CAPPY_BHV_SPIN_ANGLE_VEL);
             cappy->oPosX = m->pos[0];
             cappy->oPosY = m->pos[1] + CAPPY_BHV_SPIN_OFFSET;
@@ -415,7 +408,7 @@ void omm_cappy_update_behavior(struct Object *cappy, struct MarioState *m) {
                 if (cappy->oCappyLifeTimer < CAPPY_BHV_FLYING_CALL_BACK_START) {
                     m->marioObj->oGfxAngle[2] += ((cappy->oCappyLifeTimer * 0x10000) / CAPPY_BHV_FLYING_CALL_BACK_START);
                 }
-                f32 r = omm_min_f(cappy->oCappyLifeTimer * CAPPY_BHV_FLYING_RADIUS_GROWTH, CAPPY_BHV_FLYING_RADIUS_MAX);
+                f32 r = min_f(cappy->oCappyLifeTimer * CAPPY_BHV_FLYING_RADIUS_GROWTH, CAPPY_BHV_FLYING_RADIUS_MAX);
                 s16 a = (s16) (cappy->oFaceAngleYaw + (s32) (cappy->oCappyLifeTimer) * CAPPY_BHV_FLYING_ANGLE_VEL);
                 Vec3f v = { r * coss(a), r * sins(a), 0 };
                 vec3f_rotate_zxy(v, v, -m->faceAngle[0], m->faceAngle[1], 0);
@@ -488,7 +481,7 @@ static const MarioThrowAnimParams *omm_cappy_get_mario_anim_params(s32 cappyBeha
       { MARIO_ANIM_FINAL_BOWSER_RAISE_HAND_SPIN, 1.50f, 62, 94, 3,  0 },
       { MARIO_ANIM_WING_CAP_FLY,                 1.00f,  0, -1, 0,  0 }, },
     { { MARIO_ANIM_OMM_CAPPY_THROW,              1.50f,  0, 28, 0, -4 },
-      { MARIO_ANIM_OMM_CAPPY_THROW,              1.25f, 31, -1, 0, -4 },
+      { MARIO_ANIM_OMM_CAPPY_THROW,              1.50f, 31, -1, 0, -4 },
       { MARIO_ANIM_OMM_CAPPY_UP_THROW,           1.25f,  0, 27, 0, -4 },
       { MARIO_ANIM_OMM_CAPPY_UP_THROW,           1.25f, 29, -1, 0, -4 },
       { MARIO_ANIM_OMM_CAPPY_DOWN_THROW,         1.25f,  0, 27, 0, -4 },
@@ -522,8 +515,6 @@ static const u32 sMarioThrowEndAction[] = {
     ACT_OMM_METAL_WATER_FREEFALL,
     ACT_WATER_IDLE,
     ACT_WATER_IDLE,
-    ACT_WATER_IDLE,
-    ACT_WATER_IDLE,
 };
 
 void omm_cappy_update_mario_anim(struct Object *cappy, struct MarioState *m) {
@@ -534,7 +525,7 @@ void omm_cappy_update_mario_anim(struct Object *cappy, struct MarioState *m) {
 
     // Params
     const MarioThrowAnimParams *p = omm_cappy_get_mario_anim_params(cappy->oCappyBehavior);
-    cappy->oCappyLifeTimer = omm_max_s(cappy->oCappyLifeTimer, p->cappy);
+    cappy->oCappyLifeTimer = max_s(cappy->oCappyLifeTimer, p->cappy);
 
     // Skip if Mario is not in a throw action
     if (m->action != ACT_OMM_CAPPY_THROW_GROUND &&
@@ -544,17 +535,19 @@ void omm_cappy_update_mario_anim(struct Object *cappy, struct MarioState *m) {
         m->action != ACT_OMM_METAL_WATER_CAPPY_THROW_AIRBORNE) {
         cappy->oCappyFlags &= ~CAPPY_FLAG_START_ANIM;
     } else {
+        bool water = ((m->action & ACT_GROUP_MASK) == ACT_GROUP_SUBMERGED);
+        bool metal = ((m->action & ACT_GROUP_MASK) == ACT_GROUP_METAL_WATER);
     
         // Start
         if (cappy->oCappyFlags & CAPPY_FLAG_START_ANIM) {
             obj_anim_play(m->marioObj, p->anim, p->speed);
             obj_anim_set_frame(m->marioObj, p->start);
-            play_sound(sThrowSounds[p->sound + (random_u16() % 3) + (6 * ((m->action & ACT_GROUP_MASK) == ACT_GROUP_METAL_WATER))], m->marioObj->oCameraToObject);
+            play_sound(sThrowSounds[p->sound + (random_u16() % 3) + (6 * metal)], m->marioObj->oCameraToObject);
             cappy->oCappyFlags &= ~CAPPY_FLAG_START_ANIM;
         }
 
         // End
-        u32 endAction = sMarioThrowEndAction[(cappy->oCappyBehavior & 1) + (2 * ((m->action & ACT_GROUP_MASK) == ACT_GROUP_METAL_WATER)) + (4 * ((m->action & ACT_GROUP_MASK) == ACT_GROUP_SUBMERGED))];
+        u32 endAction = sMarioThrowEndAction[(cappy->oCappyBehavior & 1) + (2 * metal) + (4 * water)];
         if (p->end == -1) {
             if (obj_anim_is_at_end(m->marioObj)) {
                 omm_mario_set_action(m, endAction, 0, 0);

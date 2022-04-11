@@ -90,7 +90,7 @@ static void DynOS_Audio_Resample(u8 *aOutput, s32 aLength, const u8 *aInput, f32
 static void DynOS_Audio_Callback(UNUSED void *, u8 *aStream, s32 aLength) {
     bzero(aStream, aLength);
     if (sPlayingAudio) {
-        f32 _Volume = omm_clamp_f(sVibeAudioVolumeModifiers[*gOmmPeachVibeTypeRef] * sPlayingAudio->mVolume * (configMasterVolume / 127.f) * (configMusicVolume / 127.f) * softenAudioVolume * !configAudioMute, 0.f, 1.f);
+        f32 _Volume = clamp_f(sVibeAudioVolumeModifiers[*gOmmPeachVibeTypeRef] * sPlayingAudio->mVolume * (configMasterVolume / 127.f) * (configMusicVolume / 127.f) * softenAudioVolume * !configAudioMute, 0.f, 1.f);
         f32 _FreqMod = sVibeAudioFreqModifiers[*gOmmPeachVibeTypeRef];
         s32 _AudioLength = ALIGN_TO_SAMPLE(aLength * _FreqMod);
         s32 _AudioLenTilEnd = sPlayingAudio->mLength - sPlayingAudio->mCurrent;

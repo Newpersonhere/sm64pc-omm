@@ -388,7 +388,7 @@ typedef struct {
 const GeoLayout omm_geo_shockwave_fire[] = {
     GEO_NODE_START(),
     GEO_OPEN_NODE(),
-        GEO_ASM(0, omm_geo_link_geo_data),
+        GEO_ASM(0, geo_link_geo_data),
         GEO_DISPLAY_LIST(LAYER_TRANSPARENT, omm_shockwave_fire_gfx),
     GEO_CLOSE_NODE(),
     GEO_END(),
@@ -401,12 +401,12 @@ const GeoLayout omm_geo_shockwave_fire[] = {
 static bool is_mario_in_range(struct Object *o, struct MarioState *m) {
 
     // Lateral distance
-    f32 marioRadius = (m->action == ACT_OMM_POSSESSION ? omm_capture_get_wall_hitbox_radius(gOmmData->mario->capture.obj) : (50.f * m->marioObj->oScaleX));
+    f32 marioRadius = (m->action == ACT_OMM_POSSESSION ? omm_capture_get_wall_hitbox_radius(gOmmCapture) : (50.f * m->marioObj->oScaleX));
     f32 waveRadius = (o->oShockwaveFireRadius * o->oScaleX);
     f32 waveWidth = (o->oShockwaveFireWidth / 2.5f) + marioRadius;
     f32 distMin = waveRadius - waveWidth;
     f32 distMax = waveRadius + waveWidth;
-    f32 distToMario = sqrtf(omm_sqr_f(m->pos[0] - o->oPosX) + omm_sqr_f(m->pos[2] - o->oPosZ));
+    f32 distToMario = sqrtf(sqr_f(m->pos[0] - o->oPosX) + sqr_f(m->pos[2] - o->oPosZ));
     if (distMin > distToMario ||
         distMax < distToMario) {
         return false;
@@ -445,26 +445,26 @@ static void omm_bhv_shockwave_fire_update() {
     Vtx *vwave = data->vtx;
     Vtx *vfire = data->vtx + 130;
     f32 radius = o->oShockwaveFireRadius;
-    f32 width  = o->oShockwaveFireWidth  * 1.60f / omm_max_f(o->oScaleX, 0.01f);
+    f32 width  = o->oShockwaveFireWidth  * 1.60f / max_f(o->oScaleX, 0.01f);
     f32 height = o->oShockwaveFireHeight * 1.25f;
     s32 frame  = o->oTimer;
-    u8  alpha  = 255.9f * omm_clamp_0_1_f((o->oShockwaveFireDuration - o->oTimer) / 15.f);
+    u8  alpha  = 255.9f * clamp_0_1_f((o->oShockwaveFireDuration - o->oTimer) / 15.f);
 
     // Compute wave vtx
     for (s32 i = 0; i <= 64; i++, vwave += 2) {
         s16 angle = (s16) (i * 0x400);
-        vwave[0].v.ob[0] = omm_max_f(0, (radius - width / 2)) * sins(angle);
+        vwave[0].v.ob[0] = max_f(0, (radius - width / 2)) * sins(angle);
         vwave[0].v.ob[1] = 0;
-        vwave[0].v.ob[2] = omm_max_f(0, (radius - width / 2)) * coss(angle);
+        vwave[0].v.ob[2] = max_f(0, (radius - width / 2)) * coss(angle);
         vwave[0].v.tc[0] = (1 << 5) * 256 * (i % 2);
         vwave[0].v.tc[1] = (1 << 5) * 64;
         vwave[0].v.cn[0] = 0xFF;
         vwave[0].v.cn[1] = 0xFF;
         vwave[0].v.cn[2] = 0xFF;
         vwave[0].v.cn[3] = alpha;
-        vwave[1].v.ob[0] = omm_max_f(0, (radius + width / 2)) * sins(angle);
+        vwave[1].v.ob[0] = max_f(0, (radius + width / 2)) * sins(angle);
         vwave[1].v.ob[1] = 0;
-        vwave[1].v.ob[2] = omm_max_f(0, (radius + width / 2)) * coss(angle);
+        vwave[1].v.ob[2] = max_f(0, (radius + width / 2)) * coss(angle);
         vwave[1].v.tc[0] = (1 << 5) * 256 * (i % 2);
         vwave[1].v.tc[1] = (1 << 5) * 192;
         vwave[1].v.cn[0] = 0xFF;
@@ -478,7 +478,7 @@ static void omm_bhv_shockwave_fire_update() {
     s16 u = (frame % 4) * 240;
     s16 v = (frame / 4) * 160;
     s32 m = (s32) ((2.f * M_PI * radius * o->oScaleX) / 200.f);
-    s32 n = ((omm_clamp_s(m, 8, 256) / 2) * 2); // Must be even
+    s32 n = ((clamp_s(m, 8, 256) / 2) * 2); // Must be even
     for (s32 i = 0; i <= n; i++, vfire += 2) {
         s16 angle = (s16) ((i * 0x10000) / n);
         s32 du = 0;
@@ -515,7 +515,7 @@ static void omm_bhv_shockwave_fire_update() {
 
     // Hitbox
     if (is_mario_in_range(o, gMarioState)) {
-        f32 width = o->oShockwaveFireWidth / omm_max_f(o->oScaleX, 0.01f);
+        f32 width = o->oShockwaveFireWidth / max_f(o->oScaleX, 0.01f);
         obj_set_params(o, INTERACT_FLAME, 1, 0, 0, true);
         obj_reset_hitbox(o, o->oShockwaveFireRadius + width, o->oShockwaveFireHeight, 0, 0, 0, 0);
     } else {
@@ -544,11 +544,11 @@ struct Object *omm_spawn_shockwave_fire(struct Object *o, f32 radius, f32 width,
     obj_set_angle(fire, 0, 0, 0);
     obj_scale(fire, 0);
     fire->oOpacity = 0xFF;
-    fire->oShockwaveFireRadius = omm_abs_f(radius);
-    fire->oShockwaveFireWidth = omm_abs_f(width);
-    fire->oShockwaveFireHeight = omm_abs_f(height);
-    fire->oShockwaveFireSpeed = omm_abs_f(speed);
-    fire->oShockwaveFireDuration = omm_abs_s(distMax / omm_max_f(speed, 1.f));
+    fire->oShockwaveFireRadius = abs_f(radius);
+    fire->oShockwaveFireWidth = abs_f(width);
+    fire->oShockwaveFireHeight = abs_f(height);
+    fire->oShockwaveFireSpeed = abs_f(speed);
+    fire->oShockwaveFireDuration = abs_s(distMax / max_f(speed, 1.f));
 
     // Init geo data
     OmmShockwaveFireGeoData *data = omm_memory_new(gOmmMemoryPoolGeoData, sizeof(OmmShockwaveFireGeoData), fire);

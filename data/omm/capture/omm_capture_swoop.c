@@ -81,9 +81,9 @@ s32 cappy_swoop_update(struct Object *o) {
                     (s16) ceilObj->oFaceAngleRoll  - (s16) *((s32 *) &gOmmData->object->swoop.ceiling.object.angle[2]),
                 };
                 Vec3f scale = {
-                    ceilObj->oScaleX / omm_max_f(0.01f, gOmmData->object->swoop.ceiling.object.scale[0]),
-                    ceilObj->oScaleY / omm_max_f(0.01f, gOmmData->object->swoop.ceiling.object.scale[1]),
-                    ceilObj->oScaleZ / omm_max_f(0.01f, gOmmData->object->swoop.ceiling.object.scale[2]),
+                    ceilObj->oScaleX / max_f(0.01f, gOmmData->object->swoop.ceiling.object.scale[0]),
+                    ceilObj->oScaleY / max_f(0.01f, gOmmData->object->swoop.ceiling.object.scale[1]),
+                    ceilObj->oScaleZ / max_f(0.01f, gOmmData->object->swoop.ceiling.object.scale[2]),
                 };
                 
                 // Transform
@@ -115,23 +115,23 @@ s32 cappy_swoop_update(struct Object *o) {
         }
 
         // Movement
-        obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+        perform_object_step(o, POBJ_STEP_FLAGS);
         pobj_decelerate(o, 0.80f, 0.80f);
         pobj_apply_gravity(o, 1.f);
         pobj_handle_special_floors(o);
         POBJ_STOP_IF_UNPOSSESSED;
 
         // Batman
-        if (POBJ_A_BUTTON_DOWN && o->oWall && o->oWall->normal.y < -0.9f) {
-            if (o->oWall->object) {
+        if (POBJ_A_BUTTON_DOWN && o->oCeil && o->oCeil->normal.y < -0.9f) {
+            if (o->oCeil->object) {
                 gOmmData->object->swoop.ceilingType = 2;
-                gOmmData->object->swoop.ceiling.object.o = o->oWall->object;
-                vec3f_copy(gOmmData->object->swoop.ceiling.object.pos,   (f32 *) &o->oWall->object->oPosX);
-                vec3f_copy(gOmmData->object->swoop.ceiling.object.angle, (f32 *) &o->oWall->object->oFaceAnglePitch);
-                vec3f_copy(gOmmData->object->swoop.ceiling.object.scale, (f32 *) &o->oWall->object->oScaleX);
+                gOmmData->object->swoop.ceiling.object.o = o->oCeil->object;
+                vec3f_copy(gOmmData->object->swoop.ceiling.object.pos,   (f32 *) &o->oCeil->object->oPosX);
+                vec3f_copy(gOmmData->object->swoop.ceiling.object.angle, (f32 *) &o->oCeil->object->oFaceAnglePitch);
+                vec3f_copy(gOmmData->object->swoop.ceiling.object.scale, (f32 *) &o->oCeil->object->oScaleX);
             } else {
                 gOmmData->object->swoop.ceilingType = 1;
-                gOmmData->object->swoop.ceiling.surface.s = o->oWall;
+                gOmmData->object->swoop.ceiling.surface.s = o->oCeil;
                 gOmmData->object->swoop.ceiling.surface.height = o->oPosY;
             }
         }

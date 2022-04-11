@@ -885,6 +885,8 @@ Gfx *render_painting(u8 *img, s16 tWidth, s16 tHeight, s16 *textureMap, s16 mapV
     }
 
     // Draw the triangles individually
+    extern void gfx_interpolate_painting(Vtx *, s32);
+    gfx_interpolate_painting(verts, numVtx);
     gSPVertex(gfx++, VIRTUAL_TO_PHYSICAL(verts + triGroups * 15), remGroupTris * 3, 0);
     for (group = 0; group < remGroupTris; group++) {
         gSP1Triangle(gfx++, group * 3, group * 3 + 1, group * 3 + 2, 0);
@@ -1261,6 +1263,7 @@ Gfx *geo_painting_update(s32 callContext, UNUSED struct GraphNode *node, UNUSED 
         gLastPaintingUpdateCounter = gAreaUpdateCounter - 1;
         gPaintingUpdateCounter = gAreaUpdateCounter;
     } else {
+        geo_painting_update_fix_floor();
         gLastPaintingUpdateCounter = gPaintingUpdateCounter;
         gPaintingUpdateCounter = gAreaUpdateCounter;
 

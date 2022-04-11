@@ -53,7 +53,7 @@ bool omm_exit_level() {
         // Close the pause menu if it was open
         if (optmenu_open) optmenu_toggle();
         level_set_transition(0, NULL);
-        gDialogState = 0;
+        gDialogBoxState = 0;
         gMenuMode = -1;
 
         // Cancel out every music/sound/sequence
@@ -256,7 +256,7 @@ void *omm_update_warp(void *cmd, bool inited) {
                 // Close the pause menu if it was open
                 if (optmenu_open) optmenu_toggle();
                 level_set_transition(0, NULL);
-                gDialogState = 0;
+                gDialogBoxState = 0;
                 gMenuMode = -1;
 
                 // Cancel out every music/sound/sequence
@@ -292,7 +292,7 @@ void *omm_update_warp(void *cmd, bool inited) {
                 gCurrLevelNum = sOmmWarpState.level;
                 gCurrCourseNum = omm_level_get_course(gCurrLevelNum);
                 gSavedCourseNum = gCurrCourseNum;
-                gCurrActNum = omm_max_s(1, sOmmWarpState.act * (gCurrCourseNum <= COURSE_STAGES_MAX));
+                gCurrActNum = max_s(1, sOmmWarpState.act * (gCurrCourseNum <= COURSE_STAGES_MAX));
                 gDialogCourseActNum = gCurrActNum;
                 gCurrAreaIndex = sOmmWarpState.area;
                 sTargetArea = gCurrAreaIndex;

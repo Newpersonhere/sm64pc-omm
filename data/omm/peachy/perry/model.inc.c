@@ -1,3 +1,9 @@
+#ifdef VSCODE
+#define OMM_ALL_HEADERS
+#include "data/omm/omm_includes.h"
+#undef OMM_ALL_HEADERS
+#endif
+
 //
 // Lights
 //
@@ -12,7 +18,7 @@ static const Lights1 omm_perry_light = gdSPDefLights1(
 // Textures
 //
 
-static const u8 OMM_TEXTURE_PEACH_PERRY[] = "OMM_GFX/peach/omm_texture_peach_perry";
+static const u8 OMM_TEXTURE_PEACH_PERRY[] = "peach/omm_texture_peach_perry.rgba32";
 
 //
 // Vertices

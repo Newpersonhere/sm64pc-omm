@@ -22,7 +22,7 @@ static const Gfx omm_peach_vibe_rage_aura_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, SHADE, 0),
     gsDPLoadTextureBlock(OMM_TEXTURE_EFFECT_VIBE_RAGE_AURA, G_IM_FMT_RGBA, G_IM_SIZ_32b, 256, 256, 0, 0, 0, 0, 0, 0, 0),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
-    gsSPDisplayList(NULL_dl),
+    gsSPDisplayList(null),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
     gsSPSetGeometryMode(G_LIGHTING | G_CULL_BACK),
     gsSPEndDisplayList(),
@@ -45,7 +45,7 @@ typedef struct {
 const GeoLayout omm_geo_peach_vibe_rage_aura[] = {
     GEO_NODE_START(),
     GEO_OPEN_NODE(),
-        GEO_ASM(0, omm_geo_link_geo_data),
+        GEO_ASM(0, geo_link_geo_data),
         GEO_DISPLAY_LIST(LAYER_TRANSPARENT, NULL),
     GEO_CLOSE_NODE(),
     GEO_END(),
@@ -64,19 +64,19 @@ static f32 oscillate_min_mid_max(f32 t,
     f32 baseMid, f32 gapMid, s16 freqMid,
     f32 baseMax, f32 gapMax, s16 freqMax) {
     return (t < 0.5f) ?
-        omm_lerp_f(1.f - coss(t * 0x8000), oscillate(baseMin, gapMin, freqMin), oscillate(baseMid, gapMid, freqMid)) :
-        omm_lerp_f(0.f - coss(t * 0x8000), oscillate(baseMid, gapMid, freqMid), oscillate(baseMax, gapMax, freqMax));
+        lerp_f(1.f - coss(t * 0x8000), oscillate(baseMin, gapMin, freqMin), oscillate(baseMid, gapMid, freqMid)) :
+        lerp_f(0.f - coss(t * 0x8000), oscillate(baseMid, gapMid, freqMid), oscillate(baseMax, gapMax, freqMax));
 }
 
 static void omm_bhv_peach_vibe_rage_aura_update() {
     struct Object *o = gCurrentObject;
-    OmmPeachVibeRageAuraGeoData *data = omm_geo_get_geo_data(o, sizeof(OmmPeachVibeRageAuraGeoData), omm_peach_vibe_rage_aura_gfx, sizeof(omm_peach_vibe_rage_aura_gfx));
+    OmmPeachVibeRageAuraGeoData *data = geo_get_geo_data(o, sizeof(OmmPeachVibeRageAuraGeoData), omm_peach_vibe_rage_aura_gfx, sizeof(omm_peach_vibe_rage_aura_gfx));
 
     // Global state
     s32 isRage = omm_peach_vibe_is_rage();
     o->oTimer *= (o->oAction == isRage);
     o->oAction = isRage;
-    f32 alpha  = omm_invlerp_0_1_s(o->oTimer, 15 * !isRage, 15 * isRage);
+    f32 alpha  = invlerp_0_1_s(o->oTimer, 15 * !isRage, 15 * isRage);
 
     // Vertices and triangles
     Vtx *vtx = data->vtx;
@@ -85,9 +85,9 @@ static void omm_bhv_peach_vibe_rage_aura_update() {
         f32 t = (f32) i / (f32) OMM_PEACH_VIBE_RAGE_AURA_NUM_SEGMENTS;
         f32 r = oscillate(OMM_PEACH_VIBE_RAGE_AURA_RADIUS) * sins(t * 0x8000) * gMarioObject->oScaleX;
         f32 y = oscillate_min_mid_max(t, OMM_PEACH_VIBE_RAGE_AURA_Y_MIN, OMM_PEACH_VIBE_RAGE_AURA_Y_MID, OMM_PEACH_VIBE_RAGE_AURA_Y_MAX) * gMarioObject->oScaleY;
-        f32 op = omm_sqr_f(oscillate_min_mid_max(t, OMM_PEACH_VIBE_RAGE_AURA_Y_MIN_OPACITY, OMM_PEACH_VIBE_RAGE_AURA_Y_MID_OPACITY, OMM_PEACH_VIBE_RAGE_AURA_Y_MAX_OPACITY) / 10.f);
-        f32 tu = omm_relerp_0_1_f(o->parentObj->oTimer % 60, 0, 60, 1.f, 0.f);
-        f32 tv = omm_relerp_0_1_f(o->parentObj->oTimer % 60, 0, 60, 1.f, 0.f) + t;
+        f32 op = sqr_f(oscillate_min_mid_max(t, OMM_PEACH_VIBE_RAGE_AURA_Y_MIN_OPACITY, OMM_PEACH_VIBE_RAGE_AURA_Y_MID_OPACITY, OMM_PEACH_VIBE_RAGE_AURA_Y_MAX_OPACITY) / 10.f);
+        f32 tu = relerp_0_1_f(o->parentObj->oTimer % 60, 0, 60, 1.f, 0.f);
+        f32 tv = relerp_0_1_f(o->parentObj->oTimer % 60, 0, 60, 1.f, 0.f) + t;
 
         // Vertex buffer
         // Current segment + next segment
@@ -131,7 +131,7 @@ static void omm_bhv_peach_vibe_rage_aura_update() {
     }
 
     // Update object
-    f32 *marioRootPos = omm_geo_get_marios_root_pos();
+    f32 *marioRootPos = geo_get_marios_root_pos();
     obj_set_pos(o, marioRootPos[0], marioRootPos[1], marioRootPos[2]);
     obj_set_home(o, marioRootPos[0], marioRootPos[1], marioRootPos[2]);
     obj_set_angle(o, 0, 0, 0);

@@ -36,7 +36,7 @@ static const Gfx omm_perry_blast_gfx[] = {
     gsDPSetEnvColor(0xFF, 0xFF, 0xFF, 0xFF),
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, SHADE, 0),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
-    gsSPDisplayList(NULL_dl),
+    gsSPDisplayList(null),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
     gsSPSetGeometryMode(G_LIGHTING | G_CULL_BACK),
     gsSPEndDisplayList(),
@@ -69,7 +69,7 @@ const GeoLayout omm_geo_perry_blast[] = {
         GEO_CLOSE_NODE(),
         GEO_TRANSLATE_NODE(LAYER_TRANSPARENT, 0, 0, 0),
         GEO_OPEN_NODE(),
-            GEO_ASM(0, omm_geo_link_geo_data),
+            GEO_ASM(0, geo_link_geo_data),
             GEO_DISPLAY_LIST(LAYER_TRANSPARENT, NULL),
         GEO_CLOSE_NODE(),
     GEO_CLOSE_NODE(),
@@ -88,9 +88,9 @@ static void omm_bhv_perry_blast_update() {
     }
 
     // Update gfx
-    OmmPerryBigShotGeoData *data = omm_geo_get_geo_data(o, sizeof(OmmPerryBigShotGeoData), omm_perry_blast_gfx, sizeof(omm_perry_blast_gfx));
-    f32 scale = omm_relerp_0_1_f(o->oTimer, 0, OMM_PERRY_BLAST_DURATION, 0.f, 1.f) * OMM_PERRY_BLAST_RADIUS;
-    f32 alpha = omm_relerp_0_1_f(o->oTimer, 5, OMM_PERRY_BLAST_DURATION, 1.f, 0.f);
+    OmmPerryBigShotGeoData *data = geo_get_geo_data(o, sizeof(OmmPerryBigShotGeoData), omm_perry_blast_gfx, sizeof(omm_perry_blast_gfx));
+    f32 scale = relerp_0_1_f(o->oTimer, 0, OMM_PERRY_BLAST_DURATION, 0.f, 1.f) * OMM_PERRY_BLAST_RADIUS;
+    f32 alpha = relerp_0_1_f(o->oTimer, 5, OMM_PERRY_BLAST_DURATION, 1.f, 0.f);
     obj_set_angle(o, 0, 0, 0);
     obj_set_scale(o, 1, 1, 1);
     
@@ -101,8 +101,8 @@ static void omm_bhv_perry_blast_update() {
         f32 t = (f32) i / (f32) OMM_PERRY_BLAST_NUM_SEGMENTS;
         f32 r = scale * sins(t * 0x8000);
         f32 y = scale * -coss(t * 0x8000);
-        f32 tu = omm_relerp_0_1_f((o->oTimer + o->oAction) % 20, 0, 20, 1.f, 0.f);
-        f32 tv = omm_relerp_0_1_f((o->oTimer + o->oAction) % 30, 0, 30, 1.f, 0.f) + t;
+        f32 tu = relerp_0_1_f((o->oTimer + o->oAction) % 20, 0, 20, 1.f, 0.f);
+        f32 tv = relerp_0_1_f((o->oTimer + o->oAction) % 30, 0, 30, 1.f, 0.f) + t;
 
         // Vertex buffer
         // Current segment + next segment
@@ -160,7 +160,7 @@ const BehaviorScript omm_bhv_perry_blast[] = {
 struct Object *omm_spawn_perry_blast(struct Object *o, s32 type) {
     struct Object *blast = obj_spawn_from_geo(o, omm_geo_perry_blast, omm_bhv_perry_blast);
     obj_set_always_rendered(blast, true);
-    blast->oAnimState = type;
+    blast->oPerryType = type;
     blast->oAction = random_u16();
     return blast;
 }

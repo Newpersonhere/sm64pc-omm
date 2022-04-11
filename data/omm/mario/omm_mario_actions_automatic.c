@@ -59,7 +59,7 @@ static s32 omm_act_hang_moving(struct MarioState *m) {
         mario_set_forward_vel(m, m->forwardVel);
         action_condition(perform_hang_step(m) == HANG_STEP_LEFT_CEIL, ACT_FREEFALL, 0, RETURN_BREAK);
         
-        f32 animSpeed = omm_relerp_0_1_f(m->forwardVel, 0.f, OMM_MARIO_HANG_MAX_SPEED, 1.f, 2.f);
+        f32 animSpeed = relerp_0_1_f(m->forwardVel, 0.f, OMM_MARIO_HANG_MAX_SPEED, 1.f, 2.f);
         obj_anim_play(m->marioObj, (m->actionArg ? MARIO_ANIM_MOVE_ON_WIRE_NET_RIGHT : MARIO_ANIM_MOVE_ON_WIRE_NET_LEFT), animSpeed);
         if (obj_anim_is_past_frame(m->marioObj, 12)) {
             play_sound_if_no_flag(m, SOUND_ACTION_HANGING_STEP, MARIO_ACTION_SOUND_PLAYED);
@@ -102,6 +102,11 @@ static s32 omm_act_climbing_pole(struct MarioState *m) {
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
+static s32 omm_act_ledge_climb_slow(struct MarioState *m) {
+    action_condition(OMM_MOVESET_ODYSSEY, ACT_LEDGE_CLIMB_FAST, 0, RETURN_CANCEL);
+    return OMM_MARIO_ACTION_RESULT_CONTINUE;
+}
+
 //
 // OMM Bowser
 //
@@ -125,7 +130,7 @@ static s32 omm_act_hold_bowser(struct MarioState *m) {
     obj_anim_play(m->marioObj, m->angleVel[1] == 0 ? MARIO_ANIM_HOLDING_BOWSER : MARIO_ANIM_SWINGING_BOWSER, 1.f);
 
     // Prepare release
-    if (!sAboutToReleaseBowser && (m->controller->buttonPressed & B_BUTTON) && (omm_abs_s(m->angleVel[1]) >= 0x0E00)) {
+    if (!sAboutToReleaseBowser && (m->controller->buttonPressed & B_BUTTON) && (abs_s(m->angleVel[1]) >= 0x0E00)) {
         
         // Target the nearest mine to throw Bowser into
         // Takes the current rotation into account
@@ -134,12 +139,12 @@ static s32 omm_act_hold_bowser(struct MarioState *m) {
         u16 minAngle = 0xFFFF;
         for_each_object_with_behavior(mine, omm_bhv_bowser_mine) {
             s16 mineAngle = atan2s(mine->oPosZ, mine->oPosX);
-            for (s32 deltaAngle = 0; omm_abs_s(deltaAngle) < 0x10000; deltaAngle += m->angleVel[1]) {
+            for (s32 deltaAngle = 0; abs_s(deltaAngle) < 0x10000; deltaAngle += m->angleVel[1]) {
                 s16 nextAngle = m->faceAngle[1] + (s16) deltaAngle;
-                u16 angleDiff = (u16) omm_abs_s(nextAngle - mineAngle);
-                if (angleDiff < (u16) omm_abs_s(m->angleVel[1])) {
-                    if ((u16) omm_abs_s(deltaAngle) < minAngle) {
-                        minAngle = (u16) omm_abs_s(deltaAngle);
+                u16 angleDiff = (u16) abs_s(nextAngle - mineAngle);
+                if (angleDiff < (u16) abs_s(m->angleVel[1])) {
+                    if ((u16) abs_s(deltaAngle) < minAngle) {
+                        minAngle = (u16) abs_s(deltaAngle);
                         targetAngle = mineAngle;
                         targetMine = mine;
                     }
@@ -156,13 +161,13 @@ static s32 omm_act_hold_bowser(struct MarioState *m) {
 
     // About to release
     if (sAboutToReleaseBowser) {
-        u16 angleDiff = (u16) omm_abs_s(m->faceAngle[1] - sTargetMineYawAngle);
-        if (angleDiff < (u16) omm_abs_s((s16) sTargetMineYawVel)) {
+        u16 angleDiff = (u16) abs_s(m->faceAngle[1] - sTargetMineYawAngle);
+        if (angleDiff < (u16) abs_s((s16) sTargetMineYawVel)) {
         
             // Set Bowser's starting point and direction
             m->faceAngle[1] = sTargetMineYawAngle;
             struct Object *bowser = obj_get_first_with_behavior(omm_bhv_bowser);
-            f32 distBowserFromCenter = sqrtf(omm_sqr_f(bowser->oPosX) + omm_sqr_f(bowser->oPosZ));
+            f32 distBowserFromCenter = sqrtf(sqr_f(bowser->oPosX) + sqr_f(bowser->oPosZ));
             bowser->oPosX = distBowserFromCenter * sins(m->faceAngle[1]);
             bowser->oPosZ = distBowserFromCenter * coss(m->faceAngle[1]);
             bowser->oFaceAngleYaw = m->faceAngle[1];
@@ -187,9 +192,9 @@ static s32 omm_act_hold_bowser(struct MarioState *m) {
                 m->actionArg = 1;
                 m->twirlYaw = m->intendedYaw;
             } else {
-                s16 angleAccel = omm_clamp_s((s16) (m->intendedYaw - m->twirlYaw) / 100, -200, +200);
+                s16 angleAccel = clamp_s((s16) (m->intendedYaw - m->twirlYaw) / 100, -200, +200);
                 m->twirlYaw = m->intendedYaw;
-                m->angleVel[1] = omm_clamp_s(m->angleVel[1] + angleAccel, -0x1000, +0x1000);
+                m->angleVel[1] = clamp_s(m->angleVel[1] + angleAccel, -0x1000, +0x1000);
             }
         } else {
             m->actionArg = 0;
@@ -208,7 +213,7 @@ static s32 omm_act_hold_bowser(struct MarioState *m) {
 
     // Update Bowser's pos and angle
     struct Object *bowser = obj_get_first_with_behavior(omm_bhv_bowser);
-    f32 distBowserFromCenter = sqrtf(omm_sqr_f(bowser->oPosX) + omm_sqr_f(bowser->oPosZ));
+    f32 distBowserFromCenter = sqrtf(sqr_f(bowser->oPosX) + sqr_f(bowser->oPosZ));
     bowser->oPosX = distBowserFromCenter * sins(m->faceAngle[1]);
     bowser->oPosZ = distBowserFromCenter * coss(m->faceAngle[1]);
     bowser->oFaceAngleYaw = m->faceAngle[1];
@@ -259,6 +264,8 @@ s32 omm_mario_execute_automatic_action(struct MarioState *m) {
         case ACT_IN_CANNON:             return omm_act_in_cannon(m);
         case ACT_HOLDING_POLE:          return omm_act_holding_pole(m);
         case ACT_CLIMBING_POLE:         return omm_act_climbing_pole(m);
+        case ACT_LEDGE_CLIMB_SLOW_1:    return omm_act_ledge_climb_slow(m);
+        case ACT_LEDGE_CLIMB_SLOW_2:    return omm_act_ledge_climb_slow(m);
 
         case ACT_OMM_GRAB_BOWSER:       return omm_act_grab_bowser(m);
         case ACT_OMM_HOLD_BOWSER:       return omm_act_hold_bowser(m);

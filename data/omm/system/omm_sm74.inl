@@ -7,7 +7,7 @@
 //
 
 typedef struct { s32 level; s32 act; } ActValues;
-static OmmArray sOmmWarpActValues[3] = { NULL, NULL, NULL };
+static OmmArray sOmmWarpActValues[3] = { omm_array_zero, omm_array_zero, omm_array_zero };
 
 static const u8 **sOmmWarpLevelChoices[3] = { NULL, NULL, NULL };
 static const u8 **sOmmWarpActChoices[3] = { NULL, NULL, NULL };
@@ -21,13 +21,15 @@ static u32 sOmmWarpAct = 0;
 
 static void omm_opt_init_warp_to_level() {
     for (sm74_mode__omm_opt_init_warp_to_level = 1; sm74_mode__omm_opt_init_warp_to_level <= 2; ++sm74_mode__omm_opt_init_warp_to_level) {
-        sOmmWarpActValues[sm74_mode__omm_opt_init_warp_to_level] = omm_array_new(ActValues);
         for (s32 i = 0; i != omm_level_get_count(); ++i) {
             s32 level = omm_level_get_list()[i];
-            s32 stars = omm_max_s(0x1, omm_stars_get_bits_total(level));
+            s32 stars = max_s(0x1, omm_stars_get_bits_total(level));
             for (s32 j = 0; j != 6; ++j) {
                 if ((stars >> j) & 1) {
-                    omm_array_add_inplace(sOmmWarpActValues[sm74_mode__omm_opt_init_warp_to_level], ActValues, { level, j + 1 });
+                    ActValues *actValues = OMM_MEMNEW(ActValues, 1);
+                    actValues->level = level;
+                    actValues->act = j + 1;
+                    omm_array_add(sOmmWarpActValues[sm74_mode__omm_opt_init_warp_to_level], ptr, actValues);
                 }
             }
         }
@@ -47,9 +49,10 @@ static void omm_opt_init_warp_to_level() {
     sOmmWarpActChoices[1] = sOmmWarpActChoices[0];
     sOmmWarpActChoices[2] = sOmmWarpActChoices[0] + omm_array_count(sOmmWarpActValues[1]);
     for (sm74_mode__omm_opt_init_warp_to_level = 1; sm74_mode__omm_opt_init_warp_to_level <= 2; ++sm74_mode__omm_opt_init_warp_to_level) {
-        omm_array_for_each(sOmmWarpActValues[sm74_mode__omm_opt_init_warp_to_level], ActValues, actValues) {
+        omm_array_for_each(sOmmWarpActValues[sm74_mode__omm_opt_init_warp_to_level], p) {
+            ActValues *actValues = (ActValues *) p->as_ptr;
             const u8 *name = omm_level_get_act_name(actValues->level, actValues->act, true, true);
-            sOmmWarpActChoices[sm74_mode__omm_opt_init_warp_to_level][index_actValues] = OMM_MEMDUP(name, omm_text_length(name) + 1);
+            sOmmWarpActChoices[sm74_mode__omm_opt_init_warp_to_level][i_p] = OMM_MEMDUP(name, omm_text_length(name) + 1);
         }
     }
 }
@@ -101,9 +104,10 @@ static u32 omm_opt_get_level_index(s32 level) {
 
 static u32 omm_opt_get_first_act_index(s32 level) {
     s32 mode = sOmmWarpArea + 1;
-    omm_array_for_each(sOmmWarpActValues[mode], ActValues, actValues) {
+    omm_array_for_each(sOmmWarpActValues[mode], p) {
+        ActValues *actValues = (ActValues *) p->as_ptr;
         if (actValues->level == level) {
-            return index_actValues;
+            return i_p;
         }
     }
     return 0;
@@ -137,7 +141,7 @@ static void omm_opt_update_warp_to_level() {
     // Act changed
     else if (sOmmWarpActPrev != sOmmWarpAct) {
         s32 mode = sOmmWarpArea + 1;
-        s32 level = omm_array_getp(sOmmWarpActValues[mode], ActValues, sOmmWarpAct)->level;
+        s32 level = ((ActValues *) omm_array_get(sOmmWarpActValues[mode], ptr, sOmmWarpAct))->level;
         sOmmWarpLevel = omm_opt_get_level_index(level);
     }
 
@@ -151,7 +155,7 @@ static void omm_opt_warp_to_level(UNUSED void *opt, s32 arg) {
     if (!arg) {
         s32 level = omm_level_get_list()[sOmmWarpLevel];
         s32 mode = sOmmWarpArea + 1;
-        s32 act = omm_array_getp(sOmmWarpActValues[mode], ActValues, sOmmWarpAct)->act;
+        s32 act = ((ActValues *) omm_array_get(sOmmWarpActValues[mode], ptr, sOmmWarpAct))->act;
         if (!omm_warp_to_level(level, mode, act)) {
             play_sound(SOUND_MENU_CAMERA_BUZZ | 0xFF00, gGlobalSoundArgs);
         }
@@ -164,7 +168,7 @@ void omm_opt_sm74_change_mode(UNUSED void *opt, s32 arg) {
         initiate_warp(gCurrLevelNum, gCurrAreaIndex ^ 3, 0x0A, 0);
         fade_into_special_warp(0, 0);
         gSavedCourseNum = COURSE_NONE;
-        gDialogState = 0;
+        gDialogBoxState = 0;
         gMenuMode = -1;
     }
 }

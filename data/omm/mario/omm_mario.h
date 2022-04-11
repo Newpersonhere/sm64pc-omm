@@ -26,25 +26,6 @@ enum OmmUnpossessAction {
 };
 
 //
-// Collision
-//
-
-typedef struct {
-    struct {
-        OmmArray floors;
-        OmmArray ceils;
-        OmmArray walls;
-    } surfaces[OMM_COLLISION_CELL_COUNT][OMM_COLLISION_CELL_COUNT];
-    struct {
-        s32 floors;
-        s32 ceils;
-        s32 walls;
-    } counts[OMM_COLLISION_CELL_COUNT][OMM_COLLISION_CELL_COUNT];
-} OmmSurfaceHashMap;
-extern OmmSurfaceHashMap gOmmStaticSurfaces;
-extern OmmSurfaceHashMap gOmmDynamicSurfaces;
-
-//
 // Movement
 //
 

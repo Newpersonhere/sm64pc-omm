@@ -1,3 +1,7 @@
+#ifdef VSCODE
+#include "model.inc.c"
+#endif
+
 const GeoLayout omm_geo_peachs_cap[] = {
     GEO_SHADOW(SHADOW_CIRCLE_9_VERTS, 0xB4, 60),
     GEO_OPEN_NODE(),

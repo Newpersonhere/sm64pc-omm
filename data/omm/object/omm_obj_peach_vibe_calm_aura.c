@@ -73,16 +73,7 @@ OMM_GFX_DL(omm_peach_vibe_calm_aura, OMM_TEXTURE_EFFECT_VIBE_CALM_AURA, omm_peac
 
 static Gfx *omm_geo_peach_vibe_calm_aura_translate(s32 callContext, struct GraphNode *node, UNUSED void *context) {
     if (callContext == GEO_CONTEXT_RENDER) {
-        struct GraphNodeTranslation *translationNode = (struct GraphNodeTranslation *) node->next;
-        f32 dx = gCurGraphNodeObject->cameraToObject[0];
-        f32 dy = gCurGraphNodeObject->cameraToObject[1];
-        f32 dz = gCurGraphNodeObject->cameraToObject[2];
-        f32 dn = sqrtf(omm_sqr_f(dx) + omm_sqr_f(dy) + omm_sqr_f(dz));
-        if (dn != 0) {
-            translationNode->translation[0] = (s16) ((-80.f * dx) / (gCurrGraphNodeObject->oScaleX * dn));
-            translationNode->translation[1] = (s16) ((-80.f * dy) / (gCurrGraphNodeObject->oScaleY * dn));
-            translationNode->translation[2] = (s16) ((-80.f * dz) / (gCurrGraphNodeObject->oScaleZ * dn));
-        }
+        geo_move_from_camera(gCurGraphNodeObject, (struct GraphNodeTranslation *) node->next, -80.f * gMarioObject->oScaleY);
     }
     return NULL;
 }
@@ -129,7 +120,7 @@ const GeoLayout omm_geo_peach_vibe_calm_aura[] = {
 static void omm_bhv_peach_vibe_calm_aura_update() {
     struct Object *o = gCurrentObject;
     if (omm_peach_vibe_is_calm()) {
-        f32 *marioRootPos = omm_geo_get_marios_root_pos();
+        f32 *marioRootPos = geo_get_marios_root_pos();
         o->oPosX = marioRootPos[0];
         o->oPosY = marioRootPos[1];
         o->oPosZ = marioRootPos[2];
@@ -162,7 +153,7 @@ struct Object *omm_spawn_peach_vibe_calm_aura(struct Object *o) {
         aura = obj_spawn_from_geo(o, omm_geo_peach_vibe_calm_aura, omm_bhv_peach_vibe_calm_aura);
         obj_set_always_rendered(aura, true);
         obj_set_angle(aura, 0, 0, 0);
-        obj_scale(aura, 5.f);
+        obj_scale(aura, 5.f * gMarioObject->oScaleY);
     }
     return aura;
 }

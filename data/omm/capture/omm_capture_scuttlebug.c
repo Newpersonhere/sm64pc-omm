@@ -40,7 +40,7 @@ s32 cappy_scuttlebug_update(struct Object *o) {
         if (o->oWall && gOmmData->object->state.actionState) {
             s16 wallAngle = atan2s(o->oWall->normal.z, o->oWall->normal.x);
             s16 diffAngle = (s16) gOmmData->mario->capture.stickYaw - (s16) wallAngle;
-            if (omm_abs_s(diffAngle) < 0x4000) {
+            if (abs_s(diffAngle) < 0x4000) {
                 gOmmData->mario->capture.stickYaw = wallAngle + 0x8000 - diffAngle;
             }
             o->oFloor = o->oWall;
@@ -62,7 +62,7 @@ s32 cappy_scuttlebug_update(struct Object *o) {
         0xE99A, 0xE99A,
         0x1666, 0xE99A
     };
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     pobj_decelerate(o, 0.85f, 0.95f);
     if (o->oWall && (o->oVelY <= 0.f) && (o->oDistToFloor > o->hitboxRadius) && POBJ_B_BUTTON_DOWN) {
         o->oVelY = 0;
@@ -102,9 +102,9 @@ s32 cappy_scuttlebug_update(struct Object *o) {
         o->oGfxAngle[0] = -0x4000;
         o->oGfxAngle[1] = wallAngle;
     }
-    obj_anim_play(o, 0, (o->oVelY <= 0.f) * omm_max_f(1.f, o->oForwardVel * 2.f / (omm_capture_get_walk_speed(o))));
+    obj_anim_play(o, 0, (o->oVelY <= 0.f) * max_f(1.f, o->oForwardVel * 2.f / (omm_capture_get_walk_speed(o))));
     if (obj_is_on_ground(o)) {
-        obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, omm_capture_get_walk_speed(o) * 12.f, o->oForwardVel, SOUND_OBJ2_SCUTTLEBUG_WALK, OBJ_STEP_PARTICLE_NONE);
+        obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, omm_capture_get_walk_speed(o) * 12.f, o->oForwardVel, SOUND_OBJ2_SCUTTLEBUG_WALK, OBJ_PARTICLE_NONE);
     }
 
     // Cappy values

@@ -85,7 +85,7 @@ const GeoLayout omm_geo_sparkle[] = {
         GEO_CLOSE_NODE(),
         GEO_TRANSLATE_NODE(LAYER_TRANSPARENT, 0, 0, 0),
         GEO_OPEN_NODE(),
-            GEO_ASM(0, omm_geo_link_geo_data),
+            GEO_ASM(0, geo_link_geo_data),
             GEO_DISPLAY_LIST(LAYER_TRANSPARENT, NULL),
         GEO_CLOSE_NODE(),
     GEO_CLOSE_NODE(),
@@ -100,7 +100,7 @@ struct Object *omm_spawn_sparkle(struct Object *o, u8 r, u8 g, u8 b, f32 transla
     struct Object *sparkle = obj_spawn_from_geo(o, omm_geo_sparkle, bhvSparkle);
     obj_translate_xyz_random(sparkle, translationRange * 2.f);
     obj_scale_random(sparkle, maxScale - minScale, minScale);
-    OmmSparkleGeoData *data = omm_geo_get_geo_data(sparkle, sizeof(OmmSparkleGeoData), omm_sparkle_gfx, sizeof(omm_sparkle_gfx));
+    OmmSparkleGeoData *data = geo_get_geo_data(sparkle, sizeof(OmmSparkleGeoData), omm_sparkle_gfx, sizeof(omm_sparkle_gfx));
     data->gfx[0].words.w1 = (uintptr_t) (((r & 0xFF) << 24llu) | ((g & 0xFF) << 16llu) | ((b & 0xFF) << 8llu) | 0xFF);
     return sparkle;
 }

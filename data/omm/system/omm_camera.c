@@ -2,10 +2,6 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
-//
-// Constants
-//
-
 #define OMM_CAM_NUM_DIRS            (8 * (OMM_CAMERA_CLASSIC ? 1 : gOmmCameraMode))
 #define OMM_CAM_DELTA_ANGLE         (0x10000 / OMM_CAM_NUM_DIRS)
 #define OMM_CAM_DIST_NUM_MODES      5
@@ -15,25 +11,6 @@
 #define OMM_CAM_DIST_MODE_HIGH      (OMM_CAM_DIST_MODE_MEDIUM + 1)
 #define OMM_CAM_DIST_MODE_LOW       (OMM_CAM_DIST_MODE_MEDIUM - 1)
 static const f32 sOmmCameraDistances[OMM_CAM_DIST_NUM_MODES] = { 400.f, 800.f, 1200.f, 1600.f, 2000.f };
-
-//
-// Inlines
-//
-
-inline static s16 approach(s16 value, s16 target, s16 inc) {
-    return target - approach_s32((s16) (target - value), 0, inc, inc);
-}
-
-inline static s16 get_nearest_dir_angle(s16 value) {
-    s32 va = (s32) value + 0x10000;
-    s32 da = OMM_CAM_DELTA_ANGLE;
-    s32 a0 = (((va / da) + 0) * da);
-    s32 a1 = (((va / da) + 1) * da);
-    s32 d0 = omm_abs_s(va - a0);
-    s32 d1 = omm_abs_s(va - a1);
-    if (d0 == omm_min_s(d0, d1)) return (s16) a0;
-    return (s16) a1;
-}
 
 //
 // Data
@@ -50,16 +27,52 @@ static f32 sOmmCamDistance    = 0.f;
 static f32 sOmmCamPos[3];
 static f32 sOmmCamFocus[3];
 
+OMM_INLINE s16 approach(s16 value, s16 target, s16 inc) {
+    return target - approach_s32((s16) (target - value), 0, inc, inc);
+}
+
+OMM_INLINE s16 get_nearest_dir_angle(s16 value) {
+    s32 va = (s32) value + 0x10000;
+    s32 da = OMM_CAM_DELTA_ANGLE;
+    s32 a0 = (((va / da) + 0) * da);
+    s32 a1 = (((va / da) + 1) * da);
+    s32 d0 = abs_s(va - a0);
+    s32 d1 = abs_s(va - a1);
+    if (d0 == min_s(d0, d1)) return (s16) a0;
+    return (s16) a1;
+}
+
 //
-// Functions
+// States
 //
 
 bool omm_camera_is_available(struct MarioState *m) {
-    return
-        !omm_is_ending_cutscene() &&
-        (!OMM_CAMERA_CLASSIC || omm_cappy_get_object_play_as()) &&
-        (m->action != ACT_IN_CANNON);
+    return !omm_is_ending_cutscene() && (!OMM_CAMERA_CLASSIC || omm_cappy_get_object_play_as()) && (m->action != ACT_IN_CANNON);
 }
+
+s16 omm_camera_get_intended_yaw(struct MarioState *m) {
+
+    // OMM cam
+    if (omm_camera_is_available(m)) {
+        return atan2s(-m->controller->stickY, m->controller->stickX) + sOmmCamYaw;
+    }
+
+    // Better cam (not Puppy cam)
+    if (BETTER_CAM_IS_ENABLED && !BETTER_CAM_IS_PUPPY_CAM && gLakituState.mode == BETTER_CAM_MODE) {
+        return atan2s(-m->controller->stickY, m->controller->stickX) - BETTER_CAM_YAW + 0x4000;
+    }
+
+    // Lakitu/Puppy cam
+    return atan2s(-m->controller->stickY, m->controller->stickX) + m->area->camera->yaw;
+}
+
+s32 omm_camera_get_relative_dist_mode() {
+    return sOmmCamDistMode - OMM_CAM_DIST_MODE_MEDIUM;
+}
+
+//
+// Init
+//
 
 #if OMM_GAME_IS_SM64
 // Level, Area, Pitch, Yaw, Distance
@@ -83,7 +96,7 @@ static const s32 sOmmCameraInitPresetCount = sizeof(sOmmCameraInitPresets) / siz
 static const s16 sOmmCameraNoColBoxes[][8] = {
     { LEVEL_WDW,   1,  450, 1400,   100, 3600, -2350, -1100 },
     { LEVEL_BITFS, 1, 2950, 4550, -1450, -600,  -350,   950 },
-    { LEVEL_BITFS, 1, 2550, 3150, -1250,  450,     0,   600 },
+    { LEVEL_BITFS, 1, 2500, 3200, -1250,  450, -1200,  1200 },
 };
 static const s32 sOmmCameraNoColBoxCount = sizeof(sOmmCameraNoColBoxes) / sizeof(sOmmCameraNoColBoxes[0]);
 #endif
@@ -123,101 +136,18 @@ OMM_ROUTINE_LEVEL_ENTRY(omm_camera_init_from_level_entry) {
     sOmmCamFpMode = 0;
 }
 
-void omm_camera_set_yaw(s16 yaw) {
-    sOmmCamYaw = yaw;
-}
-
-s16 omm_camera_get_intended_yaw(struct MarioState *m) {
-
-    // OMM cam
-    if (omm_camera_is_available(m)) {
-        return atan2s(-m->controller->stickY, m->controller->stickX) + sOmmCamYaw;
-    }
-
-    // Better cam (not Puppy cam)
-    if (BETTER_CAM_IS_ENABLED && !BETTER_CAM_IS_PUPPY_CAM && gLakituState.mode == BETTER_CAM_MODE) {
-        return atan2s(-m->controller->stickY, m->controller->stickX) - BETTER_CAM_YAW + 0x4000;
-    }
-
-    // Lakitu/Puppy cam
-    return atan2s(-m->controller->stickY, m->controller->stickX) + m->area->camera->yaw;
-}
-
-s32 omm_camera_get_relative_dist_mode() {
-    return sOmmCamDistMode - OMM_CAM_DIST_MODE_MEDIUM;
-}
-
 //
 // Collision
 //
 
-typedef struct { f32 x, y, z; } vec3;
-typedef struct { vec3 pos; f32 dist; f32 ratio; struct Surface *surf; } RayHit;
-typedef struct { RayHit hit[16]; s32 count; } RayHits;
-typedef struct { void *buffer[4096]; s32 count; } Surfaces;
-
-inline static vec3 vec3_set(f32 x, f32 y, f32 z) { vec3 v = { x, y, z }; return v; }
-inline static vec3 vec3_add(vec3 u, vec3 v) { return vec3_set(u.x + v.x, u.y + v.y, u.z + v.z); }
-inline static vec3 vec3_sub(vec3 u, vec3 v) { return vec3_set(u.x - v.x, u.y - v.y, u.z - v.z); }
-inline static vec3 vec3_mult(vec3 v, f32 f) { return vec3_set(v.x * f, v.y * f, v.z * f); }
-inline static vec3 vec3_cross(vec3 u, vec3 v) { return vec3_set(u.y * v.z - v.y * u.z, u.z * v.x - v.z * u.x, u.x * v.y - v.x * u.y); }
-inline static f32  vec3_length(vec3 v) { return sqrtf(omm_sqr_f(v.x) + omm_sqr_f(v.y) + omm_sqr_f(v.z)); }
-inline static f32  vec3_dist(vec3 u, vec3 v) { return vec3_length(vec3_sub(u, v)); }
-inline static f32  vec3_dot(vec3 u, vec3 v) { return u.x * v.x + u.y * v.y + u.z * v.z; }
-inline static bool find_surface(const Surfaces *surfaces, void *ptr) { for (s32 i = 0; i != surfaces->count; ++i) { if (surfaces->buffer[i] == ptr) { return true; } } return false; }
-
-static bool omm_camera_intersect_ray_surface(vec3 origin, vec3 dirNormalized, f32 dirLength, struct Surface *surface, RayHit *hit) {
-    vec3 p0 = vec3_set(surface->vertex1[0], surface->vertex1[1], surface->vertex1[2]);
-    vec3 p1 = vec3_set(surface->vertex2[0], surface->vertex2[1], surface->vertex2[2]);
-    vec3 p2 = vec3_set(surface->vertex3[0], surface->vertex3[1], surface->vertex3[2]);
-    vec3 vc = vec3_mult(vec3_add(vec3_add(p0, p1), p2), 1.f / 3.f);
-    vec3 v0 = vec3_add(vc, vec3_mult(vec3_sub(p0, vc), 1.1f));
-    vec3 v1 = vec3_add(vc, vec3_mult(vec3_sub(p1, vc), 1.1f));
-    vec3 v2 = vec3_add(vc, vec3_mult(vec3_sub(p2, vc), 1.1f));
-    vec3 e1 = vec3_sub(v1, v0);
-    vec3 e2 = vec3_sub(v2, v0);
-    vec3 vh = vec3_cross(dirNormalized, e2);
-
-    // Perpendicular?
-    f32 dot = vec3_dot(e1, vh);
-    if (dot > -0.01f && dot < 0.01f) {
-        return false;
-    }
-
-    // Contact?
-    vec3 vo = vec3_sub(origin, v0);
-    f32 u = vec3_dot(vo, vh) / dot;
-    if (u < 0.f || u > 1.f) {
-        return false;
-    }
-
-    vec3 voeCross = vec3_cross(vo, e1);
-    f32 v = vec3_dot(dirNormalized, voeCross) / dot;
-    if (v < 0.f || (u + v) > 1.f) {
-        return false;
-    }
-
-    // Compute hitLength
-    hit->dist = vec3_dot(e2, voeCross) / dot;
-    if (hit->dist < 0.01f || hit->dist > dirLength) {
-        return false;
-    }
-
-    // Fill hit
-    hit->pos = vec3_add(origin, vec3_mult(dirNormalized, hit->dist));
-    hit->surf = surface;
-    hit->ratio = hit->dist / dirLength;
-    return true;
-}
-
-static bool omm_camera_check_point_in_no_col_box(vec3 pos) {
+static bool omm_camera_check_point_in_no_col_box(Vec3f pos) {
 #if OMM_GAME_IS_SM64
     for (s32 i = 0; i != sOmmCameraNoColBoxCount; ++i) {
         if (sOmmCameraNoColBoxes[i][0] == gCurrLevelNum &&
             sOmmCameraNoColBoxes[i][1] == gCurrAreaIndex &&
-            sOmmCameraNoColBoxes[i][2] < pos.x && pos.x < sOmmCameraNoColBoxes[i][3] &&
-            sOmmCameraNoColBoxes[i][4] < pos.y && pos.y < sOmmCameraNoColBoxes[i][5] &&
-            sOmmCameraNoColBoxes[i][6] < pos.z && pos.z < sOmmCameraNoColBoxes[i][7]) {
+            sOmmCameraNoColBoxes[i][2] < pos[0] && pos[0] < sOmmCameraNoColBoxes[i][3] &&
+            sOmmCameraNoColBoxes[i][4] < pos[1] && pos[1] < sOmmCameraNoColBoxes[i][5] &&
+            sOmmCameraNoColBoxes[i][6] < pos[2] && pos[2] < sOmmCameraNoColBoxes[i][7]) {
             return true;
         }
     }
@@ -227,151 +157,41 @@ static bool omm_camera_check_point_in_no_col_box(vec3 pos) {
     return false;
 }
 
-static void omm_camera_find_hits_on_list(struct Surface **head, s32 count, vec3 origin, vec3 dirNormalized, f32 dirLength, RayHits *hits, Surfaces *surfaces) {
-    f32 lowerY = omm_min_f(origin.y, vec3_add(origin, vec3_mult(dirNormalized, dirLength)).y);
-    f32 upperY = omm_max_f(origin.y, vec3_add(origin, vec3_mult(dirNormalized, dirLength)).y);
-    for (s32 i = 0; i < count && hits->count < 16; head++, i++) {
-        struct Surface *surf = *head;
-
-        // Reject surface out of vertical bounds
-        if (surf->lowerY > upperY ||
-            surf->upperY < lowerY) {
-            continue;
-        }
-
-        // Reject no-cam collision and vanish cap walls surfaces
-        if ((surf->flags & SURFACE_FLAG_NO_CAM_COLLISION) ||
-            (surf->type == SURFACE_NO_CAM_COLLISION) ||
-            (surf->type == SURFACE_NO_CAM_COLLISION_77) ||
-            (surf->type == SURFACE_NO_CAM_COL_VERY_SLIPPERY) ||
-            (surf->type == SURFACE_NO_CAM_COL_SLIPPERY) ||
-            (surf->type == SURFACE_SWITCH) ||
-            (surf->type == SURFACE_VANISH_CAP_WALLS)) {
-            continue;
-        }
-
-        // Exclude already checked surfaces
-        if (find_surface(surfaces, surf)) {
-            continue;
-        }
-        surfaces->buffer[surfaces->count++] = surf;
-
-        // Check intersection
-        // Reject hit if inside a no-collision box
-        // Reject hit if not opposed to the camera direction
-        RayHit hit;
-        if (omm_camera_intersect_ray_surface(origin, dirNormalized, dirLength, surf, &hit)) {
-            if (!omm_camera_check_point_in_no_col_box(hit.pos)) {
-                if (vec3_dot(dirNormalized, vec3_set(hit.surf->normal.x, hit.surf->normal.y, hit.surf->normal.z)) < 0.f) {
-                    hits->hit[hits->count++] = hit;
-                }
+static bool omm_camera_check_focus_behind_actual_wall(const RayCollisionData *hits, const RayHit *hit) {
+    if (hits->count != -1) {
+        for (s32 i = 0; i != hits->count; ++i) {
+            if (hits->hits[i].ratio - hit->ratio < 0.15f) {
+                return true;
             }
         }
+        return false;
     }
-}
-
-static void omm_camera_find_hits_on_cell(s16 cx, s16 cz, vec3 origin, vec3 dirNormalized, f32 dirLength, RayHits *hits, Surfaces *surfaces) {
-    if (cx < 0 || cz < 0 || cx > OMM_COLLISION_CELL_BITS || cz > OMM_COLLISION_CELL_BITS) {
-        return;
-    }
-
-    // Walls
-    omm_camera_find_hits_on_list((struct Surface **) omm_array_data(gOmmStaticSurfaces.surfaces[cz][cx].walls), gOmmStaticSurfaces.counts[cz][cx].walls, origin, dirNormalized, dirLength, hits, surfaces);
-    omm_camera_find_hits_on_list((struct Surface **) omm_array_data(gOmmDynamicSurfaces.surfaces[cz][cx].walls), gOmmDynamicSurfaces.counts[cz][cx].walls, origin, dirNormalized, dirLength, hits, surfaces);
-
-    // Floors
-    if (dirNormalized.y < +0.95f) {
-        omm_camera_find_hits_on_list((struct Surface **) omm_array_data(gOmmStaticSurfaces.surfaces[cz][cx].floors), gOmmStaticSurfaces.counts[cz][cx].floors, origin, dirNormalized, dirLength, hits, surfaces);
-        omm_camera_find_hits_on_list((struct Surface **) omm_array_data(gOmmDynamicSurfaces.surfaces[cz][cx].floors), gOmmDynamicSurfaces.counts[cz][cx].floors, origin, dirNormalized, dirLength, hits, surfaces);
-    }
-
-    // Ceilings
-    if (dirNormalized.y > -0.95f) {
-        omm_camera_find_hits_on_list((struct Surface **) omm_array_data(gOmmStaticSurfaces.surfaces[cz][cx].ceils), gOmmStaticSurfaces.counts[cz][cx].ceils, origin, dirNormalized, dirLength, hits, surfaces);
-        omm_camera_find_hits_on_list((struct Surface **) omm_array_data(gOmmDynamicSurfaces.surfaces[cz][cx].ceils), gOmmDynamicSurfaces.counts[cz][cx].ceils, origin, dirNormalized, dirLength, hits, surfaces);
-    }
-}
-
-static RayHits omm_camera_find_hits(vec3 origin, vec3 dir) {
-    f32 dirLength = vec3_length(dir);
-    vec3 dirNormalized = vec3_mult(dir, 1.f / dirLength);
-    f32 steps = 4.f * omm_max_f(omm_abs_f(dir.x), omm_abs_f(dir.z)) / OMM_COLLISION_CELL_SIZE;
-    f32 dx = dir.x / (steps * OMM_COLLISION_CELL_SIZE);
-    f32 dz = dir.z / (steps * OMM_COLLISION_CELL_SIZE);
-    f32 cx = (origin.x + OMM_COLLISION_LEVEL_BOUNDARY) / OMM_COLLISION_CELL_SIZE;
-    f32 cz = (origin.z + OMM_COLLISION_LEVEL_BOUNDARY) / OMM_COLLISION_CELL_SIZE;
-    Surfaces surfaces = { 0 };
-    RayHits hits = { 0 };
-    for (s32 i = 0; i <= (s32) steps; i++, cx += dx, cz += dz) {
-        omm_camera_find_hits_on_cell((s16) cx, (s16) cz, origin, dirNormalized, dirLength, &hits, &surfaces);
-    }
-    return hits;
-}
-
-static RayHits omm_camera_find_hits_focus_to_camera() {
-    vec3 origin = {
-        sOmmCamFocus[0],
-        sOmmCamFocus[1],
-        sOmmCamFocus[2]
-    };
-    vec3 dir = {
-        sOmmCamPos[0] - origin.x,
-        sOmmCamPos[1] - origin.y,
-        sOmmCamPos[2] - origin.z,
-    };
-
-    // Find hits, then sort them by distance
-    // A simple bubblesort easily do the trick
-    RayHits hits = omm_camera_find_hits(origin, dir);
-    for (s32 n = hits.count; n > 1;) {
-        s32 m = 1;
-        for (s32 i = 1; i != n; ++i) {
-            if (hits.hit[i - 1].dist > hits.hit[i].dist) {
-                RayHit temp = hits.hit[i];
-                hits.hit[i] = hits.hit[i - 1];
-                hits.hit[i - 1] = temp;
-                m = i;
-            }
-        }
-        n = m;
-    }
-    return hits;
-}
-
-static bool omm_camera_check_collision(const RayHit *hit) {
-    struct Surface *ceil;
-    f32 lowestCeil = find_ceil(sOmmCamFocus[0], sOmmCamFocus[1], sOmmCamFocus[2], &ceil) - 10.f;
-    vec3 origin = {
-        sOmmCamFocus[0],
-        omm_min_f(lowestCeil, (sOmmCamPos[1] + sOmmCamFocus[1]) / 2),
-        sOmmCamFocus[2]
-    };
-    vec3 dir = {
-        sOmmCamPos[0] - origin.x,
-        sOmmCamPos[1] - origin.y,
-        sOmmCamPos[2] - origin.z,
-    };
-
-    // Before applying the collision, try to find another hit from above the focus,
-    // to know if the first hit was against a fence or a small object
-    RayHits hits = omm_camera_find_hits(origin, dir);
-    for (s32 i = 0; i != hits.count; ++i) {
-        if (hits.hit[i].ratio - hit->ratio < 0.15f) {
-            return true;
-        }
-    }
-    return false;
+    return true;
 }
 
 static void omm_camera_process_collisions() {
-    RayHits hits = omm_camera_find_hits_focus_to_camera();
-    for (s32 i = 0; i != hits.count; ++i) {
-        const RayHit *hit = &hits.hit[i];
-        if (sOmmCamPos[1] <= sOmmCamFocus[1] || omm_camera_check_collision(hit)) {
-            sOmmCamPos[0] = hit->pos.x + 8.f * hit->surf->normal.x;
-            sOmmCamPos[1] = hit->pos.y + 8.f * hit->surf->normal.y;
-            sOmmCamPos[2] = hit->pos.z + 8.f * hit->surf->normal.z;
-            break;
+    Vec3f orig; vec3f_copy(orig, sOmmCamFocus);
+    Vec3f dir; vec3f_dif(dir, sOmmCamPos, orig);
+    RayCollisionData hits;
+    if (find_collisions_on_ray(orig, dir, &hits, 1.1f, RAYCAST_FLAGS_CAMERA)) {
+
+        // Before applying the collision, try to find another hit from above the focus,
+        // to know if the first hit was against a fence or a small object
+        RayCollisionData hitsAboveFocus = { .count = -1 };
+        if (sOmmCamPos[1] > sOmmCamFocus[1]) {
+            orig[1] = min_f(find_ceil(sOmmCamFocus[0], sOmmCamFocus[1], sOmmCamFocus[2], NULL) - 10.f, (sOmmCamPos[1] + sOmmCamFocus[1]) / 2);
+            vec3f_dif(dir, sOmmCamPos, orig);
+            find_collisions_on_ray(orig, dir, &hitsAboveFocus, 1.1f, RAYCAST_FLAGS_CAMERA);
+        }
+
+        for (s32 i = 0; i != hits.count; ++i) {
+            RayHit *hit = hits.hits + i;
+            if (!omm_camera_check_point_in_no_col_box(hit->pos) && omm_camera_check_focus_behind_actual_wall(&hitsAboveFocus, hit)) {
+                sOmmCamPos[0] = hit->pos[0] + 8.f * hit->surf->normal.x;
+                sOmmCamPos[1] = hit->pos[1] + 8.f * hit->surf->normal.y;
+                sOmmCamPos[2] = hit->pos[2] + 8.f * hit->surf->normal.z;
+                return;
+            }
         }
     }
 }
@@ -465,7 +285,7 @@ static void omm_camera_update_first_person_mode(struct MarioState *m) {
 
     // Pitch (from -89 deg to +89 deg)
     sOmmCamPitchFp += (s16) (m->controller->stickY * 10.f);
-    sOmmCamPitchFp = omm_clamp_s(sOmmCamPitchFp, -0x3C00, +0x3C00);
+    sOmmCamPitchFp = clamp_s(sOmmCamPitchFp, -0x3C00, +0x3C00);
 
     // Yaw
     m->faceAngle[1] -= (s16) (m->controller->stickX * 10.f);
@@ -503,24 +323,11 @@ static void omm_camera_update_first_person_mode(struct MarioState *m) {
 static void omm_camera_calc_y_offsets(f32 *camPosOffsetY, f32 *camFocOffsetY) {
     f32 curGeometryFloorHeight = sMarioGeometry.currFloorHeight;
     if (!(sMarioCamState->action & ACT_FLAG_METAL_WATER)) {
-        curGeometryFloorHeight = omm_max_f(curGeometryFloorHeight, sMarioGeometry.waterHeight);
+        curGeometryFloorHeight = max_f(curGeometryFloorHeight, sMarioGeometry.waterHeight);
     }
-
-    // Camera vertical position offset
-    *camPosOffsetY = (curGeometryFloorHeight - sMarioCamState->pos[1]);
-    struct Object *pole = gMarioState->usedObj;
-    if ((pole != NULL) &&
-        (sMarioCamState->action & ACT_FLAG_ON_POLE) &&
-        (curGeometryFloorHeight >= pole->oPosY) &&
-        (sMarioCamState->pos[1] <= pole->oPosY + pole->hitboxHeight * 0.7f)) {
-        *camPosOffsetY = omm_clamp_f(*camPosOffsetY, -1200.f, 1200.f);
-    } else {
-        *camPosOffsetY = omm_clamp_f(*camPosOffsetY, -200.f, 200.f);
-    }
-
-    // Camera vertical focus offset
-    *camFocOffsetY = (curGeometryFloorHeight - sMarioCamState->pos[1]) * 0.9f;
-    *camFocOffsetY = omm_clamp_f(*camFocOffsetY, -200.f, 200.f);
+    f32 offset = curGeometryFloorHeight - sMarioCamState->pos[1];
+    *camPosOffsetY = clamp_f(offset * 1.0f, -200.f, 200.f);
+    *camFocOffsetY = clamp_f(offset * 0.9f, -200.f, 200.f);
 }
 
 static bool omm_camera_is_bowser_fight() {
@@ -567,20 +374,19 @@ static void omm_camera_update_angles_from_state(struct MarioState *m, s16 camPit
     if (!omm_cappy_get_object_play_as()) {
         
         // Flying
-        if ((m->action == ACT_SHOT_FROM_CANNON) ||
-            (m->action == ACT_FLYING) || (
-            (m->action == ACT_OMM_POSSESSION) &&
-            (gOmmData->object->state.camBehindMario))) {
-            sOmmCamPitch = approach(sOmmCamPitch, (-m->faceAngle[0] * 0.75f) + 0xC00, omm_max_f(m->forwardVel, 4.f) * 0x20);
-            sOmmCamYaw = approach(sOmmCamYaw, m->faceAngle[1] + 0x8000, omm_max_f(m->forwardVel, 4.f) * 0x80);
+        if ((m->action == ACT_FLYING) ||
+            (m->action == ACT_SHOT_FROM_CANNON) || (
+            (m->action == ACT_OMM_POSSESSION && gOmmData->object->state.camBehindMario))) {
+            sOmmCamPitch = approach(sOmmCamPitch, (-m->faceAngle[0] * 0.75f) + 0xC00, max_f(m->forwardVel, 4.f) * 0x20);
+            sOmmCamYaw = approach(sOmmCamYaw, m->faceAngle[1] + 0x8000, max_f(m->forwardVel, 4.f) * 0x80);
             sOmmCamYawTarget = sOmmCamYaw;
             return;
         }
 
         // Underwater
         if (m->action & ACT_FLAG_SWIMMING) {
-            sOmmCamPitch = approach(sOmmCamPitch, (-m->faceAngle[0] * 0.75f) + 0xC00, omm_max_f(m->forwardVel, 2.f) * 0x20);
-            sOmmCamYaw = approach(sOmmCamYaw, m->faceAngle[1] + 0x8000, omm_max_f(m->forwardVel, 2.f) * 0x80);
+            sOmmCamPitch = approach(sOmmCamPitch, (-m->faceAngle[0] * 0.75f) + 0xC00, max_f(m->forwardVel, 4.f) * 0x20);
+            sOmmCamYaw = approach(sOmmCamYaw, m->faceAngle[1] + 0x8000, max_f(m->forwardVel, 8.f) * 0x80);
             sOmmCamYawTarget = sOmmCamYaw;
             return;
         }
@@ -599,7 +405,7 @@ static void omm_camera_update_angles_from_state(struct MarioState *m, s16 camPit
                 (m->action == ACT_HOLD_STOMACH_SLIDE) ||
                 (m->action == ACT_OMM_ROLL)) {
                 sOmmCamPitch = approach(sOmmCamPitch, camPitchTarget, 0x400);
-                sOmmCamYaw = approach(sOmmCamYaw, m->faceAngle[1] + 0x8000, omm_max_f(m->forwardVel, 4.f) * 0x80);
+                sOmmCamYaw = approach(sOmmCamYaw, m->faceAngle[1] + 0x8000, max_f(m->forwardVel, 4.f) * 0x80);
                 sOmmCamYawTarget = sOmmCamYaw;
                 return;
             }
@@ -646,11 +452,18 @@ static void omm_camera_update_transform(struct MarioState *m) {
     // Possessed Goomba tower
     // The camera focus and distance are computed to always show
     // the entire stack if the distance setting is at its max value
-    if (sOmmCamDistMode == OMM_CAM_DIST_MODE_MAX && m->action == ACT_OMM_POSSESSION &&
-        omm_obj_is_goomba(gOmmData->mario->capture.obj)) {
-        f32 goombaHeight = omm_capture_get_top(gOmmData->mario->capture.obj);
-        camFocHeight = omm_max_f(camFocHeight, goombaHeight / 1.8f);
-        camDistTarget = omm_max_f(camDistTarget, goombaHeight * 2.5f);
+    if (sOmmCamDistMode == OMM_CAM_DIST_MODE_MAX && m->action == ACT_OMM_POSSESSION && omm_obj_is_goomba(gOmmCapture)) {
+        f32 goombaHeight = omm_capture_get_top(gOmmCapture);
+        camFocHeight = max_f(camFocHeight, goombaHeight / 1.8f);
+        camDistTarget = max_f(camDistTarget, goombaHeight * 2.5f);
+    }
+
+    // Ceil-hanging
+    // Move the camera from above Mario to below Mario
+    if (omm_mario_is_hanging(m)) {
+        camPitchTarget = -camPitchTarget / 2;
+        camPosOffsetY = 0.f;
+        camFocOffsetY = 0.f;
     }
 
     // Angles
@@ -686,26 +499,26 @@ static void omm_camera_update_transform(struct MarioState *m) {
 static void omm_camera_apply(struct Camera *c) {
 
     // Position
-    c->pos[0] = gLakituState.pos[0] = sOmmCamPos[0];
-    c->pos[1] = gLakituState.pos[1] = sOmmCamPos[1];
-    c->pos[2] = gLakituState.pos[2] = sOmmCamPos[2];
+    vec3f_copy(c->pos, sOmmCamPos);
+    vec3f_copy(gLakituState.pos, sOmmCamPos);
+    vec3f_copy(gLakituState.goalPos, sOmmCamPos);
 
     // Focus
-    c->focus[0] = gLakituState.focus[0] = sOmmCamFocus[0];
-    c->focus[1] = gLakituState.focus[1] = sOmmCamFocus[1];
-    c->focus[2] = gLakituState.focus[2] = sOmmCamFocus[2];
+    vec3f_copy(c->focus, sOmmCamFocus);
+    vec3f_copy(gLakituState.focus, sOmmCamFocus);
+    vec3f_copy(gLakituState.goalFocus, sOmmCamFocus);
 
     // Angle
     c->yaw = gLakituState.yaw = sOmmCamYaw;
 
     // Mario transparency
     f32 dist = sqrtf(
-        omm_sqr_f(gLakituState.curFocus[0] - gLakituState.curPos[0]) +
-        omm_sqr_f(gLakituState.curFocus[1] - gLakituState.curPos[1]) +
-        omm_sqr_f(gLakituState.curFocus[2] - gLakituState.curPos[2])
+        sqr_f(gLakituState.curFocus[0] - gLakituState.curPos[0]) +
+        sqr_f(gLakituState.curFocus[1] - gLakituState.curPos[1]) +
+        sqr_f(gLakituState.curFocus[2] - gLakituState.curPos[2])
     );
     if (dist < 300.f) {
-        u8 alpha = (u8) ((omm_max_f(dist - 100.f, 0) * 255.f) / 200.f);
+        u8 alpha = (u8) ((max_f(dist - 100.f, 0) * 255.f) / 200.f);
         gMarioState->marioBodyState->modelState &= ~0xFF;
         gMarioState->marioBodyState->modelState |= (0x100 | alpha);
     }

@@ -10,7 +10,7 @@ void bhv_chain_chomp_update_chain_parts(struct Object *o, bool isFreed) {
     seg0->posX = o->oPosX - pivot->oPosX;
     seg0->posY = o->oPosY - pivot->oPosY;
     seg0->posZ = o->oPosZ - pivot->oPosZ;
-    o->oChainChompDistToPivot = sqrtf(omm_sqr_f(seg0->posX) + omm_sqr_f(seg0->posY) + omm_sqr_f(seg0->posZ));
+    o->oChainChompDistToPivot = sqrtf(sqr_f(seg0->posX) + sqr_f(seg0->posY) + sqr_f(seg0->posZ));
 
     // If the chain is fully stretched
     f32 maxDistToPivot = o->oChainChompMaxDistFromPivotPerChainPart * 5.f;
@@ -78,7 +78,7 @@ void bhv_chain_chomp_update_chain_parts(struct Object *o, bool isFreed) {
         f32 offsetX = segment->posX - prevSegment->posX;
         f32 offsetY = segment->posY - prevSegment->posY;
         f32 offsetZ = segment->posZ - prevSegment->posZ;
-        f32 offset = sqrtf(omm_sqr_f(offsetX) + omm_sqr_f(offsetY) + omm_sqr_f(offsetZ));
+        f32 offset = sqrtf(sqr_f(offsetX) + sqr_f(offsetY) + sqr_f(offsetZ));
         if (offset > o->oChainChompMaxDistFromPivotPerChainPart) {
             offset = o->oChainChompMaxDistFromPivotPerChainPart / offset;
             offsetX *= offset;
@@ -90,7 +90,7 @@ void bhv_chain_chomp_update_chain_parts(struct Object *o, bool isFreed) {
         offsetX += prevSegment->posX;
         offsetY += prevSegment->posY;
         offsetZ += prevSegment->posZ;
-        offset = sqrtf(omm_sqr_f(offsetX) + omm_sqr_f(offsetY) + omm_sqr_f(offsetZ));
+        offset = sqrtf(sqr_f(offsetX) + sqr_f(offsetY) + sqr_f(offsetZ));
         f32 maxTotalOffset = o->oChainChompMaxDistFromPivotPerChainPart * (5 - i);
         if (offset > maxTotalOffset) {
             offset = maxTotalOffset / offset;
@@ -202,8 +202,8 @@ static void omm_bhv_chain_chomp_free_update() {
         o->oInteractStatus = 0;
     }
 
-    o->oVelY = omm_max_f(o->oVelY + o->oGravity, -75.f);
-    obj_update_pos_and_vel(o, true, false, false, obj_is_on_ground(o), NULL);
+    o->oVelY = max_f(o->oVelY + o->oGravity, -75.f);
+    perform_object_step(o, OBJ_STEP_UPDATE_HOME | OBJ_STEP_CHECK_ON_GROUND);
     obj_anim_play(o, 0, 1.f);
     bhv_chain_chomp_update_chain_parts(o, true);
     obj_reset_hitbox(o, 80, 160, 80, 160, 120, 0);

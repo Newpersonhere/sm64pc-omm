@@ -25,7 +25,7 @@
 
 #define POBJ_GROUND_SPEED_MULTIPLIER            (1.f / omm_player_get_selected_ground_speed_multiplier())
 #define POBJ_AIR_SPEED_MULTIPLIER               (1.f / omm_player_get_selected_air_speed_multiplier())
-#define POBJ_JUMP_MULTIPLIER                    (1.f / omm_player_get_selected_jump_multiplier())
+#define POBJ_JUMP_MULTIPLIER                    (1.f / sqrtf(omm_player_get_selected_jump_multiplier()))
 
 #define POBJ_SET_ABOVE_WATER                    gOmmData->object->state.properties |= (1 << 0)
 #define POBJ_SET_UNDER_WATER                    gOmmData->object->state.properties |= (1 << 1)
@@ -51,8 +51,10 @@
 #define POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS      ((gOmmData->object->state.properties & (1 << 9)) != 0)
 #define POBJ_IS_ATTACKING                       ((gOmmData->object->state.properties & (1 << 10)) != 0)
 
+#define POBJ_STEP_FLAGS                         (OBJ_STEP_UPDATE_HOME | (OBJ_STEP_MOVE_THROUGH_WALLS * POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS) | (OBJ_STEP_STICKY_FEET * POBJ_IS_ABLE_TO_MOVE_ON_SLOPES) | OBJ_STEP_CHECK_ON_GROUND)
+
 #define POBJ_INTERACTIONS(...)                                                                         \
-    if ((gOmmData->object->state.interactTimer-- <= 0) && !omm_mario_is_locked(gMarioState)) {         \
+    if ((gOmmData->object->state.invincTimer-- <= 0) && !omm_mario_is_locked(gMarioState)) {           \
         for_each_object_in_interaction_lists(obj) {                                                    \
             if (obj != o) {                                                                            \
                 __VA_ARGS__;                                                                           \
@@ -95,6 +97,7 @@ f32  omm_capture_get_hitbox_radius(struct Object *o);
 f32  omm_capture_get_hitbox_height(struct Object *o);
 f32  omm_capture_get_hitbox_down_offset(struct Object *o);
 f32  omm_capture_get_wall_hitbox_radius(struct Object *o);
+bool omm_capture_should_reference_object(struct Object *o);
 void omm_capture_set_camera_behind_mario();
 void omm_capture_reset_camera();
 
@@ -157,6 +160,7 @@ CAPTURE_BEHAVIOR(klepto);               // bhvKlepto
 // Dire, Dire Docks
 CAPTURE_BEHAVIOR(fire_spitter);         // bhvFireSpitter
 CAPTURE_BEHAVIOR(sushi_shark);          // bhvSushiShark
+// underwater shell?
 
 // Snowman's Land
 CAPTURE_BEHAVIOR(moneybag);             // bhvMoneybag, bhvMoneybagHidden

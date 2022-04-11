@@ -27,8 +27,8 @@ s32 omm_audio_resample(u8 **output, const u8 *input, s32 inputLength, f32 output
 
     // Resampling
     for (s32 i = 0; i != outputSamples; ++i) {
-        s32 i0 = omm_clamp_s(i * invOutputScale, 0, inputSamples - 1);
-        s32 i1 = omm_clamp_s(i0 + 1, 0, inputSamples - 1);
+        s32 i0 = clamp_s(i * invOutputScale, 0, inputSamples - 1);
+        s32 i1 = clamp_s(i0 + 1, 0, inputSamples - 1);
         f32 fi = (i * invOutputScale) - (f32) i0;
         temp[i] = (inputBuffer[i0] * (1.f - fi)) + (inputBuffer[i1] * fi);
     }
@@ -50,7 +50,7 @@ s32 omm_audio_resample_fast(u8 **output, const u8 *input, s32 inputLength, f32 o
 
     // Resampling
     for (s32 i = 0; i != outputSamples; ++i) {
-        temp[i] = inputBuffer[omm_clamp_s(i * invOutputScale, 0, inputSamples - 1)];
+        temp[i] = inputBuffer[clamp_s(i * invOutputScale, 0, inputSamples - 1)];
     }
 
     // Copy temp to output
@@ -125,7 +125,7 @@ s32 omm_audio_time_stretch(u8 **output, const u8 *input, s32 inputLength, s32 au
 // Resizing is done in a temporary buffer, so output and input can be the same buffer
 s32 omm_audio_resize(u8 **output, const u8 *input, s32 inputLength, s32 desiredLength) {
     u8 *temp = OMM_MEMNEW(u8, desiredLength);
-    OMM_MEMCPY(temp, input, omm_min_s(inputLength, desiredLength));
+    OMM_MEMCPY(temp, input, min_s(inputLength, desiredLength));
     OMM_MEMDEL(*output);
     *output = temp;
     return desiredLength;
@@ -147,8 +147,8 @@ s32 omm_audio_pitch_shift(u8 **output, const u8 *input, s32 inputLength, s32 aud
 }
 
 u8 *omm_audio_mix(u8 *output, const u8 *input, s32 length, s32 volume, s32 distance) {
-    s32 acrVolume = omm_clamp_s((1 << 7) - ((distance << 7) / sAcousticReachPerLevel[gCurrLevelNum]), 0, 1 << 7);
-    s32 mixVolume = omm_clamp_s((volume * acrVolume) >> 7, 0, 1 << 7);
+    s32 acrVolume = clamp_s((1 << 7) - ((distance << 7) / sAcousticReachPerLevel[gCurrLevelNum]), 0, 1 << 7);
+    s32 mixVolume = clamp_s((volume * acrVolume) >> 7, 0, 1 << 7);
     for (s32 i = 0; i < length; i += sizeof(s16)) {
         *((s16 *) (output + i)) = (s16) ((((s32) *((s16 *) (input + i))) * mixVolume) >> 7);
     }
@@ -312,7 +312,7 @@ static void omm_sound_load_wav(s32 id, const char *name, u8 bank, s32 vibesPitch
         u8 *rageL = OMM_MEMDUP(data, length * sizeof(u8)); omm_audio_pitch_shift(&rageL, data, length, SOUND_FREQ, OMM_PEACH_VIBE_SOUND_PITCH_MOD_RAGE * 0.98f);
         u8 *rageR = OMM_MEMDUP(data, length * sizeof(u8)); omm_audio_pitch_shift(&rageR, data, length, SOUND_FREQ, OMM_PEACH_VIBE_SOUND_PITCH_MOD_RAGE * 1.02f);
         for (s32 i = 0; i < length; i += sizeof(s16)) {
-            *((s16 *) (sound->input[OMM_PEACH_VIBE_TYPE_RAGE] + i)) = (s16) omm_clamp_s((((s32) *((s16 *) (rageL + i))) + ((s32) *((s16 *) (rageR + i)))) * 0.8f, -0x8000, +0x7FFF);
+            *((s16 *) (sound->input[OMM_PEACH_VIBE_TYPE_RAGE] + i)) = (s16) clamp_s((((s32) *((s16 *) (rageL + i))) + ((s32) *((s16 *) (rageR + i)))) * 0.8f, -0x8000, +0x7FFF);
         }
 
         // Gloom: speed down

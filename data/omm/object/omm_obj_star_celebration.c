@@ -17,8 +17,8 @@ static void omm_bhv_star_celebration_update() {
         obj_scale(sparkle, o->oScaleX);
         f32 ratio = (frame / 24.f);
         f32 scale = 0.5f + 0.5f * ratio;
-        f32 angle = omm_sqr_f(ratio) * (3 * 0x10000);
-        f32 radius = o->oCelebStarRadius * (1.f - omm_sqr_f(ratio));
+        f32 angle = sqr_f(ratio) * (3 * 0x10000);
+        f32 radius = o->oCelebStarRadius * (1.f - sqr_f(ratio));
         f32 height = o->oCelebStarHeight * ratio;
         o->oPosX = o->oHomeX + radius * sins(m->faceAngle[1] - angle);
         o->oPosY = o->oHomeY + height;

@@ -27,11 +27,12 @@ bool cappy_goomba_init(struct Object *o) {
     // First Goomba is the one Mario's trying to capture
     struct Object *goombas[OBJ_GOOMBA_STACK_MAX] = { o };
     s32 goombaCount = 1;
-    for_each_until_null(const BehaviorScript*, bhv, omm_obj_get_goomba_behaviors()) {
-        for_each_object_with_behavior(goomba, *bhv) {
+    omm_array_for_each(omm_obj_get_goomba_behaviors(), p) {
+        const BehaviorScript *bhv = (const BehaviorScript *) p->as_ptr;
+        for_each_object_with_behavior(goomba, bhv) {
             if (goomba == o) continue;
             f32 dist = obj_get_horizontal_distance(o, goomba);
-            f32 ydif = omm_abs_f(goomba->oPosY - o->oPosY);
+            f32 ydif = abs_f(goomba->oPosY - o->oPosY);
             if (dist < 20.f && ydif < (70.f * OBJ_GOOMBA_STACK_MAX * o->oScaleY)) {
                 set_goomba_as_standalone(goomba);
                 goombas[goombaCount++] = goomba;
@@ -45,7 +46,7 @@ bool cappy_goomba_init(struct Object *o) {
     // Store the lowest Y value, this will be the Y value of the base
     f32 lowestY = +20000.f;
     for (s32 i = 0; i != goombaCount; ++i) {
-        lowestY = omm_min_f(lowestY, goombas[i]->oPosY);
+        lowestY = min_f(lowestY, goombas[i]->oPosY);
     }
 
     // Setup the first Goomba
@@ -124,7 +125,7 @@ s32 cappy_goomba_update(struct Object *o) {
     }
 
     // Movement
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     pobj_decelerate(o, 0.80f, 0.95f);
     pobj_apply_gravity(o, 1.f);
     pobj_handle_special_floors(o);
@@ -148,8 +149,8 @@ s32 cappy_goomba_update(struct Object *o) {
             if (y1 < o->oPosY && o->oPosY < y2) {
 
                 // Radius check
-                f32 r2 = omm_sqr_f(o->hitboxRadius + obj->hitboxRadius);
-                f32 d2 = omm_sqr_f(o->oPosX - obj->oPosX) + omm_sqr_f(o->oPosZ - obj->oPosZ);
+                f32 r2 = sqr_f(o->hitboxRadius + obj->hitboxRadius);
+                f32 d2 = sqr_f(o->oPosX - obj->oPosX) + sqr_f(o->oPosZ - obj->oPosZ);
                 if (d2 < r2) {
 
                     // Add goomba to stack
@@ -171,10 +172,10 @@ s32 cappy_goomba_update(struct Object *o) {
 
     // Gfx
     obj_update_gfx(o);
-    obj_anim_play(o, 0, (o->oVelY <= 0.f) * omm_max_f(1.f, o->oForwardVel * 2.f / (omm_capture_get_walk_speed(o))));
+    obj_anim_play(o, 0, (o->oVelY <= 0.f) * max_f(1.f, o->oForwardVel * 2.f / (omm_capture_get_walk_speed(o))));
     obj_update_blink_state(o, &o->oGoombaBlinkTimer, 30, 50, 5);
     if (obj_is_on_ground(o)) {
-        obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, omm_capture_get_walk_speed(o) * 8.f, o->oForwardVel, SOUND_OBJ_GOOMBA_WALK, OBJ_STEP_PARTICLE_NONE);
+        obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, omm_capture_get_walk_speed(o) * 8.f, o->oForwardVel, SOUND_OBJ_GOOMBA_WALK, OBJ_PARTICLE_NONE);
     }
 
     // Update Goomba stack

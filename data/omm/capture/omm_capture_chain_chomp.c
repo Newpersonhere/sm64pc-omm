@@ -82,7 +82,7 @@ s32 cappy_chain_chomp_update(struct Object *o) {
     }
 
     // Movement
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     pobj_decelerate(o, 0.80f, 0.95f);
     pobj_apply_gravity(o, 1.f);
     pobj_handle_special_floors(o);
@@ -92,7 +92,7 @@ s32 cappy_chain_chomp_update(struct Object *o) {
     if (!gOmmData->object->chain_chomp.isFreed) {
         f32 dx = o->oPosX - gOmmData->object->state.initialPos[0];
         f32 dz = o->oPosZ - gOmmData->object->state.initialPos[2];
-        f32 dist = sqrtf(omm_sqr_f(dx) + omm_sqr_f(dz));
+        f32 dist = sqrtf(sqr_f(dx) + sqr_f(dz));
         if (dist > 750.f) {
 
             // Break free if enough speed

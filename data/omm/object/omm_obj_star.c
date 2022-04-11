@@ -549,46 +549,38 @@ static struct GraphNode *omm_geo_star_get_child(struct GraphNode *node, s16 type
 //
 
 static void omm_geo_star_compute_color(OmmStarGeoData *data, const char *texture) {
-    static OmmArray sOmmStarTextures = NULL;
-    static OmmArray sOmmStarColors = NULL;
-    omm_array_init(sOmmStarTextures, const char *);
-    omm_array_init(sOmmStarColors, u32);
-
+    static OmmMap sOmmStarTexColors = omm_map_zero;
     data->color.a = 0xFF;
     data->texture = texture;
-    if (strstr(texture, OMM_GFX) == texture) {
 
-        // Look for a registered texture
-        omm_array_for_each(sOmmStarTextures, const char *, starTex) {
-            if (OMM_MEMCMP(texture, *starTex, strlen(texture) + 1)) {
-                u32 color = omm_array_get(sOmmStarColors, u32, index_starTex);
-                data->color.r = (color >> 16) & 0xFF;
-                data->color.g = (color >>  8) & 0xFF;
-                data->color.b = (color >>  0) & 0xFF;
-                return;
-            }
+    // Retrieve the color from the texture
+    omm_map_for_each(sOmmStarTexColors, tex, color) {
+        if (strcmp(tex->as_ptr, texture) == 0) {
+            data->color.r = (color->as_u32 >> 16) & 0xFF;
+            data->color.g = (color->as_u32 >>  8) & 0xFF;
+            data->color.b = (color->as_u32 >>  0) & 0xFF;
+            return;
         }
-        
-        // Not found, compute color and register it
-        OMM_STRING(filename, 256, "%s/%s/%s.png", OMM_EXE_FOLDER, OMM_GFX_FOLDER, texture + sizeof(OMM_GFX) - 1);
-        s32 w, h;
-        u8 *p = stbi_load(filename, &w, &h, NULL, 4);
-        if (p) {
-            u32 r = 0;
-            u32 g = 0;
-            u32 b = 0;
-            for (s32 i = 0; i != w * h; ++i) {
-                r += (u32) p[4 * i + 0];
-                g += (u32) p[4 * i + 1];
-                b += (u32) p[4 * i + 2];
-            }
-            data->color.r = (u8) (r / (w * h));
-            data->color.g = (u8) (g / (w * h));
-            data->color.b = (u8) (b / (w * h));
-            stbi_image_free(p);
-            omm_array_add_inplace(sOmmStarTextures, const char *, OMM_MEMDUP(texture, strlen(texture) + 1));
-            omm_array_add_inplace(sOmmStarColors, u32, (data->color.r << 16) | (data->color.g << 8) | (data->color.b << 0));
+    }
+    
+    // Not found, compute new color and register it
+    OMM_STRING(filename, 256, "%s/%s/%s.png", OMM_EXE_FOLDER, OMM_GFX_FOLDER, texture);
+    s32 w, h;
+    u8 *p = stbi_load(filename, &w, &h, NULL, 4);
+    if (p) {
+        u32 r = 0;
+        u32 g = 0;
+        u32 b = 0;
+        for (s32 i = 0; i != w * h; ++i) {
+            r += (u32) p[4 * i + 0];
+            g += (u32) p[4 * i + 1];
+            b += (u32) p[4 * i + 2];
         }
+        data->color.r = (u8) (r / (w * h));
+        data->color.g = (u8) (g / (w * h));
+        data->color.b = (u8) (b / (w * h));
+        stbi_image_free(p);
+        omm_map_add(sOmmStarTexColors, ptr, OMM_MEMDUP(texture, strlen(texture) + 1), u32, (data->color.r << 16) | (data->color.g << 8) | (data->color.b << 0));
     }
 }
 
@@ -617,21 +609,10 @@ static Gfx *omm_geo_star_update_glow(s32 callContext, struct GraphNode *node, UN
 
         // Translate
         struct GraphNodeTranslation *translationNode = (struct GraphNodeTranslation *) node->next;
-        f32 dx = gCurGraphNodeObject->cameraToObject[0];
-        f32 dy = gCurGraphNodeObject->cameraToObject[1];
-        f32 dz = gCurGraphNodeObject->cameraToObject[2];
-        f32 dn = sqrtf(omm_sqr_f(dx) + omm_sqr_f(dy) + omm_sqr_f(dz));
-        if (dn != 0) {
-            translationNode->translation[0] = (s16) (240.f * dx / dn);
-            translationNode->translation[1] = (s16) (240.f * dy / dn);
-            translationNode->translation[2] = (s16) (240.f * dz / dn);
-        }
+        geo_move_from_camera(gCurGraphNodeObject, translationNode, 240.f * gCurrGraphNodeObject->oScaleY);
 
         // Update env color
-        u32 r = data->color.r;
-        u32 g = data->color.g;
-        u32 b = data->color.b;
-        omm_geo_star_set_env_color(data->glow.gfx, r, g, b, 0xFF);
+        omm_geo_star_set_env_color(data->glow.gfx, data->color.r, data->color.g, data->color.b, 0xFF);
         struct GraphNodeDisplayList *displayListNode = (struct GraphNodeDisplayList *) omm_geo_star_get_child(&translationNode->node, GRAPH_NODE_TYPE_DISPLAY_LIST);
         displayListNode->displayList = data->glow.gfx;
     }

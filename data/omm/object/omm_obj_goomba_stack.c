@@ -68,13 +68,14 @@ bool omm_obj_is_goomba_stack(struct Object *o) {
 // Update
 //
 
-OMM_ROUTINE_GFX(omm_goomba_stack_update) {
+OMM_ROUTINE_PRE_RENDER(omm_goomba_stack_update) {
     struct Object *goombaStacks[64][OBJ_GOOMBA_STACK_MAX] = { { NULL } };
     s32 goombaStacksCount = 0;
 
     // Add Goombas to a stack based on its parent
-    for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_goomba_behaviors()) {
-        for_each_object_with_behavior(obj, *bhv) {
+    omm_array_for_each(omm_obj_get_goomba_behaviors(), p) {
+        const BehaviorScript *bhv = (const BehaviorScript *) p->as_ptr;
+        for_each_object_with_behavior(obj, bhv) {
             if (omm_obj_is_goomba_stack(obj)) {
                 for (s32 i = 0; i <= goombaStacksCount; ++i) {
                     if (i == goombaStacksCount) {

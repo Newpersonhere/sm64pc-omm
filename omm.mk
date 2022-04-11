@@ -6,66 +6,86 @@
 # Source
 # ------
 
-SRC_DIRS += data/omm data/omm/system data/omm/object data/omm/mario data/omm/cappy data/omm/capture data/omm/peachy data/omm/dev
+SRC_DIRS += \
+data/omm \
+data/omm/system \
+data/omm/engine \
+data/omm/object \
+data/omm/mario \
+data/omm/cappy \
+data/omm/capture \
+data/omm/peachy \
+data/omm/level \
+data/omm/dev
+
+INC_DIRS := \
+-I data/omm/engine/headers \
+-I data/omm/engine/headers/include \
+-I data/omm/engine/headers/src \
+-I data/omm/engine/headers/src/engine \
+-I data/omm/engine/headers/src/game 
 
 # -------
 # Version
 # -------
 
-OMM_VERSION_NUMBER := 7.0.9
-OMM_VERSION_REVISION := 2
+OMM_VERSION_NUMBER := 7.1.0
+OMM_VERSION_REVISION := 1
 OMM_DEVELOPER := PeachyPeach
+OMM_FLAGS := -p
 VERSION_CFLAGS += -DOMM_VERSION="$(OMM_VERSION_NUMBER)"
 VERSION_CFLAGS += -DOMM_DEVELOPER="$(OMM_DEVELOPER)"
+GRUCODE_CFLAGS += $(INC_DIRS) # Can't use VERSION_CFLAGS for these
 DEFINES += OMM_VERSION="$(OMM_VERSION_NUMBER)"
 DEFINES += OMM_DEVELOPER="$(OMM_DEVELOPER)"
-ifeq ($(OMM_BUILDER),1)
-CC := $(CROSS)gcc -w
-CXX := $(CROSS)g++ -w
-else
-OMM_PATCH := $(shell python3 omm_patcher.py -p)
-endif
 
 # Super Mario 64 Moonshine
 ifeq      ($(or $(and $(wildcard actors/Bee/geo.inc.c),1),0),1)
-	VERSION_CFLAGS += -DSMMS -DEXTERNAL_DATA
-	DEFINES += SMMS=1 EXTERNAL_DATA=1
+	VERSION_CFLAGS += -DSMMS
+	DEFINES += SMMS=1
+	OMM_FLAGS += smms
 	OMM_VERSION_SUB := Super Mario 64 Moonshine
 
 # Super Mario Star Road
 else ifeq ($(or $(and $(wildcard levels/zerolife/script.c),1),0),1)
 	VERSION_CFLAGS += -DSMSR
 	DEFINES += SMSR=1
+	OMM_FLAGS += smsr
 	OMM_VERSION_SUB := Super Mario Star Road
 	
 # Super Mario 74
 else ifeq ($(or $(and $(wildcard text/us/coursesEE.h),1),0),1)
 	VERSION_CFLAGS += -DSM74
 	DEFINES += SM74=1
+	OMM_FLAGS += sm74
 	OMM_VERSION_SUB := Super Mario 74
 
 # Render96-alpha
 else ifeq ($(or $(and $(wildcard data/r96/r96_defines.h),1),0),1)
 	VERSION_CFLAGS += -DR96A
 	DEFINES += R96A=1
+	OMM_FLAGS += r96a
 	OMM_VERSION_SUB := Render96 ex-alpha
 
 # Saturn-legacy
 else ifeq ($(or $(and $(wildcard src/saturn/saturn.h),1),0),1)
 	VERSION_CFLAGS += -DSMEX -DSATURN
 	DEFINES += SMEX=1 SATURN=1
+	OMM_FLAGS += saex
 	OMM_VERSION_SUB := Saturn (sm64ex-nightly)
 
 # sm64ex-alo (Refresh 14)
 else ifeq ($(or $(and $(wildcard src/extras/bettercamera.h),1),0),1)
 	VERSION_CFLAGS += -DXALO
 	DEFINES += XALO=1
+	OMM_FLAGS += xalo
 	OMM_VERSION_SUB := Super Mario 64 ex-alo
 
 # sm64ex-nightly
 else 
 	VERSION_CFLAGS += -DSMEX
 	DEFINES += SMEX=1
+	OMM_FLAGS += smex
 	OMM_VERSION_SUB := Super Mario 64 ex-nightly
 endif
 
@@ -73,9 +93,11 @@ endif
 # Initialization
 # --------------
 
-OMM_DIR_DATA := ./omm
-OMM_DIR_OUT := $(BUILD_DIR)/omm
-OMM_INIT := mkdir -p $(OMM_DIR_DATA) ; mkdir -p $(OMM_DIR_OUT) ; cp -rf $(OMM_DIR_DATA) $(BUILD_DIR) 2>/dev/null || true ; echo 'ok'
+OMM_INIT := \
+	mkdir -p $(BUILD_DIR)/$(BASEDIR); \
+	cp -rf omm/gfx $(BUILD_DIR)/$(BASEDIR) 2>/dev/null || true; \
+	cp -rf omm/sound $(BUILD_DIR)/$(BASEDIR) 2>/dev/null || true; \
+	echo 'ok'
 ifneq ($(shell $(call OMM_INIT)),ok)
 $(error Could not initialize OMM before building. Aborting make..)
 endif
@@ -84,15 +106,39 @@ endif
 # Built-in
 # --------
 
-VERSION_CFLAGS += -DTEXTURE_FIX
-VERSION_CFLAGS += -DEXT_OPTIONS_MENU
-VERSION_CFLAGS += -DBETTERCAMERA
-VERSION_CFLAGS += -DNODRAWINGDISTANCE
-DEFINES += TEXTURE_FIX=1
-DEFINES += EXT_OPTIONS_MENU=1
-DEFINES += BETTERCAMERA=1
-DEFINES += NODRAWINGDISTANCE=1
+# No segmented memory
 DEFINES += NO_SEGMENTED_MEMORY=1
+
+# Fixes
+TEXTURE_FIX := 1
+VERSION_CFLAGS += -DTEXTURE_FIX
+DEFINES += TEXTURE_FIX=1
+
+# Options menu
+EXT_OPTIONS_MENU := 1
+VERSION_CFLAGS += -DEXT_OPTIONS_MENU
+DEFINES += EXT_OPTIONS_MENU=1
+
+# Better cam/Puppy cam
+BETTERCAMERA := 1
+VERSION_CFLAGS += -DBETTERCAMERA
+DEFINES += BETTERCAMERA=1
+
+# No drawing distance
+NODRAWINGDISTANCE := 1
+VERSION_CFLAGS += -DNODRAWINGDISTANCE
+DEFINES += NODRAWINGDISTANCE=1
+
+# External data
+EXTERNAL_DATA := 1
+VERSION_CFLAGS += -DEXTERNAL_DATA -DFS_BASEDIR="\"$(BASEDIR)\""
+DEFINES += EXTERNAL_DATA=1 FS_BASEDIR="\"$(BASEDIR)\""
+
+# No text saves
+TEXTSAVES := 0
+
+# Disable 60 FPS flag (built-in)
+HIGH_FPS_PC := 0
 
 # ------
 # Macros
@@ -102,6 +148,12 @@ OMM_BOWSER ?= -1
 ifneq ($(OMM_BOWSER),-1)
 VERSION_CFLAGS += -DOMM_BOWSER=$(OMM_BOWSER)
 DEFINES += OMM_BOWSER=$(OMM_BOWSER)
+endif
+
+OMM_MARIO_COLORS ?= -1
+ifneq ($(OMM_MARIO_COLORS),-1)
+VERSION_CFLAGS += -DOMM_MARIO_COLORS=$(OMM_MARIO_COLORS)
+DEFINES += OMM_MARIO_COLORS=$(OMM_MARIO_COLORS)
 endif
 
 OMM_DEBUG ?= -1
@@ -129,6 +181,7 @@ ifeq ($(or $(and $(wildcard data/dynos.h),1),0),1)
 VERSION_CFLAGS += -DDYNOS
 DEFINES += DYNOS=1
 OMM_PATCHES += [DynOS]
+OMM_FLAGS += dynos
 endif
 
 ifeq ($(or $(and $(wildcard src/game/mario_cheats.h),1),0),1)
@@ -151,6 +204,17 @@ endif
 
 OMM_PATCHES := $(or $(OMM_PATCHES),None)
 
+# ---------------
+# Builder/Patcher
+# ---------------
+
+ifeq ($(OMM_BUILDER),1)
+CC := $(CROSS)gcc -w
+CXX := $(CROSS)g++ -w
+else
+OMM_PATCH := $(shell python3 omm_patcher.py $(OMM_FLAGS))
+endif
+
 # ---------
 # OMM rules
 # ---------
@@ -165,5 +229,4 @@ OMM_VERSION:
 	--------------------------------------------------------------------------------------------------------------------------------\n"
 
 OMM_EXE_MAP: $(EXE)
-	@objdump -t $(EXE) > $(OMM_DIR_OUT)/omm.map ;\
-	python3 omm_assets.py
+	@objdump -t $(EXE) > $(BUILD_DIR)/$(BASEDIR)/omm.map

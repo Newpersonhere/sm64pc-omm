@@ -2,7 +2,7 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
-#define LIFE_UP_CUTSCENE_HEAL_END   (OMM_HEALTH_NUM_TICKS_PER_SEGMENT * 3)
+#define LIFE_UP_CUTSCENE_HEAL_END   (OMM_HEALTH_ODYSSEY_NUM_TICKS_PER_SEGMENT * 3)
 #define LIFE_UP_CUTSCENE_POS_END    (LIFE_UP_CUTSCENE_HEAL_END + 15)
 #define LIFE_UP_CUTSCENE_END        (LIFE_UP_CUTSCENE_POS_END + 15)
 
@@ -10,7 +10,7 @@ f32 omm_get_life_up_gauge_position(s32 hp) {
     struct Object *o = obj_get_first_with_behavior(omm_bhv_life_up);
     if (o == NULL) return (hp <= omm_health_get_max_hp(0) ? 1.f : 0.f);
     f32 t = (f32) (o->oTimer - LIFE_UP_CUTSCENE_HEAL_END) / (f32) (LIFE_UP_CUTSCENE_POS_END - LIFE_UP_CUTSCENE_HEAL_END);
-    return sqrtf(omm_clamp_0_1_f(1.f - t));
+    return sqrtf(clamp_0_1_f(1.f - t));
 }
 
 f32 omm_get_life_gauge_rumble_strength(struct MarioState *m) {

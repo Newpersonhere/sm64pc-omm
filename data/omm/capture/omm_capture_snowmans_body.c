@@ -49,7 +49,7 @@ s32 cappy_snowmans_body_update(struct Object *o) {
 
     // Snowman's head
     struct Object *snowmansHead = obj_get_nearest_with_behavior(o, bhvSnowmansHead);
-    f32 distToHead = (snowmansHead ? obj_get_distance(o, snowmansHead) : (OMM_COLLISION_LEVEL_BOUNDARY * 2.f));
+    f32 distToHead = (snowmansHead ? obj_get_distance(o, snowmansHead) : (LEVEL_BOUNDS * 2.f));
 
     // Hitbox
     o->hitboxRadius = omm_capture_get_hitbox_radius(o);
@@ -94,11 +94,11 @@ s32 cappy_snowmans_body_update(struct Object *o) {
         }
 
     } else {
-        gOmmData->object->state.actionTimer = omm_max_s(0, gOmmData->object->state.actionTimer - 1);
+        gOmmData->object->state.actionTimer = max_s(0, gOmmData->object->state.actionTimer - 1);
     }
 
     // Movement
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     pobj_decelerate(o, 0.80f, 0.95f);
     pobj_apply_gravity(o, 1.f);
     pobj_handle_special_floors(o);
@@ -122,7 +122,7 @@ s32 cappy_snowmans_body_update(struct Object *o) {
 
     // Snowman's head
     // Distance must be computed again after movement
-    distToHead = (snowmansHead ? obj_get_distance(o, snowmansHead) : (OMM_COLLISION_LEVEL_BOUNDARY * 2.f));
+    distToHead = (snowmansHead ? obj_get_distance(o, snowmansHead) : (LEVEL_BOUNDS * 2.f));
     if (distToHead < 285.f && o->oScaleX == 1.f && obj_is_on_ground(o)) {
         gOmmData->object->snowmans_body.headFound = true;
         omm_mario_unpossess_object(gMarioState, OMM_MARIO_UNPOSSESS_ACT_JUMP_OUT, true, 6);
@@ -133,7 +133,7 @@ s32 cappy_snowmans_body_update(struct Object *o) {
     // Scale
     if (obj_is_on_ground(o)) {
         f32 scaleInc = (o->oForwardVel / (omm_capture_get_walk_speed(o))) * 0.002f;
-        o->oScaleX = omm_min_f(o->oScaleX + scaleInc, 1.f);
+        o->oScaleX = min_f(o->oScaleX + scaleInc, 1.f);
         o->oScaleY = o->oScaleX;
         o->oScaleZ = o->oScaleX;
     }
@@ -146,7 +146,7 @@ s32 cappy_snowmans_body_update(struct Object *o) {
     obj_update_gfx(o);
     if (obj_is_on_ground(o)) {
         f32 walkDistance = gOmmData->object->state.walkDistance;
-        obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, 400.f, o->oForwardVel, SOUND_OBJ_SNOW_SAND1, OBJ_STEP_PARTICLE_NONE);
+        obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, 400.f, o->oForwardVel, SOUND_OBJ_SNOW_SAND1, OBJ_PARTICLE_NONE);
         if (gOmmData->object->state.walkDistance < walkDistance) {
             obj_spawn_particles(o, 8, MODEL_WHITE_PARTICLE, 0, 10 * scale, 5 * scale, 20 * scale, 10 * scale, -2 * sqrtf(scale), 0.5f * scale, 0.25f * scale);
         }

@@ -30,7 +30,7 @@ static void omm_bhv_shockwave_spindrift_update() {
     obj_set_params(o, 0, 0, 0, 0, true);
     obj_reset_hitbox(o, 5 * scale, 160, 0, 0, 0, 80);
     obj_scale(o, scale);
-    o->oOpacity = omm_min_s(255, 510 * (1.f - t));
+    o->oOpacity = min_s(255, 510 * (1.f - t));
     omm_obj_process_interactions(o, OBJ_INT_PRESET_ATTACK_AND_COLLECT);
 }
 

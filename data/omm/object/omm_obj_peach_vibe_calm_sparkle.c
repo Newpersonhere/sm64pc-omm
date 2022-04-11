@@ -46,7 +46,7 @@ const GeoLayout omm_geo_peach_vibe_calm_sparkle[] = {
 static void omm_bhv_peach_vibe_calm_sparkle_update() {
     struct Object *o = gCurrentObject;
     if (o->oTimer < 30) {
-        f32 *marioRootPos = omm_geo_get_marios_root_pos();
+        f32 *marioRootPos = geo_get_marios_root_pos();
         o->oPosX = marioRootPos[0] + o->oHomeX + o->oVelX * o->oTimer;
         o->oPosY = marioRootPos[1] + o->oHomeY + o->oVelY * o->oTimer;
         o->oPosZ = marioRootPos[2] + o->oHomeZ + o->oVelZ * o->oTimer;
@@ -73,14 +73,14 @@ struct Object *omm_spawn_peach_vibe_calm_sparkle(struct Object *o) {
     struct Object *sparkle = obj_spawn_from_geo(o, omm_geo_peach_vibe_calm_sparkle, omm_bhv_peach_vibe_calm_sparkle);
     obj_set_always_rendered(sparkle, true);
     obj_set_angle(sparkle, 0, 0, 0);
-    obj_scale(sparkle, omm_lerp_f(random_float(), 0.5f, 1.f));
-    f32 r = omm_lerp_f(random_float(), 0.f, 100.f);
+    obj_scale(sparkle, lerp_f(random_float(), 0.5f, 1.f));
+    f32 r = lerp_f(random_float(), 0.f, 100.f);
     s16 a = random_u16();
     sparkle->oHomeX = r * sins(a);
-    sparkle->oHomeY = omm_lerp_f(random_float(), -gMarioObject->hitboxHeight / 2.f, 0.f);
+    sparkle->oHomeY = lerp_f(random_float(), -gMarioObject->hitboxHeight / 2.f, 0.f);
     sparkle->oHomeZ = r * coss(a);
     sparkle->oVelX  = 0.f;
-    sparkle->oVelY  = omm_lerp_f(random_float(), 1.f, 8.f);
+    sparkle->oVelY  = lerp_f(random_float(), 1.f, 8.f);
     sparkle->oVelZ  = 0.f;
     return sparkle;
 }

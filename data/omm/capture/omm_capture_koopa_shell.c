@@ -56,7 +56,7 @@ s32 cappy_koopa_shell_update(struct Object *o) {
     POBJ_SET_ATTACKING;
 
     // Movement
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     pobj_decelerate(o, 0.80f, 0.95f);
     pobj_apply_gravity(o, 1.f);
     pobj_handle_special_floors(o);
@@ -79,21 +79,24 @@ s32 cappy_koopa_shell_update(struct Object *o) {
             obj_make_step_sound_and_particle(o,
                 &gOmmData->object->state.walkDistance, 0.f, 0.f,
                 SOUND_MOVING_TERRAIN_RIDING_SHELL + gMarioState->terrainSoundAddend,
-                OBJ_STEP_PARTICLE_MIST);
+                OBJ_PARTICLE_MIST
+            );
             break;
 
         case OBJ_FLOOR_TYPE_WATER:
             obj_make_step_sound_and_particle(o,
                 &gOmmData->object->state.walkDistance, 0.f, 0.f,
                 SOUND_MOVING_TERRAIN_RIDING_SHELL + SOUND_TERRAIN_WATER,
-                OBJ_STEP_PARTICLE_WATER_TRAIL | OBJ_STEP_PARTICLE_WATER_DROPLET);
+                OBJ_PARTICLE_WATER_TRAIL | OBJ_PARTICLE_WATER_DROPLET
+            );
             break;
 
         case OBJ_FLOOR_TYPE_LAVA:
             obj_make_step_sound_and_particle(o,
                 &gOmmData->object->state.walkDistance, 0.f, 0.f,
                 SOUND_MOVING_RIDING_SHELL_LAVA,
-                OBJ_STEP_PARTICLE_FLAME);
+                OBJ_PARTICLE_FLAME
+            );
             break;
     }
 

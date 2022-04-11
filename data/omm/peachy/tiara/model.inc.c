@@ -1,3 +1,9 @@
+#ifdef VSCODE
+#define OMM_ALL_HEADERS
+#include "data/omm/omm_includes.h"
+#undef OMM_ALL_HEADERS
+#endif
+
 //
 // Lights
 //
@@ -12,10 +18,10 @@ static const Lights1 omm_peachs_cap_light = gdSPDefLights1(
 // Textures
 //
 
-static const u8 OMM_TEXTURE_PEACH_CAP_CROWN[] = "OMM_GFX/peach/omm_texture_peach_body";
-static const u8 OMM_TEXTURE_PEACH_CAP_CROWN_METAL[] = "OMM_GFX/peach/omm_texture_peach_metal";
-static const u8 OMM_TEXTURE_PEACH_CAP_TIARA[] = "OMM_GFX/peach/omm_texture_peach_tiara";
-static const u8 OMM_TEXTURE_PEACH_CAP_TIARA_METAL[] = "OMM_GFX/peach/omm_texture_peach_tiara_metal";
+static const u8 OMM_TEXTURE_PEACH_CAP_CROWN[] = "peach/omm_texture_peach_body.rgba32";
+static const u8 OMM_TEXTURE_PEACH_CAP_CROWN_METAL[] = "peach/omm_texture_peach_metal.rgba32";
+static const u8 OMM_TEXTURE_PEACH_CAP_TIARA[] = "peach/omm_texture_peach_tiara.rgba32";
+static const u8 OMM_TEXTURE_PEACH_CAP_TIARA_METAL[] = "peach/omm_texture_peach_tiara_metal.rgba32";
 
 //
 // Vertices

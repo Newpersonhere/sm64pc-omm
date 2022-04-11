@@ -14,7 +14,7 @@ void omm_cappy_try_to_target_next_coin(struct Object *cappy);
 void omm_cappy_bounce_back(struct Object *cappy);
 void omm_cappy_unload();
 bool omm_cappy_is_mario_available(struct MarioState *m, bool isCapture);
-bool omm_cappy_gfx_draw_eyes(struct GraphNodeSwitchCase *node, void (*append)(void *, s16));
+void omm_cappy_gfx_draw_eyes(struct GraphNodeSwitchCase *node, void (*append)(void *, s16));
 u32  omm_cappy_gfx_get_graph_node_identifier(struct GraphNode *node);
 
 #endif // OMM_CAPPY_H

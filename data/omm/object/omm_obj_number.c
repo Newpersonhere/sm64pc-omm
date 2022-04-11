@@ -223,7 +223,7 @@ const BehaviorScript omm_bhv_star_number[] = {
 
 struct Object *omm_spawn_number(struct Object *o, s32 n) {
     struct Object *number = spawn_object_relative(n, 0, 0, 0, o, MODEL_NONE, bhvOrangeNumber);
-    number->oGraphNode = omm_geo_get_graph_node(omm_geo_number, true);
+    number->oGraphNode = geo_layout_to_graph_node(NULL, omm_geo_number);
     number->oPosY += 25.f;
     return number;
 }

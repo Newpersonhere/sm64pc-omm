@@ -59,7 +59,7 @@ enum {
     OMM_BOWSER_ACTION_FLAMETHROWER,
     OMM_BOWSER_ACTION_CLONE_START,
     OMM_BOWSER_ACTION_CLONE_END,
-    OMM_BOWSER_ACTION_SURPRISED,
+    OMM_BOWSER_ACTION_GET_MAD,
     OMM_BOWSER_ACTION_EXHAUSTED,
     OMM_BOWSER_ACTION_DAMAGED,
 };
@@ -82,7 +82,7 @@ typedef struct OmmBowserAction {
 #define ACTION_FLAMETHROWER(flameDuration)                                      { OMM_BOWSER_ACTION_FLAMETHROWER, flameDuration, 0, 0 }
 #define ACTION_CLONE_START()                                                    { OMM_BOWSER_ACTION_CLONE_START, 0, 0, 0 }
 #define ACTION_CLONE_END()                                                      { OMM_BOWSER_ACTION_CLONE_END, 0, 0, 0 }
-#define ACTION_SURPRISED()                                                      { OMM_BOWSER_ACTION_SURPRISED, 0, 0, 0 }
+#define ACTION_GET_MAD()                                                        { OMM_BOWSER_ACTION_GET_MAD, 0, 0, 0 }
 #define ACTION_EXHAUSTED(exhaustDuration)                                       { OMM_BOWSER_ACTION_EXHAUSTED, exhaustDuration, 0, 0 }
 #define ACTION_DAMAGED()                                                        { OMM_BOWSER_ACTION_DAMAGED, 0, 0, 0 }
 #define ACTION_DEFEATED()                                                       { OMM_BOWSER_ACTION_DAMAGED, 0, -1, 0 }
@@ -104,19 +104,19 @@ static const OmmBowserAction sOmmBowserActions[5][3][4][36] = {
 {
 {
 ACTION_START(),
-ACTION_JUMP(30, 0, 45),
-ACTION_BOMBS(1, 45),
+ACTION_JUMP(30, 0, 35),
+ACTION_BOMBS(10, 45),
 ACTION_END_LOOP(),
 },
 {
 ACTION_START(),
-ACTION_SURPRISED(),
+ACTION_GET_MAD(),
 ACTION_END_NEXT_COMBO(),
 },
 {
 ACTION_START(),
-ACTION_JUMP(30, 1, 45),
-ACTION_JUMP_MINE(30, 2, 40),
+ACTION_JUMP(30, 1, 35),
+ACTION_JUMP_MINE(30, 2, 30),
 ACTION_EXHAUSTED(90),
 ACTION_END_LOOP(),
 },
@@ -130,20 +130,20 @@ ACTION_END_NEXT_PHASE(),
 {
 {
 ACTION_START(),
-ACTION_JUMP(30, 1, 45),
+ACTION_JUMP(30, 1, 35),
 ACTION_BOMBS(2, 45),
 ACTION_END_LOOP(),
 },
 {
 ACTION_START(),
-ACTION_SURPRISED(),
+ACTION_GET_MAD(),
 ACTION_END_NEXT_COMBO(),
 },
 {
 ACTION_START(),
-ACTION_JUMP(30, 1, 40),
-ACTION_FIRE_BALLS(3, 60, 0),
-ACTION_JUMP_MINE(30, 2, 35),
+ACTION_JUMP(30, 1, 30),
+ACTION_FIRE_BALLS(3, 45, 0),
+ACTION_JUMP_MINE(30, 2, 25),
 ACTION_EXHAUSTED(75),
 ACTION_END_LOOP(),
 },
@@ -157,22 +157,22 @@ ACTION_END_NEXT_PHASE(),
 {
 {
 ACTION_START(),
-ACTION_JUMP(30, 2, 40),
+ACTION_JUMP(30, 2, 30),
 ACTION_BOMBS(3, 45),
 ACTION_END_LOOP(),
 },
 {
 ACTION_START(),
-ACTION_SURPRISED(),
+ACTION_GET_MAD(),
 ACTION_END_NEXT_COMBO(),
 },
 {
 ACTION_START(),
-ACTION_JUMP(30, 1, 40),
-ACTION_FIRE_BALLS(2, 45, 0),
-ACTION_JUMP(30, 2, 35),
-ACTION_FIRE_BALLS(3, 45, 10),
-ACTION_JUMP_MINE(30, 3, 30),
+ACTION_JUMP(30, 1, 30),
+ACTION_FIRE_BALLS(2, 30, 0),
+ACTION_JUMP(30, 2, 25),
+ACTION_FIRE_BALLS(3, 30, 10),
+ACTION_JUMP_MINE(30, 3, 20),
 ACTION_EXHAUSTED(60),
 ACTION_END_LOOP(),
 },
@@ -193,21 +193,21 @@ ACTION_END_LOOP(),
 {
 {
 ACTION_START(),
-ACTION_JUMP(30, 1, 30),
+ACTION_JUMP(30, 1, 20),
 ACTION_BOMBS(2, 45),
 ACTION_END_LOOP(),
 },
 {
 ACTION_START(),
-ACTION_SURPRISED(),
+ACTION_GET_MAD(),
 ACTION_END_NEXT_COMBO(),
 },
 {
 ACTION_START(),
-ACTION_JUMP(30, 1, 30),
-ACTION_FIRE_BALLS(2, 30, 0),
-ACTION_JUMP_MINE(20, 2, 30),
-ACTION_FIRE_BALLS(3, 25, 0),
+ACTION_JUMP(30, 1, 20),
+ACTION_FIRE_BALLS(2, 25, 0),
+ACTION_JUMP_MINE(20, 2, 20),
+ACTION_FIRE_BALLS(3, 20, 0),
 ACTION_EXHAUSTED(90),
 ACTION_END_LOOP(),
 },
@@ -221,20 +221,20 @@ ACTION_END_NEXT_PHASE(),
 {
 {
 ACTION_START(),
-ACTION_JUMP(30, 2, 30),
+ACTION_JUMP(30, 2, 20),
 ACTION_BOMBS(3, 45),
 ACTION_END_LOOP(),
 },
 {
 ACTION_START(),
-ACTION_SURPRISED(),
+ACTION_GET_MAD(),
 ACTION_END_NEXT_COMBO(),
 },
 {
 ACTION_START(),
-ACTION_JUMP(30, 1, 30),
-ACTION_FLAMETHROWER(150),
-ACTION_JUMP_MINE(25, 2, 25),
+ACTION_JUMP(30, 1, 20),
+ACTION_FLAMETHROWER(120),
+ACTION_JUMP_MINE(25, 2, 15),
 ACTION_EXHAUSTED(75),
 ACTION_END_LOOP(),
 },
@@ -248,22 +248,22 @@ ACTION_END_NEXT_PHASE(),
 {
 {
 ACTION_START(),
-ACTION_JUMP(30, 3, 30),
+ACTION_JUMP(30, 3, 20),
 ACTION_BOMBS(4, 40),
 ACTION_END_LOOP(),
 },
 {
 ACTION_START(),
-ACTION_SURPRISED(),
+ACTION_GET_MAD(),
 ACTION_END_NEXT_COMBO(),
 },
 {
 ACTION_START(),
-ACTION_JUMP(30, 1, 25),
-ACTION_FIRE_BALLS(4, 20, 0),
-ACTION_JUMP(25, 2, 25),
-ACTION_FLAMETHROWER(150),
-ACTION_JUMP_MINE(20, 3, 25),
+ACTION_JUMP(30, 1, 15),
+ACTION_FIRE_BALLS(4, 20, 2),
+ACTION_JUMP(25, 2, 15),
+ACTION_FLAMETHROWER(120),
+ACTION_JUMP_MINE(20, 3, 15),
 ACTION_EXHAUSTED(60),
 ACTION_END_LOOP(),
 },
@@ -284,25 +284,25 @@ ACTION_END_LOOP(),
 {
 {
 ACTION_START(),
-ACTION_JUMP(25, 1, 20),
+ACTION_JUMP(25, 1, 15),
 ACTION_BOMBS(3, 45),
 ACTION_END_LOOP(),
 },
 {
 ACTION_START(),
-ACTION_SURPRISED(),
+ACTION_GET_MAD(),
 ACTION_END_NEXT_COMBO(),
 },
 {
 ACTION_START(),
-ACTION_JUMP(30, 1, 30),
-ACTION_JUMP(27, 1, 30),
-ACTION_JUMP(24, 1, 30),
-ACTION_JUMP(21, 1, 30),
-ACTION_JUMP(18, 1, 30),
-ACTION_JUMP(15, 1, 30),
-ACTION_JUMP(12, 1, 30),
-ACTION_JUMP_MINE(9, 5, 20),
+ACTION_JUMP(30, 1, 20),
+ACTION_JUMP(27, 1, 20),
+ACTION_JUMP(24, 1, 20),
+ACTION_JUMP(21, 1, 20),
+ACTION_JUMP(18, 1, 20),
+ACTION_JUMP(15, 1, 20),
+ACTION_JUMP(12, 1, 20),
+ACTION_JUMP_MINE(9, 5, 15),
 ACTION_EXHAUSTED(90),
 ACTION_END_LOOP(),
 },
@@ -316,22 +316,22 @@ ACTION_END_NEXT_PHASE(),
 {
 {
 ACTION_START(),
-ACTION_JUMP(25, 3, 15),
+ACTION_JUMP(25, 3, 12),
 ACTION_BOMBS(4, 40),
 ACTION_END_LOOP(),
 },
 {
 ACTION_START(),
-ACTION_SURPRISED(),
+ACTION_GET_MAD(),
 ACTION_END_NEXT_COMBO(),
 },
 {
 ACTION_START(),
-ACTION_JUMP(25, 1, 30),
-ACTION_FIRE_BALLS(3, 30, 5),
-ACTION_JUMP(20, 2, 30),
-ACTION_FIRE_BALLS(4, 25, 4),
-ACTION_JUMP_MINE(15, 3, 25),
+ACTION_JUMP(25, 1, 20),
+ACTION_FIRE_BALLS(3, 25, 5),
+ACTION_JUMP(20, 2, 20),
+ACTION_FIRE_BALLS(4, 22, 4),
+ACTION_JUMP_MINE(15, 3, 15),
 ACTION_FIRE_BALLS(5, 20, 3),
 ACTION_EXHAUSTED(75),
 ACTION_END_LOOP(),
@@ -346,24 +346,24 @@ ACTION_END_NEXT_PHASE(),
 {
 {
 ACTION_START(),
-ACTION_JUMP(20, 5, 10),
+ACTION_JUMP(20, 5, 8),
 ACTION_BOMBS(5, 35),
 ACTION_END_LOOP(),
 },
 {
 ACTION_START(),
-ACTION_SURPRISED(),
+ACTION_GET_MAD(),
 ACTION_END_NEXT_COMBO(),
 },
 {
 ACTION_START(),
-ACTION_JUMP(25, 1, 30),
-ACTION_FLAMETHROWER(90),
-ACTION_JUMP(20, 2, 30),
+ACTION_JUMP(25, 1, 20),
+ACTION_FLAMETHROWER(80),
+ACTION_JUMP(20, 2, 20),
+ACTION_FLAMETHROWER(100),
+ACTION_JUMP(15, 3, 20),
 ACTION_FLAMETHROWER(120),
-ACTION_JUMP(15, 3, 30),
-ACTION_FLAMETHROWER(150),
-ACTION_JUMP_MINE(10, 4, 25),
+ACTION_JUMP_MINE(10, 4, 15),
 ACTION_FIRE_BALLS(12, 30, 2),
 ACTION_EXHAUSTED(60),
 ACTION_END_LOOP(),
@@ -386,20 +386,20 @@ ACTION_END_LOOP(),
 {
 {
 ACTION_START(),
-ACTION_JUMP(25, 1, 20),
-ACTION_JUMP(15, 1, 20),
-ACTION_JUMP(5, 1, 20),
+ACTION_JUMP(25, 1, 15),
+ACTION_JUMP(15, 1, 15),
+ACTION_JUMP(5, 1, 15),
 ACTION_BOMBS(5, 45),
 ACTION_END_LOOP(),
 },
 {
 ACTION_START(),
-ACTION_SURPRISED(),
+ACTION_GET_MAD(),
 ACTION_END_NEXT_COMBO(),
 },
 {
 ACTION_START(),
-ACTION_JUMP_MINE(30, 20, 20),
+ACTION_JUMP_MINE(30, 20, 15),
 ACTION_EXHAUSTED(120),
 ACTION_END_LOOP(),
 },
@@ -413,26 +413,26 @@ ACTION_END_NEXT_PHASE(),
 {
 {
 ACTION_START(),
-ACTION_JUMP(25, 1, 20),
+ACTION_JUMP(25, 1, 15),
 ACTION_FIRE_BALLS(10, 15, 0),
-ACTION_JUMP(20, 2, 25),
+ACTION_JUMP(20, 2, 20),
 ACTION_FIRE_BALLS(20, 10, 0),
-ACTION_JUMP(15, 3, 30),
+ACTION_JUMP(15, 3, 25),
 ACTION_BOMBS(7, 40),
 ACTION_END_LOOP(),
 },
 {
 ACTION_START(),
-ACTION_SURPRISED(),
+ACTION_GET_MAD(),
 ACTION_END_NEXT_COMBO(),
 },
 {
 ACTION_START(),
-ACTION_JUMP(20, 1, 20),
+ACTION_JUMP(20, 1, 15),
 ACTION_FIRE_BALLS(3, 10, 0),
-ACTION_JUMP(15, 2, 15),
+ACTION_JUMP(15, 2, 12),
 ACTION_FIRE_BALLS(4, 8, 0),
-ACTION_JUMP_MINE(10, 3, 12),
+ACTION_JUMP_MINE(10, 3, 9),
 ACTION_FIRE_BALLS(5, 6, 0),
 ACTION_EXHAUSTED(105),
 ACTION_END_LOOP(),
@@ -447,41 +447,41 @@ ACTION_END_NEXT_PHASE(),
 {
 {
 ACTION_START(),
-ACTION_JUMP(20, 3, 35),
-ACTION_FLAMETHROWER(120),
-ACTION_JUMP(15, 5, 30),
-ACTION_FLAMETHROWER(240),
-ACTION_JUMP(10, 7, 25),
+ACTION_JUMP(20, 3, 25),
+ACTION_FLAMETHROWER(90),
+ACTION_JUMP(15, 5, 20),
+ACTION_FLAMETHROWER(180),
+ACTION_JUMP(10, 7, 15),
 ACTION_BOMBS(9, 35),
 ACTION_END_LOOP(),
 },
 {
 ACTION_START(),
-ACTION_SURPRISED(),
+ACTION_GET_MAD(),
 ACTION_END_NEXT_COMBO(),
 },
 {
 ACTION_START(),
-ACTION_JUMP(25, 1, 20),
-ACTION_JUMP(23, 1, 20),
-ACTION_JUMP(21, 1, 20),
-ACTION_JUMP(19, 1, 20),
-ACTION_JUMP(17, 1, 20),
-ACTION_JUMP(15, 1, 20),
-ACTION_JUMP(13, 1, 20),
-ACTION_JUMP(11, 1, 20),
-ACTION_JUMP(9, 1, 20),
-ACTION_JUMP(7, 1, 20),
-ACTION_JUMP(5, 1, 20),
-ACTION_JUMP(3, 1, 20),
-ACTION_JUMP(1, 1, 20),
-ACTION_JUMP(1, 1, 20),
-ACTION_JUMP(1, 1, 20),
-ACTION_JUMP(1, 1, 20),
-ACTION_JUMP(1, 1, 20),
-ACTION_JUMP(1, 1, 20),
-ACTION_JUMP(1, 1, 20),
-ACTION_JUMP_MINE(1, 1, 20),
+ACTION_JUMP(25, 1, 15),
+ACTION_JUMP(23, 1, 15),
+ACTION_JUMP(21, 1, 15),
+ACTION_JUMP(19, 1, 15),
+ACTION_JUMP(17, 1, 15),
+ACTION_JUMP(15, 1, 15),
+ACTION_JUMP(13, 1, 15),
+ACTION_JUMP(11, 1, 15),
+ACTION_JUMP(9, 1, 15),
+ACTION_JUMP(7, 1, 15),
+ACTION_JUMP(5, 1, 15),
+ACTION_JUMP(3, 1, 15),
+ACTION_JUMP(1, 1, 15),
+ACTION_JUMP(1, 1, 15),
+ACTION_JUMP(1, 1, 15),
+ACTION_JUMP(1, 1, 15),
+ACTION_JUMP(1, 1, 15),
+ACTION_JUMP(1, 1, 15),
+ACTION_JUMP(1, 1, 15),
+ACTION_JUMP_MINE(1, 1, 15),
 ACTION_EXHAUSTED(90),
 ACTION_END_LOOP(),
 },
@@ -503,22 +503,22 @@ ACTION_END_LOOP(),
 {
 {
 ACTION_START(),
-ACTION_JUMP(20, 1, 20),
-ACTION_JUMP(16, 1, 20),
-ACTION_JUMP(12, 1, 20),
-ACTION_JUMP(8, 1, 20),
-ACTION_JUMP(4, 3, 20),
+ACTION_JUMP(20, 1, 15),
+ACTION_JUMP(16, 1, 15),
+ACTION_JUMP(12, 1, 15),
+ACTION_JUMP(8, 1, 15),
+ACTION_JUMP(4, 3, 15),
 ACTION_BOMBS(7, 40),
 ACTION_END_LOOP(),
 },
 {
 ACTION_START(),
-ACTION_SURPRISED(),
+ACTION_GET_MAD(),
 ACTION_END_NEXT_COMBO(),
 },
 {
 ACTION_START(),
-ACTION_JUMP_MINE(30, 40, 18),
+ACTION_JUMP_MINE(30, 40, 12),
 ACTION_EXHAUSTED(120),
 ACTION_END_LOOP(),
 },
@@ -532,34 +532,34 @@ ACTION_END_NEXT_PHASE(),
 {
 {
 ACTION_START(),
-ACTION_JUMP(25, 1, 20),
+ACTION_JUMP(25, 1, 15),
 ACTION_FIRE_BALLS(15, 10, 0),
-ACTION_JUMP(20, 3, 25),
+ACTION_JUMP(20, 3, 20),
 ACTION_FIRE_BALLS(30, 5, 0),
-ACTION_JUMP(15, 5, 30),
+ACTION_JUMP(15, 5, 25),
 ACTION_BOMBS(9, 35),
 ACTION_END_LOOP(),
 },
 {
 ACTION_START(),
-ACTION_SURPRISED(),
+ACTION_GET_MAD(),
 ACTION_END_NEXT_COMBO(),
 },
 {
 ACTION_START(),
-ACTION_JUMP(20, 1, 15),
+ACTION_JUMP(20, 1, 12),
 ACTION_FIRE_BALLS(3, 10, 1),
-ACTION_JUMP(18, 2, 20),
+ACTION_JUMP(18, 2, 15),
 ACTION_FIRE_BALLS(4, 10, 1),
-ACTION_JUMP(16, 2, 12),
+ACTION_JUMP(16, 2, 9),
 ACTION_FIRE_BALLS(5, 10, 1),
-ACTION_JUMP(14, 3, 20),
+ACTION_JUMP(14, 3, 15),
 ACTION_FIRE_BALLS(6, 10, 1),
-ACTION_JUMP(12, 3, 8),
+ACTION_JUMP(12, 3, 6),
 ACTION_FIRE_BALLS(7, 10, 1),
-ACTION_JUMP(10, 4, 20),
+ACTION_JUMP(10, 4, 15),
 ACTION_FIRE_BALLS(8, 10, 1),
-ACTION_JUMP_MINE(8, 4, 6),
+ACTION_JUMP_MINE(8, 4, 5),
 ACTION_FIRE_BALLS(9, 10, 1),
 ACTION_EXHAUSTED(105),
 ACTION_END_LOOP(),
@@ -574,55 +574,55 @@ ACTION_END_NEXT_PHASE(),
 {
 {
 ACTION_START(),
-ACTION_JUMP(30, 0, 20),
+ACTION_JUMP(30, 0, 15),
 ACTION_CLONE_START(),
-ACTION_JUMP(25, 3, 20),
-ACTION_FLAMETHROWER(180),
-ACTION_JUMP(20, 6, 25),
-ACTION_FLAMETHROWER(360),
-ACTION_JUMP(15, 10, 30),
+ACTION_JUMP(25, 3, 15),
+ACTION_FLAMETHROWER(150),
+ACTION_JUMP(20, 6, 20),
+ACTION_FLAMETHROWER(300),
+ACTION_JUMP(15, 10, 25),
 ACTION_CLONE_END(),
 ACTION_BOMBS(11, 30),
 ACTION_END_LOOP(),
 },
 {
 ACTION_START(),
-ACTION_SURPRISED(),
+ACTION_GET_MAD(),
 ACTION_END_NEXT_COMBO(),
 },
 {
 ACTION_START(),
 ACTION_CLONE_START(),
-ACTION_JUMP(30, 1, 20),
-ACTION_JUMP(29, 1, 20),
-ACTION_JUMP(28, 1, 20),
-ACTION_JUMP(27, 1, 20),
-ACTION_JUMP(26, 1, 20),
-ACTION_JUMP(25, 1, 20),
-ACTION_JUMP(24, 1, 20),
-ACTION_JUMP(23, 1, 20),
-ACTION_JUMP(22, 1, 20),
-ACTION_JUMP(21, 1, 20),
-ACTION_JUMP(20, 1, 20),
-ACTION_JUMP(19, 1, 20),
-ACTION_JUMP(18, 1, 20),
-ACTION_JUMP(17, 1, 20),
-ACTION_JUMP(16, 1, 20),
-ACTION_JUMP(15, 1, 20),
-ACTION_JUMP(14, 1, 20),
-ACTION_JUMP(13, 1, 20),
-ACTION_JUMP(12, 1, 20),
-ACTION_JUMP(11, 1, 20),
-ACTION_JUMP(10, 1, 20),
-ACTION_JUMP(9, 1, 20),
-ACTION_JUMP(8, 1, 20),
-ACTION_JUMP(7, 1, 20),
-ACTION_JUMP(6, 1, 20),
-ACTION_JUMP(5, 1, 20),
-ACTION_JUMP(4, 1, 20),
-ACTION_JUMP(3, 1, 20),
-ACTION_JUMP(2, 1, 20),
-ACTION_JUMP_MINE(1, 1, 20),
+ACTION_JUMP(30, 1, 15),
+ACTION_JUMP(29, 1, 15),
+ACTION_JUMP(28, 1, 15),
+ACTION_JUMP(27, 1, 15),
+ACTION_JUMP(26, 1, 15),
+ACTION_JUMP(25, 1, 15),
+ACTION_JUMP(24, 1, 15),
+ACTION_JUMP(23, 1, 15),
+ACTION_JUMP(22, 1, 15),
+ACTION_JUMP(21, 1, 15),
+ACTION_JUMP(20, 1, 15),
+ACTION_JUMP(19, 1, 15),
+ACTION_JUMP(18, 1, 15),
+ACTION_JUMP(17, 1, 15),
+ACTION_JUMP(16, 1, 15),
+ACTION_JUMP(15, 1, 15),
+ACTION_JUMP(14, 1, 15),
+ACTION_JUMP(13, 1, 15),
+ACTION_JUMP(12, 1, 15),
+ACTION_JUMP(11, 1, 15),
+ACTION_JUMP(10, 1, 15),
+ACTION_JUMP(9, 1, 15),
+ACTION_JUMP(8, 1, 15),
+ACTION_JUMP(7, 1, 15),
+ACTION_JUMP(6, 1, 15),
+ACTION_JUMP(5, 1, 15),
+ACTION_JUMP(4, 1, 15),
+ACTION_JUMP(3, 1, 15),
+ACTION_JUMP(2, 1, 15),
+ACTION_JUMP_MINE(1, 1, 15),
 ACTION_CLONE_END(),
 ACTION_EXHAUSTED(90),
 ACTION_END_LOOP(),
@@ -709,7 +709,7 @@ static void omm_bhv_bowser_init(OmmBowser *bowser) {
         bowser->mineRadius = 3600;
         bowser->grabMultiplier = 1.08f;
     } else {
-        bowser->index = omm_sparkly_get_current_mode() + 2;
+        bowser->index = gOmmSSM + 2;
         bowser->bowserType = 2;
         bowser->numMines = 8;
         bowser->setupDuration = 5;
@@ -742,7 +742,7 @@ static void omm_bhv_bowser_init(OmmBowser *bowser) {
     bowser->hintTimer = 0;
     bowser->real = bowser;
     bowser->clone = NULL;
-    bowser->flamethrowerYaws = NULL;
+    bowser->flamethrowerYaws = (OmmArray) omm_array_zero;
     bowser->flamethrowerCanChangeDir = false;
     for (s32 i = 0; i != bowser->numMines; ++i) {
         s16 angle = (s16)(i * bowser->jumpDeltaAngle);
@@ -797,7 +797,7 @@ static s32 omm_bhv_bowser_get_jump_index(OmmBowser *bowser, bool ignoreMines) {
         // Is Mario near this point?
         f32 x = bowser->landRadius * +sins(i * bowser->jumpDeltaAngle);
         f32 z = bowser->landRadius * -coss(i * bowser->jumpDeltaAngle);
-        f32 distToMario = sqrtf(omm_sqr_f(gMarioState->pos[0] - x) + omm_sqr_f(gMarioState->pos[2] - z));
+        f32 distToMario = sqrtf(sqr_f(gMarioState->pos[0] - x) + sqr_f(gMarioState->pos[2] - z));
         if (distToMario < 800.f) {
             continue;
         }
@@ -811,7 +811,7 @@ static s32 omm_bhv_bowser_get_jump_index(OmmBowser *bowser, bool ignoreMines) {
 static void omm_bhv_bowser_turn_to_target(OmmBowser *bowser, f32 x, f32 z, s16 angleVel, s32 animIdle, s32 animWalk) {
     static s32 sSoundWalkTimer = 0;
     s16 angleToTarget = atan2s(z - bowser->obj->oPosZ, x - bowser->obj->oPosX);
-    u16 diff = (u16) omm_abs_s(bowser->obj->oFaceAngleYaw - angleToTarget);
+    u16 diff = (u16) abs_s(bowser->obj->oFaceAngleYaw - angleToTarget);
     if (diff > 0x40) {
         if (animWalk != -1) {
             obj_anim_play_with_sound(bowser->obj, animWalk, 1.f, 0, false);
@@ -940,6 +940,11 @@ static void omm_bhv_bowser_check_emergency_jump(OmmBowser *bowser) {
         return;
     }
 
+    // Doesn't trigger if Mario is possessing a flaming bob-omb
+    if (gMarioState->action == ACT_OMM_POSSESSION && gOmmCapture->behavior == omm_bhv_flaming_bobomb) {
+        return;
+    }
+    
     // Deinit action
     switch (omm_bowser_current_action->action) {
 
@@ -996,7 +1001,7 @@ static void omm_bhv_bowser_jump(OmmBowser *bowser) {
         case 0: {
             if (bowser->timer < 6) {
 OMM_BOWSER_CLONE_CODE(
-                s32 angleVel = omm_abs_s(bowser->jumpAngle - bowser->obj->oFaceAngleYaw) / (6 - bowser->timer);
+                s32 angleVel = abs_s(bowser->jumpAngle - bowser->obj->oFaceAngleYaw) / (6 - bowser->timer);
                 bowser->obj->oFaceAngleYaw = bowser->jumpAngle - approach_s32((s16) (bowser->jumpAngle - bowser->obj->oFaceAngleYaw), 0, angleVel, angleVel);
                 obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_JUMP, 1.f, 0, false);
 );
@@ -1016,7 +1021,7 @@ OMM_BOWSER_CLONE_CODE(
         case 1: {
 OMM_BOWSER_CLONE_CODE(
             obj_reset_hitbox(bowser->obj, 0, 0, 0, 0, 0, 0);
-            f32 t = omm_clamp_0_1_f((f32) bowser->timer / (f32) omm_bowser_current_action->duration);
+            f32 t = clamp_0_1_f((f32) bowser->timer / (f32) omm_bowser_current_action->duration);
             bowser->obj->oPosX = bowser->jumpPosX + ((bowser->landRadius * +sins(bowser->jumpIndex * bowser->jumpDeltaAngle)) - bowser->jumpPosX) * t;
             bowser->obj->oPosZ = bowser->jumpPosZ + ((bowser->landRadius * -coss(bowser->jumpIndex * bowser->jumpDeltaAngle)) - bowser->jumpPosZ) * t;
             bowser->obj->oPosY = bowser->floorHeight + (bowser->jumpMaxHeight - bowser->floorHeight) * sins(0x8000 * t);
@@ -1045,7 +1050,7 @@ OMM_BOWSER_CLONE_CODE(
 OMM_BOWSER_CLONE_CODE(
                 obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_LAND, 1.f, 0, true);
                 if ((bowser->timer % omm_bowser_current_action->delay) == 0) {
-                    omm_spawn_shockwave_fire(bowser->obj, 100, 100, 150, 30, 5000, OMM_TEXTURE_BOWSER_FIRE_RED_1, OMM_TEXTURE_BOWSER_FIRE_RED_2);
+                    omm_spawn_shockwave_fire(bowser->obj, 100, 100, 150, 40, 5000, OMM_TEXTURE_BOWSER_FIRE_RED_1, OMM_TEXTURE_BOWSER_FIRE_RED_2);
                     bowser->jumpWaves--;
                 }
 );
@@ -1104,17 +1109,17 @@ static void omm_bhv_bowser_fireballs(OmmBowser *bowser) {
                     f32 vz = gMarioState->vel[2];
                     f32 dx = gMarioState->pos[0] - bowser->obj->oPosX;
                     f32 dz = gMarioState->pos[2] - bowser->obj->oPosZ;
-                    f32 A = omm_sqr_f(vx) + omm_sqr_f(vz) - omm_sqr_f(vf);
+                    f32 A = sqr_f(vx) + sqr_f(vz) - sqr_f(vf);
                     f32 B = 2.f * (vx * dx + vz * dz);
-                    f32 C = omm_sqr_f(dx) + omm_sqr_f(dz);
+                    f32 C = sqr_f(dx) + sqr_f(dz);
                     f32 D = (B * B) - (4.f * A * C);
                     if (A != 0.f && D >= 0.f) {
                         f32 t1 = (-B - sqrtf(D)) / (2.f * A);
                         f32 t2 = (-B + sqrtf(D)) / (2.f * A);
-                        if (omm_max_f(t1, t2) >= 0.f) {
+                        if (max_f(t1, t2) >= 0.f) {
                             if (t1 < 0.f) t1 = 10000.f;
                             if (t2 < 0.f) t2 = 10000.f;
-                            pt = omm_min_f(t1, t2);
+                            pt = min_f(t1, t2);
                         }
                     }
                 } else {
@@ -1183,7 +1188,16 @@ static void omm_bhv_bowser_bombs(OmmBowser *bowser) {
         case 1: {
             for (s32 i = 0; i != omm_bowser_current_action->count; ++i) {
                 s32 angle = (((f32) i - (f32) (omm_bowser_current_action->count / 2.f)) * 0x1740) + bowser->obj->oFaceAngleYaw;
-                omm_spawn_flaming_bobomb(bowser->obj, bowser->obj->oPosX + 500.f * sins(angle), bowser->obj->oPosY + 360.f, bowser->obj->oPosZ + 500.f * coss(angle), i, bowser->bombMaxHeight);
+                omm_spawn_flaming_bobomb(
+                    bowser->obj,
+                    bowser->obj->oPosX + 500.f * sins(angle),
+                    bowser->obj->oPosY + 360.f,
+                    bowser->obj->oPosZ + 500.f * coss(angle),
+                    omm_bowser_current_action->count - i,
+                    omm_bowser_current_action->count,
+                    bowser->landRadius,
+                    bowser->bombMaxHeight
+                );
             }
             obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_RAISE_ARM, 1.f, SOUND_OBJ2_BOWSER_TELEPORT, true);
             omm_bhv_bowser_update_action(bowser, 2);
@@ -1192,7 +1206,7 @@ static void omm_bhv_bowser_bombs(OmmBowser *bowser) {
         // Wait
         case 2: {
             obj_anim_extend(bowser->obj);
-            if (bowser->timer >= 30) {
+            if (bowser->timer >= 20) {
                 omm_bhv_bowser_update_action(bowser, 3);
             }
         } break;
@@ -1200,22 +1214,26 @@ static void omm_bhv_bowser_bombs(OmmBowser *bowser) {
         // Throw bombs
         case 3: {
             if (bowser->counter > 0) {
-                if ((bowser->timer % omm_bowser_current_action->delay) == 0) {
-                    
-                    // Retrieve inactive bobombs
-                    OmmArray bobombs = omm_array_new(struct Object *);
+
+                // If Mario manages to capture a flaming bob-omb during its ascending state,
+                // Bowser gets mad instantly and throw all other bombs at once
+                if (gMarioState->action == ACT_OMM_POSSESSION && gOmmCapture->behavior == omm_bhv_flaming_bobomb && gOmmCapture->oAction == 1) {
                     for_each_object_with_behavior(bobomb, omm_bhv_flaming_bobomb) {
-                        if (bobomb->oAction == 0) {
-                            omm_array_add(bobombs, bobomb);
+                        if (bobomb->oAction <= 1) {
+                            bobomb->oAction = 5;
+                            bobomb->oTimer = 0;
                         }
                     }
+                    omm_bhv_bowser_update_combo(bowser);
+                    return;
+                }
 
-                    // Throw a random bob-omb
-                    obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_THROW_BOMB, 1.f, SOUND_OBJ2_BOWSER_ROAR, true);
-                    s32 j = (s32) (random_u16() % omm_array_count(bobombs));
-                    omm_array_get(bobombs, struct Object *, j)->oAction = 1;
-                    omm_array_get(bobombs, struct Object *, j)->oTimer = 0;
-                    omm_array_delete(bobombs);
+                // Throw a bomb every delay frames
+                if ((bowser->timer % omm_bowser_current_action->delay) == 0) {
+                    obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_THROW_BOMB, 1.f, SOUND_OBJ2_BOWSER_ROAR | 0x8100, true);
+                    struct Object *bobomb = obj_get_first_with_behavior_and_field_s32(omm_bhv_flaming_bobomb, 0x1B, bowser->counter);
+                    bobomb->oAction = 1;
+                    bobomb->oTimer = 0;
                     bowser->counter--;
                 }
                 if (bowser->obj->oAnimID == OMM_BOWSER_ANIM_THROW_BOMB && obj_anim_is_near_end(bowser->obj)) {
@@ -1303,11 +1321,7 @@ OMM_BOWSER_CLONE_CODE(
             // Next sub-action
             else {
 OMM_BOWSER_CLONE_CODE(
-                if (bowser->flamethrowerYaws) {
-                    omm_array_clear(bowser->flamethrowerYaws);
-                } else {
-                    bowser->flamethrowerYaws = omm_array_new(s16);
-                }
+                omm_array_clear(bowser->flamethrowerYaws);
                 bowser->obj->oAngleVelYaw = 0;
 );
                 omm_bhv_bowser_update_action(bowser, 3);
@@ -1330,8 +1344,8 @@ OMM_BOWSER_CLONE_CODE(
                 s16 prevVel = bowser->obj->oAngleVelYaw;
                 omm_bhv_bowser_turn_to_target(bowser, gMarioState->pos[0], gMarioState->pos[2], 0x20, -1, -1);
                 s16 currAcc = (bowser->obj->oFaceAngleYaw - prevYaw);
-                s16 signVel = omm_sign_0_s(bowser->obj->oAngleVelYaw);
-                s16 signAcc = omm_sign_0_s(currAcc);
+                s16 signVel = sign_0_s(bowser->obj->oAngleVelYaw);
+                s16 signAcc = sign_0_s(currAcc);
                 s16 signDir = (signAcc != 0) ? signAcc : signVel;
 
                 // Deceleration/Acceleration
@@ -1344,10 +1358,10 @@ OMM_BOWSER_CLONE_CODE(
                 } else {
                     bowser->obj->oAngleVelYaw += 0x20 * signDir;
                 }
-                bowser->obj->oAngleVelYaw = omm_clamp_s(bowser->obj->oAngleVelYaw, -0x400, +0x400);
+                bowser->obj->oAngleVelYaw = clamp_s(bowser->obj->oAngleVelYaw, -0x400, +0x400);
 
                 // Direction
-                if (omm_abs_s(bowser->obj->oAngleVelYaw) > 0x200) {
+                if (abs_s(bowser->obj->oAngleVelYaw) > 0x200) {
                     bowser->flamethrowerCanChangeDir = true;
                 } else if (bowser->obj->oAngleVelYaw * prevVel < 0) {
                     bowser->flamethrowerCanChangeDir = false;
@@ -1355,7 +1369,7 @@ OMM_BOWSER_CLONE_CODE(
 
                 // Angle
                 bowser->obj->oFaceAngleYaw = prevYaw + bowser->obj->oAngleVelYaw;
-                omm_array_add(bowser->flamethrowerYaws, bowser->obj->oFaceAngleYaw);
+                omm_array_add(bowser->flamethrowerYaws, s32, bowser->obj->oFaceAngleYaw);
 );
             }
             
@@ -1378,8 +1392,8 @@ OMM_BOWSER_CLONE_CODE(
         if (flame->oAction == 1) {
 OMM_BOWSER_CLONE_CODE(
             if (flame->oIsBowserClone == is_bowser_clone) {
-                s32 index = omm_clamp_s(flame->oTimer - 1, 0, omm_array_count(bowser->flamethrowerYaws) - 1);
-                s16 angle = omm_array_get(bowser->flamethrowerYaws, s16, index);
+                s32 index = clamp_s(flame->oTimer - 1, 0, omm_array_count(bowser->flamethrowerYaws) - 1);
+                s16 angle = omm_array_get(bowser->flamethrowerYaws, s32, index);
                 flame->oPosX = flame->oHomeX + flame->oForwardVel * sins(angle);
                 flame->oPosZ = flame->oHomeZ + flame->oForwardVel * coss(angle);
             }
@@ -1436,11 +1450,11 @@ static void omm_bhv_bowser_clone_end(OmmBowser *bowser) {
     omm_bhv_bowser_update_combo(bowser);
 }
 
-// Bowser is surprised to see his minion controlled by Mario
-static void omm_bhv_bowser_surprised(OmmBowser *bowser) {
+// Bowser gets mad when seeing his minion controlled by Mario
+static void omm_bhv_bowser_get_mad(OmmBowser *bowser) {
     switch (bowser->subAction) {
 
-        // Surprised
+        // Gets mad
         case 0: {
             obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_SURPRISED, 1.25f, SOUND_OBJ_BOWSER_TAIL_PICKUP, true);
             omm_bhv_bowser_update_action(bowser, 1);
@@ -1529,7 +1543,7 @@ static void omm_bhv_bowser_exhausted(OmmBowser *bowser) {
             } else {
                 bowser->obj->oPosY = bowser->floorHeight;
                 bowser->jumpVelY /= -2.f;
-                if (omm_abs_f(bowser->jumpVelY) > 5.f) {
+                if (abs_f(bowser->jumpVelY) > 5.f) {
                     obj_spawn_white_puff(bowser->obj, SOUND_OBJ_BOWSER_WALK);
                     set_environmental_camera_shake(SHAKE_ENV_BOWSER_THROW_BOUNCE);
                 } else {
@@ -1552,7 +1566,7 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
 
         // Flies into a mine
         case 1: {
-            f32 t = omm_clamp_0_1_f(bowser->timer / 30.f);
+            f32 t = clamp_0_1_f(bowser->timer / 30.f);
             bowser->obj->oPosX = (bowser->landRadius + (bowser->mineRadius - bowser->landRadius) * t) * +sins(bowser->jumpIndex * bowser->jumpDeltaAngle);
             bowser->obj->oPosY = (bowser->floorHeight + (bowser->mineHeight + 100.f - bowser->floorHeight) * t + (bowser->jumpMaxHeight - bowser->floorHeight) * 0.5f * sins(0x8000 * t));
             bowser->obj->oPosZ = (bowser->landRadius + (bowser->mineRadius - bowser->landRadius) * t) * -coss(bowser->jumpIndex * bowser->jumpDeltaAngle);
@@ -1593,7 +1607,7 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
         // Hits the mine
         case 2: {
             f32 q = (bowser->phase == 2 ? bowser->grabMultiplier : 1.f);
-            f32 t = sqrtf(omm_clamp_0_1_f(bowser->timer / 90.f));
+            f32 t = sqrtf(clamp_0_1_f(bowser->timer / 90.f));
             bowser->obj->oPosX = (bowser->mineRadius * (1.f - t * q)) * +sins(bowser->jumpIndex * bowser->jumpDeltaAngle);
             bowser->obj->oPosZ = (bowser->mineRadius * (1.f - t * q)) * -coss(bowser->jumpIndex * bowser->jumpDeltaAngle);
             bowser->obj->oPosY += bowser->jumpVelY;
@@ -1606,7 +1620,7 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
             } else {
                 bowser->obj->oPosY = bowser->floorHeight;
                 bowser->jumpVelY /= -2.f;
-                if (omm_abs_f(bowser->jumpVelY) > 5.f) {
+                if (abs_f(bowser->jumpVelY) > 5.f) {
                     obj_spawn_white_puff(bowser->obj, SOUND_OBJ_BOWSER_WALK);
                     set_environmental_camera_shake(SHAKE_ENV_BOWSER_THROW_BOUNCE);
                 }
@@ -1642,8 +1656,8 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
         case 6: {
             bowser->obj->oBowserEyesShut = 1;
             obj_anim_play_with_sound(bowser->obj, OMM_BOWSER_ANIM_GIVE_UP, 1.f, 0, false);
-            f32 distMarioFromCenter = sqrtf(omm_sqr_f(gMarioObject->oPosX) + omm_sqr_f(gMarioObject->oPosZ));
-            if (distMarioFromCenter <= 100.f && omm_mario_is_punching(gMarioState)) {
+            f32 distMarioFromCenter = sqrtf(sqr_f(gMarioObject->oPosX) + sqr_f(gMarioObject->oPosZ));
+            if (distMarioFromCenter <= 150.f && omm_mario_is_punching(gMarioState)) {
                 omm_mario_set_action(gMarioState, ACT_OMM_GRAB_BOWSER, 0, B_BUTTON);
                 gMarioState->pos[0] = 0.f;
                 gMarioState->pos[1] = bowser->floorHeight;
@@ -1673,7 +1687,7 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
 
         // "So long-a, Bowser"
         case 8: {
-            f32 t = omm_clamp_0_1_f((bowser->timer + 1) / 40.f);
+            f32 t = clamp_0_1_f((bowser->timer + 1) / 40.f);
             bowser->obj->oPosX = (bowser->jumpPosX + (bowser->mineRadius - bowser->jumpPosX) * sqrtf(t)) * sins(bowser->obj->oFaceAngleYaw);
             bowser->obj->oPosY = (bowser->floorHeight + (bowser->mineHeight + 100.f - bowser->floorHeight) * t + (bowser->jumpMaxHeight - bowser->floorHeight) * 0.75f * sins(0x8000 * t));
             bowser->obj->oPosZ = (bowser->jumpPosZ + (bowser->mineRadius - bowser->jumpPosZ) * sqrtf(t)) * coss(bowser->obj->oFaceAngleYaw);
@@ -1698,7 +1712,7 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
 
         // Hits the mine
         case 9: {
-            f32 t = sqrtf(omm_clamp_0_1_f(bowser->timer / 120.f));
+            f32 t = sqrtf(clamp_0_1_f(bowser->timer / 120.f));
             bowser->obj->oPosX = (bowser->mineRadius * (1.f - t)) * sins(bowser->obj->oFaceAngleYaw);
             bowser->obj->oPosZ = (bowser->mineRadius * (1.f - t)) * coss(bowser->obj->oFaceAngleYaw);
             bowser->obj->oPosY += bowser->jumpVelY;
@@ -1711,7 +1725,7 @@ static void omm_bhv_bowser_damaged(OmmBowser *bowser) {
             } else {
                 bowser->obj->oPosY = bowser->floorHeight;
                 bowser->jumpVelY /= -2.f;
-                if (omm_abs_f(bowser->jumpVelY) > 4.f) {
+                if (abs_f(bowser->jumpVelY) > 4.f) {
                     obj_spawn_white_puff(bowser->obj, SOUND_OBJ_BOWSER_WALK);
                     set_environmental_camera_shake(SHAKE_ENV_BOWSER_THROW_BOUNCE);
                 }
@@ -1796,7 +1810,7 @@ static void omm_bhv_bowser_update_bowser(OmmBowser *bowser) {
         bowser->obj->oFaceAngleYaw = b->oFaceAngleYaw;
         bowser->obj->oFaceAngleRoll = 0;
         bowser->obj->oBowserHit = 0;
-        bowser->obj->oOpacity = 255;
+        bowser->obj->oOpacity = 0xFF;
         bowser->obj->oIntangibleTimer = 0;
         bowser->obj->oBowserRainbowLightEffect = (gCurrLevelNum == LEVEL_BOWSER_3);
         bowser->obj->oNodeFlags &= ~GRAPH_RENDER_INVISIBLE;
@@ -1805,8 +1819,9 @@ static void omm_bhv_bowser_update_bowser(OmmBowser *bowser) {
         obj_reset_hitbox(bowser->obj, 200, 400, 200, 400, 0, 0);
 
         // Deactivate old Bowser objects
-        for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_bowser_behaviors()) {
-            for_each_object_with_behavior(obj, *bhv) {
+        omm_array_for_each(omm_obj_get_bowser_behaviors(), p) {
+            const BehaviorScript *bhv = (const BehaviorScript *) p->as_ptr;
+            for_each_object_with_behavior(obj, bhv) {
                 obj_set_dormant(obj, true);
             }
         }
@@ -1827,7 +1842,7 @@ static void omm_bhv_bowser_update_bowser(OmmBowser *bowser) {
     }
 
     // Update
-    bowser->jumpShake = omm_max_s(bowser->jumpShake - 1, 0);
+    bowser->jumpShake = max_s(bowser->jumpShake - 1, 0);
 OMM_BOWSER_CLONE_CODE(
     obj_reset_hitbox(bowser->obj, 200, 400, 200, 400, 0, 0);
 );
@@ -1841,7 +1856,7 @@ OMM_BOWSER_CLONE_CODE(
         // Triggers after 3 flaming bob-omb misses, or after 30 seconds
         // Cancelled if the player captures a flaming bob-omb
         if (bowser->h1Counter != -1) {
-            if (m->action == ACT_OMM_POSSESSION && gOmmData->mario->capture.obj->behavior == omm_bhv_flaming_bobomb) {
+            if (m->action == ACT_OMM_POSSESSION && gOmmCapture->behavior == omm_bhv_flaming_bobomb) {
                 bowser->h1Counter = -1;
             } else {
                 static s32 sPrevFlamingBobombCount = 0;
@@ -1941,8 +1956,8 @@ OMM_BOWSER_CLONE_CODE(
             bowser->obj->oHealth = -1;
             break;
 
-        case OMM_BOWSER_ACTION_SURPRISED:
-            omm_bhv_bowser_surprised(bowser);
+        case OMM_BOWSER_ACTION_GET_MAD:
+            omm_bhv_bowser_get_mad(bowser);
             bowser->obj->oBowserHit = 0;
             bowser->obj->oHealth = -1;
             break;
@@ -1990,6 +2005,29 @@ OMM_BOWSER_CLONE_CODE(
         bowser->clone->real = bowser;
         bowser->clone->clone = bowser->clone;
     }
+
+    // Update Bowser's aura
+OMM_BOWSER_CLONE_CODE(
+    struct Object *aura = NULL;
+    for_each_object_with_behavior(obj, omm_bhv_bowser_mad_aura) {
+        if (obj->parentObj == bowser->obj) {
+            aura = obj;
+            break;
+        }
+    }
+    if (!aura) {
+        aura = obj_spawn_from_geo(bowser->obj, omm_geo_bowser_mad_aura, omm_bhv_bowser_mad_aura);
+        aura->parentObj = bowser->obj;
+        aura->oOpacity = 0;
+    }
+    s32 inc = 4 * (((bowser->combo == 1 || bowser->combo == 2) && omm_bowser_current_action->action != OMM_BOWSER_ACTION_EXHAUSTED) ? +1 : -1);
+    aura->oOpacity = ((clamp_s(aura->oOpacity + inc, 0x00, 0x80) * bowser->obj->oOpacity) / 0xFF);
+    f32 dxz = sqrtf(sqr_f(gCamera->focus[2] - gCamera->pos[2]) + sqr_f(gCamera->focus[0] - gCamera->pos[0]));
+    f32 dy = abs_f(gCamera->focus[1] - gCamera->pos[1]) / dxz;
+    obj_set_pos(aura, bowser->obj->oPosX, bowser->obj->oPosY + dy * bowser->obj->oScaleY * 100.f, bowser->obj->oPosZ);
+    obj_set_angle(aura, 0, atan2s(bowser->obj->oPosZ - gCamera->pos[2], bowser->obj->oPosX - gCamera->pos[0]), 0);
+    obj_set_scale(aura, (aura->oOpacity != 0) * bowser->obj->oScaleX, (aura->oOpacity != 0) * bowser->obj->oScaleY, (aura->oOpacity != 0) * bowser->obj->oScaleZ);
+);
 }
 
 static void omm_bhv_bowser_update() {
@@ -2016,7 +2054,7 @@ static void omm_bhv_bowser_clone_update() {
 
         // Slowly appears
         case 0: {
-            f32 t = omm_invlerp_0_1_f(o->oSubAction++, 0, 30);
+            f32 t = invlerp_0_1_f(o->oSubAction++, 0, 30);
             o->oOpacity = 0xFF * t;
         } break;
 
@@ -2028,9 +2066,15 @@ static void omm_bhv_bowser_clone_update() {
 
         // Slowly disappears
         case 2: {
-            f32 t = 1.f - omm_invlerp_0_1_f(o->oSubAction++, 0, 15);
+            f32 t = 1.f - invlerp_0_1_f(o->oSubAction++, 0, 15);
             o->oOpacity = 0xFF * t;
             if (t == 0.f) {
+                for_each_object_with_behavior(obj, omm_bhv_bowser_mad_aura) {
+                    if (obj->parentObj == o) {
+                        obj_mark_for_deletion(obj);
+                        break;
+                    }
+                }
                 obj_mark_for_deletion(o);
             }
         } break;
@@ -2058,7 +2102,7 @@ OMM_ROUTINE_UPDATE(omm_spawn_bowser) {
         (gCurrLevelNum == LEVEL_BOWSER_2) ||
         (gCurrLevelNum == LEVEL_BOWSER_3) ||
 #endif
-        omm_sparkly_is_bowser_4()))
+        omm_ssd_is_bowser_4()))
     {
         struct Object *o = obj_get_first_with_behavior(omm_bhv_bowser);
         if (!o) {
@@ -2066,7 +2110,7 @@ OMM_ROUTINE_UPDATE(omm_spawn_bowser) {
             o->oPosX = 0;
             o->oPosY = 0;
             o->oPosZ = 0;
-            o->oBehParams = omm_sparkly_is_bowser_4() || OMM_CAP_CAPPY_CAPTURE;
+            o->oBehParams = omm_ssd_is_bowser_4() || OMM_CAP_CAPPY_CAPTURE;
             o->oNodeFlags |= GRAPH_RENDER_INVISIBLE;
             obj_reset_hitbox(o, 0, 0, 0, 0, 0, 0);
         }

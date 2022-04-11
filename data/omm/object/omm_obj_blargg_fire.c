@@ -22,15 +22,15 @@ static void omm_bhv_blargg_fire_drop_update() {
     }
 
     f32 velY = o->oVelY;
-    obj_update_pos_and_vel(o, true, false, true, false, NULL);
+    perform_object_step(o, OBJ_STEP_UPDATE_HOME | OBJ_STEP_STICKY_FEET);
     if (obj_is_on_ground(o)) {
-        o->oVelY = omm_abs_f(velY) / 2.f;
+        o->oVelY = abs_f(velY) / 2.f;
     } else {
         o->oVelY -= 2.f;
     }
 
     f32 maxScale = o->oAction / 100.f;
-    obj_scale(o, omm_relerp_0_1_f(o->oTimer, 60, 90, maxScale, 0.f));
+    obj_scale(o, relerp_0_1_f(o->oTimer, 60, 90, maxScale, 0.f));
     obj_update_gfx(o);
     obj_set_params(o, 0, 0, 0, 0, true);
     obj_reset_hitbox(o, 16, 24, 0, 0, 8, 12);
@@ -58,7 +58,7 @@ static void omm_bhv_blargg_fire_trail_update() {
     }
 
     f32 maxScale = o->oAction / 100.f;
-    obj_scale(o, omm_relerp_0_1_f(o->oTimer, 0, 15, maxScale, 0.f));
+    obj_scale(o, relerp_0_1_f(o->oTimer, 0, 15, maxScale, 0.f));
     obj_update_gfx(o);
     o->oAnimState++;
 }
@@ -79,12 +79,12 @@ static void omm_bhv_blargg_fire_ball_delete(struct Object *o) {
     for (s32 i = 0; i != 10; ++i) {
         struct Object *drop = obj_spawn_from_geo(o, omm_geo_fire_smoke_red, omm_bhv_blargg_fire_drop);
         s16 angle = (s16) random_u16();
-        f32 velXZ = omm_lerp_f(random_float(), 0.f, 8.f);
-        f32 velY = omm_lerp_f(random_float(), 30.f, 40.f);
+        f32 velXZ = lerp_f(random_float(), 0.f, 8.f);
+        f32 velY = lerp_f(random_float(), 30.f, 40.f);
         drop->oVelX = velXZ * sins(angle);
         drop->oVelY = velY;
         drop->oVelZ = velXZ * coss(angle);
-        drop->oAction = (s32) (100.f * omm_lerp_f(random_float(), 3.f, 4.f));
+        drop->oAction = (s32) (100.f * lerp_f(random_float(), 3.f, 4.f));
     }
     obj_spawn_white_puff(o, SOUND_GENERAL_FLAME_OUT);
     obj_mark_for_deletion(o);
@@ -92,7 +92,7 @@ static void omm_bhv_blargg_fire_ball_delete(struct Object *o) {
 
 static void omm_bhv_blargg_fire_ball_update() {
     struct Object *o = gCurrentObject;
-    obj_update_pos_and_vel(o, true, false, false, false, NULL);
+    perform_object_step(o, OBJ_STEP_UPDATE_HOME);
     o->oVelY -= 1.f;
 
     // Collided with a floor

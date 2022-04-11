@@ -250,7 +250,7 @@ static void omm_bhv_debug_box_update() {
 
         // Hitbox
         case 0: {
-            if (o->parentObj == gOmmData->mario->capture.obj) {
+            if (o->parentObj == gOmmCapture) {
                 o->oPosX   = o->parentObj->oPosX;
                 o->oPosY   = o->parentObj->oPosY - gOmmData->mario->capture.hitboxOffset;
                 o->oPosZ   = o->parentObj->oPosZ;
@@ -279,7 +279,7 @@ static void omm_bhv_debug_box_update() {
 
         // Wallbox
         case 2: {
-            if (o->parentObj == gOmmData->mario->capture.obj) {
+            if (o->parentObj == gOmmCapture) {
                 o->oPosX   = o->parentObj->oPosX;
                 o->oPosY   = o->parentObj->oPosY - gOmmData->mario->capture.hitboxOffset;
                 o->oPosZ   = o->parentObj->oPosZ;
@@ -325,66 +325,68 @@ static struct Object *omm_spawn_debug_box(struct Object *o, s32 type) {
 
 #if defined(_WIN32)
 #define OMM_DEBUG_COUNTER_FUNCTIONS_DEFINED
-#define OMM_30 DEF(30.5, 30.5, 30.5, 30.9, 30.9, 30.9)
-#define OMM_60 DEF(61.0, 61.0, 61.0, 61.9, 61.9, 61.9)
 #include <windows.h>
 
-static f64 sCounterFrequency = 0.0;
-static s64 sCounterStart = 0;
-static s32 sCounters[4][2]; // in microseconds
-static s64 sFPSCounterStart = 0;
-static s32 sFPSCounters[2];
+static struct {
+    f64 start;
+    f64 end;
+    f64 sum;
+    f64 disp;
+} sCounters[OMM_NUM_COUNTERS];
 
-void omm_debug_start_counter() {
+void omm_debug_start_counter(s32 counter) {
     LARGE_INTEGER li;
     QueryPerformanceFrequency(&li);
-    sCounterFrequency = (f64) li.QuadPart;
+    f64 freq = (s64) li.QuadPart;
     QueryPerformanceCounter(&li);
-    sCounterStart = (s64) li.QuadPart;
+    sCounters[counter].start = (f64) li.QuadPart / freq;
 }
 
-void omm_debug_end_counter() {
-    static s32 sCurrentCounter = 0;
+void omm_debug_end_counter(s32 counter) {
     LARGE_INTEGER li;
+    QueryPerformanceFrequency(&li);
+    f64 freq = (s64) li.QuadPart;
     QueryPerformanceCounter(&li);
-    sCounters[sCurrentCounter][0] += (s32) (((li.QuadPart - sCounterStart) * 1000000.0) / sCounterFrequency);
-    sCurrentCounter = (sCurrentCounter + 1) % 4;
-}
-
-void omm_debug_start_fps_counter() {
-    LARGE_INTEGER li;
-    QueryPerformanceCounter(&li);
-    sFPSCounterStart = (s64) li.QuadPart;
-}
-
-void omm_debug_end_fps_counter() {
-    LARGE_INTEGER li;
-    QueryPerformanceCounter(&li);
-    sFPSCounters[0] += (s32) (((li.QuadPart - sFPSCounterStart) * 1000000.0) / sCounterFrequency);
+    sCounters[counter].end = (f64) li.QuadPart / freq;
+    sCounters[counter].sum += (sCounters[counter].end - sCounters[counter].start);
 }
 
 static void omm_debug_update_counters() {
-    omm_debug_end_fps_counter();
-    omm_debug_start_fps_counter();
+    omm_debug_end_counter(OMM_COUNTER_FPS);
     if (gGlobalTimer % 30 == 0) {
-        for (s32 i = 0; i != 4; ++i) {
-            sCounters[i][1] = sCounters[i][0] / 30;
-            sCounters[i][0] = 0;
+        for (s32 i = 0; i != OMM_NUM_COUNTERS; ++i) {
+            sCounters[i].disp = sCounters[i].sum / (i != OMM_COUNTER_FPS ? 30.0 : 1.0);
+            sCounters[i].sum = 0;
         }
-#if OMM_GAME_IS_R96A
-        sFPSCounters[1] = (s32) ((config60FPS ? OMM_60 : OMM_30) * (1000000.0 / omm_max_s(1, sFPSCounters[0])));
-#else
-        sFPSCounters[1] = (s32) ((OMM_IS_60_FPS ? OMM_60 : OMM_30) * (1000000.0 / omm_max_s(1, sFPSCounters[0])));
-#endif
-        sFPSCounters[0] = 0;
     }
     if (gOmmDebugProfiler) {
-        OMM_PRINT_TEXT(-60, 76, "FPS %d", (s32) sFPSCounters[1]);
-        OMM_PRINT_TEXT(-60, 58, "OMM %d", (s32) sCounters[0][1]);
-        OMM_PRINT_TEXT(-60, 40, "LUL %d", (s32) sCounters[1][1]);
-        OMM_PRINT_TEXT(-60, 22, "GF* %d", (s32) sCounters[2][1]);
-        OMM_PRINT_TEXT(-60,  4, "RDG %d", (s32) sCounters[3][1]);
+        static const struct { s32 idx; const char *str; }
+        sOmmDebugProfilerDisplay[] = {
+            { OMM_COUNTER_OMM, "OMM" },
+            { OMM_COUNTER_LVL, "LUL" },
+            { OMM_COUNTER_PRE, "PRE" },
+            { OMM_COUNTER_GEO, "GEO" },
+            { OMM_COUNTER_GFX, "GF*" },
+            { OMM_COUNTER_RDR, "RDR" },
+            { OMM_COUNTER_FRM, "FRM" },
+            { OMM_COUNTER_FPS, "FPS" },
+        };
+        for (s32 i = 0; i != OMM_NUM_COUNTERS; ++i) {
+            s32 us = (s32) (1000000ll * sCounters[sOmmDebugProfilerDisplay[i].idx].disp);
+            if (sOmmDebugProfilerDisplay[i].idx == OMM_COUNTER_FPS) {
+                s32 curFPS = (s32) ((1000000.0 / max_s(1, us)) * (gNumInterpolatedFrames * 30.5));
+                s32 maxUPS = (s32) (1.0 / max(0.0000001, sCounters[OMM_COUNTER_FRM].disp));
+
+                // curFPS is the number of drawn frames per second.
+                // maxUPS is the number of game updates the game could run per second if there was no sleep time.
+                // As long as this number is above 30, the game won't suffer any slowdown.
+                OMM_PRINT_TEXT(-60, -14 + 18 * (OMM_NUM_COUNTERS - i), "%s %d I %d", sOmmDebugProfilerDisplay[i].str, min_s(curFPS, gNumInterpolatedFrames * 30), maxUPS);
+            } else {
+                OMM_PRINT_TEXT(-60, -14 + 18 * (OMM_NUM_COUNTERS - i), "%s %d", sOmmDebugProfilerDisplay[i].str, us);
+            }
+        }
     }
+    omm_debug_start_counter(OMM_COUNTER_FPS);
 }
 
 #else
@@ -441,7 +443,7 @@ OMM_ROUTINE_UPDATE(omm_debug_update) {
                 if (next->oIntangibleTimer == 0) {
                     struct Object *obj = next;
                     if (obj == gMarioObject && m->action == ACT_OMM_POSSESSION) {
-                        obj = gOmmData->mario->capture.obj;
+                        obj = gOmmCapture;
                     }
                     s32 objIndex = (s32) (((uintptr_t) obj - (uintptr_t) gObjectPool) / sizeof(struct Object));
 
@@ -496,10 +498,10 @@ OMM_ROUTINE_UPDATE(omm_debug_update) {
 
 #if !defined(OMM_DEBUG_COUNTER_FUNCTIONS_DEFINED)
 
-void omm_debug_start_counter() {
+void omm_debug_start_counter(s32) {
 }
 
-void omm_debug_end_counter() {
+void omm_debug_end_counter(s32) {
 }
 
 #endif

@@ -184,7 +184,7 @@ static bool is_unlocked(s32 (get_collectibles_count(s32)), s32 required) {
 bool omm_player_is_unlocked(s32 index) {
     switch (index) {
         case OMM_PLAYER_MARIO: return true;
-        case OMM_PLAYER_PEACH: return omm_sparkly_is_mode_completed(OMM_SPARKLY_MODE_NORMAL);
+        case OMM_PLAYER_PEACH: return omm_ssd_is_completed(OMM_SSM_NORMAL);
 #if OMM_GAME_IS_R96A
         case OMM_PLAYER_LUIGI: return is_unlocked(save_file_get_keys, NUM_KEYS);
         case OMM_PLAYER_WARIO: return is_unlocked(save_file_get_wario_coins, NUM_WARIO_COINS);
@@ -281,15 +281,15 @@ OMM_ROUTINE_UPDATE(omm_player_update) {
     );
 }
 
-OMM_ROUTINE_GFX(omm_player_update_gfx) {
+OMM_ROUTINE_PRE_RENDER(omm_player_update_gfx) {
     if (gLoadedGraphNodes && gMarioObject) {
         const OmmPlayerProperties *pp   = &sOmmPlayerProperties[sOmmPlayer];
-        gLoadedGraphNodes[pp->body.id]  = omm_geo_get_graph_node(pp->body.geo, true);
-        gLoadedGraphNodes[pp->cap.id]   = omm_geo_get_graph_node(pp->cap.geo, true);
-        gLoadedGraphNodes[pp->wcap.id]  = omm_geo_get_graph_node(pp->wcap.geo, true);
-        gLoadedGraphNodes[pp->mcap.id]  = omm_geo_get_graph_node(pp->mcap.geo, true);
-        gLoadedGraphNodes[pp->wmcap.id] = omm_geo_get_graph_node(pp->wmcap.geo, true);
-        gMarioObject->oGraphNode        = omm_geo_get_graph_node(pp->body.geo, true);
+        gLoadedGraphNodes[pp->body.id]  = geo_layout_to_graph_node(NULL, pp->body.geo);
+        gLoadedGraphNodes[pp->cap.id]   = geo_layout_to_graph_node(NULL, pp->cap.geo);
+        gLoadedGraphNodes[pp->wcap.id]  = geo_layout_to_graph_node(NULL, pp->wcap.geo);
+        gLoadedGraphNodes[pp->mcap.id]  = geo_layout_to_graph_node(NULL, pp->mcap.geo);
+        gLoadedGraphNodes[pp->wmcap.id] = geo_layout_to_graph_node(NULL, pp->wmcap.geo);
+        gMarioObject->oGraphNode        = geo_layout_to_graph_node(NULL, pp->body.geo);
         gMarioState->mMarioAnimations   = (MarioAnimationsStruct *) pp->anims;
 #if OMM_GAME_IS_R96A
         Cheats.ChaosPlayAs = 0;

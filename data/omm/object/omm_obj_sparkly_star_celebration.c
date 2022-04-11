@@ -51,7 +51,7 @@ const BehaviorScript omm_bhv_sparkly_star_celebration[] = {
 //
 
 struct Object *omm_spawn_sparkly_star_celebration(struct Object *o, s32 mode) {
-    struct Object *star = obj_spawn_from_geo(o, OMM_SPARKLY_STAR_OPAQUE_GEO[mode], omm_bhv_sparkly_star_celebration);
+    struct Object *star = obj_spawn_from_geo(o, OMM_SSX_STAR_GEO_OPAQUE[mode], omm_bhv_sparkly_star_celebration);
     star->activeFlags |= ACTIVE_FLAG_INITIATED_TIME_STOP;
     star->oSparklyStarMode = mode;
     return star;

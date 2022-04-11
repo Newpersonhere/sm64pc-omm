@@ -58,7 +58,7 @@ s32 cappy_mr_i_update(struct Object *o) {
         // Shoot
         // Hold B to shoot faster, further and with bigger projectiles
         if (POBJ_B_BUTTON_DOWN) {
-            gOmmData->object->state.actionTimer = omm_min_s(gOmmData->object->state.actionTimer + 1, 30);
+            gOmmData->object->state.actionTimer = min_s(gOmmData->object->state.actionTimer + 1, 30);
         } else if (gOmmData->object->state.actionTimer > 0) {
             f32 power = 1.f + 1.5f * (gOmmData->object->state.actionTimer / 30.f);
             omm_spawn_mr_i_beam(o, power);
@@ -67,7 +67,7 @@ s32 cappy_mr_i_update(struct Object *o) {
     }
 
     // Movement
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     pobj_decelerate(o, 0.80f, 0.95f);
     pobj_apply_gravity(o, 1.f);
     pobj_handle_special_floors(o);

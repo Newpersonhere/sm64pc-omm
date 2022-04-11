@@ -91,13 +91,13 @@ static void omm_bhv_wing_glow_update() {
     }
 
     // Compute Mario's hand pos
-    f32  *fPos = omm_geo_get_marios_forearm_pos(o->oAction);
-    f32  *wPos = omm_geo_get_marios_hand_pos(o->oAction);
+    f32  *fPos = geo_get_marios_forearm_pos(o->oAction);
+    f32  *wPos = geo_get_marios_hand_pos(o->oAction);
     Vec3f dPos = { wPos[0] - fPos[0], wPos[1] - fPos[1], wPos[2] - fPos[2] };
     Vec3f hPos = { wPos[0], wPos[1], wPos[2] };
-    f32 delta  = sqrtf(omm_sqr_f(dPos[0]) + omm_sqr_f(dPos[1]) + omm_sqr_f(dPos[2]));
+    f32 delta  = sqrtf(sqr_f(dPos[0]) + sqr_f(dPos[1]) + sqr_f(dPos[2]));
     if (delta != 0.f) {
-        f32 offset = (180.f - omm_geo_get_marios_height()) / (4.f * delta);
+        f32 offset = (180.f - geo_get_marios_height()) / (4.f * delta);
         hPos[0] += dPos[0] * m->marioObj->oScaleX * offset;
         hPos[1] += dPos[1] * m->marioObj->oScaleY * offset;
         hPos[2] += dPos[2] * m->marioObj->oScaleZ * offset;
@@ -117,7 +117,7 @@ static void omm_bhv_wing_glow_update() {
     obj_set_angle(o, 0, 0, 0);
     obj_set_scale(o, 1.f, 1.f, 1.f);
     obj_set_always_rendered(o, true);
-    o->oGraphNode = omm_geo_get_graph_node(sOmmWingGlowGeoLayout, true);
+    o->oGraphNode = geo_layout_to_graph_node(NULL, sOmmWingGlowGeoLayout);
     o->activeFlags |= ACTIVE_FLAG_INITIATED_TIME_STOP;
     if ((m->marioObj->oNodeFlags & GRAPH_RENDER_INVISIBLE) ||
        !(m->marioObj->oNodeFlags & GRAPH_RENDER_ACTIVE)) {
@@ -200,13 +200,13 @@ static void omm_bhv_wing_trail_update() {
     for (s32 k = 0; k != 2; ++k) {
 
         // Compute Mario's hand pos
-        f32  *fPos = omm_geo_get_marios_forearm_pos(k);
-        f32  *wPos = omm_geo_get_marios_hand_pos(k);
+        f32  *fPos = geo_get_marios_forearm_pos(k);
+        f32  *wPos = geo_get_marios_hand_pos(k);
         Vec3f dPos = { wPos[0] - fPos[0], wPos[1] - fPos[1], wPos[2] - fPos[2] };
         Vec3f hPos = { wPos[0], wPos[1], wPos[2] };
-        f32 delta  = sqrtf(omm_sqr_f(dPos[0]) + omm_sqr_f(dPos[1]) + omm_sqr_f(dPos[2]));
+        f32 delta  = sqrtf(sqr_f(dPos[0]) + sqr_f(dPos[1]) + sqr_f(dPos[2]));
         if (delta != 0.f) {
-            f32 offset = (180.f - omm_geo_get_marios_height()) / (4.f * delta);
+            f32 offset = (180.f - geo_get_marios_height()) / (4.f * delta);
             hPos[0] += dPos[0] * m->marioObj->oScaleX * offset;
             hPos[1] += dPos[1] * m->marioObj->oScaleY * offset;
             hPos[2] += dPos[2] * m->marioObj->oScaleZ * offset;
@@ -240,8 +240,8 @@ static void omm_bhv_wing_trail_update() {
         Vec3f dirPrev2d = { 0, 0, 0 };
         Gfx *tri = sOmmWingTrailTriangles[swapTriangleBuffers ? (1 - k) : (k)];
         for (s32 i = 0; i != OMM_WING_TRAIL_NUM_POINTS; ++i, vtxHead += 5) {
-            s32 iPrev = omm_min_s(i + 1, OMM_WING_TRAIL_NUM_POINTS - 1);
-            s32 iNext = omm_max_s(i - 1, 0);
+            s32 iPrev = min_s(i + 1, OMM_WING_TRAIL_NUM_POINTS - 1);
+            s32 iNext = max_s(i - 1, 0);
             Vec3f posCurr; vec3f_copy(posCurr, vtxHead->v.ob);
             Vec3f posPrev; vec3f_copy(posPrev, (vtxHead + (5 * (iPrev - i)))->v.ob);
             Vec3f posNext; vec3f_copy(posNext, (vtxHead + (5 * (iNext - i)))->v.ob);
@@ -259,7 +259,7 @@ static void omm_bhv_wing_trail_update() {
 
             // Correct direction to avoid twists
             Vec3f dirCurr2d = { posNext2d[0] - posPrev2d[0], posNext2d[1] - posPrev2d[1], 0 };
-            vec3f_norm(dirCurr2d);
+            vec3f_normalize(dirCurr2d);
             if (vec3f_dot(dirPrev2d, dirCurr2d) < 0.f) {
                 dirCurr2d[0] *= -1.f;
                 dirCurr2d[1] *= -1.f;
@@ -305,7 +305,7 @@ static void omm_bhv_wing_trail_update() {
     obj_set_angle(o, 0, 0, 0);
     obj_set_scale(o, 1.f, 1.f, 1.f);
     obj_set_always_rendered(o, true);
-    o->oGraphNode = omm_geo_get_graph_node(sOmmWingTrailGeoLayout, true);
+    o->oGraphNode = geo_layout_to_graph_node(NULL, sOmmWingTrailGeoLayout);
     o->activeFlags |= ACTIVE_FLAG_INITIATED_TIME_STOP;
 }
 

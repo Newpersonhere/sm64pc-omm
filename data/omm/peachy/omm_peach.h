@@ -15,6 +15,8 @@ bool omm_peach_vibe_is_joy();
 bool omm_peach_vibe_is_rage();
 bool omm_peach_vibe_is_gloom();
 bool omm_peach_vibe_is_calm();
+bool omm_peach_vibe_activate(struct MarioState *m, s32 vibe);
+bool omm_peach_vibe_deactivate(struct MarioState *m);
 void omm_peach_vibe_update(struct MarioState *m);
 
 s32 omm_act_peach_float(struct MarioState *m);

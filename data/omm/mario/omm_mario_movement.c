@@ -22,20 +22,22 @@ hMin _|        \________
 */
 
 #define OMM_MARIO_HANDLING_DISABLE      100.f
-#define OMM_MARIO_HANDLING_MODIFIER(x)  (omm_sqr_f(x))
+#define OMM_MARIO_HANDLING_MODIFIER(x)  (sqr_f(x))
 
 static f32 omm_mario_get_handling_velocity(struct MarioState *m) {
-    if (m->action == ACT_WALL_KICK_AIR)                 return OMM_MARIO_HANDLING_DISABLE;
-    if (m->action == ACT_DIVE)                          return OMM_MARIO_HANDLING_DISABLE;
-    if (m->action == ACT_SIDE_FLIP)                     return OMM_MARIO_HANDLING_DISABLE;
-    if (m->action == ACT_BACKFLIP)                      return OMM_MARIO_HANDLING_DISABLE;
-    if (m->action == ACT_LONG_JUMP)                     return OMM_MARIO_HANDLING_DISABLE;
-    if (m->action == ACT_OMM_METAL_WATER_WALL_KICK_AIR) return OMM_MARIO_HANDLING_DISABLE;
-    if (m->action == ACT_OMM_METAL_WATER_DIVE)          return OMM_MARIO_HANDLING_DISABLE;
-    if (m->action == ACT_OMM_METAL_WATER_SIDE_FLIP)     return OMM_MARIO_HANDLING_DISABLE;
-    if (m->action == ACT_OMM_METAL_WATER_BACKFLIP)      return OMM_MARIO_HANDLING_DISABLE;
-    if (m->action == ACT_OMM_METAL_WATER_LONG_JUMP)     return OMM_MARIO_HANDLING_DISABLE;
-    return omm_abs_f(m->forwardVel);
+    switch (m->action) {
+    case ACT_DIVE:                          return OMM_MARIO_HANDLING_DISABLE;
+    case ACT_BACKFLIP:                      return OMM_MARIO_HANDLING_DISABLE;
+    case ACT_SIDE_FLIP:                     return OMM_MARIO_HANDLING_DISABLE;
+    case ACT_LONG_JUMP:                     return OMM_MARIO_HANDLING_DISABLE;
+    case ACT_WALL_KICK_AIR:                 return OMM_MARIO_HANDLING_DISABLE;
+    case ACT_OMM_METAL_WATER_DIVE:          return OMM_MARIO_HANDLING_DISABLE;
+    case ACT_OMM_METAL_WATER_BACKFLIP:      return OMM_MARIO_HANDLING_DISABLE;
+    case ACT_OMM_METAL_WATER_SIDE_FLIP:     return OMM_MARIO_HANDLING_DISABLE;
+    case ACT_OMM_METAL_WATER_LONG_JUMP:     return OMM_MARIO_HANDLING_DISABLE;
+    case ACT_OMM_METAL_WATER_WALL_KICK_AIR: return OMM_MARIO_HANDLING_DISABLE;
+    default:                                return abs_f(m->forwardVel);
+    }
 }
 
 static f32 omm_mario_get_handling_magnitude(struct MarioState *m) {
@@ -45,9 +47,10 @@ static f32 omm_mario_get_handling_magnitude(struct MarioState *m) {
 }
 
 static s32 omm_mario_get_handling(struct MarioState *m, f32 velMin, f32 velMax, f32 handlingMin, f32 handlingMax) {
+    if (OMM_CHEAT_SUPER_RESPONSIVE) return 0x8000;
     f32 velocity  = omm_mario_get_handling_velocity(m);
     f32 magnitude = omm_mario_get_handling_magnitude(m);
-    return (s32) ((handlingMin + OMM_MARIO_HANDLING_MODIFIER(1.f - omm_invlerp_0_1_f(velocity, velMin, velMax)) * (handlingMax - handlingMin)) * magnitude);
+    return (s32) ((handlingMin + OMM_MARIO_HANDLING_MODIFIER(1.f - invlerp_0_1_f(velocity, velMin, velMax)) * (handlingMax - handlingMin)) * magnitude);
 }
 
 //
@@ -56,8 +59,8 @@ static s32 omm_mario_get_handling(struct MarioState *m, f32 velMin, f32 velMax, 
 
 bool omm_mario_update_walking_speed(struct MarioState *m) {
     if (OMM_LIKELY(OMM_MOVESET_ODYSSEY)) {
-        f32 speedTgt = omm_max_f(1.f, omm_min_f(m->intendedMag, 32.f) * (1.f / omm_max_f(1.f, m->quicksandDepth / 6.25f)));
-        m->forwardVel = omm_min_f(m->forwardVel + 1.2f * (1.f - (omm_max_f(0.f, m->forwardVel) / speedTgt)), 48.f);
+        f32 speedTgt = max_f(1.f, min_f(m->intendedMag, 32.f) * (1.f / max_f(1.f, m->quicksandDepth / 6.25f)));
+        m->forwardVel = min_f(m->forwardVel + 1.2f * (1.f - (max_f(0.f, m->forwardVel) / speedTgt)), 48.f);
         s32 handling = omm_mario_get_handling(m, 8.f, 32.f, 0x800, 0x4000);
         m->faceAngle[1] = m->intendedYaw - approach_s32((s16) (m->intendedYaw - m->faceAngle[1]), 0, handling, handling);
         apply_slope_accel(m);
@@ -79,7 +82,8 @@ static bool update_air(struct MarioState *m, bool turn) {
             m->forwardVel = approach_f32(m->forwardVel, 0.0f, 0.35f, 0.35f);
 
             if (m->input & INPUT_NONZERO_ANALOG) {
-                if (m->action != ACT_BACKFLIP && m->action != ACT_OMM_METAL_WATER_BACKFLIP) {
+                if (m->action != ACT_BACKFLIP && m->action != ACT_OMM_METAL_WATER_BACKFLIP && ((
+                    m->action != ACT_LONG_JUMP && m->action != ACT_OMM_METAL_WATER_LONG_JUMP) || !OMM_CHEAT_BLJ_ANYWHERE)) {
                     s32 handling     = omm_mario_get_handling(m, 8.f, 24.f, 0x200, 0x2000);
                     m->forwardVel   += 1.5f * coss(m->intendedYaw - m->faceAngle[1]) * omm_mario_get_handling_magnitude(m);
                     m->faceAngle[1]  = m->intendedYaw - approach_s32((s16) (m->intendedYaw - m->faceAngle[1]), 0, handling, handling);
@@ -124,7 +128,7 @@ bool omm_mario_update_air_with_turn(struct MarioState *m) {
 
 bool omm_mario_update_hanging_speed(struct MarioState *m) {
     if (OMM_LIKELY(OMM_MOVESET_ODYSSEY)) {
-        m->forwardVel = approach_f32(m->forwardVel, OMM_MARIO_HANG_MAX_SPEED * omm_min_f(m->intendedMag, 32.f) / 32.f, 2.f, 4.f);
+        m->forwardVel = approach_f32(m->forwardVel, OMM_MARIO_HANG_MAX_SPEED * min_f(m->intendedMag, 32.f) / 32.f, 2.f, 4.f);
         s32 handling = omm_mario_get_handling(m, 4.f, OMM_MARIO_HANG_MAX_SPEED, 0x800, 0x2000);
         m->faceAngle[1] = m->intendedYaw - approach_s32((s16) (m->intendedYaw - m->faceAngle[1]), 0, handling, handling);
         return true;

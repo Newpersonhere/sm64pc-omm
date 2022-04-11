@@ -38,6 +38,7 @@ typedef struct {
 static OmmLevelData sOmmLevelData[LEVEL_COUNT] = { 0 };
 static s32 sOmmLevelList[LEVEL_COUNT] = { 0 }; // Ordered by Course Id, COURSE_NONE excluded
 static s32 sOmmLevelCount = 0;
+static s32 sCurrentLevelNum;
 
 //
 // Init
@@ -73,107 +74,90 @@ static OmmWarpData *omm_level_get_warp_data(s32 level, u8 area, u8 id) {
 static s32 omm_level_preprocess_master_script(u8 type, void *cmd) {
     static bool sScriptExecLevelTable = false;
     static s32 sLevelNum = -1;
-    
-    if (!sScriptExecLevelTable) {
-        switch (type) {
-            case 0x06: { // JUMP_LINK
-                sScriptExecLevelTable = true;
-                return OMM_LEVEL_SCRIPT_CONTINUE;
-            } break;
+    if (sScriptExecLevelTable) {
+        if (type == LEVEL_CMD_EXECUTE) {
+            const LevelScript *script = level_cmd_get(cmd, const LevelScript *, 12);
+            if (sLevelNum >= 0 && sLevelNum < LEVEL_COUNT && !sOmmLevelData[sLevelNum].script) {
+                sOmmLevelData[sLevelNum].script = script;
+            }
+            sLevelNum = -1;
+            return LEVEL_SCRIPT_RETURN;
         }
-    } else {
-        switch (type) {
-            case 0x00: { // EXECUTE
-                const LevelScript *script = (const LevelScript *) omm_level_cmd_get(cmd, 0x0C);
-                if (sLevelNum >= 0 && sLevelNum < LEVEL_COUNT && !sOmmLevelData[sLevelNum].script) {
-                    sOmmLevelData[sLevelNum].script = script;
-                }
-                sLevelNum = -1;
-                return OMM_LEVEL_SCRIPT_RETURN;
-            } break;
-
-            case 0x02: { // EXIT
-                return OMM_LEVEL_SCRIPT_STOP;
-            } break;
-
-            case 0x03: { // SLEEP
-                return OMM_LEVEL_SCRIPT_STOP;
-            } break;
-
-            case 0x0C: { // JUMP_IF
-                sLevelNum = (s32) omm_level_cmd_get(cmd, 0x04);
-                return OMM_LEVEL_SCRIPT_CONTINUE;
-            } break;
+        if (type == LEVEL_CMD_EXIT || type == LEVEL_CMD_SLEEP) {
+            return LEVEL_SCRIPT_STOP;
         }
+        if (type == LEVEL_CMD_JUMP_IF) {
+            sLevelNum = level_cmd_get(cmd, s32, 4);
+        }
+    } else if (type == LEVEL_CMD_JUMP_LINK) {
+        sScriptExecLevelTable = true;
     }
-    return OMM_LEVEL_SCRIPT_CONTINUE;
+    return LEVEL_SCRIPT_CONTINUE;
 }
 
-static s32 sCurrentLevelNum;
 static s32 omm_level_fill_warp_data(u8 type, void *cmd) {
     static u8 sCurrentAreaIndex = 0;
     switch (type) {
-        case 0x03:   // SLEEP
-        case 0x04: { // SLEEP_BEFORE_EXIT
-            return OMM_LEVEL_SCRIPT_STOP;
-        } break;
+        case LEVEL_CMD_SLEEP:
+        case LEVEL_CMD_SLEEP_BEFORE_EXIT: {
+        } return LEVEL_SCRIPT_STOP;
 
-        case 0x1F: { // AREA
-            sCurrentAreaIndex = (u8) omm_level_cmd_get(cmd, 2);
+        case LEVEL_CMD_AREA: {
+            sCurrentAreaIndex = level_cmd_get(cmd, u8, 2);
             sOmmLevelData[sCurrentLevelNum].areas |= (1 << sCurrentAreaIndex);
         } break;
 
-        case 0x24: { // OBJECT
-            const BehaviorScript *bhv = (const BehaviorScript *) omm_level_cmd_get(cmd, 20);
+        case LEVEL_CMD_OBJECT_WITH_ACTS: {
+            const BehaviorScript *bhv = level_cmd_get(cmd, const BehaviorScript *, 20);
 
             // Red coin
             if (bhv == bhvRedCoin) {
-                if (omm_array_find(sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex], cmd) == -1) {
-                    omm_array_add(sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex], cmd);
+                if (omm_array_find(sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex], ptr, cmd) == -1) {
+                    omm_array_add(sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex], ptr, cmd);
                 }
             }
 
             // Warps
             for (s32 i = 0; i != 20; ++i) {
                 if (sWarpBhvSpawnTable[i] == bhv) {
-                    OmmWarpData *warp = omm_level_get_warp_data(sCurrentLevelNum, sCurrentAreaIndex, ((((u32) omm_level_cmd_get(cmd, 16)) >> 16) & 0xFF));
+                    OmmWarpData *warp = omm_level_get_warp_data(sCurrentLevelNum, sCurrentAreaIndex, ((level_cmd_get(cmd, u32, 16) >> 16) & 0xFF));
                     if (warp->type == -1) {
                         warp->type = i;
-                        warp->x = (s16) omm_level_cmd_get(cmd, 4);
-                        warp->y = (s16) omm_level_cmd_get(cmd, 6);
-                        warp->z = (s16) omm_level_cmd_get(cmd, 8);
-                        warp->yaw = (s16) ((((s32) ((s16) omm_level_cmd_get(cmd, 12))) * 0x8000) / 180);
+                        warp->x = level_cmd_get(cmd, s16, 4);
+                        warp->y = level_cmd_get(cmd, s16, 6);
+                        warp->z = level_cmd_get(cmd, s16, 8);
+                        warp->yaw = (level_cmd_get(cmd, s16, 12) * 0x8000) / 180;
                     }
                     break;
                 }
             }
         } break;
 
-        case 0x26:   // WARP_NODE
-        case 0x27: { // PAINTING_WARP_NODE
-            OmmWarpData *warp = omm_level_get_warp_data(sCurrentLevelNum, sCurrentAreaIndex, (u8) omm_level_cmd_get(cmd, 2));
+        case LEVEL_CMD_WARP_NODE:
+        case LEVEL_CMD_PAINTING_WARP_NODE: {
+            OmmWarpData *warp = omm_level_get_warp_data(sCurrentLevelNum, sCurrentAreaIndex, level_cmd_get(cmd, u8, 2));
             if (warp->destLevel == 0) {
-                warp->destLevel = (u8) omm_level_cmd_get(cmd, 3);
-                warp->destArea = (u8) omm_level_cmd_get(cmd, 4);
-                warp->destId = (u8) omm_level_cmd_get(cmd, 5);
+                warp->destLevel = level_cmd_get(cmd, u8, 3);
+                warp->destArea = level_cmd_get(cmd, u8, 4);
+                warp->destId = level_cmd_get(cmd, u8, 5);
             }
         } break;
 
-        case 0x39: { // MACRO_OBJECTS
-            MacroObject *data = (MacroObject *) omm_level_cmd_get(cmd, 4);
+        case LEVEL_CMD_MACRO_OBJECTS: {
+            MacroObject *data = level_cmd_get(cmd, MacroObject *, 4);
             for (; *data != MACRO_OBJECT_END(); data += 5) {
                 s32 presetId = (s32) ((data[0] & 0x1FF) - 0x1F);
 
                 // Red coin
                 if (presetId == macro_red_coin) {
-                    if (omm_array_find(sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex], data) == -1) {
-                        omm_array_add(sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex], data);
+                    if (omm_array_find(sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex], ptr, data) == -1) {
+                        omm_array_add(sOmmLevelData[sCurrentLevelNum].redCoins[sCurrentAreaIndex], ptr, data);
                     }
                 }
             }
         } break;
     }
-    return OMM_LEVEL_SCRIPT_CONTINUE;
+    return LEVEL_SCRIPT_CONTINUE;
 }
 
 static void omm_level_init() {
@@ -181,15 +165,12 @@ static void omm_level_init() {
     if (OMM_UNLIKELY(!sInited)) {
 
         // Level scripts
-        omm_level_parse_script(level_main_scripts_entry, omm_level_preprocess_master_script);
+        level_script_preprocess(level_main_scripts_entry, omm_level_preprocess_master_script);
 
         // Level warps
         for (sCurrentLevelNum = 0; sCurrentLevelNum != LEVEL_COUNT; ++sCurrentLevelNum) {
             if (sOmmLevelData[sCurrentLevelNum].script) {
-                for (s32 area = 0; area != 8; ++area) {
-                    sOmmLevelData[sCurrentLevelNum].redCoins[area] = omm_array_new(void *);
-                }
-                omm_level_parse_script(sOmmLevelData[sCurrentLevelNum].script, omm_level_fill_warp_data);
+                level_script_preprocess(sOmmLevelData[sCurrentLevelNum].script, omm_level_fill_warp_data);
             }
         }
 
@@ -212,7 +193,7 @@ static void omm_level_init() {
 // Common data
 //
 
-inline static void convert_text_and_set_buffer(u8 *buffer, const char *str) {
+OMM_INLINE void convert_text_and_set_buffer(u8 *buffer, const char *str) {
     u8 *str64 = omm_text_convert(str, false);
     OMM_MEMCPY(buffer, str64, omm_text_length(str64) + 1);
 }
@@ -359,408 +340,6 @@ u8 *omm_level_get_act_name(s32 level, s32 act, bool decaps, bool num) {
 // - Loops break after the first loop
 //
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-
-typedef struct {
-    u8 type;
-    u8 size;
-} LvlCmd;
-
-typedef struct {
-    u64 data[32];
-    s32 baseIndex;
-    s32 topIndex;
-} Stack;
-
-static void stack_push(Stack *stack, u64 value) {
-    if (stack->topIndex >= 0) {
-        stack->data[stack->topIndex] = value;
-        stack->topIndex++;
-    }
-}
-
-static u64 stack_pop(Stack *stack) {
-    if (stack->topIndex <= 0) {
-        return 0;
-    }
-    stack->topIndex--;
-    return stack->data[stack->topIndex];
-}
-
-u64 omm_level_cmd_get(void *cmd, u64 offset) {
-    offset = (((offset) & 3llu) | (((offset) & ~3llu) << (sizeof(void *) >> 3llu)));
-    return *((u64 *) (((u64) cmd) + offset));
-}
-
-static LvlCmd *omm_level_cmd_next(void *cmd, u64 size) {
-    u64 offset = (((size) & 3llu) | (((size) & ~3llu) << (sizeof(void *) >> 3llu)));
-    return (void *) (((u64) cmd) + offset);
-}
-
-static LvlCmd *omm_level_cmd_execute(Stack *stack, LvlCmd *cmd) {
-    stack_push(stack, (u64) omm_level_cmd_next(cmd, cmd->size));
-    stack_push(stack, stack->baseIndex);
-    stack->baseIndex = stack->topIndex;
-    return (LvlCmd *) omm_level_cmd_get(cmd, 12);
-}
-
-static LvlCmd *omm_level_cmd_exit_and_execute(Stack *stack, LvlCmd *cmd) {
-    stack->topIndex = stack->baseIndex;
-    return (LvlCmd *) omm_level_cmd_get(cmd, 12);
-}
-
-static LvlCmd *omm_level_cmd_exit(Stack *stack, LvlCmd *cmd) {
-    stack->topIndex = stack->baseIndex;
-    stack->baseIndex = (s32) stack_pop(stack);
-    return (LvlCmd *) stack_pop(stack);
-}
-
-static LvlCmd *omm_level_cmd_sleep(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_sleep_before_exit(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_jump(Stack *stack, LvlCmd *cmd) {
-    return (LvlCmd *) omm_level_cmd_get(cmd, 4);
-}
-
-static LvlCmd *omm_level_cmd_jump_link(Stack *stack, LvlCmd *cmd) {
-    stack_push(stack, (u64) omm_level_cmd_next(cmd, cmd->size));
-    return (LvlCmd *) omm_level_cmd_get(cmd, 4);
-}
-
-static LvlCmd *omm_level_cmd_return(Stack *stack, UNUSED LvlCmd *cmd) {
-    return (LvlCmd *) stack_pop(stack);
-}
-
-static LvlCmd *omm_level_cmd_jump_link_push_arg(Stack *stack, LvlCmd *cmd) {
-    stack_push(stack, (u64) omm_level_cmd_next(cmd, cmd->size));
-    stack_push(stack, omm_level_cmd_get(cmd, 2));
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_jump_repeat(Stack *stack, LvlCmd *cmd) {
-    stack->topIndex -= 2;
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_loop_begin(Stack *stack, LvlCmd *cmd) {
-    stack_push(stack, (u64) omm_level_cmd_next(cmd, cmd->size));
-    stack_push(stack, 0);
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_loop_until(Stack *stack, LvlCmd *cmd) {
-    stack->topIndex -= 2;
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_jump_if(Stack *stack, LvlCmd *cmd) {
-    stack_push(stack, (u64) omm_level_cmd_next(cmd, cmd->size)); // Not an error, that's intentional
-    return (LvlCmd *) omm_level_cmd_get(cmd, 8);
-}
-
-static LvlCmd *omm_level_cmd_jump_link_if(Stack *stack, LvlCmd *cmd) {
-    stack_push(stack, (u64) omm_level_cmd_next(cmd, cmd->size));
-    return (LvlCmd *) omm_level_cmd_get(cmd, 8);
-}
-
-static LvlCmd *omm_level_cmd_skip_if(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_skip(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_skip_nop(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_call(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_call_loop(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_set_register(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_push_pool(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_pop_pool(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_load_fixed(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_load_raw(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_load_mio0(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_load_mario_head(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_load_mio0_texture(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_init_level(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_clear_level(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_alloc_level_pool(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_free_level_pool(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_begin_area(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_end_area(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_load_model_from_dl(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_load_model_from_geo(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_23(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_mario(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_object(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_warp_node(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_instant_warp(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_set_terrain_type(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_painting_warp_node(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_3A(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_set_whirlpool(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_set_blackout(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_set_gamma(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_set_terrain(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_set_rooms(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_macro_objects(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_load_area(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_unload_area(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_set_mario_start_pos(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_2C(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_2D(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_set_transition(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_nop(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_show_dialog(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_set_background_music(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_set_menu_music(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_stop_music(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_get_or_set(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_advance_demo(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_clr_demo_pointer(Stack *stack, LvlCmd *cmd) {
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-static LvlCmd *omm_level_cmd_jump_area(Stack *stack, LvlCmd *cmd, s32 (*func)(u8, void *)) {
-    omm_level_parse_script((const LevelScript *) omm_level_cmd_get(cmd, 8), func);
-    return omm_level_cmd_next(cmd, cmd->size);
-}
-
-void omm_level_parse_script(const LevelScript *script, s32 (*func)(u8, void *)) {
-    Stack stack;
-    stack.baseIndex = -1;
-    stack.topIndex = 0;
-    for (LvlCmd *cmd = (LvlCmd *) script; cmd != NULL;) {
-        u8 type = (cmd->type & 0x3F);
-        s32 act = func(type, (void *) cmd);
-        switch (act) {
-            case OMM_LEVEL_SCRIPT_CONTINUE:
-                switch (type) {
-                    case 0x00: cmd = omm_level_cmd_execute(&stack, cmd); break;
-                    case 0x01: cmd = omm_level_cmd_exit_and_execute(&stack, cmd); break;
-                    case 0x02: cmd = omm_level_cmd_exit(&stack, cmd); break;
-                    case 0x03: cmd = omm_level_cmd_sleep(&stack, cmd); break;
-                    case 0x04: cmd = omm_level_cmd_sleep_before_exit(&stack, cmd); break;
-                    case 0x05: cmd = omm_level_cmd_jump(&stack, cmd); break;
-                    case 0x06: cmd = omm_level_cmd_jump_link(&stack, cmd); break;
-                    case 0x07: cmd = omm_level_cmd_return(&stack, cmd); break;
-                    case 0x08: cmd = omm_level_cmd_jump_link_push_arg(&stack, cmd); break;
-                    case 0x09: cmd = omm_level_cmd_jump_repeat(&stack, cmd); break;
-                    case 0x0A: cmd = omm_level_cmd_loop_begin(&stack, cmd); break;
-                    case 0x0B: cmd = omm_level_cmd_loop_until(&stack, cmd); break;
-                    case 0x0C: cmd = omm_level_cmd_jump_if(&stack, cmd); break;
-                    case 0x0D: cmd = omm_level_cmd_jump_link_if(&stack, cmd); break;
-                    case 0x0E: cmd = omm_level_cmd_skip_if(&stack, cmd); break;
-                    case 0x0F: cmd = omm_level_cmd_skip(&stack, cmd); break;
-                    case 0x10: cmd = omm_level_cmd_skip_nop(&stack, cmd); break;
-                    case 0x11: cmd = omm_level_cmd_call(&stack, cmd); break;
-                    case 0x12: cmd = omm_level_cmd_call_loop(&stack, cmd); break;
-                    case 0x13: cmd = omm_level_cmd_set_register(&stack, cmd); break;
-                    case 0x14: cmd = omm_level_cmd_push_pool(&stack, cmd); break;
-                    case 0x15: cmd = omm_level_cmd_pop_pool(&stack, cmd); break;
-                    case 0x16: cmd = omm_level_cmd_load_fixed(&stack, cmd); break;
-                    case 0x17: cmd = omm_level_cmd_load_raw(&stack, cmd); break;
-                    case 0x18: cmd = omm_level_cmd_load_mio0(&stack, cmd); break;
-                    case 0x19: cmd = omm_level_cmd_load_mario_head(&stack, cmd); break;
-                    case 0x1A: cmd = omm_level_cmd_load_mio0_texture(&stack, cmd); break;
-                    case 0x1B: cmd = omm_level_cmd_init_level(&stack, cmd); break;
-                    case 0x1C: cmd = omm_level_cmd_clear_level(&stack, cmd); break;
-                    case 0x1D: cmd = omm_level_cmd_alloc_level_pool(&stack, cmd); break;
-                    case 0x1E: cmd = omm_level_cmd_free_level_pool(&stack, cmd); break;
-                    case 0x1F: cmd = omm_level_cmd_begin_area(&stack, cmd); break;
-                    case 0x20: cmd = omm_level_cmd_end_area(&stack, cmd); break;
-                    case 0x21: cmd = omm_level_cmd_load_model_from_dl(&stack, cmd); break;
-                    case 0x22: cmd = omm_level_cmd_load_model_from_geo(&stack, cmd); break;
-                    case 0x23: cmd = omm_level_cmd_23(&stack, cmd); break;
-                    case 0x24: cmd = omm_level_cmd_object(&stack, cmd); break;
-                    case 0x25: cmd = omm_level_cmd_mario(&stack, cmd); break;
-                    case 0x26: cmd = omm_level_cmd_warp_node(&stack, cmd); break;
-                    case 0x27: cmd = omm_level_cmd_painting_warp_node(&stack, cmd); break;
-                    case 0x28: cmd = omm_level_cmd_instant_warp(&stack, cmd); break;
-                    case 0x29: cmd = omm_level_cmd_load_area(&stack, cmd); break;
-                    case 0x2A: cmd = omm_level_cmd_unload_area(&stack, cmd); break;
-                    case 0x2B: cmd = omm_level_cmd_set_mario_start_pos(&stack, cmd); break;
-                    case 0x2C: cmd = omm_level_cmd_2C(&stack, cmd); break;
-                    case 0x2D: cmd = omm_level_cmd_2D(&stack, cmd); break;
-                    case 0x2E: cmd = omm_level_cmd_set_terrain(&stack, cmd); break;
-                    case 0x2F: cmd = omm_level_cmd_set_rooms(&stack, cmd); break;
-                    case 0x30: cmd = omm_level_cmd_show_dialog(&stack, cmd); break;
-                    case 0x31: cmd = omm_level_cmd_set_terrain_type(&stack, cmd); break;
-                    case 0x32: cmd = omm_level_cmd_nop(&stack, cmd); break;
-                    case 0x33: cmd = omm_level_cmd_set_transition(&stack, cmd); break;
-                    case 0x34: cmd = omm_level_cmd_set_blackout(&stack, cmd); break;
-                    case 0x35: cmd = omm_level_cmd_set_gamma(&stack, cmd); break;
-                    case 0x36: cmd = omm_level_cmd_set_background_music(&stack, cmd); break;
-                    case 0x37: cmd = omm_level_cmd_set_menu_music(&stack, cmd); break;
-                    case 0x38: cmd = omm_level_cmd_stop_music(&stack, cmd); break;
-                    case 0x39: cmd = omm_level_cmd_macro_objects(&stack, cmd); break;
-                    case 0x3A: cmd = omm_level_cmd_3A(&stack, cmd); break;
-                    case 0x3B: cmd = omm_level_cmd_set_whirlpool(&stack, cmd); break;
-                    case 0x3C: cmd = omm_level_cmd_get_or_set(&stack, cmd); break;
-                    case 0x3D: cmd = omm_level_cmd_advance_demo(&stack, cmd); break;
-                    case 0x3E: cmd = omm_level_cmd_clr_demo_pointer(&stack, cmd); break;
-                    case 0x3F: cmd = omm_level_cmd_jump_area(&stack, cmd, func); break;
-                } break;
-
-            case OMM_LEVEL_SCRIPT_NEXT_CMD:
-                cmd = omm_level_cmd_next(cmd, cmd->size);
-                break;
-
-            case OMM_LEVEL_SCRIPT_RETURN:
-                cmd = omm_level_cmd_return(&stack, cmd);
-                break;
-
-            case OMM_LEVEL_SCRIPT_STOP:
-                return;
-        }
-    }
-}
-
-#pragma GCC diagnostic pop
 
 //
 // Warps

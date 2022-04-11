@@ -37,6 +37,7 @@ void omm_mario_init_next_action(struct MarioState *m) {
 
     // Set Mario's facing direction
     if ((m->controller->stickMag > 32.f) && (
+        (m->prevAction == ACT_OMM_WATER_GROUND_POUND_JUMP) ||
         (m->action == ACT_OMM_PEACH_VIBE_JOY_ATTACK) ||
         (m->action == ACT_OMM_CAPPY_THROW_GROUND) ||
         (m->action == ACT_OMM_CAPPY_THROW_AIRBORNE) ||
@@ -92,7 +93,7 @@ bool omm_mario_can_perform_wall_slide(struct MarioState *m) {
         s16 wallAngle = atan2s(m->wall->normal.z, m->wall->normal.x);
         f32 wallHeight = m->pos[1];
         if (gOmmData->mario->wallSlide.jumped) {
-            u16 diffAngle = (u16) omm_abs_s((s32) wallAngle - (s32) gOmmData->mario->wallSlide.angle);
+            u16 diffAngle = (u16) abs_s((s32) wallAngle - (s32) gOmmData->mario->wallSlide.angle);
             f32 diffHeight = wallHeight - gOmmData->mario->wallSlide.height;
             if (diffAngle < 0x2000 && diffHeight > 0) {
                 return false;
@@ -272,11 +273,11 @@ bool omm_mario_is_star_dancing(struct MarioState *m) {
 }
 
 bool omm_mario_should_walk(struct MarioState *m) {
-    return OMM_PLAYER_IS_PEACH || (omm_max_3_f(4.f, m->intendedMag, m->forwardVel) < 18.f);
+    return OMM_PLAYER_IS_PEACH || (max_3_f(4.f, m->intendedMag, m->forwardVel) < 18.f);
 }
 
 bool omm_mario_should_run(struct MarioState *m) {
-    return !OMM_PLAYER_IS_PEACH && (omm_max_3_f(4.f, m->intendedMag, m->forwardVel) > 22.f);
+    return !OMM_PLAYER_IS_PEACH && (max_3_f(4.f, m->intendedMag, m->forwardVel) > 22.f);
 }
 
 bool omm_mario_has_wing_cap(struct MarioState *m) {
@@ -315,7 +316,7 @@ bool omm_mario_check_dead(struct MarioState *m, s16 hp) {
 
     // Non-Stop mode only
     // Getting caught cheating also disable the SMO-style death cutscenes
-    if (OMM_STARS_CLASSIC || omm_sparkly_flags_get(OMM_SPARKLY_FLAG_CHEAT_DETECTED)) {
+    if (OMM_STARS_CLASSIC || OMM_SSF_IS_CHEAT_DETECTED) {
         return false;
     }
 
@@ -349,14 +350,15 @@ bool omm_mario_check_dead(struct MarioState *m, s16 hp) {
 }
 
 bool omm_mario_check_death_warp(struct MarioState *m, s32 warpOp) {
-    if (OMM_STARS_NON_STOP && !OMM_LEVEL_NO_WARP(gCurrLevelNum) && !omm_sparkly_flags_get(OMM_SPARKLY_FLAG_CHEAT_DETECTED)) {
+    if (OMM_STARS_NON_STOP && !OMM_LEVEL_NO_WARP(gCurrLevelNum) && !OMM_SSF_IS_CHEAT_DETECTED) {
         switch (warpOp) {
             case WARP_OP_DEATH: {
                 return omm_mario_check_dead(m, OMM_HEALTH_DEAD);
             } break;
 
             case WARP_OP_WARP_FLOOR: {
-                if ((m->pos[1] < m->floorHeight + 2048.f) &&
+                if (!OMM_CHEAT_WALK_ON_DEATH_BARRIER &&
+                    (m->pos[1] < m->floorHeight + 2048.f) &&
                     (m->floor != NULL) && (
                     (m->floor->type == SURFACE_DEATH_PLANE) ||
                     (m->floor->type == SURFACE_VERTICAL_WIND))) {
@@ -407,7 +409,7 @@ bool omm_mario_check_grab(struct MarioState *m, struct Object *o, bool ignoreAng
                 }
 #endif
                 // Is Bowser grabbable and is Mario facing Bowser's tail, in a 120 deg arc?
-                if (gIsBowserInteractible[bowser->oAction] && (ignoreAngles || omm_abs_s((s16) (m->faceAngle[1] - bowser->oFaceAngleYaw)) < 0x5555)) {
+                if (gIsBowserInteractible[bowser->oAction] && (ignoreAngles || abs_s((s16) (m->faceAngle[1] - bowser->oFaceAngleYaw)) < 0x5555)) {
                     gOmmData->mario->grab.obj = bowser;
                     return true;
                 }
@@ -656,6 +658,11 @@ void omm_mario_update_spin(struct MarioState *m) {
 }
 
 void omm_mario_update_fall(struct MarioState *m) {
+    if (OMM_CHEAT_NO_FALL_DAMAGE) {
+        m->peakHeight = m->pos[1];
+        gOmmData->mario->state.peakHeight = m->pos[1];
+        return;
+    }
     if (OMM_MOVESET_ODYSSEY) {
         
         // Airborne
@@ -667,6 +674,7 @@ void omm_mario_update_fall(struct MarioState *m) {
                 (m->vel[1] >= 0.f) ||
                 (m->action == ACT_FLYING) ||
                 (m->action == ACT_TWIRLING) ||
+                (m->action == ACT_SHOT_FROM_CANNON) ||
                 (m->action == ACT_RIDING_SHELL_FALL) ||
                 (m->action == ACT_RIDING_SHELL_JUMP) ||
                 (m->action == ACT_OMM_SPIN_AIR) ||
@@ -694,7 +702,7 @@ void omm_mario_update_fall(struct MarioState *m) {
 
                 // Interrupts Mario's action if he lands on a non-slippery surface
                 if (((gOmmData->mario->state.peakHeight - m->pos[1]) > OMM_MARIO_FALL_DAMAGE_HEIGHT) &&
-                    (m->health > OMM_HEALTH_DEAD) &&
+                    (m->health > OMM_HEALTH_ODYSSEY_DEAD) &&
                     (m->vel[1] < -50.0f) &&
                     !mario_floor_is_slippery(m) &&
                     !omm_mario_has_metal_cap(m) &&
@@ -757,7 +765,7 @@ void omm_mario_update_caps(struct MarioState *m) {
     
         // Cannot die, unless if he's already dead
         if (m->health > OMM_HEALTH_DEAD) {
-            m->health = omm_max_s(m->health, 0x1FF);
+            m->health = max_s(m->health, OMM_HEALTH_1_HP);
             m->hurtCounter = 0;
         }
 
@@ -852,7 +860,7 @@ void omm_mario_update_castle_collisions(struct MarioState *m) {
         if ((gCurrLevelNum == LEVEL_CASTLE) && (gCurrAreaIndex == 2) && (room != 6)) {
             if (m->pos[1] > 4000.f) {
                 m->pos[1] = 4000.f;
-                m->vel[1] = omm_min_f(m->vel[1], 0.f);
+                m->vel[1] = min_f(m->vel[1], 0.f);
             }
         }
 
@@ -888,13 +896,15 @@ void omm_mario_update_castle_collisions(struct MarioState *m) {
 }
 
 static void omm_mario_update_inputs(struct MarioState *m) {
-    if (OMM_UNLIKELY(OMM_CHEAT_MOON_JUMP && (m->controller->buttonDown & L_TRIG))) {
-        u32 action = m->action;
-        m->action = (m->heldObj ? ACT_HOLD_JUMP : ACT_JUMP);
-        update_mario_inputs(m);
-        m->action = (m->action == ACT_HOLD_JUMP || m->action == ACT_JUMP ? action : m->action);
-    } else {
-        update_mario_inputs(m);
+    update_mario_inputs(m);
+    if (OMM_CHEAT_MOON_JUMP && (m->controller->buttonDown & L_TRIG)) {
+        m->vel[1] = +30.f;
+    }
+    if (OMM_CHEAT_INVINCIBLE) {
+        m->invincTimer = max_s(m->invincTimer, 1);
+        if (m->action == ACT_OMM_POSSESSION) {
+            gOmmData->object->state.invincTimer = max_s(gOmmData->object->state.invincTimer, 1);
+        }
     }
 }
 
@@ -940,6 +950,20 @@ void bhv_mario_update() {
         return;
     }
 
+    // Update old Cheats flags
+#if OMM_GAME_IS_XALO || OMM_GAME_IS_SM74 || OMM_GAME_IS_SMSR
+    OMM_MEMSET(&Cheats, 0, sizeof(Cheats));
+    Cheats.EnableCheats = gOmmCheatEnable;
+    Cheats.Responsive = OMM_CHEAT_SUPER_RESPONSIVE;
+    Cheats.WalkOn.Lava = OMM_CHEAT_WALK_ON_LAVA;
+    Cheats.WalkOn.Quicksand = OMM_CHEAT_WALK_ON_QUICKSAND;
+    Cheats.WalkOn.Slope = OMM_CHEAT_WALK_ON_SLOPE;
+    Cheats.WalkOn.DeathBarrier = OMM_CHEAT_WALK_ON_DEATH_BARRIER;
+#elif !OMM_GAME_IS_R96A
+    Cheats.EnableCheats = gOmmCheatEnable;
+    Cheats.Responsive = OMM_CHEAT_SUPER_RESPONSIVE;
+#endif
+
     // Infinite health cheat
     if (OMM_CHEAT_GOD_MODE) {
         if (g1HPMode) {
@@ -960,7 +984,7 @@ void bhv_mario_update() {
         m->controller->stickMag = 64.f;
     }
     omm_mario_update_inputs(m);
-    if (omm_peach_vibe_is_gloom() && ((m->input & INPUT_NONZERO_ANALOG) || (omm_abs_f(m->forwardVel) > 16.f))) {
+    if (omm_peach_vibe_is_gloom() && ((m->input & INPUT_NONZERO_ANALOG) || (abs_f(m->forwardVel) > 16.f))) {
         m->input &= ~INPUT_ABOVE_SLIDE;
     }
     if (m->input & INPUT_NONZERO_ANALOG) {
@@ -1078,7 +1102,7 @@ void bhv_mario_update() {
 #if !OMM_GAME_IS_R96A
     play_infinite_stairs_music();
 #endif
-    m->numLives = omm_max_s(m->numLives, 1);
+    m->numLives = max_s(m->numLives, 1);
     m->numStars = save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1);
 
     // Update Mario object
@@ -1103,7 +1127,7 @@ void bhv_mario_update() {
         if (m->action == ACT_IDLE && omm_peach_vibe_is_gloom()) {
             f32 tAnim = obj_anim_get_frame(m->marioObj) / m->marioObj->oCurrAnim->mLoopEnd;
             m->marioBodyState->action |= ACT_FLAG_WATER_OR_TEXT;
-            m->marioBodyState->headAngle[0] = omm_relerp_f(sins(tAnim * 0x30000), -1.f, +1.f, -0x1000, -0x1800);
+            m->marioBodyState->headAngle[0] = relerp_f(sins(tAnim * 0x30000), -1.f, +1.f, -0x1000, -0x1800);
             m->marioBodyState->headAngle[1] = 0;
             m->marioBodyState->headAngle[2] = 0;
         }
@@ -1142,7 +1166,7 @@ void bhv_mario_update() {
     
     // Graph node preprocessing
     // Compute Mario's hands, arms, head and root positions
-    omm_geo_preprocess_object_graph_node(gMarioObject);
+    geo_preprocess_object_graph_node(gMarioObject);
 
     // Spawn particles
     m->particleFlags &= ~(!enable_dust_particles * (PARTICLE_DUST | PARTICLE_SNOW | PARTICLE_DIRT));

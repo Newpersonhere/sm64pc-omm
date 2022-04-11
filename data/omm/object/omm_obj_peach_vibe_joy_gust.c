@@ -130,7 +130,7 @@ static void omm_bhv_peach_vibe_joy_gust_update() {
     if (o->oTimer >= 60) {
         obj_mark_for_deletion(o);
     } else if (o->oAction == 1) {
-        obj_update_pos_and_vel(o, true, false, true, false, NULL);
+        perform_object_step(o, OBJ_STEP_UPDATE_HOME | OBJ_STEP_STICKY_FEET);
     } else {
         obj_set_pos(o, o->parentObj->oPosX, o->parentObj->oPosY, o->parentObj->oPosZ);
         obj_set_home(o, o->parentObj->oPosX, o->parentObj->oPosY, o->parentObj->oPosZ);
@@ -138,43 +138,13 @@ static void omm_bhv_peach_vibe_joy_gust_update() {
     }
 
     // Gfx
-    f32 t = omm_clamp_0_1_f(o->oAction + omm_invlerp_0_1_s(o->oTimer, 0, 8)) * omm_invlerp_0_1_s(o->oTimer, 60, 50);
+    f32 t = clamp_0_1_f(o->oAction + invlerp_0_1_s(o->oTimer, 0, 8)) * invlerp_0_1_s(o->oTimer, 60, 50);
     obj_set_scale(o, 0.3f * t, 0.25f * t, 0.3f * t);
     obj_set_angle(o, 0, o->oFaceAngleYaw + 0x2000, 0);
     obj_update_gfx(o);
     o->oOpacity = 0x80;
 
-    // Attract nearby coins
-    if (!(gTimeStopState & TIME_STOP_ENABLED)) {
-        for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_coin_behaviors()) {
-            for_each_object_with_behavior(obj, *bhv) {
-                if (omm_obj_is_coin(obj) && obj->oIntangibleTimer == 0) {
-                    Vec3f dv = {
-                        obj->oPosX - o->oPosX,
-                        obj->oPosY - o->oPosY - 200.f * o->oScaleY,
-                        obj->oPosZ - o->oPosZ
-                    };
-                    f32 distToObj = vec3f_length(dv);
-                    if (distToObj < 2000.f * o->oScaleX) {
-                        vec3f_norm(dv);
-                        vec3f_mul(dv, o->oForwardVel * 1.25f);
-                        Vec4f vel = { obj->oVelX, obj->oVelY, obj->oVelZ, obj->oForwardVel };
-                        obj->oVelX = -dv[0];
-                        obj->oVelY = -dv[1];
-                        obj->oVelZ = -dv[2];
-                        obj->oWallHitboxRadius = obj->hitboxRadius / 2.f;
-                        obj_update_pos_and_vel(obj, false, false, false, false, NULL);
-                        obj->oVelX = vel[0];
-                        obj->oVelY = vel[1];
-                        obj->oVelZ = vel[2];
-                        obj->oForwardVel = vel[3];
-                    }
-                }
-            }
-        }
-    }
-
-    // Collect coins and attack weak enemies
+    // Attack weak enemies, attract and collect coins
     obj_set_params(o, 0, 0, 0, 0, true);
     obj_reset_hitbox(o, 300, 800, 0, 0, 200, 0);
     omm_obj_process_interactions(o, OBJ_INT_PRESET_PEACH_VIBE_JOY_GUST);

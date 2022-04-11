@@ -28,11 +28,11 @@ static void omm_bhv_rock_delete(struct Object *o) {
 
 static void omm_bhv_rock_update() {
     struct Object *o = gCurrentObject;
-    obj_update_pos_and_vel(o, true, false, false, false, NULL);
+    perform_object_step(o, OBJ_STEP_UPDATE_HOME);
     o->oVelY -= 2.f;
 
     // Collided with a wall/floor
-    if (o->oWall || o->oDistToFloor <= 0.f) {
+    if (o->oWall || o->oCeil || o->oDistToFloor <= 0.f) {
         omm_bhv_rock_delete(o);
         return;
     }

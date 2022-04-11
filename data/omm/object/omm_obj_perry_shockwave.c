@@ -18,7 +18,7 @@ static const Gfx omm_perry_shockwave_gfx[] = {
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, SHADE, 0),
     gsDPLoadTextureBlock(OMM_TEXTURE_EFFECT_PERRY_SHOCKWAVE, G_IM_FMT_RGBA, G_IM_SIZ_32b, 128, 128, 0, 0, 0, 0, 0, 0, 0),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
-    gsSPDisplayList(NULL_dl),
+    gsSPDisplayList(null),
     gsSPSetGeometryMode(G_CULL_BACK | G_LIGHTING),
     gsSPEndDisplayList(),
 };
@@ -41,7 +41,7 @@ const GeoLayout omm_geo_perry_shockwave[] = {
     GEO_NODE_START(),
     GEO_OPEN_NODE(),
         GEO_OPEN_NODE(),
-            GEO_ASM(0, omm_geo_link_geo_data),
+            GEO_ASM(0, geo_link_geo_data),
             GEO_DISPLAY_LIST(LAYER_TRANSPARENT, NULL),
         GEO_CLOSE_NODE(),
     GEO_CLOSE_NODE(),
@@ -57,7 +57,7 @@ static void omm_bhv_perry_shockwave_explode(struct Object *o, f32 x, f32 y, f32 
     o->oPosY = y;
     o->oPosZ = z;
     if (o->oPerryShockwaveBlast) {
-        omm_spawn_perry_blast(o, o->oAnimState);
+        omm_spawn_perry_blast(o, o->oPerryType);
         obj_mark_for_deletion(o);
     } else {
         o->oTimer = 0;
@@ -135,7 +135,7 @@ static void omm_bhv_perry_shockwave_update() {
 
         // Grows during delay frames
         case 0: {
-            f32 t = omm_invlerp_0_1_s(o->oTimer, 0, o->oPerryShockwaveDelay);
+            f32 t = invlerp_0_1_s(o->oTimer, 0, o->oPerryShockwaveDelay);
             obj_scale(o, t * OMM_PERRY_SHOCKWAVE_RADIUS / 100.f);
             o->oOpacity = t * 0xFF;
             o->oPosX = gMarioState->pos[0];
@@ -162,8 +162,8 @@ static void omm_bhv_perry_shockwave_update() {
 
         // Vanishes and unloads
         case 2: {
-            obj_scale(o, omm_relerp_0_1_f(o->oTimer, 0, 15, 1.f, 3.f) * OMM_PERRY_SHOCKWAVE_RADIUS / 100.f);
-            o->oOpacity = omm_clamp_s(omm_invlerp_0_1_s(o->oTimer, 15, 0) * 0x140, 0x00, 0xFF);
+            obj_scale(o, relerp_0_1_f(o->oTimer, 0, 15, 1.f, 3.f) * OMM_PERRY_SHOCKWAVE_RADIUS / 100.f);
+            o->oOpacity = clamp_s(invlerp_0_1_s(o->oTimer, 15, 0) * 0x140, 0x00, 0xFF);
             o->oIntangibleTimer = -1;
             if (o->oTimer >= 15) {
                 obj_mark_for_deletion(o);
@@ -172,8 +172,8 @@ static void omm_bhv_perry_shockwave_update() {
 
         // Trail
         case 3: {
-            o->oOpacity = omm_relerp_0_1_s(o->oTimer, 0, 15, 0xFF, 0x00);
-            obj_scale(o, omm_relerp_0_1_f(o->oTimer, 0, 15, o->oPerryShockwaveBaseScale, 0.f));
+            o->oOpacity = relerp_0_1_s(o->oTimer, 0, 15, 0xFF, 0x00);
+            obj_scale(o, relerp_0_1_f(o->oTimer, 0, 15, o->oPerryShockwaveBaseScale, 0.f));
             if (o->oTimer >= 15) {
                 obj_mark_for_deletion(o);
             }
@@ -182,14 +182,14 @@ static void omm_bhv_perry_shockwave_update() {
 
     // Spawn trail
     if (o->oAction == 1 && o->oPerryShockwaveBlast) {
-        struct Object *trail = omm_spawn_perry_shockwave(o, 0, o->oAnimState, 0);
+        struct Object *trail = omm_spawn_perry_shockwave(o, 0, o->oPerryType, 0);
         trail->oPerryShockwaveBaseScale = o->oScaleX;
         trail->oIntangibleTimer = -1;
         trail->oAction = 3;
         omm_spawn_sparkle(o,
-            omm_lerp_s(0.5f, OMM_PERRY_COLOR_FRONT[0], 0xFF),
-            omm_lerp_s(0.5f, OMM_PERRY_COLOR_FRONT[1], 0xFF),
-            omm_lerp_s(0.5f, OMM_PERRY_COLOR_FRONT[2], 0xFF),
+            lerp_s(0.5f, OMM_PERRY_COLOR_FRONT[0], 0xFF),
+            lerp_s(0.5f, OMM_PERRY_COLOR_FRONT[1], 0xFF),
+            lerp_s(0.5f, OMM_PERRY_COLOR_FRONT[2], 0xFF),
             o->oScaleX * 40.f,
             o->oScaleX / 15.f,
             o->oScaleX / 1.5f
@@ -197,7 +197,7 @@ static void omm_bhv_perry_shockwave_update() {
     }
 
     // Update gfx
-    OmmPeachPerryShockwaveGeoData *data = omm_geo_get_geo_data(o, sizeof(OmmPeachPerryShockwaveGeoData), omm_perry_shockwave_gfx, sizeof(omm_perry_shockwave_gfx));
+    OmmPeachPerryShockwaveGeoData *data = geo_get_geo_data(o, sizeof(OmmPeachPerryShockwaveGeoData), omm_perry_shockwave_gfx, sizeof(omm_perry_shockwave_gfx));
     o->oPerryShockwaveAngleYaw += 0x1800 * o->oPerryShockwaveAngleDir;
     obj_set_angle(o, 0, 0, 0);
     Vtx *vtx = data->vtx;
@@ -320,8 +320,8 @@ struct Object *omm_spawn_perry_shockwave(struct Object *o, s32 delay, s32 type, 
     obj_set_angle(wave, 0, 0, 0);
     obj_set_params(wave, 0, 0, 0, 0, true);
     obj_reset_hitbox(wave, 0, 0, 0, 0, 0, 0);
-    wave->oAnimState = type;
-    wave->oPerryShockwaveDelay = omm_max_s(1, delay);
+    wave->oPerryType = type;
+    wave->oPerryShockwaveDelay = max_s(1, delay);
     wave->oPerryShockwaveAngleYaw = gMarioState->faceAngle[1] + 0x2000 * (delay - 7 + 2 * clockwise);
     wave->oPerryShockwaveAngleDir = (clockwise ? -1 : +1);
     if (gOmmPerryBlast) {

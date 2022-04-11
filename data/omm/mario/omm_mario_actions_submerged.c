@@ -44,6 +44,7 @@ static s32 omm_act_water_idle(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_WATER, 0, RETURN_CANCEL);
     action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_WATER_DASH, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_WATER_GROUND_POUND, 0, RETURN_CANCEL);
+    m->faceAngle[1] += m->angleVel[1];
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
@@ -51,6 +52,7 @@ static s32 omm_act_water_action_end(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_WATER, 0, RETURN_CANCEL);
     action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_WATER_DASH, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_WATER_GROUND_POUND, 0, RETURN_CANCEL);
+    m->faceAngle[1] += m->angleVel[1];
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
@@ -69,6 +71,13 @@ static s32 omm_act_swimming_end(struct MarioState *m) {
 }
 
 static s32 omm_act_flutter_kick(struct MarioState *m) {
+    action_cappy(1, ACT_OMM_CAPPY_THROW_WATER, 0, RETURN_CANCEL);
+    action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_WATER_DASH, 0, RETURN_CANCEL);
+    action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_WATER_GROUND_POUND, 0, RETURN_CANCEL);
+    return OMM_MARIO_ACTION_RESULT_CONTINUE;
+}
+
+static s32 omm_act_water_punch(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_WATER, 0, RETURN_CANCEL);
     action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_WATER_DASH, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_WATER_GROUND_POUND, 0, RETURN_CANCEL);
@@ -106,18 +115,28 @@ static s32 omm_act_water_dash(struct MarioState *m) {
 
     // Pitch
     s16 targetPitch = (s16) (-250.0f * m->controller->stickY);
-    m->faceAngle[0] = targetPitch - approach_s32((s16)(targetPitch - m->faceAngle[0]), 0, 0x200, 0x200);
+    m->faceAngle[0] = targetPitch - approach_s32((s16) (targetPitch - m->faceAngle[0]), 0, 0x200, 0x200);
 
     // Yaw
-    s16 yawVel = (s16) (0x200 * omm_abs_f(m->controller->stickX / 64.f));
-    m->faceAngle[1] = m->intendedYaw - approach_s32((s16)(m->intendedYaw - m->faceAngle[1]), 0, yawVel, yawVel);
+    s16 yawVel = (s16) (0x200 * abs_f(m->controller->stickX / 64.f));
+    m->faceAngle[1] = m->intendedYaw - approach_s32((s16) (m->intendedYaw - m->faceAngle[1]), 0, yawVel, yawVel);
 
     // Roll
     m->faceAngle[2] = (s16) (m->controller->stickX * 64.f);
 
     // Perform step
     u32 step = perform_water_step(m);
-    action_condition(step == WATER_STEP_HIT_WALL, ACT_BACKWARD_WATER_KB, 0, RETURN_BREAK, SFX(SOUND_MARIO_OOOF2); PFX(PARTICLE_VERTICAL_STAR););
+    if (step == WATER_STEP_HIT_WALL && m->wall) {
+        Vec3f v; vec3f_copy(v, m->vel); vec3f_normalize(v);
+        f32 dot = vec3f_dot(v, (f32 *) &m->wall->normal);
+        if (dot < -0.5f) {
+            m->vel[1] /= 1.5f;
+            mario_set_forward_vel(m, m->forwardVel / 1.5f);
+            SFX(SOUND_MARIO_OOOF2);
+            PFX(PARTICLE_VERTICAL_STAR);
+            action_condition(1, ACT_BACKWARD_WATER_KB, 0, RETURN_BREAK);
+        }
+    }
 
     // Animation
     obj_anim_play(m->marioObj, MARIO_ANIM_FLUTTERKICK, 3.f);
@@ -195,7 +214,7 @@ static s32 omm_act_water_ground_pound_jump(struct MarioState *m) {
 
     obj_anim_play(m->marioObj, MARIO_ANIM_DOUBLE_JUMP_RISE, 1.f);
     s16 prevSpinYaw = gOmmData->mario->spin.yaw;
-    gOmmData->mario->spin.yaw += (0x90 * m->vel[1]) * (prevSpinYaw != 0) * (omm_mario_has_vanish_cap(m) ? 0.8f : 1.f) / omm_sqr_f(omm_player_get_selected_jump_multiplier());
+    gOmmData->mario->spin.yaw += (0x90 * m->vel[1]) * (prevSpinYaw != 0) * (omm_mario_has_vanish_cap(m) ? 0.8f : 1.f) / sqr_f(omm_player_get_selected_jump_multiplier());
     gOmmData->mario->spin.yaw *= ((u16) prevSpinYaw < (u16) gOmmData->mario->spin.yaw) * (m->vel[1] > 0.f);
     m->marioObj->oGfxAngle[1] = m->faceAngle[1] + gOmmData->mario->spin.yaw;
     m->particleFlags |= (PARTICLE_PLUNGE_BUBBLE | PARTICLE_BUBBLE);
@@ -214,7 +233,7 @@ static s32 omm_act_leave_object_water(struct MarioState *m) {
     m->particleFlags |= PARTICLE_SPARKLES;
 
     action_condition(m->pos[1] >= m->waterLevel - 80, ACT_WATER_JUMP, 0, RETURN_BREAK);
-    action_condition(omm_abs_f(m->vel[1]) < 1.f, ACT_WATER_IDLE, 0, RETURN_BREAK);
+    action_condition(abs_f(m->vel[1]) < 1.f, ACT_WATER_IDLE, 0, RETURN_BREAK);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
@@ -227,6 +246,7 @@ static s32 omm_act_cappy_throw_water(struct MarioState *m) {
     action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_WATER_PUNCH, 0, RETURN_CANCEL);
     action_init(m->forwardVel, m->vel[1], 0, SOUND_ACTION_SWIM);
 
+    m->vel[1] *= 0.9f;
     mario_set_forward_vel(m, m->forwardVel * 0.9f);
     perform_water_step(m);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -278,6 +298,7 @@ s32 omm_mario_execute_submerged_action(struct MarioState *m) {
         case ACT_BREASTSTROKE:                      return omm_act_breaststroke(m);
         case ACT_SWIMMING_END:                      return omm_act_swimming_end(m);
         case ACT_FLUTTER_KICK:                      return omm_act_flutter_kick(m);
+        case ACT_WATER_PUNCH:                       return omm_act_water_punch(m);
         case ACT_BACKWARD_WATER_KB:                 return omm_act_backward_water_kb(m);
         case ACT_FORWARD_WATER_KB:                  return omm_act_forward_water_kb(m);
 

@@ -36,13 +36,18 @@ typedef s16 Collision;
 #define OBJ_OVERLAP_FLAG_HITBOX_HURTBOX_MAX                 (1 << 2)
 #define OBJ_OVERLAP_FLAG_IGNORE_INTANGIBLE                  (1 << 3)
 
-#define OBJ_STEP_PARTICLE_NONE                              (0 << 0)
-#define OBJ_STEP_PARTICLE_MIST                              (1 << 0)
-#define OBJ_STEP_PARTICLE_SMOKE                             (1 << 1)
-#define OBJ_STEP_PARTICLE_WATER_TRAIL                       (1 << 2)
-#define OBJ_STEP_PARTICLE_WATER_DROPLET                     (1 << 3)
-#define OBJ_STEP_PARTICLE_FIRE                              (1 << 4)
-#define OBJ_STEP_PARTICLE_FLAME                             (1 << 5)
+#define OBJ_STEP_UPDATE_HOME                                (1 << 0)
+#define OBJ_STEP_MOVE_THROUGH_WALLS                         (1 << 1)
+#define OBJ_STEP_STICKY_FEET                                (1 << 2)
+#define OBJ_STEP_CHECK_ON_GROUND                            (1 << 3)
+
+#define OBJ_PARTICLE_NONE                                   (0 << 0)
+#define OBJ_PARTICLE_MIST                                   (1 << 0)
+#define OBJ_PARTICLE_SMOKE                                  (1 << 1)
+#define OBJ_PARTICLE_WATER_TRAIL                            (1 << 2)
+#define OBJ_PARTICLE_WATER_DROPLET                          (1 << 3)
+#define OBJ_PARTICLE_FIRE                                   (1 << 4)
+#define OBJ_PARTICLE_FLAME                                  (1 << 5)
 
 #define OBJ_SPAWN_TRI_BREAK_PRESET_COINS                    20, MODEL_YELLOW_COIN,    1.0f, 0
 #define OBJ_SPAWN_TRI_BREAK_PRESET_DIRT                     20, MODEL_DIRT_ANIMATION, 0.7f, 3
@@ -72,6 +77,10 @@ typedef s16 Collision;
 #define OBJ_INT_GRAB_OBJECTS                                (1 << 11) // Perform a grab instead of attacking
 #define OBJ_INT_HEAL_MARIO                                  (1 << 12) // Heal Mario after attacking/destroying an enemy
 #define OBJ_INT_NOT_INTERACTED                              (1 << 13) // omm_obj_process_interactions() always returns NULL
+#define OBJ_INT_ATTRACT_COINS_WEAK                          (1 << 14) // Attract nearby coins (weak pull)
+#define OBJ_INT_ATTRACT_COINS_STRONG                        (1 << 15) // Attract nearby coins (strong pull)
+#define OBJ_INT_ATTRACT_COINS_RANGE(x)                      ((((u32) (x / 100)) & 0xF) << 16) // Attraction range (4 bits, values from 0 to 1500)
+#define OBJ_INT_ATTRACT_COINS_RANGE_GET(intFlags)           (((u32) ((intFlags >> 16) & 0xF)) * 100)
 #define OBJ_INT_PERRY_ATTACK                                (1 << 24)
 #define OBJ_INT_PERRY_SWORD                                 (1 << 25)
 #define OBJ_INT_PERRY_TRAIL                                 (1 << 26)
@@ -90,8 +99,8 @@ typedef s16 Collision;
 #define OBJ_INT_PRESET_ROCK                                 (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS)
 #define OBJ_INT_PRESET_BLARGG_FIRE                          (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_DESTRUCTIBLE | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS)
 
-#define OBJ_INT_PRESET_PEACH_VIBE_JOY_TORNADO               (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_KNOCKBACK | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_PERRY_ATTACK)
-#define OBJ_INT_PRESET_PEACH_VIBE_JOY_GUST                  (OBJ_INT_ATTACK_WEAK | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_PERRY_ATTACK)
+#define OBJ_INT_PRESET_PEACH_VIBE_JOY_TORNADO               (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_KNOCKBACK | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_ATTRACT_COINS_WEAK | OBJ_INT_ATTRACT_COINS_RANGE(900) | OBJ_INT_PERRY_ATTACK)
+#define OBJ_INT_PRESET_PEACH_VIBE_JOY_GUST                  (OBJ_INT_ATTACK_WEAK | OBJ_INT_COLLECT_COINS | OBJ_INT_COLLECT_TRIGGERS | OBJ_INT_ATTRACT_COINS_STRONG | OBJ_INT_ATTRACT_COINS_RANGE(600) | OBJ_INT_PERRY_ATTACK)
 #define OBJ_INT_PRESET_PEACH_VIBE_GLOOM_AURA                (OBJ_INT_ATTACK_FLAMES | OBJ_INT_PERRY_ATTACK)
 #define OBJ_INT_PRESET_PEACH_VIBE_RAGE_AURA                 (OBJ_INT_ATTACK_WEAK | (OBJ_INT_ATTACK_ONE_HIT * omm_mario_is_ground_pounding(gMarioState)) | OBJ_INT_PERRY_ATTACK)
 #define OBJ_INT_PRESET_PEACH_VIBE_RAGE_GROUND_POUND_LAND    (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG | OBJ_INT_ATTACK_ONE_HIT | OBJ_INT_ATTACK_BREAKABLE | OBJ_INT_ATTACK_DESTRUCTIBLE | OBJ_INT_PERRY_ATTACK)
@@ -171,10 +180,12 @@ extern const GeoLayout omm_geo_shockwave_whomp[];
 extern const GeoLayout omm_geo_shockwave_spindrift[];
 extern const GeoLayout omm_geo_shockwave_fire[];
 extern const GeoLayout omm_geo_rising_lava[];
+extern const GeoLayout omm_geo_star_ring[];
 extern const GeoLayout omm_geo_bowser_mine[];
 extern const GeoLayout omm_geo_bowser_flame[];
 extern const GeoLayout omm_geo_bowser_fireball[];
 extern const GeoLayout omm_geo_bowser_fireball_flame[];
+extern const GeoLayout omm_geo_bowser_mad_aura[];
 extern const GeoLayout omm_geo_flaming_bobomb[];
 extern const GeoLayout omm_geo_flaming_bobomb_aura[];
 extern const GeoLayout omm_geo_flaming_bobomb_explosion[];
@@ -252,6 +263,7 @@ extern const BehaviorScript omm_bhv_shockwave_whomp[];
 extern const BehaviorScript omm_bhv_shockwave_spindrift[];
 extern const BehaviorScript omm_bhv_shockwave_fire[];
 extern const BehaviorScript omm_bhv_rising_lava[];
+extern const BehaviorScript omm_bhv_star_ring[];
 extern const BehaviorScript omm_bhv_bitfs_pillar[];
 extern const BehaviorScript omm_bhv_goomba_stack[];
 extern const BehaviorScript omm_bhv_goomba_stack_capture[];
@@ -263,6 +275,7 @@ extern const BehaviorScript omm_bhv_bowser_mine[];
 extern const BehaviorScript omm_bhv_bowser_flame[];
 extern const BehaviorScript omm_bhv_bowser_fireball[];
 extern const BehaviorScript omm_bhv_bowser_fireball_flame[];
+extern const BehaviorScript omm_bhv_bowser_mad_aura[];
 extern const BehaviorScript omm_bhv_flaming_bobomb[];
 extern const BehaviorScript omm_bhv_flaming_bobomb_aura[];
 extern const BehaviorScript omm_bhv_flaming_bobomb_explosion[];
@@ -293,18 +306,5 @@ extern const BehaviorScript omm_bhv_peach_vibe_calm_aura[];
 extern const BehaviorScript omm_bhv_peach_vibe_calm_sparkle[];
 extern const BehaviorScript omm_bhv_menu_character_select_button[];
 extern const BehaviorScript omm_bhv_problem[];
-
-//
-// Collisions
-//
-
-extern const Collision omm_thwomp_collision[];
-
-//
-// Level scripts
-//
-
-extern const LevelScript omm_ttm_slide_script[];
-extern const LevelScript omm_bowser_4_level_script[];
 
 #endif // OMM_OBJECT_DATA_H

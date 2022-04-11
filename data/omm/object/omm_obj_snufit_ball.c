@@ -44,8 +44,8 @@ static void omm_bhv_snufit_ball_loop() {
 
     // Update pos and collisions
     obj_play_sound(o, SOUND_OBJ_SNUFIT_SHOOT * (o->oTimer == 0));
-    obj_update_pos_and_vel(o, true, false, false, false, NULL);
-    if (o->oTimer > 60 || o->oWall || o->oDistToFloor <= 0.f) {
+    perform_object_step(o, OBJ_STEP_UPDATE_HOME);
+    if (o->oTimer > 60 || o->oWall || o->oCeil || o->oDistToFloor <= 0.f) {
         omm_bhv_snufit_ball_delete(o);
         return;
     }

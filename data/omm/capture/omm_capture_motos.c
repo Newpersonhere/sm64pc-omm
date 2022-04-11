@@ -65,10 +65,11 @@ static void cappy_motos_try_to_hold_object(struct Object *o) {
     f32 dMax = 200.f + o->hitboxRadius;
     f32 yMin = o->oPosY - o->hitboxDownOffset - 50.f;
     f32 yMax = o->oPosY - o->hitboxDownOffset + 50.f + o->hitboxHeight;
-    for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_holdable_behaviors()) {
-        for_each_object_with_behavior(obj, *bhv) {
+    omm_array_for_each(omm_obj_get_holdable_behaviors(), p) {
+        const BehaviorScript *bhv = (const BehaviorScript *) p->as_ptr;
+        for_each_object_with_behavior(obj, bhv) {
             if (obj != o && !obj_is_dormant(obj)) {
-                u16 angleDiff = (u16) omm_abs_s((s16) (obj_get_object1_angle_yaw_to_object2(o, obj) - o->oFaceAngleYaw));
+                u16 angleDiff = (u16) abs_s((s16) (obj_get_object1_angle_yaw_to_object2(o, obj) - o->oFaceAngleYaw));
                 if (angleDiff < 0x3000 && obj->oPosY >= yMin && obj->oPosY <= yMax && obj_get_horizontal_distance(o, obj) <= dMax) {
                     if (omm_obj_hold(obj)) {
                         obj_set_home(obj, obj->oPosX, obj->oPosY, obj->oPosZ);
@@ -118,14 +119,14 @@ s32 cappy_motos_update(struct Object *o) {
     }
 
     // Movement
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     pobj_decelerate(o, 0.80f, 0.95f);
     pobj_apply_gravity(o, 1.f);
     pobj_handle_special_floors(o);
     POBJ_STOP_IF_UNPOSSESSED;
 
     // Lava must be handled separately
-    if (obj_is_on_ground(o) && o->oFloor->type == SURFACE_BURNING) {
+    if (obj_is_on_ground(o) && o->oFloor->type == SURFACE_BURNING && !OMM_CHEAT_WALK_ON_LAVA) {
         omm_mario_unpossess_object(gMarioState, OMM_MARIO_UNPOSSESS_ACT_BURNT, false, 0);
         omm_mario_set_action(gMarioState, ACT_LAVA_BOOST, 0, 0);
         o->oAction = MOTOS_ACT_DEATH;
@@ -151,7 +152,7 @@ s32 cappy_motos_update(struct Object *o) {
                 obj_make_step_sound_and_particle(
                     o, &gOmmData->object->state.walkDistance,
                     omm_capture_get_walk_speed(o) * 16.f, o->oForwardVel,
-                    SOUND_OBJ_BULLY_WALKING, OBJ_STEP_PARTICLE_NONE
+                    SOUND_OBJ_BULLY_WALKING, OBJ_PARTICLE_NONE
                 );
             }
         } break;
@@ -159,10 +160,10 @@ s32 cappy_motos_update(struct Object *o) {
         case 1: {
             obj_anim_play(o, MOTOS_ANIM_CARRY_START, 1.f);
             omm_obj_update_held_object(gOmmData->object->motos.heldObj, o, CAPPY_MOTOS_HAND_POS_1);
-            gOmmData->object->motos.heldObj->oPosX = omm_relerp_0_1_f(obj_anim_get_frame(o), 0, 30, gOmmData->object->motos.heldObj->oHomeX, gOmmData->object->motos.heldObj->oPosX);
-            gOmmData->object->motos.heldObj->oPosY = omm_relerp_0_1_f(obj_anim_get_frame(o), 0, 30, gOmmData->object->motos.heldObj->oHomeY, gOmmData->object->motos.heldObj->oPosY);
-            gOmmData->object->motos.heldObj->oPosZ = omm_relerp_0_1_f(obj_anim_get_frame(o), 0, 30, gOmmData->object->motos.heldObj->oHomeZ, gOmmData->object->motos.heldObj->oPosZ);
-            gOmmData->object->motos.heldObj->oPosY += 0.5f * o->hitboxHeight * sins(omm_relerp_0_1_s(obj_anim_get_frame(o), 0, 30, 0, 0x8000));
+            gOmmData->object->motos.heldObj->oPosX = relerp_0_1_f(obj_anim_get_frame(o), 0, 30, gOmmData->object->motos.heldObj->oHomeX, gOmmData->object->motos.heldObj->oPosX);
+            gOmmData->object->motos.heldObj->oPosY = relerp_0_1_f(obj_anim_get_frame(o), 0, 30, gOmmData->object->motos.heldObj->oHomeY, gOmmData->object->motos.heldObj->oPosY);
+            gOmmData->object->motos.heldObj->oPosZ = relerp_0_1_f(obj_anim_get_frame(o), 0, 30, gOmmData->object->motos.heldObj->oHomeZ, gOmmData->object->motos.heldObj->oPosZ);
+            gOmmData->object->motos.heldObj->oPosY += 0.5f * o->hitboxHeight * sins(relerp_0_1_s(obj_anim_get_frame(o), 0, 30, 0, 0x8000));
             obj_update_gfx(gOmmData->object->motos.heldObj);
             if (obj_anim_is_at_end(o)) {
                 sound_stop(SOUND_GENERAL_CANNON_UP, o->oCameraToObject);
@@ -175,10 +176,10 @@ s32 cappy_motos_update(struct Object *o) {
             obj_anim_play(o, MOTOS_ANIM_PITCH, 1.f);
             Vec3f pos1 = { CAPPY_MOTOS_HAND_POS_1 };
             Vec3f pos2 = { CAPPY_MOTOS_HAND_POS_2 };
-            f32 t = sins(omm_relerp_0_1_f(obj_anim_get_frame(o), 0, 14, 0, 0x8000));
-            f32 x = omm_lerp_f(t, pos1[0], pos2[0]);
-            f32 y = omm_lerp_f(t, pos1[1], pos2[1]);
-            f32 z = omm_lerp_f(t, pos1[2], pos2[2]);
+            f32 t = sins(relerp_0_1_f(obj_anim_get_frame(o), 0, 14, 0, 0x8000));
+            f32 x = lerp_f(t, pos1[0], pos2[0]);
+            f32 y = lerp_f(t, pos1[1], pos2[1]);
+            f32 z = lerp_f(t, pos1[2], pos2[2]);
             omm_obj_update_held_object(gOmmData->object->motos.heldObj, o, x, y, z);
             if (gOmmData->object->motos.heldObj && obj_anim_get_frame(o) >= 14) {
                 omm_obj_throw(gOmmData->object->motos.heldObj, 40.f, 20.f);

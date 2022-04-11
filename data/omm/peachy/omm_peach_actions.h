@@ -6,6 +6,7 @@
 //
 
 #define OMM_PEACH_FLOAT_DURATION                    (30)
+#define OMM_PEACH_SPAWN_PERRY_SHOCKWAVE             (gOmmPerryBlast || omm_health_is_at_max(m) || omm_peach_vibe_is_active() || omm_mario_has_wing_cap(m) || omm_mario_has_metal_cap(m) || omm_mario_has_vanish_cap(m))
 
 //
 // Vibes
@@ -36,9 +37,9 @@
 #define OMM_PEACH_VIBE_GAUGE_RAGE_DEC               (15) // 20 seconds (600 frames)
 #define OMM_PEACH_VIBE_GAUGE_RAGE_SHOCKWAVE_DEC     (450) // Releasing a shockwave drains 5% of the Vibe gauge
 #define OMM_PEACH_VIBE_GAUGE_GLOOM_DEC              (12) // 25 seconds (750 frames)
-#define OMM_PEACH_VIBE_GAUGE_CALM_O2_DEC            (20) // 15 seconds (450 frames), recovers 6 O2 every frame (+5~15% per second)
-#define OMM_PEACH_VIBE_GAUGE_CALM_HP_DEC            (30) // 10 seconds (300 frames), recovers 1 HP every 2 seconds (60 frames)
-#define OMM_PEACH_VIBE_GAUGE_CALM_FREEZE_DEC        (10) // 30 seconds (900 frames), prevents the effect of frozen water
+#define OMM_PEACH_VIBE_GAUGE_CALM_O2_DEC            (20) // 15 seconds (450 frames), recovers 6 O2 every frame (fully restored in 8~20 seconds)
+#define OMM_PEACH_VIBE_GAUGE_CALM_HP_DEC            (30) // 10 seconds (300 frames), recovers 1 HP every 2 seconds (fully restored in 10 seconds)
+#define OMM_PEACH_VIBE_GAUGE_CALM_FREEZE_DEC        (15) // 20 seconds (600 frames), prevents the effect of frozen water
 
 #define OMM_PEACH_VIBE_COOLDOWN                     (20)
 #define OMM_PEACH_VIBE_MUSIC_FREQ_MOD_JOY           (1.50f)

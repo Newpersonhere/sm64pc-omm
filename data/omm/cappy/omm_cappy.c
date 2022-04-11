@@ -7,7 +7,10 @@
 //
 
 struct Object *omm_cappy_get_object() {
-    return obj_get_first_with_behavior(omm_bhv_cappy);
+    if (gOmmCappy && gOmmCappy->activeFlags && gOmmCappy->behavior == omm_bhv_cappy) {
+        return gOmmCappy;
+    }
+    return NULL;
 }
 
 struct Object *omm_cappy_get_object_play_as() {
@@ -25,12 +28,12 @@ struct Object *omm_cappy_get_object_play_as() {
 static s16 omm_cappy_get_behavior(struct MarioState *m) {
     bool air = (m->action & (ACT_FLAG_AIR | ACT_FLAG_SWIMMING)) != 0;
     if (m->action == ACT_FLYING)                 return OMM_CAPPY_BHV_FLYING;
-    if (m->controller->buttonPressed & A_BUTTON) return OMM_CAPPY_BHV_UPWARDS_GROUND + air;
-    if (omm_mario_is_ground_pound_landing(m))    return OMM_CAPPY_BHV_DOWNWARDS_GROUND;
     if (m->controller->buttonDown & U_JPAD)      return OMM_CAPPY_BHV_UPWARDS_GROUND + air;
     if (m->controller->buttonDown & D_JPAD)      return OMM_CAPPY_BHV_DOWNWARDS_GROUND + air;
     if (m->controller->buttonDown & L_JPAD)      return OMM_CAPPY_BHV_SPIN_GROUND + air;
     if (m->controller->buttonDown & R_JPAD)      return OMM_CAPPY_BHV_SPIN_GROUND + air;
+    if (m->controller->buttonPressed & A_BUTTON) return OMM_CAPPY_BHV_UPWARDS_GROUND + air;
+    if (omm_mario_is_ground_pound_landing(m))    return OMM_CAPPY_BHV_DOWNWARDS_GROUND;
     if (gOmmData->mario->spin.timer != 0)        return OMM_CAPPY_BHV_SPIN_GROUND + air;
     else                                         return OMM_CAPPY_BHV_DEFAULT_GROUND + air;
 }
@@ -38,7 +41,7 @@ static s16 omm_cappy_get_behavior(struct MarioState *m) {
 struct Object *omm_cappy_spawn(struct MarioState *m) {
 
     // Cappy must be available
-    if (OMM_CAP_CLASSIC || !(m->flags & MARIO_CAP_ON_HEAD) || (omm_cappy_get_object() != NULL)) {
+    if (OMM_CAP_CLASSIC || !(m->flags & MARIO_CAP_ON_HEAD) || omm_cappy_get_object()) {
         return NULL;
     }
 
@@ -54,6 +57,7 @@ struct Object *omm_cappy_spawn(struct MarioState *m) {
     cappy->oCappyThrowStrength = 0;
     cappy->oIntangibleTimer    = 0;
     obj_set_dormant(cappy, true);
+    gOmmCappy = cappy;
     return cappy;
 }
 
@@ -144,7 +148,7 @@ void omm_cappy_update(struct MarioState *m) {
 
         // Advance Cappy's life timer
         cappy->oCappyThrowStrength += advance * ((cappy->oCappyLifeTimer < 0) && (m->controller->buttonDown & X_BUTTON));
-        cappy->oCappyThrowStrength = omm_clamp_s(cappy->oCappyThrowStrength, 4 * (m->controller->stickMag > 60.f), 4);
+        cappy->oCappyThrowStrength = clamp_s(cappy->oCappyThrowStrength, 4 * (m->controller->stickMag > 60.f), 4);
         cappy->oCappyLifeTimer += advance;
     }
 }

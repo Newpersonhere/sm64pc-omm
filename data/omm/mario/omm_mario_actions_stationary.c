@@ -39,7 +39,7 @@ static s32 omm_act_idle(struct MarioState *m) {
                             case 2: obj_anim_play(m->marioObj, MARIO_ANIM_IDLE_HEAD_CENTER, 1.f); break;
                         }
                         if (obj_anim_is_at_end(m->marioObj) && ++m->actionState == 3) {
-                            f32 deltaY = omm_abs_f(m->pos[1] - find_floor_height_relative_polar(m, -0x8000, 60.f));
+                            f32 deltaY = abs_f(m->pos[1] - find_floor_height_relative_polar(m, -0x8000, 60.f));
                             if (deltaY > 24.f || (m->floor->flags & SURFACE_FLAG_DYNAMIC) || ++m->actionTimer < 10) {
                                 m->actionState = 0;
                             }
@@ -203,10 +203,10 @@ static s32 omm_act_spin_ground(struct MarioState *m) {
     s32 step = perform_ground_step(m);
     action_condition(step == GROUND_STEP_LEFT_GROUND, ACT_OMM_SPIN_AIR, 0, RETURN_BREAK);
 
-    mario_set_forward_vel(m, omm_max_f(0, m->forwardVel - 1.f));
+    mario_set_forward_vel(m, max_f(0, m->forwardVel - 1.f));
     obj_anim_play(m->marioObj, MARIO_ANIM_TWIRL, 1.f);
     play_sound(SOUND_MOVING_TERRAIN_SLIDE + m->terrainSoundAddend, m->marioObj->oCameraToObject);
-    gOmmData->mario->spin.yaw += omm_min_s(0x31E9, 0x280 * gOmmData->mario->spin.timer);
+    gOmmData->mario->spin.yaw += min_s(0x31E9, 0x280 * gOmmData->mario->spin.timer);
     m->marioObj->oGfxAngle[1] = m->faceAngle[1] - gOmmData->mario->spin.yaw;
     m->marioBodyState->handState = MARIO_HAND_OPEN;
     m->particleFlags |= PARTICLE_DUST;

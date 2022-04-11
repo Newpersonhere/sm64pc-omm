@@ -50,11 +50,11 @@ static void omm_bhv_snowball_update() {
 
     // Released
     else {
-        obj_update_pos_and_vel(o, true, false, false, false, NULL);
+        perform_object_step(o, OBJ_STEP_UPDATE_HOME);
         o->oVelY -= 2.f;
 
         // Collided with a wall/floor
-        if (o->oWall || o->oDistToFloor <= 0.f) {
+        if (o->oWall || o->oCeil || o->oDistToFloor <= 0.f) {
             omm_bhv_snowball_delete(o);
             return;
         }

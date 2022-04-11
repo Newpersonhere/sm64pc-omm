@@ -8,7 +8,7 @@ s16 gOmm1HPMode = FALSE;
 //
 
 typedef void (*OmmRoutine)(void);
-static OmmArray sOmmRoutines[OMM_ROUTINE_TYPES] = { NULL, NULL, NULL };
+static OmmArray sOmmRoutines[OMM_ROUTINE_TYPES] = { omm_array_zero, omm_array_zero, omm_array_zero };
 static bool sOmmIsMainMenu = true;
 static bool sOmmIsLevelEntry = false;
 static bool sOmmIsEndingCutscene = false;
@@ -67,16 +67,16 @@ const char *omm_user_path() {
 
 void omm_add_routine(s32 type, void (*func)(void)) {
     if (OMM_LIKELY(type >= 0 && type < OMM_ROUTINE_TYPES && func)) {
-        omm_array_init(sOmmRoutines[type], OmmRoutine);
-        if (omm_array_find(sOmmRoutines[type], func) == -1) {
-            omm_array_add(sOmmRoutines[type], func);
+        if (omm_array_find(sOmmRoutines[type], ptr, func) == -1) {
+            omm_array_add(sOmmRoutines[type], ptr, func);
         }
     }
 }
 
 static void omm_execute_routines(s32 type) {
-    omm_array_for_each(sOmmRoutines[type], OmmRoutine, routine) {
-        (*routine)();
+    omm_array_for_each(sOmmRoutines[type], p) {
+        OmmRoutine routine = (OmmRoutine) p->as_ptr;
+        routine();
     }
 }
 
@@ -99,7 +99,7 @@ void omm_select_save_file(s32 saveFileNum) {
 void omm_return_to_main_menu() {
     if (optmenu_open) optmenu_toggle();
     fade_into_special_warp(-2, 0);
-    gDialogState = 0;
+    gDialogBoxState = 0;
     gMenuMode = -1;
 }
 
@@ -108,7 +108,6 @@ void omm_return_to_main_menu() {
 //
 
 void omm_update() {
-    omm_debug_start_counter();
 
     // Level entry
     if (sOmmIsLevelEntry) {
@@ -157,20 +156,19 @@ void omm_update() {
     // Misc stuff
     sOmmTimerReturnToMainMenu--;
     gPrevFrameObjectCount = 0;
-    omm_debug_end_counter();
-    omm_debug_start_counter();
 }
 
 //
 // Update GFX
 //
 
-static void omm_gfx_update_stars_models() {
+static void omm_pre_render_update_stars_models() {
 
     // Stars number
     if (OMM_EXTRAS_SHOW_STAR_NUMBER) {
-        for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_star_or_key_behaviors()) {
-            for_each_object_with_behavior(star, *bhv) {
+        omm_array_for_each(omm_obj_get_star_or_key_behaviors(), p) {
+            const BehaviorScript *bhv = (const BehaviorScript *) p->as_ptr;
+            for_each_object_with_behavior(star, bhv) {
                 if (!obj_is_dormant(star) &&
                     star->behavior != bhvBowserKey &&
                     star->behavior != bhvGrandStar &&
@@ -194,45 +192,46 @@ static void omm_gfx_update_stars_models() {
     // Colored Stars
     static struct GraphNode *sOmmStarGraphNodes[34] = { NULL };
     if (OMM_UNLIKELY(!sOmmStarGraphNodes[0])) {
-        sOmmStarGraphNodes[0]  = omm_geo_get_graph_node(omm_geo_star_0_opaque, true);
-        sOmmStarGraphNodes[1]  = omm_geo_get_graph_node(omm_geo_star_1_opaque, true);
-        sOmmStarGraphNodes[2]  = omm_geo_get_graph_node(omm_geo_star_2_opaque, true);
-        sOmmStarGraphNodes[3]  = omm_geo_get_graph_node(omm_geo_star_3_opaque, true);
-        sOmmStarGraphNodes[4]  = omm_geo_get_graph_node(omm_geo_star_4_opaque, true);
-        sOmmStarGraphNodes[5]  = omm_geo_get_graph_node(omm_geo_star_5_opaque, true);
-        sOmmStarGraphNodes[6]  = omm_geo_get_graph_node(omm_geo_star_6_opaque, true);
-        sOmmStarGraphNodes[7]  = omm_geo_get_graph_node(omm_geo_star_7_opaque, true);
-        sOmmStarGraphNodes[8]  = omm_geo_get_graph_node(omm_geo_star_8_opaque, true);
-        sOmmStarGraphNodes[9]  = omm_geo_get_graph_node(omm_geo_star_9_opaque, true);
-        sOmmStarGraphNodes[10] = omm_geo_get_graph_node(omm_geo_star_10_opaque, true);
-        sOmmStarGraphNodes[11] = omm_geo_get_graph_node(omm_geo_star_11_opaque, true);
-        sOmmStarGraphNodes[12] = omm_geo_get_graph_node(omm_geo_star_12_opaque, true);
-        sOmmStarGraphNodes[13] = omm_geo_get_graph_node(omm_geo_star_13_opaque, true);
-        sOmmStarGraphNodes[14] = omm_geo_get_graph_node(omm_geo_star_14_opaque, true);
-        sOmmStarGraphNodes[15] = omm_geo_get_graph_node(omm_geo_star_15_opaque, true);
-        sOmmStarGraphNodes[16] = omm_geo_get_graph_node(omm_geo_star_16_opaque, true);
-        sOmmStarGraphNodes[17] = omm_geo_get_graph_node(omm_geo_star_0_transparent, true);
-        sOmmStarGraphNodes[18] = omm_geo_get_graph_node(omm_geo_star_1_transparent, true);
-        sOmmStarGraphNodes[19] = omm_geo_get_graph_node(omm_geo_star_2_transparent, true);
-        sOmmStarGraphNodes[20] = omm_geo_get_graph_node(omm_geo_star_3_transparent, true);
-        sOmmStarGraphNodes[21] = omm_geo_get_graph_node(omm_geo_star_4_transparent, true);
-        sOmmStarGraphNodes[22] = omm_geo_get_graph_node(omm_geo_star_5_transparent, true);
-        sOmmStarGraphNodes[23] = omm_geo_get_graph_node(omm_geo_star_6_transparent, true);
-        sOmmStarGraphNodes[24] = omm_geo_get_graph_node(omm_geo_star_7_transparent, true);
-        sOmmStarGraphNodes[25] = omm_geo_get_graph_node(omm_geo_star_8_transparent, true);
-        sOmmStarGraphNodes[26] = omm_geo_get_graph_node(omm_geo_star_9_transparent, true);
-        sOmmStarGraphNodes[27] = omm_geo_get_graph_node(omm_geo_star_10_transparent, true);
-        sOmmStarGraphNodes[28] = omm_geo_get_graph_node(omm_geo_star_11_transparent, true);
-        sOmmStarGraphNodes[29] = omm_geo_get_graph_node(omm_geo_star_12_transparent, true);
-        sOmmStarGraphNodes[30] = omm_geo_get_graph_node(omm_geo_star_13_transparent, true);
-        sOmmStarGraphNodes[31] = omm_geo_get_graph_node(omm_geo_star_14_transparent, true);
-        sOmmStarGraphNodes[32] = omm_geo_get_graph_node(omm_geo_star_15_transparent, true);
-        sOmmStarGraphNodes[33] = omm_geo_get_graph_node(omm_geo_star_16_transparent, true);
+        sOmmStarGraphNodes[0]  = geo_layout_to_graph_node(NULL, omm_geo_star_0_opaque);
+        sOmmStarGraphNodes[1]  = geo_layout_to_graph_node(NULL, omm_geo_star_1_opaque);
+        sOmmStarGraphNodes[2]  = geo_layout_to_graph_node(NULL, omm_geo_star_2_opaque);
+        sOmmStarGraphNodes[3]  = geo_layout_to_graph_node(NULL, omm_geo_star_3_opaque);
+        sOmmStarGraphNodes[4]  = geo_layout_to_graph_node(NULL, omm_geo_star_4_opaque);
+        sOmmStarGraphNodes[5]  = geo_layout_to_graph_node(NULL, omm_geo_star_5_opaque);
+        sOmmStarGraphNodes[6]  = geo_layout_to_graph_node(NULL, omm_geo_star_6_opaque);
+        sOmmStarGraphNodes[7]  = geo_layout_to_graph_node(NULL, omm_geo_star_7_opaque);
+        sOmmStarGraphNodes[8]  = geo_layout_to_graph_node(NULL, omm_geo_star_8_opaque);
+        sOmmStarGraphNodes[9]  = geo_layout_to_graph_node(NULL, omm_geo_star_9_opaque);
+        sOmmStarGraphNodes[10] = geo_layout_to_graph_node(NULL, omm_geo_star_10_opaque);
+        sOmmStarGraphNodes[11] = geo_layout_to_graph_node(NULL, omm_geo_star_11_opaque);
+        sOmmStarGraphNodes[12] = geo_layout_to_graph_node(NULL, omm_geo_star_12_opaque);
+        sOmmStarGraphNodes[13] = geo_layout_to_graph_node(NULL, omm_geo_star_13_opaque);
+        sOmmStarGraphNodes[14] = geo_layout_to_graph_node(NULL, omm_geo_star_14_opaque);
+        sOmmStarGraphNodes[15] = geo_layout_to_graph_node(NULL, omm_geo_star_15_opaque);
+        sOmmStarGraphNodes[16] = geo_layout_to_graph_node(NULL, omm_geo_star_16_opaque);
+        sOmmStarGraphNodes[17] = geo_layout_to_graph_node(NULL, omm_geo_star_0_transparent);
+        sOmmStarGraphNodes[18] = geo_layout_to_graph_node(NULL, omm_geo_star_1_transparent);
+        sOmmStarGraphNodes[19] = geo_layout_to_graph_node(NULL, omm_geo_star_2_transparent);
+        sOmmStarGraphNodes[20] = geo_layout_to_graph_node(NULL, omm_geo_star_3_transparent);
+        sOmmStarGraphNodes[21] = geo_layout_to_graph_node(NULL, omm_geo_star_4_transparent);
+        sOmmStarGraphNodes[22] = geo_layout_to_graph_node(NULL, omm_geo_star_5_transparent);
+        sOmmStarGraphNodes[23] = geo_layout_to_graph_node(NULL, omm_geo_star_6_transparent);
+        sOmmStarGraphNodes[24] = geo_layout_to_graph_node(NULL, omm_geo_star_7_transparent);
+        sOmmStarGraphNodes[25] = geo_layout_to_graph_node(NULL, omm_geo_star_8_transparent);
+        sOmmStarGraphNodes[26] = geo_layout_to_graph_node(NULL, omm_geo_star_9_transparent);
+        sOmmStarGraphNodes[27] = geo_layout_to_graph_node(NULL, omm_geo_star_10_transparent);
+        sOmmStarGraphNodes[28] = geo_layout_to_graph_node(NULL, omm_geo_star_11_transparent);
+        sOmmStarGraphNodes[29] = geo_layout_to_graph_node(NULL, omm_geo_star_12_transparent);
+        sOmmStarGraphNodes[30] = geo_layout_to_graph_node(NULL, omm_geo_star_13_transparent);
+        sOmmStarGraphNodes[31] = geo_layout_to_graph_node(NULL, omm_geo_star_14_transparent);
+        sOmmStarGraphNodes[32] = geo_layout_to_graph_node(NULL, omm_geo_star_15_transparent);
+        sOmmStarGraphNodes[33] = geo_layout_to_graph_node(NULL, omm_geo_star_16_transparent);
     }
 
-    s32 starColor = omm_clamp_s(gCurrCourseNum, 0, 16);
-    for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_star_model_behaviors()) {
-        for_each_object_with_behavior(obj, *bhv) {
+    s32 starColor = clamp_s(gCurrCourseNum, 0, 16);
+    omm_array_for_each(omm_obj_get_star_model_behaviors(), p) {
+        const BehaviorScript *bhv = (const BehaviorScript *) p->as_ptr;
+        for_each_object_with_behavior(obj, bhv) {
             if (OMM_EXTRAS_COLORED_STARS) {
                 if (obj_check_model(obj, MODEL_STAR) || (obj->behavior == bhvCelebrationStar && !obj_check_model(obj, MODEL_BOWSER_KEY))) {
                     obj->oGraphNode = sOmmStarGraphNodes[starColor];
@@ -252,7 +251,7 @@ static void omm_gfx_update_stars_models() {
 #endif
 }
 
-static void omm_gfx_update_caps_models() {
+static void omm_pre_render_update_caps_models() {
     static s32 (*sCapFunctions[])(s32) = {
         omm_player_get_normal_cap,
         omm_player_get_wing_cap,
@@ -260,8 +259,9 @@ static void omm_gfx_update_caps_models() {
         omm_player_get_winged_metal_cap,
     };
     s32 playerIndex = omm_player_get_selected_index();
-    for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_cap_behaviors()) {
-        for_each_object_with_behavior(obj, *bhv) {
+    omm_array_for_each(omm_obj_get_cap_behaviors(), p) {
+        const BehaviorScript *bhv = (const BehaviorScript *) p->as_ptr;
+        for_each_object_with_behavior(obj, bhv) {
             for (s32 capType = 0; capType != 4; ++capType) {
                 s32 playerCapModel = sCapFunctions[capType](playerIndex);
                 for (s32 charIndex = 0; charIndex != OMM_NUM_PLAYABLE_CHARACTERS; ++charIndex) {
@@ -273,15 +273,13 @@ static void omm_gfx_update_caps_models() {
                     }
                 }
             }
-            omm_geo_preprocess_object_graph_node(obj);
+            geo_preprocess_object_graph_node(obj);
         }
     }
 }
 
-void omm_update_gfx() {
-    omm_debug_end_counter();
-    omm_debug_start_counter();
-    omm_execute_routines(OMM_ROUTINE_TYPE_GFX);
+void omm_pre_render() {
+    omm_execute_routines(OMM_ROUTINE_TYPE_PRE_RENDER);
 
     // Mario
     if (gMarioState->marioBodyState && OMM_EXTRAS_INVISIBLE_MODE) {
@@ -292,17 +290,18 @@ void omm_update_gfx() {
     // Crystal sparkles
     if (gMarioObject && OMM_EXTRAS_CRYSTAL_STARS_REWARD) {
         if (!omm_is_game_paused() && ((gGlobalTimer & 1) || vec3f_dist(gMarioState->pos, gOmmData->mario->state.previous.pos) > 20.f)) {
-            omm_spawn_sparkly_star_sparkle_mario(gMarioObject, OMM_SPARKLY_MODE_HARD, 60.f, 10.f, 0.5f, 30.f);
+            omm_spawn_sparkly_star_sparkle_mario(gMarioObject, OMM_SSM_HARD, 60.f, 10.f, 0.5f, 30.f);
         }
     }
 
     // Object models
-    omm_gfx_update_stars_models();
-    omm_gfx_update_caps_models();
+    omm_pre_render_update_stars_models();
+    omm_pre_render_update_caps_models();
 
     // Invisible mode
-    for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_player_behaviors()) {
-        for_each_object_with_behavior(obj, *bhv) {
+    omm_array_for_each(omm_obj_get_player_behaviors(), p) {
+        const BehaviorScript *bhv = (const BehaviorScript *) p->as_ptr;
+        for_each_object_with_behavior(obj, bhv) {
             if (OMM_EXTRAS_INVISIBLE_MODE) {
                 obj->oNodeFlags |= GRAPH_RENDER_INVISIBLE;
             } else {
@@ -310,31 +309,26 @@ void omm_update_gfx() {
             }
         }
     }
-    omm_debug_end_counter();
-    omm_debug_start_counter();
 }
 
 //
 // Level commands
 //
 
-static const uintptr_t cmd_sm64_splash_screen[] = { CALL(0, lvl_intro_update) };
-static const uintptr_t cmd_goddard_head_hello[] = { CALL_LOOP(1, lvl_intro_update) };
-static const uintptr_t cmd_goddard_head_dizzy[] = { CALL_LOOP(2, lvl_intro_update) };
-static const uintptr_t cmd_debug_level_select[] = { CALL_LOOP(3, lvl_intro_update) };
-static const uintptr_t cmd_level_entry_start[]  = { CALL(0, lvl_init_or_update) };
-static const uintptr_t cmd_star_select_start[]  = { EXECUTE(0x14, _menuSegmentRomStart, _menuSegmentRomEnd, level_main_menu_entry_2) };
-static const uintptr_t cmd_skip_star_select[]   = { EXIT() };
-static const uintptr_t cmd_ending_cake_start[]  = { AREA(1, ending_geo_000050) };
-static const uintptr_t cmd_ending_cake_sound[]  = { CALL(0, lvl_play_the_end_screen_sound) };
-
 void *omm_update_cmd(void *cmd, s32 reg) {
 
     // Main Menu
-    if (OMM_MEMCMP(cmd, cmd_sm64_splash_screen, sizeof(cmd_sm64_splash_screen)) ||
-        OMM_MEMCMP(cmd, cmd_goddard_head_hello, sizeof(cmd_goddard_head_hello)) ||
-        OMM_MEMCMP(cmd, cmd_goddard_head_dizzy, sizeof(cmd_goddard_head_dizzy)) ||
-        OMM_MEMCMP(cmd, cmd_debug_level_select, sizeof(cmd_debug_level_select))) {
+    if (cmd == level_script_entry_point ||
+        cmd == level_script_splash_screen ||
+        cmd == level_script_goddard_regular ||
+        cmd == level_script_goddard_game_over ||
+        cmd == level_script_debug_level_select ||
+        cmd == level_script_to_file_select ||
+        cmd == level_script_to_debug_level_select ||
+        cmd == level_script_to_star_select_1 ||
+        cmd == level_script_to_star_select_2 ||
+        cmd == level_script_to_splash_screen ||
+        cmd == level_script_file_select) {
         gMarioState->action = 0;
         sOmmIsMainMenu = true;
         sOmmIsLevelEntry = false;
@@ -343,7 +337,8 @@ void *omm_update_cmd(void *cmd, s32 reg) {
     }
 
     // Level Entry
-    if (OMM_MEMCMP(cmd, cmd_level_entry_start, sizeof(cmd_level_entry_start))) {
+    static const uintptr_t cmd_level_entry[] = { CALL(0, lvl_init_or_update) };
+    if (OMM_MEMCMP(cmd, cmd_level_entry, sizeof(cmd_level_entry))) {
         sOmmIsMainMenu = false;
         sOmmIsLevelEntry = true;
         sOmmIsEndingCakeScreen = false;
@@ -351,7 +346,8 @@ void *omm_update_cmd(void *cmd, s32 reg) {
     }
 
     // Star Select
-    if (OMM_MEMCMP(cmd, cmd_star_select_start, sizeof(cmd_star_select_start)) && OMM_STARS_NON_STOP_NOT_ENDING_CUTSCENE) {
+    static const uintptr_t cmd_star_select[] = { EXECUTE(0x14, _menuSegmentRomStart, _menuSegmentRomEnd, level_script_star_select) };
+    if (OMM_MEMCMP(cmd, cmd_star_select, sizeof(cmd_star_select)) && OMM_STARS_NON_STOP_NOT_ENDING_CUTSCENE) {
         gCurrLevelNum = reg;
         gCurrCourseNum = omm_level_get_course(reg);
         gCurrActNum = 1;
@@ -373,6 +369,7 @@ void *omm_update_cmd(void *cmd, s32 reg) {
         }
 
         // Return an EXIT command to skip the star select screen
+        static const uintptr_t cmd_skip_star_select[] = { EXIT() };
         return (void *) cmd_skip_star_select;
     }
 
@@ -391,9 +388,10 @@ void *omm_update_cmd(void *cmd, s32 reg) {
         // Sets sOmmIsEndingCakeScreen to true if loading the cake screen
         // Starts the timer when hearing the "Thank you so much"
         default: {
-            if (OMM_MEMCMP(cmd, cmd_ending_cake_start, sizeof(cmd_ending_cake_start))) {
+            if (cmd == level_script_cake_ending) {
                 sOmmIsEndingCakeScreen = true;
             }
+            static const uintptr_t cmd_ending_cake_sound[] = { CALL(0, lvl_play_the_end_screen_sound) };
             if (OMM_MEMCMP(cmd, cmd_ending_cake_sound, sizeof(cmd_ending_cake_sound))) {
                 sOmmTimerReturnToMainMenu = 300;
             }
@@ -413,7 +411,7 @@ void *omm_update_cmd(void *cmd, s32 reg) {
             gHudDisplay.flags = 0;
             sOmmTimerReturnToMainMenu = -1;
             sOmmIsEndingCakeScreen = false;
-            return (void *) level_intro_goddard;
+            return (void *) level_script_goddard_regular;
         } break;
     }
 
@@ -447,34 +445,4 @@ bool omm_is_ending_cutscene() {
 
 bool omm_is_ending_cake_screen() {
     return sOmmIsEndingCakeScreen;
-}
-
-//
-// Sanity checks
-//
-
-bool omm_sanity_check_graph_node(struct GraphNode *node) {
-    return (node       != NULL                                ) && (
-           (node->type == GRAPH_NODE_TYPE_ROOT                ) ||
-           (node->type == GRAPH_NODE_TYPE_ORTHO_PROJECTION    ) ||
-           (node->type == GRAPH_NODE_TYPE_PERSPECTIVE         ) ||
-           (node->type == GRAPH_NODE_TYPE_MASTER_LIST         ) ||
-           (node->type == GRAPH_NODE_TYPE_START               ) ||
-           (node->type == GRAPH_NODE_TYPE_LEVEL_OF_DETAIL     ) ||
-           (node->type == GRAPH_NODE_TYPE_SWITCH_CASE         ) ||
-           (node->type == GRAPH_NODE_TYPE_CAMERA              ) ||
-           (node->type == GRAPH_NODE_TYPE_TRANSLATION_ROTATION) ||
-           (node->type == GRAPH_NODE_TYPE_TRANSLATION         ) ||
-           (node->type == GRAPH_NODE_TYPE_ROTATION            ) ||
-           (node->type == GRAPH_NODE_TYPE_OBJECT              ) ||
-           (node->type == GRAPH_NODE_TYPE_ANIMATED_PART       ) ||
-           (node->type == GRAPH_NODE_TYPE_BILLBOARD           ) ||
-           (node->type == GRAPH_NODE_TYPE_DISPLAY_LIST        ) ||
-           (node->type == GRAPH_NODE_TYPE_SCALE               ) ||
-           (node->type == GRAPH_NODE_TYPE_SHADOW              ) ||
-           (node->type == GRAPH_NODE_TYPE_OBJECT_PARENT       ) ||
-           (node->type == GRAPH_NODE_TYPE_GENERATED_LIST      ) ||
-           (node->type == GRAPH_NODE_TYPE_BACKGROUND          ) ||
-           (node->type == GRAPH_NODE_TYPE_HELD_OBJ            ) ||
-           (node->type == GRAPH_NODE_TYPE_CULLING_RADIUS      ));
 }

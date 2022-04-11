@@ -127,65 +127,39 @@ const GeoLayout omm_geo_peach_vibe_joy_tornado[] = {
 
 static void omm_bhv_peach_vibe_joy_tornado_update() {
     struct Object *o = gCurrentObject;
+    struct MarioState *m = gMarioState;
     if (!omm_peach_vibe_is_joy()) {
-        o->oTimer = omm_clamp_s(o->oTimer - 2, 0, 15);
+        o->oTimer = clamp_s(o->oTimer - 2, 0, 15);
         if (o->oTimer == 0) {
             obj_mark_for_deletion(o);
         }
     }
-    f32 t = omm_invlerp_0_1_s(o->oTimer, 0, 15);
-    obj_set_pos(o, gMarioState->pos[0], gMarioState->pos[1], gMarioState->pos[2]);
+
+    // Update gfx
+    f32 t = invlerp_0_1_s(o->oTimer, 0, 15);
+    obj_set_pos(o, m->pos[0], m->pos[1], m->pos[2]);
     obj_set_angle(o, 0, o->oFaceAngleYaw + 0x1800, 0);
-    obj_set_scale(o, 0.4f * gMarioObject->oScaleX, 0.3f * gMarioObject->oScaleY, 0.4f * gMarioObject->oScaleZ);
+    obj_set_scale(o, 0.4f * m->marioObj->oScaleX, 0.3f * m->marioObj->oScaleY, 0.4f * m->marioObj->oScaleZ);
     obj_update_gfx(o);
-    o->oGfxPos[1] -= 50.f * gMarioObject->oScaleY;
+    o->oForwardVel = m->forwardVel;
+    o->oGfxPos[1] -= 50.f * m->marioObj->oScaleY;
     o->oOpacity = 0x60 * t;
 
     // Produce a sparkle every 6 frames
     if (o->oTimer % 6 == 0) {
-        f32 height = omm_lerp_f(random_float(), 0.f, 160.f);
-        f32 radius = omm_relerp_0_1_f(height, 0.f, 160.f, 150.f, 200.f);
+        f32 height = lerp_f(random_float(), 0.f, 160.f);
+        f32 radius = relerp_0_1_f(height, 0.f, 160.f, 150.f, 200.f);
         omm_spawn_peach_vibe_joy_sparkle(
-            gMarioObject,
-            radius * gMarioObject->oScaleX,
-            height * gMarioObject->oScaleY,
+            m->marioObj,
+            radius * m->marioObj->oScaleX,
+            height * m->marioObj->oScaleY,
             (s16) random_u16(),
-            omm_lerp_s(random_float(), 0x400, 0xC00),
-            omm_min_s(0xFF, o->oOpacity * 1.5f)
+            lerp_s(random_float(), 0x400, 0xC00),
+            min_s(0xFF, o->oOpacity * 1.5f)
         );
     }
-
-    // Attract nearby coins
-    if (!(gTimeStopState & TIME_STOP_ENABLED)) {
-        for_each_until_null(const BehaviorScript *, bhv, omm_obj_get_coin_behaviors()) {
-            for_each_object_with_behavior(obj, *bhv) {
-                if (omm_obj_is_coin(obj) && obj->oIntangibleTimer == 0) {
-                    Vec3f dv = {
-                        obj->oPosX - gMarioState->pos[0],
-                        obj->oPosY - gMarioState->pos[1] - 60.f * gMarioObject->oScaleY,
-                        obj->oPosZ - gMarioState->pos[2]
-                    };
-                    f32 distToPeach = vec3f_length(dv);
-                    if (distToPeach < 1000.f) {
-                        vec3f_norm(dv);
-                        vec3f_mul(dv, omm_relerp_0_1_f(distToPeach, 0.f, 1000.f, 50.f, 0.f));
-                        Vec4f vel = { obj->oVelX, obj->oVelY, obj->oVelZ, obj->oForwardVel };
-                        obj->oVelX = -dv[0];
-                        obj->oVelY = -dv[1];
-                        obj->oVelZ = -dv[2];
-                        obj->oWallHitboxRadius = obj->hitboxRadius / 2.f;
-                        obj_update_pos_and_vel(obj, false, false, false, false, NULL);
-                        obj->oVelX = vel[0];
-                        obj->oVelY = vel[1];
-                        obj->oVelZ = vel[2];
-                        obj->oForwardVel = vel[3];
-                    }
-                }
-            }
-        }
-    }
-
-    // Collect coins and repel enemies
+    
+    // Repel enemies, attract and collect coins
     obj_set_params(o, 0, 0, 0, 0, true);
     obj_reset_hitbox(o, 300, 600, 0, 0, 0, 0);
     omm_obj_process_interactions(o, OBJ_INT_PRESET_PEACH_VIBE_JOY_TORNADO);

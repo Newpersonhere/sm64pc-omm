@@ -14,6 +14,7 @@ static const u32 sCappyToadParams[][4] = {
 //
 
 bool cappy_toad_init(struct Object *o) {
+    if (o->oBehParams2ndByte) return false;
     gOmmData->object->state.actionState = (o->oToadMessageRecentlyTalked ? 3 : 0);
     gOmmData->object->state.actionTimer = (o->oToadMessageRecentlyTalked ? 0 : 15);
     gOmmData->object->toad.dialogId = o->oToadMessageDialogId;
@@ -112,11 +113,11 @@ s32 cappy_toad_update(struct Object *o) {
         }
 
     } else {
-        gOmmData->object->state.actionTimer = omm_max_s(0, gOmmData->object->state.actionTimer - 1);
+        gOmmData->object->state.actionTimer = max_s(0, gOmmData->object->state.actionTimer - 1);
     }
 
     // Movement
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     pobj_decelerate(o, 0.80f, 0.95f);
     pobj_apply_gravity(o, 1.f);
     pobj_handle_special_floors(o);
@@ -151,7 +152,7 @@ s32 cappy_toad_update(struct Object *o) {
     else if (o->oForwardVel > 1.f) {
         obj_anim_play(o, 1, 1.f);
         obj_anim_set_frame(o, (((s32) (obj_anim_get_frame(o) + 10)) % 18) + 8);
-        f32 vn = sqrtf(omm_sqr_f(o->oVelX) + omm_sqr_f(o->oVelZ));
+        f32 vn = sqrtf(sqr_f(o->oVelX) + sqr_f(o->oVelZ));
         o->oGfxAngle[1] += 0x8000;
         o->oGfxPos[0]   -= (o->oVelX / vn) * 9.78f * (16.36f + obj_anim_get_frame(o));
         o->oGfxPos[2]   -= (o->oVelZ / vn) * 9.78f * (16.36f + obj_anim_get_frame(o));

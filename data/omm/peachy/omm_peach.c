@@ -2,104 +2,6 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
-static const u32 sOmmPerryChargeActions[] = {
-    ACT_IDLE,
-    ACT_START_SLEEPING,
-    ACT_SLEEPING,
-    ACT_WAKING_UP,
-    ACT_PANTING,
-    ACT_COUGHING,
-    ACT_SHIVERING,
-    ACT_IN_QUICKSAND,
-    ACT_CROUCHING,
-    ACT_START_CROUCHING,
-    ACT_STOP_CROUCHING,
-    ACT_START_CRAWLING,
-    ACT_STOP_CRAWLING,
-    ACT_SLIDE_KICK_SLIDE_STOP,
-    ACT_BACKFLIP_LAND_STOP,
-    ACT_JUMP_LAND_STOP,
-    ACT_DOUBLE_JUMP_LAND_STOP,
-    ACT_FREEFALL_LAND_STOP,
-    ACT_SIDE_FLIP_LAND_STOP,
-    ACT_AIR_THROW_LAND,
-    ACT_TWIRL_LAND,
-    ACT_LAVA_BOOST_LAND,
-    ACT_TRIPLE_JUMP_LAND_STOP,
-    ACT_LONG_JUMP_LAND_STOP,
-    ACT_GROUND_POUND_LAND,
-    ACT_BRAKING_STOP,
-    ACT_BUTT_SLIDE_STOP,
-    ACT_WALKING,
-    ACT_TURNING_AROUND,
-    ACT_FINISH_TURNING_AROUND,
-    ACT_BRAKING,
-    ACT_CRAWLING,
-    ACT_DECELERATING,
-    ACT_MOVE_PUNCHING,
-    ACT_CROUCH_SLIDE,
-    ACT_JUMP_LAND,
-    ACT_FREEFALL_LAND,
-    ACT_DOUBLE_JUMP_LAND,
-    ACT_SIDE_FLIP_LAND,
-    ACT_QUICKSAND_JUMP_LAND,
-    ACT_TRIPLE_JUMP_LAND,
-    ACT_LONG_JUMP_LAND,
-    ACT_BACKFLIP_LAND,
-    ACT_JUMP,
-    ACT_DOUBLE_JUMP,
-    ACT_TRIPLE_JUMP,
-    ACT_BACKFLIP,
-    ACT_STEEP_JUMP,
-    ACT_WALL_KICK_AIR,
-    ACT_SIDE_FLIP,
-    ACT_LONG_JUMP,
-    ACT_WATER_JUMP,
-    ACT_FREEFALL,
-    ACT_TOP_OF_POLE_JUMP,
-    ACT_BUTT_SLIDE_AIR,
-    ACT_FORWARD_ROLLOUT,
-    ACT_BACKWARD_ROLLOUT,
-    ACT_JUMP_KICK,
-    ACT_PUNCHING,
-    ACT_OMM_SPIN_GROUND,
-    ACT_OMM_SPIN_POUND_LAND,
-    ACT_OMM_CAPPY_THROW_GROUND,
-    ACT_OMM_CAPPY_BOUNCE,
-    ACT_OMM_GROUND_CAPPY_BOUNCE,
-    ACT_OMM_GROUND_POUND_JUMP,
-    ACT_OMM_LEAVE_OBJECT_JUMP,
-    ACT_OMM_WALL_SLIDE,
-    ACT_OMM_CAPPY_THROW_AIRBORNE,
-    ACT_OMM_SPIN_AIR,
-    ACT_OMM_SPIN_JUMP,
-    ACT_OMM_PEACH_ATTACK_GROUND,
-    ACT_OMM_PEACH_ATTACK_FAST,
-    ACT_OMM_PEACH_FLOAT,
-    ACT_OMM_PEACH_GLIDE,
-    ACT_OMM_PEACH_ATTACK_AIR,
-    ACT_OMM_PEACH_PERRY_CHARGE_GROUND,
-    ACT_OMM_PEACH_PERRY_CHARGE_AIR,
-    0
-};
-
-static const u32 sOmmPerryAttackActions[] = {
-    ACT_JUMP_KICK,
-    ACT_OMM_PEACH_ATTACK_GROUND,
-    ACT_OMM_PEACH_ATTACK_FAST,
-    ACT_OMM_PEACH_ATTACK_AIR,
-    0
-};
-
-static bool is_valid_action(struct MarioState *m, const u32 *validActions) {
-    for (const u32 *validAction = validActions; *validAction; ++validAction) {
-        if (m->action == *validAction) {
-            return true;
-        }
-    }
-    return false;
-}
-
 static void omm_peach_set_animation_and_play_sound(struct MarioState *m, s32 animID, f32 animAccel, s32 sound) {
     if (m->marioObj->oAnimID != animID) {
         obj_play_sound(m->marioObj, sound);
@@ -125,7 +27,7 @@ static void omm_peach_perry_charge_update_animation_and_sound(struct MarioState 
     obj_anim_play(m->marioObj, animID, animAccel);
     obj_anim_set_frame(m->marioObj, frameMin + animAccel * (gOmmPerryCharge - OMM_PERRY_CHARGE_ACTION));
     obj_anim_clamp_frame(m->marioObj, frameMin, frameMax);
-    m->actionTimer = omm_max_s(0, gOmmPerryCharge - OMM_PERRY_CHARGE_ACTION);
+    m->actionTimer = max_s(0, gOmmPerryCharge - OMM_PERRY_CHARGE_ACTION);
     
     // Play the charge sound effect when Peach starts charging
     if (m->actionState == 1 && gOmmPerryCharge >= OMM_PERRY_CHARGE_START) {
@@ -219,22 +121,22 @@ s32 omm_act_peach_glide(struct MarioState *m) {
 s32 omm_act_peach_attack_ground(struct MarioState *m) {
     action_condition(!OMM_PLAYER_IS_PEACH, ACT_FREEFALL, 0, RETURN_CANCEL);
     action_condition((m->actionState == 0) && (m->controller->buttonDown & A_BUTTON), ACT_JUMP_KICK, 0, RETURN_CANCEL);
-    action_init(((omm_abs_f(m->forwardVel) < 12.f) ? 12.f : m->forwardVel), 0.f, 0, 0);
+    action_init(((abs_f(m->forwardVel) < 12.f) ? 12.f : m->forwardVel), 0.f, 0, 0);
     action_cappy(1, ACT_OMM_CAPPY_THROW_GROUND, 0, RETURN_CANCEL);
     action_a_pressed(1, ACT_JUMP, 0, RETURN_CANCEL);
     action_off_floor(1, ACT_FREEFALL, 0, RETURN_CANCEL);
     action_condition((m->forwardVel > 28.f) && (m->controller->stickMag > 56.f), ACT_OMM_PEACH_ATTACK_FAST, 0, RETURN_CANCEL);
 
     // Spawn shockwave
-    if (m->actionTimer == 0 && (omm_health_is_at_max(m) || omm_peach_vibe_is_active() || gOmmPerryBlast)) {
-        omm_spawn_perry_shockwave(m->marioObj, 6 + 2 * (m->actionArg == 4), gOmmData->mario->peach.vibeType, m->actionArg == 4);
+    if (m->actionTimer == 0 && OMM_PEACH_SPAWN_PERRY_SHOCKWAVE) {
+        omm_spawn_perry_shockwave(m->marioObj, 6 + 2 * (m->actionArg == 4), omm_peach_get_perry_type(m), m->actionArg == 4);
     }
 
     // Update vel
     if (m->forwardVel > 0.f) {
         apply_slope_decel(m, 0.5f);
     } else {
-        m->forwardVel = omm_min_f(m->forwardVel + 8.f, 0.f);
+        m->forwardVel = min_f(m->forwardVel + 8.f, 0.f);
         apply_slope_accel(m);
     }
     mario_set_forward_vel(m, m->forwardVel);
@@ -296,7 +198,7 @@ s32 omm_act_peach_attack_ground(struct MarioState *m) {
     // Gfx
     m->actionTimer++;
     m->flags |= MARIO_PUNCHING;
-    m->particleFlags |= PARTICLE_DUST * (omm_abs_f(m->forwardVel) > 16.f);
+    m->particleFlags |= PARTICLE_DUST * (abs_f(m->forwardVel) > 16.f);
     m->marioBodyState->punchState = 0;
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
@@ -310,8 +212,8 @@ s32 omm_act_peach_attack_fast(struct MarioState *m) {
     action_off_floor(1, ACT_FREEFALL, 0, RETURN_CANCEL);
 
     // Spawn shockwave
-    if (m->actionTimer == 0 && (omm_health_is_at_max(m) || omm_peach_vibe_is_active() || gOmmPerryBlast)) {
-        omm_spawn_perry_shockwave(m->marioObj, 4, gOmmData->mario->peach.vibeType, false);
+    if (m->actionTimer == 0 && OMM_PEACH_SPAWN_PERRY_SHOCKWAVE) {
+        omm_spawn_perry_shockwave(m->marioObj, 4, omm_peach_get_perry_type(m), false);
     }
 
     // Step
@@ -357,6 +259,14 @@ s32 omm_act_peach_attack_fast(struct MarioState *m) {
 }
 
 s32 omm_act_peach_attack_air(struct MarioState *m) {
+
+    // Prevent the Perry charge cancel to trigger the flying cancel
+    if (m->actionState != 2 && (m->controller->buttonPressed & B_BUTTON)) {
+        m->controller->buttonPressed &= ~(B_BUTTON * !(m->controller->buttonDown & B_BUTTON));
+        m->actionState = 2;
+    }
+    
+    // Cancels
     action_condition(!OMM_PLAYER_IS_PEACH, ACT_FREEFALL, 0, RETURN_CANCEL);
     action_cappy(1, ACT_OMM_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
     action_z_pressed(OMM_MOVESET_ODYSSEY, ACT_GROUND_POUND, 0, RETURN_CANCEL);
@@ -365,8 +275,8 @@ s32 omm_act_peach_attack_air(struct MarioState *m) {
     m->controller->buttonPressed &= ~B_BUTTON;
 
     // Spawn shockwave
-    if (m->actionTimer == 0 && (omm_health_is_at_max(m) || omm_peach_vibe_is_active() || gOmmPerryBlast)) {
-        omm_spawn_perry_shockwave(m->marioObj, 8, gOmmData->mario->peach.vibeType, true);
+    if (m->actionTimer == 0 && OMM_PEACH_SPAWN_PERRY_SHOCKWAVE) {
+        omm_spawn_perry_shockwave(m->marioObj, 8, omm_peach_get_perry_type(m), true);
     }
 
     // Step
@@ -413,7 +323,7 @@ s32 omm_act_peach_perry_charge_ground(struct MarioState *m) {
         apply_slope_decel(m, 1.f);
         m->particleFlags |= PARTICLE_DUST;
     } else if (m->forwardVel < 0.f) {
-        m->forwardVel = omm_min_f(m->forwardVel + 8.f, 0.f);
+        m->forwardVel = min_f(m->forwardVel + 8.f, 0.f);
         apply_slope_accel(m);
         m->particleFlags |= PARTICLE_DUST;
     } else {
@@ -456,15 +366,15 @@ s32 omm_act_peach_perry_charge_air(struct MarioState *m) {
 static s32 omm_peach_vibe_joy_update(struct MarioState *m, s32 yawVel, bool fly) {
 
     // Update forward vel
-    f32 fVelTarget = omm_relerp_0_1_f(m->intendedMag, 0.f, 32.f, 0.f, 30.f);
+    f32 fVelTarget = relerp_0_1_f(m->intendedMag, 0.f, 32.f, 0.f, 30.f);
     mario_set_forward_vel(m, approach_f32(m->forwardVel, fVelTarget, 1.5f, 3.f));
 
     // Update vertical vel
-    f32 yVelInc = fly * omm_clamp_f((31.f - m->vel[1]) / 2.f, 1.f, 4.f);
-    m->vel[1] = approach_f32(m->vel[1], 30.f, yVelInc, omm_sign_0_f(yVelInc));
+    f32 yVelInc = fly * clamp_f((31.f - m->vel[1]) / 2.f, 1.f, 4.f);
+    m->vel[1] = approach_f32(m->vel[1], 30.f, yVelInc, sign_0_f(yVelInc));
 
     // Update angle
-    s32 handling = omm_relerp_0_1_f(m->forwardVel, 8.f, 30.f, 0x2000, 0x800);
+    s32 handling = (OMM_CHEAT_SUPER_RESPONSIVE ? 0x8000 : relerp_0_1_f(m->forwardVel, 8.f, 30.f, 0x2000, 0x800));
     m->faceAngle[1] = m->intendedYaw - approach_s32((s16) (m->intendedYaw - m->faceAngle[1]), 0, handling, handling);
 
     // Perform step
@@ -500,9 +410,9 @@ s32 omm_act_peach_vibe_joy_fly(struct MarioState *m) {
 }
 
 s32 omm_act_peach_vibe_joy_attack(struct MarioState *m) {
-    action_init(m->forwardVel, omm_max_f(m->vel[1], 10.f), 0, SOUND_ACTION_FLYING_FAST, omm_spawn_peach_vibe_joy_gust(m->marioObj, 60.f, m->faceAngle[1]););
+    action_init(m->forwardVel, max_f(m->vel[1], 10.f), 0, SOUND_ACTION_FLYING_FAST, omm_spawn_peach_vibe_joy_gust(m->marioObj, 60.f, m->faceAngle[1]););
     action_condition(!omm_peach_vibe_is_joy(), ACT_FREEFALL, 0, RETURN_CANCEL);
     action_condition(m->actionTimer++ >= 12, ACT_OMM_PEACH_VIBE_JOY_MOVE, 0, RETURN_CANCEL);
-    return omm_peach_vibe_joy_update(m, omm_relerp_0_1_f(m->actionTimer, 8, 12, 0x3000, 0x1000), false);
+    return omm_peach_vibe_joy_update(m, relerp_0_1_f(m->actionTimer, 8, 12, 0x3000, 0x1000), false);
 }
 

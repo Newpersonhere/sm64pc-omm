@@ -22,11 +22,11 @@ static void omm_bhv_vanish_mist_update() {
         return;
     }
 
-    f32 dt = 1.f - omm_clamp_0_1_f(o->oTimer / 30.f);
+    f32 dt = 1.f - clamp_0_1_f(o->oTimer / 30.f);
     f32 dx = o->oPosX - p->oPosX;
     f32 dy = o->oPosY - p->oPosY - p->hitboxHeight / 2;
     f32 dz = o->oPosZ - p->oPosZ;
-    f32 dv = sqrtf(omm_sqr_f(dx) + omm_sqr_f(dy) + omm_sqr_f(dz));
+    f32 dv = sqrtf(sqr_f(dx) + sqr_f(dy) + sqr_f(dz));
     o->oScaleX = (60.f / 25.f) * dt;
     o->oScaleY = (90.f / 25.f) * dt;
     o->oScaleZ = (60.f / 25.f) * dt;

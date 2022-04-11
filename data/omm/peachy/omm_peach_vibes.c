@@ -3,11 +3,11 @@
 #undef OMM_ALL_HEADERS
 
 static void omm_peach_vibe_increase(s32 inc) {
-    gOmmData->mario->peach.vibeGauge = !OMM_CHEAT_PEACH_ENDLESS_VIBE_GAUGE * omm_clamp_s(gOmmData->mario->peach.vibeGauge - inc, 0, OMM_PEACH_VIBE_GAUGE_MAX);
+    gOmmData->mario->peach.vibeGauge = !OMM_CHEAT_PEACH_ENDLESS_VIBE_GAUGE * clamp_s(gOmmData->mario->peach.vibeGauge - inc, 0, OMM_PEACH_VIBE_GAUGE_MAX);
 }
 
 static void omm_peach_vibe_decrease(s32 dec) {
-    gOmmData->mario->peach.vibeGauge = !OMM_CHEAT_PEACH_ENDLESS_VIBE_GAUGE * omm_clamp_s(gOmmData->mario->peach.vibeGauge + dec, 0, OMM_PEACH_VIBE_GAUGE_MAX);
+    gOmmData->mario->peach.vibeGauge = !OMM_CHEAT_PEACH_ENDLESS_VIBE_GAUGE * clamp_s(gOmmData->mario->peach.vibeGauge + dec, 0, OMM_PEACH_VIBE_GAUGE_MAX);
 }
 
 static bool omm_peach_vibe_check_type(struct MarioState *m, s32 vibeType) {
@@ -61,13 +61,19 @@ static bool omm_peach_vibe_check_type(struct MarioState *m, s32 vibeType) {
 
 static bool omm_peach_vibe_check(struct MarioState *m) {
 
+    // Sparkly Stars Assist mode
+    // Prevent Peach from activating Vibes if Vibes are not allowed
+    if (OMM_SPARKLY_STARS_ASSIST && omm_ssc_data_flags(OMM_SSD_NO_VIBE)) {
+        return false;
+    }
+
     // Per vibe
     if (!omm_peach_vibe_check_type(m, gOmmData->mario->peach.vibeType)) {
         return false;
     }
 
     // Vibe gauge empty
-    if (gOmmData->mario->peach.vibeGauge == OMM_PEACH_VIBE_GAUGE_MAX) {
+    if (gOmmData->mario->peach.vibeGauge >= OMM_PEACH_VIBE_GAUGE_MAX) {
         return false;
     }
 
@@ -110,7 +116,7 @@ static void omm_peach_vibe_update_gauge(struct MarioState *m) {
     // Refill the vibe gauge every time a recovery heart spins
     if (!(gTimeStopState & TIME_STOP_ENABLED)) {
         for_each_object_with_behavior(obj, bhvRecoveryHeart) {
-            s32 recovery = omm_max_s(0, obj->oAngleVelYaw - 400) / 200;
+            s32 recovery = max_s(0, obj->oAngleVelYaw - 400) / 200;
             omm_peach_vibe_increase(recovery);
         }
     }
@@ -120,10 +126,12 @@ static void omm_peach_vibe_update_gauge(struct MarioState *m) {
 
         // No active vibe: refill the vibe gauge
         case OMM_PEACH_VIBE_TYPE_NONE: {
-            if (omm_mario_is_idling(m)) {
-                omm_peach_vibe_increase(OMM_PEACH_VIBE_GAUGE_IDLE_INC);
-            } else {
-                omm_peach_vibe_increase(OMM_PEACH_VIBE_GAUGE_INC);
+            if (!omm_ssc_data_flags(OMM_SSD_NO_VIBE_AUTO_REFILL) || !OMM_SSC_IS_OK) {
+                if (omm_mario_is_idling(m)) {
+                    omm_peach_vibe_increase(OMM_PEACH_VIBE_GAUGE_IDLE_INC);
+                } else {
+                    omm_peach_vibe_increase(OMM_PEACH_VIBE_GAUGE_INC);
+                }
             }
         } break;
 
@@ -214,7 +222,7 @@ static s32 omm_peach_vibe_handle_inputs() {
     return 0;
 }
 
-static void omm_peach_vibe_toggle(struct MarioState *m, s32 vibeAction) {
+static bool omm_peach_vibe_toggle(struct MarioState *m, s32 vibeAction) {
 
     // Activation or switch + end cap power-up
     if (vibeAction > 0 && gOmmData->mario->peach.vibeType != vibeAction && omm_peach_vibe_check_type(m, vibeAction)) {
@@ -243,13 +251,16 @@ static void omm_peach_vibe_toggle(struct MarioState *m, s32 vibeAction) {
         if (m->flags & (MARIO_METAL_CAP | MARIO_WING_CAP | MARIO_VANISH_CAP)) {
             m->capTimer = 1;
         }
+        return true;
     }
 
     // Deactivation
-    else if (vibeAction < 0 && gOmmData->mario->peach.vibeType != OMM_PEACH_VIBE_TYPE_NONE) {
+    if (vibeAction < 0 && gOmmData->mario->peach.vibeType != OMM_PEACH_VIBE_TYPE_NONE) {
         gOmmData->mario->peach.vibeType = OMM_PEACH_VIBE_TYPE_NONE;
         gOmmData->mario->peach.vibeTimer = 0;
+        return true;
     }
+    return false;
 }
 
 static void omm_peach_vibe_update_effects(struct MarioState *m) {
@@ -332,6 +343,14 @@ bool omm_peach_vibe_is_calm() {
     return gOmmData->mario->peach.vibeType == OMM_PEACH_VIBE_TYPE_CALM;
 }
 
+bool omm_peach_vibe_activate(struct MarioState *m, s32 vibe) {
+    return omm_peach_vibe_check(m) && omm_peach_vibe_toggle(m, vibe);
+}
+
+bool omm_peach_vibe_deactivate(struct MarioState *m) {
+    return omm_peach_vibe_toggle(m, -1);
+}
+
 void omm_peach_vibe_update(struct MarioState *m) {
     gOmmData->mario->peach.vibeTimer++;
     omm_peach_vibe_update_gauge(m);
@@ -411,7 +430,7 @@ static void omm_peach_vibe_update_sequences(s32 seqPlayer, s32 *seqList) {
     }
 }
 
-OMM_ROUTINE_GFX(omm_peach_vibe_update_music) {
+OMM_ROUTINE_PRE_RENDER(omm_peach_vibe_update_music) {
     if (OMM_PLAYER_IS_PEACH) {
         omm_peach_vibe_update_sequences(SEQ_PLAYER_LEVEL, NULL);
         omm_peach_vibe_update_sequences(SEQ_PLAYER_ENV, OMM_ARRAY_OF(s32) { SEQ_EVENT_PIRANHA_PLANT, SEQ_EVENT_MERRY_GO_ROUND, SEQ_EVENT_BOSS, SEQ_EVENT_ENDLESS_STAIRS, -1 });

@@ -36,7 +36,7 @@ const GeoLayout omm_geo_sparkly_star_3_transparent[] = {
 
 static void omm_bhv_sparkly_star_update() {
     struct Object *o = gCurrentObject;
-    if (!omm_sparkly_is_enabled() || !omm_sparkly_context_check_star(o)) {
+    if (!OMM_SSM_IS_ENABLED || !omm_ssc_check_star(o)) {
         obj_mark_for_deletion(o);
         return;
     }
@@ -56,7 +56,7 @@ static void omm_bhv_sparkly_star_update() {
                 o->oPosY = gMarioState->pos[1] + 80;
                 o->oPosZ = gMarioState->pos[2];
                 o->oMoveAngleYaw = atan2s(o->oHomeZ - o->oPosZ, o->oHomeX - o->oPosX);
-                o->oStarSpawnDisFromHome = sqrtf(omm_sqr_f(o->oHomeX - o->oPosX) + omm_sqr_f(o->oHomeZ - o->oPosZ));
+                o->oStarSpawnDisFromHome = sqrtf(sqr_f(o->oHomeX - o->oPosX) + sqr_f(o->oHomeZ - o->oPosZ));
                 o->oVelY = (o->oHomeY - o->oPosY) / 30.0f;
                 o->oForwardVel = o->oStarSpawnDisFromHome / 30.0f;
                 o->oStarSpawnUnkFC = o->oPosY;
@@ -103,12 +103,12 @@ static void omm_bhv_sparkly_star_update() {
                 // Bounce
                 case 2: {
                     o->oVelX = o->oForwardVel * sins(o->oMoveAngleYaw);
-                    o->oVelY = omm_max_f(20 - o->oTimer, -10);
+                    o->oVelY = max_f(20 - o->oTimer, -10);
                     o->oVelZ = o->oForwardVel * coss(o->oMoveAngleYaw);
                     o->oPosX += o->oVelX;
                     o->oPosY += o->oVelY;
                     o->oPosZ += o->oVelZ;
-                    o->oFaceAngleYaw += omm_max_s(0, 0x0800 - o->oTimer * 0x10);
+                    o->oFaceAngleYaw += max_s(0, 0x0800 - o->oTimer * 0x10);
                     play_sound(SOUND_ENV_STAR, o->oCameraToObject);
                     if (o->oPosY < o->oHomeY) {
                         play_sound(SOUND_GENERAL_STAR_APPEARS, o->oCameraToObject);
@@ -139,10 +139,10 @@ static void omm_bhv_sparkly_star_update() {
 
         // In Mario's hands
         case 4: {
-            f32 *marioArmLeft = omm_geo_get_marios_forearm_pos(1);
-            f32 *marioArmRight = omm_geo_get_marios_forearm_pos(0);
-            f32 *marioHandLeft = omm_geo_get_marios_hand_pos(1);
-            f32 *marioHandRight = omm_geo_get_marios_hand_pos(0);
+            f32 *marioArmLeft = geo_get_marios_forearm_pos(1);
+            f32 *marioArmRight = geo_get_marios_forearm_pos(0);
+            f32 *marioHandLeft = geo_get_marios_hand_pos(1);
+            f32 *marioHandRight = geo_get_marios_hand_pos(0);
             Vec3f starPos = {
                 ((2.f * marioHandLeft[0] - marioArmLeft[0]) + (2.f * marioHandRight[0] - marioArmRight[0])) / 2.f,
                 ((2.f * marioHandLeft[1] - marioArmLeft[1]) + (2.f * marioHandRight[1] - marioArmRight[1])) / 2.f,
@@ -178,7 +178,7 @@ static void omm_bhv_sparkly_star_update() {
         case 1:
         case 2:
         case 4: {
-            o->oGraphNode = omm_geo_get_graph_node(OMM_SPARKLY_STAR_OPAQUE_GEO[o->oSparklyStarMode], true);
+            o->oGraphNode = geo_layout_to_graph_node(NULL, OMM_SSX_STAR_GEO_OPAQUE[o->oSparklyStarMode]);
             o->oNodeFlags &= ~GRAPH_RENDER_INVISIBLE;
             if ((o->oTimer % (1 << o->oAction)) == 0) {
                 omm_spawn_sparkly_star_sparkle(o, o->oSparklyStarMode, 0, 8.f, 0.4f, 40.f);
@@ -187,7 +187,7 @@ static void omm_bhv_sparkly_star_update() {
 
         // Transparent
         case 3: {
-            o->oGraphNode = omm_geo_get_graph_node(OMM_SPARKLY_STAR_TRANSPARENT_GEO[o->oSparklyStarMode], true);
+            o->oGraphNode = geo_layout_to_graph_node(NULL, OMM_SSX_STAR_GEO_TRANSPARENT[o->oSparklyStarMode]);
             o->oNodeFlags &= ~GRAPH_RENDER_INVISIBLE;
         } break;
     }

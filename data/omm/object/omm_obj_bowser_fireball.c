@@ -339,7 +339,7 @@ static void omm_bhv_bowser_fireball_loop(void) {
     if (o->oTimer < o->oBowserFireDuration) {
         o->oPosX += o->oVelX;
         o->oPosZ += o->oVelZ;
-        f32 t = omm_clamp_0_1_f(o->oTimer / 10.f);
+        f32 t = clamp_0_1_f(o->oTimer / 10.f);
         obj_scale(o, 2.f * t);
         obj_set_params(o, INTERACT_FLAME, 1, 99, 0, true);
         obj_reset_hitbox(o, 50, 100, 0, 0, 0, 50);

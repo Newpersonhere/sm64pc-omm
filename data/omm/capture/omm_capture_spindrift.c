@@ -83,7 +83,7 @@ s32 cappy_spindrift_update(struct Object *o) {
     POBJ_STOP_IF_UNPOSSESSED;
 
     // Movement
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     pobj_decelerate(o, 0.80f, 0.95f);
     pobj_apply_gravity(o, gOmmData->object->state.actionFlag ? 0.25f : 1.f);
     pobj_handle_special_floors(o);
@@ -103,7 +103,7 @@ s32 cappy_spindrift_update(struct Object *o) {
     obj_anim_play(o, 0, 1.f);
 
     // Spin attack
-    gOmmData->object->state.actionTimer = omm_max_s(0, gOmmData->object->state.actionTimer - 1);
+    gOmmData->object->state.actionTimer = max_s(0, gOmmData->object->state.actionTimer - 1);
     if ((gOmmData->object->state.actionTimer != 0) && omm_mario_is_locked(gMarioState)) {
         o->oGfxAngle[1] += 0x2000;
     }

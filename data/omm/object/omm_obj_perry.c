@@ -11,6 +11,7 @@ static void omm_bhv_perry_update() {
     struct Object *o = gCurrentObject;
     obj_set_params(o, 0, 0, 0, 0, 0);
     obj_reset_hitbox(o, 0, 0, 0, 0, 0, 0);
+    o->oPerryType = omm_peach_get_perry_type(m);
 
     // Hitbox and interactions
     if (o->oPerryFlags & ~(OBJ_INT_PERRY_SWORD | OBJ_INT_PERRY_TRAIL)) {
@@ -36,7 +37,7 @@ static void omm_bhv_perry_update() {
     }
 
     // Preprocess
-    omm_geo_preprocess_object_graph_node(o);
+    geo_preprocess_object_graph_node(o);
 }
 
 const BehaviorScript omm_bhv_perry[] = {
@@ -54,9 +55,9 @@ const BehaviorScript omm_bhv_perry[] = {
 OMM_ROUTINE_UPDATE(omm_spawn_perry) {
     if (gMarioObject) {
         if (OMM_PLAYER_IS_PEACH) {
-            struct Object *perry = obj_get_first_with_behavior(omm_bhv_perry);
+            struct Object *perry = omm_peach_get_perry_object();
             if (!perry) {
-                obj_spawn_from_geo(gMarioObject, omm_geo_perry, omm_bhv_perry);
+                gOmmPerry = obj_spawn_from_geo(gMarioObject, omm_geo_perry, omm_bhv_perry);
             }
         } else {
             obj_deactivate_all_with_behavior(omm_bhv_perry);

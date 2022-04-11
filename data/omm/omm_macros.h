@@ -1,6 +1,25 @@
 #ifndef OMM_MACROS_H
 #define OMM_MACROS_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <xmmintrin.h>
+
+// Must be here, but can't use SM64 typenames
+typedef struct { unsigned int ts; short v; } s16_ts;
+typedef struct { unsigned int ts; int v; } s32_ts;
+typedef struct { unsigned int ts; unsigned short v; } u16_ts;
+typedef struct { unsigned int ts; unsigned int v; } u32_ts;
+typedef struct { unsigned int ts; float v; } f32_ts;
+typedef struct { unsigned int ts; float v[3]; } Vec3f_ts;
+typedef struct { unsigned int ts; short v[3]; } Vec3s_ts;
+typedef struct { unsigned int ts; float v[4][4]; } Mat4_ts;
+typedef struct { unsigned int ts; void *v; } ptr_ts;
+
 //
 // Versions (auto-detected by omm.mk)
 // SMEX : sm64ex-nightly
@@ -62,18 +81,18 @@
 #define OMM_CODE_BOWSER         DEF(1, 0, 1, 1, 0, 0)
 #endif
 
+// OMM_MARIO_COLORS | Enables Mario colors feature in Extras
+#if defined(OMM_MARIO_COLORS)
+#define OMM_CODE_MARIO_COLORS   DEF(OMM_MARIO_COLORS, 0, 0, OMM_MARIO_COLORS, OMM_MARIO_COLORS, OMM_MARIO_COLORS)
+#else
+#define OMM_CODE_MARIO_COLORS   DEF(1, 0, 0, 1, 1, 1)
+#endif
+
 // OMM_DEBUG | Enables some debug stuff
 #if defined(OMM_DEBUG)
 #define OMM_CODE_DEBUG          DEF(OMM_DEBUG, OMM_DEBUG, OMM_DEBUG, OMM_DEBUG, OMM_DEBUG, OMM_DEBUG)
 #else
 #define OMM_CODE_DEBUG          DEF(0, 0, 0, 0, 0, 0)
-#endif
-
-// EXTERNAL_DATA | If not set, enables STBI implementation in file omm_gfx.c
-#if defined(EXTERNAL_DATA)
-#define OMM_STBI_IMPL           DEF(0, 0, 0, 0, 0, 0)
-#else
-#define OMM_STBI_IMPL           DEF(1, 1, 0, 1, 1, 1)
 #endif
 
 // EXT_OPTIONS_MENU | If set, enables options types implementation in file omm_options.c
@@ -101,114 +120,120 @@
 //
 
 // Better camera
-#define BETTER_CAM_IS_PUPPY_CAM         DEF(0, 0, 0, 1, 1, 1)
-#define BETTER_CAM_IS_ENABLED           DEF(newcam_active, newcam_active, newcam_active, gPuppyCam.enabled, gPuppyCam.enabled, gPuppyCam.enabled)
-#define BETTER_CAM_MODE                 DEF(CAMERA_MODE_NEWCAM, CAMERA_MODE_NEWCAM, CAMERA_MODE_NEWCAM, 0, 0, 0)
-#define BETTER_CAM_YAW                  DEF(newcam_yaw, newcam_yaw, newcam_yaw, 0, 0, 0)
-#define BETTER_CAM_RAYCAST_ARGS         DEF(, , , __EXPAND(, UNUSED s32 flags), __EXPAND(, UNUSED s32 flags), __EXPAND(, UNUSED s32 flags))
+#define BETTER_CAM_IS_PUPPY_CAM                 DEF(0, 0, 0, 1, 1, 1)
+#define BETTER_CAM_IS_ENABLED                   DEF(newcam_active, newcam_active, newcam_active, gPuppyCam.enabled, gPuppyCam.enabled, gPuppyCam.enabled)
+#define BETTER_CAM_MODE                         DEF(CAMERA_MODE_NEWCAM, CAMERA_MODE_NEWCAM, CAMERA_MODE_NEWCAM, 0, 0, 0)
+#define BETTER_CAM_YAW                          DEF(newcam_yaw, newcam_yaw, newcam_yaw, 0, 0, 0)
+#define BETTER_CAM_RAYCAST_ARGS                 DEF(, , , __EXPAND(, UNUSED s32 flags), __EXPAND(, UNUSED s32 flags), __EXPAND(, UNUSED s32 flags))
 
 // Animation
-#define AnimInfoStruct                  DEF(GraphNodeObject_sub, GraphNodeObject_sub, GraphNodeObject_sub, AnimInfo, AnimInfo, AnimInfo)
-#define mAreaIndex                      DEF(unk18, unk18, unk18, areaIndex, areaIndex, areaIndex)
-#define mActiveAreaIndex                DEF(unk19, unk19, unk19, activeAreaIndex, activeAreaIndex, activeAreaIndex)
-#define mAnimInfo                       DEF(unk38, unk38, curAnim, animInfo, animInfo, animInfo)
-#define mAnimYTransDivisor              DEF(unk02, unk02, unk02, animYTransDivisor, animYTransDivisor, animYTransDivisor)
-#define mStartFrame                     DEF(unk04, unk04, unk04, startFrame, startFrame, startFrame)
-#define mLoopStart                      DEF(unk06, unk06, unk06, loopStart, loopStart, loopStart)
-#define mLoopEnd                        DEF(unk08, unk08, unk08, loopEnd, loopEnd, loopEnd)
-#define gCurrentAnimType                DEF(gCurAnimType, gCurAnimType, gCurAnimType, gCurrAnimType, gCurrAnimType, gCurrAnimType)
-#define gCurrentAnimData                DEF(gCurAnimData, gCurAnimData, gCurAnimData, gCurrAnimData, gCurrAnimData, gCurrAnimData)
+#define AnimInfoStruct                          DEF(GraphNodeObject_sub, GraphNodeObject_sub, GraphNodeObject_sub, AnimInfo, AnimInfo, AnimInfo)
+#define mAreaIndex                              DEF(unk18, unk18, unk18, areaIndex, areaIndex, areaIndex)
+#define mActiveAreaIndex                        DEF(unk19, unk19, unk19, activeAreaIndex, activeAreaIndex, activeAreaIndex)
+#define mModel                                  DEF(unk18, unk18, unk18, model, model, model)
+#define mAnimInfo                               DEF(unk38, unk38, curAnim, animInfo, animInfo, animInfo)
+#define mAnimYTransDivisor                      DEF(unk02, unk02, unk02, animYTransDivisor, animYTransDivisor, animYTransDivisor)
+#define mStartFrame                             DEF(unk04, unk04, unk04, startFrame, startFrame, startFrame)
+#define mLoopStart                              DEF(unk06, unk06, unk06, loopStart, loopStart, loopStart)
+#define mLoopEnd                                DEF(unk08, unk08, unk08, loopEnd, loopEnd, loopEnd)
 
 // Mario animation
-#define MarioAnimationsStruct           DEF(struct MarioAnimation, struct MarioAnimation, struct MarioAnimation, struct DmaHandlerList, struct DmaHandlerList, struct DmaHandlerList)
-#define mMarioAnimations                DEF(animation, animation, animation, animList, animList, animList)
-#define mMarioTargetAnim                DEF(targetAnim, targetAnim, targetAnim, bufTarget, bufTarget, bufTarget)
-#define gMarioAnimsData                 DEF(D_80339D10, D_80339D10, Data_MarioAnims, gMarioAnimsBuf, gMarioAnimsBuf, gMarioAnimsBuf)
+#define MarioAnimationsStruct                   DEF(struct MarioAnimation, struct MarioAnimation, struct MarioAnimation, struct DmaHandlerList, struct DmaHandlerList, struct DmaHandlerList)
+#define mMarioAnimations                        DEF(animation, animation, animation, animList, animList, animList)
+#define mMarioTargetAnim                        DEF(targetAnim, targetAnim, targetAnim, bufTarget, bufTarget, bufTarget)
+#define gMarioAnimsData                         DEF(D_80339D10, D_80339D10, Data_MarioAnims, gMarioAnimsBuf, gMarioAnimsBuf, gMarioAnimsBuf)
 
 // Audio
-#define gGlobalSoundArgs                DEF(gDefaultSoundArgs, gDefaultSoundArgs, gDefaultSoundArgs, gGlobalSoundSource, gGlobalSoundSource, gGlobalSoundSource)
-#define sAcousticReachPerLevel          DEF(D_80332028, D_80332028, D_80332028, sLevelAcousticReaches, sLevelAcousticReaches, sLevelAcousticReaches)
-#define audio_play_wing_cap_music()     DEF(play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), r96_play_cap_music(R96_EVENT_CAP_WING), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)))
-#define audio_play_metal_cap_music()    DEF(play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP)), r96_play_cap_music(R96_EVENT_CAP_METAL), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP)))
-#define audio_play_vanish_cap_music()   DEF(play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), r96_play_cap_music(R96_EVENT_CAP_VANISH), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)))
-#define audio_stop_cap_music()          DEF(stop_cap_music(), stop_cap_music(), r96_stop_cap_music(), stop_cap_music(), stop_cap_music(), stop_cap_music())
-#define audio_play_shell_music()        DEF(play_shell_music(), play_shell_music(), r96_play_shell_music(), play_shell_music(), play_shell_music(), play_shell_music())
-#define audio_stop_shell_music()        DEF(stop_shell_music(), stop_shell_music(), r96_stop_shell_music(), stop_shell_music(), stop_shell_music(), stop_shell_music())
-#define audio_play_course_clear()       DEF(play_course_clear(), play_course_clear(), dynos_music_pause(); r96_play_jingle(R96_EVENT_STAR_COLLECT), play_course_clear(), play_course_clear(), play_course_clear())
-#define audio_stop_course_clear()       DEF(, __EXPAND(stop_background_music(SEQ_EVENT_BOSS); play_secondary_music(0, 0, 0, 0); func_80321080(60)), dynos_music_resume(), , , )
-#define audio_play_puzzle_jingle()      DEF(play_puzzle_jingle(), play_puzzle_jingle(), r96_play_jingle(R96_EVENT_SOLVE_PUZZLE), play_puzzle_jingle(), play_puzzle_jingle(), play_puzzle_jingle())
-#define audio_play_toads_jingle()       DEF(play_toads_jingle(), play_toads_jingle(), r96_play_jingle(R96_EVENT_TOAD_MESSAGE), play_toads_jingle(), play_toads_jingle(), play_toads_jingle())
-#define audio_play_star_jingle()        DEF(play_power_star_jingle(1), play_power_star_jingle(1), r96_play_jingle(R96_EVENT_STAR_APPEAR), play_power_star_jingle(1), play_power_star_jingle(1), play_power_star_jingle(1))
-#define audio_play_star_fanfare()       DEF(play_star_fanfare(), play_star_fanfare(), r96_play_jingle(R96_EVENT_STAR_FANFARE), play_star_fanfare(), play_star_fanfare(), play_star_fanfare())
+#define gGlobalSoundArgs                        DEF(gDefaultSoundArgs, gDefaultSoundArgs, gDefaultSoundArgs, gGlobalSoundSource, gGlobalSoundSource, gGlobalSoundSource)
+#define sAcousticReachPerLevel                  DEF(D_80332028, D_80332028, D_80332028, sLevelAcousticReaches, sLevelAcousticReaches, sLevelAcousticReaches)
+#define audio_play_wing_cap_music()             DEF(play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), r96_play_cap_music(R96_EVENT_CAP_WING), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)))
+#define audio_play_metal_cap_music()            DEF(play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP)), r96_play_cap_music(R96_EVENT_CAP_METAL), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_METAL_CAP)))
+#define audio_play_vanish_cap_music()           DEF(play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), r96_play_cap_music(R96_EVENT_CAP_VANISH), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)), play_cap_music(SEQUENCE_ARGS(4, SEQ_EVENT_POWERUP)))
+#define audio_stop_cap_music()                  DEF(stop_cap_music(), stop_cap_music(), r96_stop_cap_music(), stop_cap_music(), stop_cap_music(), stop_cap_music())
+#define audio_play_shell_music()                DEF(play_shell_music(), play_shell_music(), r96_play_shell_music(), play_shell_music(), play_shell_music(), play_shell_music())
+#define audio_stop_shell_music()                DEF(stop_shell_music(), stop_shell_music(), r96_stop_shell_music(), stop_shell_music(), stop_shell_music(), stop_shell_music())
+#define audio_play_course_clear()               DEF(play_course_clear(), play_course_clear(), dynos_music_pause(); r96_play_jingle(R96_EVENT_STAR_COLLECT), play_course_clear(), play_course_clear(), play_course_clear())
+#define audio_stop_course_clear()               DEF(, __EXPAND(stop_background_music(SEQ_EVENT_BOSS); play_secondary_music(0, 0, 0, 0); func_80321080(60)), dynos_music_resume(), , , )
+#define audio_play_puzzle_jingle()              DEF(play_puzzle_jingle(), play_puzzle_jingle(), r96_play_jingle(R96_EVENT_SOLVE_PUZZLE), play_puzzle_jingle(), play_puzzle_jingle(), play_puzzle_jingle())
+#define audio_play_toads_jingle()               DEF(play_toads_jingle(), play_toads_jingle(), r96_play_jingle(R96_EVENT_TOAD_MESSAGE), play_toads_jingle(), play_toads_jingle(), play_toads_jingle())
+#define audio_play_star_jingle()                DEF(play_power_star_jingle(1), play_power_star_jingle(1), r96_play_jingle(R96_EVENT_STAR_APPEAR), play_power_star_jingle(1), play_power_star_jingle(1), play_power_star_jingle(1))
+#define audio_play_star_fanfare()               DEF(play_star_fanfare(), play_star_fanfare(), r96_play_jingle(R96_EVENT_STAR_FANFARE), play_star_fanfare(), play_star_fanfare(), play_star_fanfare())
 
 // Music
-#define music_pause()                   DEF(gSequencePlayers[0].muted = true, gSequencePlayers[0].muted = true, dynos_music_pause(), gSequencePlayers[0].muted = true, gSequencePlayers[0].muted = true, gSequencePlayers[0].muted = true)
-#define music_resume()                  DEF(gSequencePlayers[0].muted = false, gSequencePlayers[0].muted = false, dynos_music_resume(), gSequencePlayers[0].muted = false, gSequencePlayers[0].muted = false, gSequencePlayers[0].muted = false)
-#define music_stop()                    DEF(, , dynos_music_stop(); dynos_jingle_stop(), , , )
-#define audio_mute(...)                 DEF(set_sound_disabled(__VA_ARGS__), set_sound_disabled(__VA_ARGS__), set_sound_disabled(__VA_ARGS__), set_audio_muted(__VA_ARGS__), set_audio_muted(__VA_ARGS__), set_audio_muted(__VA_ARGS__))
-#define music_fade_out(...)             DEF(sequence_player_fade_out(__VA_ARGS__), sequence_player_fade_out(__VA_ARGS__), sequence_player_fade_out(__VA_ARGS__), seq_player_fade_out(__VA_ARGS__), seq_player_fade_out(__VA_ARGS__), seq_player_fade_out(__VA_ARGS__))
-#define music_lower_volume(...)         DEF(func_8031FFB4(__VA_ARGS__), func_8031FFB4(__VA_ARGS__), func_8031FFB4(__VA_ARGS__), seq_player_lower_volume(__VA_ARGS__), seq_player_lower_volume(__VA_ARGS__), seq_player_lower_volume(__VA_ARGS__))
-#define music_unlower_volume(...)       DEF(sequence_player_unlower(__VA_ARGS__), sequence_player_unlower(__VA_ARGS__), sequence_player_unlower(__VA_ARGS__), seq_player_unlower_volume(__VA_ARGS__), seq_player_unlower_volume(__VA_ARGS__), seq_player_unlower_volume(__VA_ARGS__))
-#define music_play_sequence_define      DEF(0, 0, 0, 1, 1, 1)
-#define MUSIC_QUEUE_MAX_SIZE            DEF(MAX_BG_MUSIC_QUEUE_SIZE, MAX_BG_MUSIC_QUEUE_SIZE, MAX_BG_MUSIC_QUEUE_SIZE, MAX_BACKGROUND_MUSIC_QUEUE_SIZE, MAX_BACKGROUND_MUSIC_QUEUE_SIZE, MAX_BACKGROUND_MUSIC_QUEUE_SIZE)
+#define music_pause()                           DEF(gSequencePlayers[0].muted = true, gSequencePlayers[0].muted = true, dynos_music_pause(), gSequencePlayers[0].muted = true, gSequencePlayers[0].muted = true, gSequencePlayers[0].muted = true)
+#define music_resume()                          DEF(gSequencePlayers[0].muted = false, gSequencePlayers[0].muted = false, dynos_music_resume(), gSequencePlayers[0].muted = false, gSequencePlayers[0].muted = false, gSequencePlayers[0].muted = false)
+#define music_stop()                            DEF(, , dynos_music_stop(); dynos_jingle_stop(), , , )
+#define audio_mute(...)                         DEF(set_sound_disabled(__VA_ARGS__), set_sound_disabled(__VA_ARGS__), set_sound_disabled(__VA_ARGS__), set_audio_muted(__VA_ARGS__), set_audio_muted(__VA_ARGS__), set_audio_muted(__VA_ARGS__))
+#define music_fade_out(...)                     DEF(sequence_player_fade_out(__VA_ARGS__), sequence_player_fade_out(__VA_ARGS__), sequence_player_fade_out(__VA_ARGS__), seq_player_fade_out(__VA_ARGS__), seq_player_fade_out(__VA_ARGS__), seq_player_fade_out(__VA_ARGS__))
+#define music_lower_volume(...)                 DEF(func_8031FFB4(__VA_ARGS__), func_8031FFB4(__VA_ARGS__), func_8031FFB4(__VA_ARGS__), seq_player_lower_volume(__VA_ARGS__), seq_player_lower_volume(__VA_ARGS__), seq_player_lower_volume(__VA_ARGS__))
+#define music_unlower_volume(...)               DEF(sequence_player_unlower(__VA_ARGS__), sequence_player_unlower(__VA_ARGS__), sequence_player_unlower(__VA_ARGS__), seq_player_unlower_volume(__VA_ARGS__), seq_player_unlower_volume(__VA_ARGS__), seq_player_unlower_volume(__VA_ARGS__))
+#define music_play_sequence_define              DEF(0, 0, 0, 1, 1, 1)
+#define MUSIC_QUEUE_MAX_SIZE                    DEF(MAX_BG_MUSIC_QUEUE_SIZE, MAX_BG_MUSIC_QUEUE_SIZE, MAX_BG_MUSIC_QUEUE_SIZE, MAX_BACKGROUND_MUSIC_QUEUE_SIZE, MAX_BACKGROUND_MUSIC_QUEUE_SIZE, MAX_BACKGROUND_MUSIC_QUEUE_SIZE)
 
 // Sound
-#define sound_stop(...)                 DEF(func_803205E8(__VA_ARGS__), func_803205E8(__VA_ARGS__), func_803205E8(__VA_ARGS__), stop_sound(__VA_ARGS__), stop_sound(__VA_ARGS__), stop_sound(__VA_ARGS__))
-#define sound_stop_from_source(...)     DEF(func_803206F8(__VA_ARGS__), func_803206F8(__VA_ARGS__), func_803206F8(__VA_ARGS__), stop_sounds_from_source(__VA_ARGS__), stop_sounds_from_source(__VA_ARGS__), stop_sounds_from_source(__VA_ARGS__))
-#define sound_set_moving_speed(...)     DEF(func_80320A4C(__VA_ARGS__), func_80320A4C(__VA_ARGS__), func_80320A4C(__VA_ARGS__), set_sound_moving_speed(__VA_ARGS__), set_sound_moving_speed(__VA_ARGS__), set_sound_moving_speed(__VA_ARGS__))
-#define SOUND_OBJ_WHOMP_SLAM            DEF(SOUND_OBJ_WHOMP_LOWPRIO, SOUND_OBJ_WHOMP_LOWPRIO, SOUND_OBJ_WHOMP_LOWPRIO, SOUND_OBJ_WHOMP, SOUND_OBJ_WHOMP, SOUND_OBJ_WHOMP)
+#define sound_stop(...)                         DEF(func_803205E8(__VA_ARGS__), func_803205E8(__VA_ARGS__), func_803205E8(__VA_ARGS__), stop_sound(__VA_ARGS__), stop_sound(__VA_ARGS__), stop_sound(__VA_ARGS__))
+#define sound_stop_from_source(...)             DEF(func_803206F8(__VA_ARGS__), func_803206F8(__VA_ARGS__), func_803206F8(__VA_ARGS__), stop_sounds_from_source(__VA_ARGS__), stop_sounds_from_source(__VA_ARGS__), stop_sounds_from_source(__VA_ARGS__))
+#define sound_stop_continuous()                 DEF(func_80320890(), func_80320890(), func_80320890(), stop_sounds_in_continuous_banks(), stop_sounds_in_continuous_banks(), stop_sounds_in_continuous_banks())
+#define sound_set_moving_speed(...)             DEF(func_80320A4C(__VA_ARGS__), func_80320A4C(__VA_ARGS__), func_80320A4C(__VA_ARGS__), set_sound_moving_speed(__VA_ARGS__), set_sound_moving_speed(__VA_ARGS__), set_sound_moving_speed(__VA_ARGS__))
+#define SOUND_OBJ_WHOMP_SLAM                    DEF(SOUND_OBJ_WHOMP_LOWPRIO, SOUND_OBJ_WHOMP_LOWPRIO, SOUND_OBJ_WHOMP_LOWPRIO, SOUND_OBJ_WHOMP, SOUND_OBJ_WHOMP, SOUND_OBJ_WHOMP)
 
 // Object fields
-#define oSnowmansBodyScale              DEF(oSnowmansBottomUnkF4, oSnowmansBottomUnkF4, oSnowmansBottomUnkF4, oSnowmansBottomScale, oSnowmansBottomScale, oSnowmansBottomScale)
-#define oBitsPlatformBowserObject       DEF(oPlatformUnkF8, oPlatformUnkF8, oPlatformUnkF8, oBitsPlatformBowser, oBitsPlatformBowser, oBitsPlatformBowser)
-#define oBowserCameraState              DEF(oBowserUnk88, oBowserUnk88, oBowserUnk88, oBowserCamAct, oBowserCamAct, oBowserCamAct)
-#define oBowserFlags                    DEF(oBowserUnkF4, oBowserUnkF4, oBowserUnkF4, oBowserStatus, oBowserStatus, oBowserStatus)
-#define oBowserActionTimer              DEF(oBowserUnkF8, oBowserUnkF8, oBowserUnkF8, oBowserTimer, oBowserTimer, oBowserTimer)
-#define oBowserBitsJump                 DEF(oBowserUnk106, oBowserUnk106, oBowserUnk106, oBowserBitsJustJump, oBowserBitsJustJump, oBowserBitsJustJump)
-#define oBowserSpitFireNumFlames        DEF(oBowserUnk108, oBowserUnk108, oBowserUnk108, oBowserRandSplitFloor, oBowserRandSplitFloor, oBowserRandSplitFloor)
-#define oBowserGrabbedAction            DEF(oBowserUnk10E, oBowserUnk10E, oBowserUnk10E, oBowserGrabbedStatus, oBowserGrabbedStatus, oBowserGrabbedStatus)
-#define oBowserActionSelected           DEF(oBowserUnk110, oBowserUnk110, oBowserUnk110, oBowserIsReacting, oBowserIsReacting, oBowserIsReacting)
-#define oBowserOpacityTarget            DEF(oBowserUnk1AC, oBowserUnk1AC, oBowserUnk1AC, oBowserTargetOpacity, oBowserTargetOpacity, oBowserTargetOpacity)
-#define oBowserBlinkTimer               DEF(oBowserUnk1AE, oBowserUnk1AE, oBowserUnk1AE, oBowserEyesTimer, oBowserEyesTimer, oBowserEyesTimer)
-#define oBowserRainbowLightEffect       DEF(oBowserUnk1B2, oBowserUnk1B2, oBowserUnk1B2, oBowserRainbowLight, oBowserRainbowLight, oBowserRainbowLight)
-#define oBowserShockwaveScale           DEF(oBowserShockWaveUnkF4, oBowserShockWaveUnkF4, oBowserShockWaveUnkF4, oBowserShockWaveScale, oBowserShockWaveScale, oBowserShockWaveScale)
+#define oSnowmansBodyScale                      DEF(oSnowmansBottomUnkF4, oSnowmansBottomUnkF4, oSnowmansBottomUnkF4, oSnowmansBottomScale, oSnowmansBottomScale, oSnowmansBottomScale)
+#define oBitsPlatformBowserObject               DEF(oPlatformUnkF8, oPlatformUnkF8, oPlatformUnkF8, oBitsPlatformBowser, oBitsPlatformBowser, oBitsPlatformBowser)
+#define oBowserCameraState                      DEF(oBowserUnk88, oBowserUnk88, oBowserUnk88, oBowserCamAct, oBowserCamAct, oBowserCamAct)
+#define oBowserFlags                            DEF(oBowserUnkF4, oBowserUnkF4, oBowserUnkF4, oBowserStatus, oBowserStatus, oBowserStatus)
+#define oBowserActionTimer                      DEF(oBowserUnkF8, oBowserUnkF8, oBowserUnkF8, oBowserTimer, oBowserTimer, oBowserTimer)
+#define oBowserBitsJump                         DEF(oBowserUnk106, oBowserUnk106, oBowserUnk106, oBowserBitsJustJump, oBowserBitsJustJump, oBowserBitsJustJump)
+#define oBowserSpitFireNumFlames                DEF(oBowserUnk108, oBowserUnk108, oBowserUnk108, oBowserRandSplitFloor, oBowserRandSplitFloor, oBowserRandSplitFloor)
+#define oBowserGrabbedAction                    DEF(oBowserUnk10E, oBowserUnk10E, oBowserUnk10E, oBowserGrabbedStatus, oBowserGrabbedStatus, oBowserGrabbedStatus)
+#define oBowserActionSelected                   DEF(oBowserUnk110, oBowserUnk110, oBowserUnk110, oBowserIsReacting, oBowserIsReacting, oBowserIsReacting)
+#define oBowserOpacityTarget                    DEF(oBowserUnk1AC, oBowserUnk1AC, oBowserUnk1AC, oBowserTargetOpacity, oBowserTargetOpacity, oBowserTargetOpacity)
+#define oBowserBlinkTimer                       DEF(oBowserUnk1AE, oBowserUnk1AE, oBowserUnk1AE, oBowserEyesTimer, oBowserEyesTimer, oBowserEyesTimer)
+#define oBowserRainbowLightEffect               DEF(oBowserUnk1B2, oBowserUnk1B2, oBowserUnk1B2, oBowserRainbowLight, oBowserRainbowLight, oBowserRainbowLight)
+#define oBowserShockwaveScale                   DEF(oBowserShockWaveUnkF4, oBowserShockWaveUnkF4, oBowserShockWaveUnkF4, oBowserShockWaveScale, oBowserShockWaveScale, oBowserShockWaveScale)
 
 // Dialogs and menus
-#define gDialogType                     DEF(gDialogBoxType, gDialogBoxType, gDialogBoxType, gDialogBoxType, gDialogBoxType, gDialogBoxType)
-#define gDialogState                    DEF(gDialogBoxState, gDialogBoxState, gDialogBoxState, gMenuState, gDialogBoxState, gMenuState)
-#define gDialogAngle                    DEF(gDialogBoxOpenTimer, gDialogBoxOpenTimer, gDialogBoxOpenTimer, gDialogBoxAngle, gDialogBoxOpenTimer, gDialogBoxAngle)
-#define gDialogScale                    DEF(gDialogBoxScale, gDialogBoxScale, gDialogBoxScale, gDialogBoxScale, gDialogBoxScale, gDialogBoxScale)
-#define gDialogPageStartNext            DEF(gLastDialogPageStrPos, gLastDialogPageStrPos, gLastDialogPageStrPos, gNextDialogPageStartStrIndex, gLastDialogPageStrPos, gNextDialogPageStartStrIndex)
-#define gDialogPageStart                DEF(gDialogTextPos, gDialogTextPos, gDialogTextPos, gDialogPageStartStrIndex, gDialogTextPos, gDialogPageStartStrIndex)
-#define gDialogLineIndex                DEF(gDialogLineNum, gDialogLineNum, gDialogLineNum, gMenuLineNum, gDialogLineNum, gMenuLineNum)
-#define gDialogChoice                   DEF(gLastDialogResponse, gLastDialogResponse, gLastDialogResponse, gDialogWithChoice, gLastDialogResponse, gDialogWithChoice)
+#define gDialogBoxState                         DEF(gDialogBoxState, gDialogBoxState, gDialogBoxState, gMenuState, gDialogBoxState, gMenuState)
+#define gDialogBoxAngle                         DEF(gDialogBoxOpenTimer, gDialogBoxOpenTimer, gDialogBoxOpenTimer, gDialogBoxAngle, gDialogBoxOpenTimer, gDialogBoxAngle)
+#define gDialogLineIndex                        DEF(gDialogLineNum, gDialogLineNum, gDialogLineNum, gMenuLineNum, gDialogLineNum, gMenuLineNum)
+
+// Level scripts
+#define LEVEL_SCRIPT_PRESSED_START              DEF(1, 1, 1, 0, 0, 0)
+#define level_script_entry_point                DEF(level_script_entry, level_script_entry, level_script_entry, level_script_entry, level_script_entry, level_script_entry)
+#define level_script_splash_screen              DEF(level_intro_entry_1, level_intro_entry_1, level_intro_entry_1, level_intro_splash_screen, level_intro_splash_screen, level_intro_splash_screen)
+#define level_script_goddard_regular            DEF(level_intro_entry_2, level_intro_entry_2, level_intro_entry_2, level_intro_mario_head_regular, level_intro_mario_head_regular, level_intro_mario_head_regular)
+#define level_script_goddard_game_over          DEF(level_intro_entry_3, level_intro_entry_3, level_intro_entry_3, level_intro_mario_head_dizzy, level_intro_mario_head_dizzy, level_intro_mario_head_dizzy)
+#define level_script_debug_level_select         DEF(level_intro_entry_4, level_intro_entry_4, level_intro_entry_4, level_intro_entry_4, level_intro_entry_4, level_intro_entry_4)
+#define level_script_to_file_select             DEF(script_intro_L1, script_intro_L1, script_intro_L1, script_intro_L1, script_intro_L1, script_intro_L1)
+#define level_script_to_debug_level_select      DEF(script_intro_L2, script_intro_L2, script_intro_L2, script_intro_L2, script_intro_L2, script_intro_L2)
+#define level_script_to_star_select_1           DEF(script_intro_L3, script_intro_L3, script_intro_L3, script_intro_L3, script_intro_L3, script_intro_L3)
+#define level_script_to_star_select_2           DEF(script_intro_L4, script_intro_L4, script_intro_L4, script_intro_L4, script_intro_L4, script_intro_L4)
+#define level_script_to_splash_screen           DEF(script_intro_L5, script_intro_L5, script_intro_L5, script_intro_L5, script_intro_L5, script_intro_L5)
+#define level_script_file_select                DEF(level_main_menu_entry_1, level_main_menu_entry_1, level_main_menu_entry_1, level_main_menu_entry_1, level_main_menu_entry_1, level_main_menu_entry_1)
+#define level_script_star_select                DEF(level_main_menu_entry_2, level_main_menu_entry_2, level_main_menu_entry_2, level_main_menu_entry_2, level_main_menu_entry_2, level_main_menu_entry_2)
+#define level_script_cake_ending                DEF(level_ending_entry, level_ending_entry, level_ending_entry, level_ending_entry, level_ending_entry, level_ending_entry)
 
 // Misc
-#define GodModeCheat                    DEF(Cheats.GodMode, Cheats.GodMode, Cheats.GodMode, Cheats.InfiniteHealth, Cheats.InfiniteHealth, Cheats.InfiniteHealth)
-#define sDemoCounter                    DEF(gDemoCountdown, gDemoCountdown, gDemoCountdown, sDemoCountdown, sDemoCountdown, sDemoCountdown)
-#define level_intro_goddard             DEF(level_intro_entry_2, level_intro_entry_2, level_intro_entry_2, level_intro_mario_head_regular, level_intro_mario_head_regular, level_intro_mario_head_regular)
-#define find_static_floor(...)          DEF(find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__))
-#define find_dynamic_floor(...)         DEF(find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__))
-#define render_dialog_triangle_page     DEF(render_dialog_string_color, render_dialog_string_color, render_dialog_string_color, render_dialog_triangle_next, render_dialog_triangle_next, render_dialog_triangle_next)
-#define load_gfx_memory_pool()          DEF(config_gfx_pool(), config_gfx_pool(), config_gfx_pool(), select_gfx_pool(), select_gfx_pool(), select_gfx_pool())
-#define init_scene_rendering()          DEF(init_render_image(), init_render_image(), init_render_image(), init_rcp(), init_rcp(), init_rcp())
-#define spawnInfoModel                  DEF(unk18, unk18, unk18, model, model, model)
-#define g1HPMode                        DEF(gOmm1HPMode, gOmm1HPMode, gOmm1HPMode, gOmm1HPMode, gOmm1HPMode, gStarRoadHardMode)
-#define INPUT_BOUNCE                    DEF(INPUT_UNKNOWN_10, INPUT_UNKNOWN_10, INPUT_UNKNOWN_10, INPUT_STOMPED, INPUT_STOMPED, INPUT_STOMPED)
+#define find_static_floor(...)                  DEF(find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__))
+#define find_dynamic_floor(...)                 DEF(find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__), find_floor(__VA_ARGS__))
+#define load_gfx_memory_pool()                  DEF(config_gfx_pool(), config_gfx_pool(), config_gfx_pool(), select_gfx_pool(), select_gfx_pool(), select_gfx_pool())
+#define init_scene_rendering()                  DEF(init_render_image(), init_render_image(), init_render_image(), init_rcp(), init_rcp(), init_rcp())
+#define run_display_list(...)                   DEF(send_display_list(__VA_ARGS__), send_display_list(__VA_ARGS__), send_display_list(__VA_ARGS__), exec_display_list(__VA_ARGS__), exec_display_list(__VA_ARGS__), exec_display_list(__VA_ARGS__))
+#define clear_framebuffer(...)                  DEF(clear_frame_buffer(__VA_ARGS__), clear_frame_buffer(__VA_ARGS__), clear_frame_buffer(__VA_ARGS__), clear_framebuffer(__VA_ARGS__), clear_frame_buffer(__VA_ARGS__), clear_framebuffer(__VA_ARGS__))
+#define g1HPMode                                DEF(gOmm1HPMode, gOmm1HPMode, gOmm1HPMode, gOmm1HPMode, gOmm1HPMode, gStarRoadHardMode)
+#define INPUT_BOUNCE                            DEF(INPUT_UNKNOWN_10, INPUT_UNKNOWN_10, INPUT_UNKNOWN_10, INPUT_STOMPED, INPUT_STOMPED, INPUT_STOMPED)
 
 // OMM
-#define OMM_LEVEL_ENTRY_WARP(level)     DEF(0x0A, 0x0A, 0x0A, 0x0A, 0x0A, (level == LEVEL_JRB ? 0x01 : 0x0A))
-#define OMM_LEVEL_EXIT_DISTANCE         DEF(500.f, 500.f, 500.f, 500.f, 150.f, 500.f)
-#define OMM_LEVEL_SLIDE                 DEF(LEVEL_PSS, LEVEL_PSS, LEVEL_PSS, LEVEL_PSS, LEVEL_PSS, LEVEL_SA)
-#define OMM_LEVEL_RETURN_TO_CASTLE      DEF(__EXPAND(LEVEL_CASTLE, 1, 0x1F, 0), __EXPAND(LEVEL_CASTLE, 1, 0x1F, 0), __EXPAND(LEVEL_CASTLE, 1, 0x1F, 0), __EXPAND(LEVEL_CASTLE, 1, 0x1F, 0), __EXPAND(LEVEL_COURT, gCurrAreaIndex, 0x40, 0), __EXPAND(LEVEL_GROUNDS, 1, 0x80, 0))
-#define OMM_CAMERA_LOOK_UP_WARP_STARS   DEF(10, 10, 10, 10, 10, 120)
-#define OMM_CAMERA_IS_BOWSER_FIGHT      DEF(omm_camera_is_bowser_fight(), omm_camera_is_bowser_fight(), omm_camera_is_bowser_fight(), omm_camera_is_bowser_fight(), omm_camera_is_bowser_fight(), gCurrLevelNum == LEVEL_BOWSER_3)
-#define OMM_TEXT_(id, str)              static const char OMM_TEXT_##id[] = \
-                                        DEF(str, str, "OMM_TEXT_" #id, str, str, str);
-#define OMM_NUM_PLAYABLE_CHARACTERS     DEF(2, 2, 4, 2, 2, 2)
-#define OMM_CUTSCENE_MSG_INDEX          DEF(8, 8, 9, 8, 8, 8)
-#define STAR                            DEF("STAR", "MOON", "STAR", "STAR", "STAR", "STAR")
-#define Star                            DEF("Star", "Moon", "Star", "Star", "Star", "Star")
+#define OMM_LEVEL_ENTRY_WARP(level)             DEF(0x0A, 0x0A, 0x0A, 0x0A, 0x0A, (level == LEVEL_JRB ? 0x01 : 0x0A))
+#define OMM_LEVEL_EXIT_DISTANCE                 DEF(500.f, 500.f, 500.f, 500.f, 150.f, 500.f)
+#define OMM_LEVEL_SLIDE                         DEF(LEVEL_PSS, LEVEL_PSS, LEVEL_PSS, LEVEL_PSS, LEVEL_PSS, LEVEL_SA)
+#define OMM_LEVEL_RETURN_TO_CASTLE              DEF(__EXPAND(LEVEL_CASTLE, 1, 0x1F, 0), __EXPAND(LEVEL_CASTLE, 1, 0x1F, 0), __EXPAND(LEVEL_CASTLE, 1, 0x1F, 0), __EXPAND(LEVEL_CASTLE, 1, 0x1F, 0), __EXPAND(LEVEL_COURT, gCurrAreaIndex, 0x40, 0), __EXPAND(LEVEL_GROUNDS, 1, 0x80, 0))
+#define OMM_CAMERA_LOOK_UP_WARP_STARS           DEF(10, 10, 10, 10, 10, 120)
+#define OMM_CAMERA_IS_BOWSER_FIGHT              DEF(omm_camera_is_bowser_fight(), omm_camera_is_bowser_fight(), omm_camera_is_bowser_fight(), omm_camera_is_bowser_fight(), omm_camera_is_bowser_fight(), gCurrLevelNum == LEVEL_BOWSER_3)
+#define OMM_NUM_PLAYABLE_CHARACTERS             DEF(2, 2, 4, 2, 2, 2)
+#define OMM_CUTSCENE_MSG_INDEX                  DEF(8, 8, 9, 8, 8, 8)
+#define STAR                                    DEF("STAR", "MOON", "STAR", "STAR", "STAR", "STAR")
+#define Star                                    DEF("Star", "Moon", "Star", "Star", "Star", "Star")
 
 //
 // Surface collision redefines
@@ -255,10 +280,10 @@
 #define COL_TRANSLATE(x, y, z)                  CMD_COL_TRANSLATE, x, y, z
 #define COL_JUMP(index)                         CMD_COL_JUMP, index
 
-#define COL_JUMP_REGISTER_INDEX(index, ptr) \
+#define COL_JUMP_REGISTER_INDEX(index, col) \
 extern void omm_surface_register_collision_jump(s16, s16 *); \
 OMM_AT_STARTUP static void omm_surface_register_collision_jump_##index() { \
-    omm_surface_register_collision_jump(index, (s16 *) (ptr)); \
+    omm_surface_register_collision_jump(index, (s16 *) (col)); \
 }
 
 //
@@ -281,6 +306,7 @@ OMM_AT_STARTUP static void omm_surface_register_collision_jump_##index() { \
 #undef QOL_FEATURE_BETTER_WF_BREAKEABLE_WALL
 #undef QOL_FEATURE_BOUNCE_BOOST
 #undef QOL_FEATURE_TINY_GOOMBA_DROP_COIN
+#undef QOL_FEATURE_MARIO_HEAD_EASTER_EGG
 #undef QOL_FIX_WATER_RING
 #undef QOL_FIX_GROUND_POUND_WALL
 #undef QOL_FIX_LAVA_INTERACTION
@@ -291,6 +317,7 @@ OMM_AT_STARTUP static void omm_surface_register_collision_jump_##index() { \
 #define QOL_FEATURE_BETTER_WF_BREAKEABLE_WALL 0
 #define QOL_FEATURE_BOUNCE_BOOST 0
 #define QOL_FEATURE_TINY_GOOMBA_DROP_COIN 0
+#define QOL_FEATURE_MARIO_HEAD_EASTER_EGG 0
 #define QOL_FIX_WATER_RING 0
 #define QOL_FIX_GROUND_POUND_WALL 0
 #define QOL_FIX_LAVA_INTERACTION 0
@@ -306,6 +333,7 @@ OMM_AT_STARTUP static void omm_surface_register_collision_jump_##index() { \
 #define __EXTENDED_BOUNDS_H__
 #else
 #include "engine/extended_bounds.h"
+#endif
 #endif
 #undef EXTENDED_BOUNDS_MODE
 #undef MAX_REFEREMCED_WALLS
@@ -339,16 +367,14 @@ OMM_AT_STARTUP static void omm_surface_register_collision_jump_##index() { \
 #define FLOOR_LOWER_LIMIT           -11000
 #define FLOOR_LOWER_LIMIT_MISC      (FLOOR_LOWER_LIMIT + 1000)
 #define FLOOR_LOWER_LIMIT_SHADOW    FLOOR_LOWER_LIMIT_MISC
-#if defined(OMM_COLLISION_LEVEL_BOUNDARY)
-#define LEVEL_BOUNDARY_MAX          OMM_COLLISION_LEVEL_BOUNDARY
-#define CELL_SIZE                   OMM_COLLISION_CELL_SIZE
+#if defined(LEVEL_BOUNDS)
+#define LEVEL_BOUNDARY_MAX          LEVEL_BOUNDS
 #else
 #define LEVEL_BOUNDARY_MAX          0x8000
 #define CELL_SIZE                   0x400
 #endif
 #define NUM_CELLS                   (2 * (LEVEL_BOUNDARY_MAX / CELL_SIZE))
 #define NUM_CELLS_INDEX             (NUM_CELLS - 1)
-#endif
 
 //
 // DynOS defines

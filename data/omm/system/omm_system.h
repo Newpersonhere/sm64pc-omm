@@ -2,6 +2,7 @@
 #define OMM_SYSTEM_H
 
 #include "data/omm/omm_includes.h"
+#include "omm_render.h"
 
 //
 // System
@@ -13,28 +14,43 @@ void omm_add_routine(s32 type, void (*func)(void));
 void omm_select_save_file(s32 saveFileNum);
 void omm_return_to_main_menu();
 void omm_update();
-void omm_update_gfx();
+void omm_pre_render();
 void *omm_update_cmd(void *cmd, s32 reg);
 bool omm_is_main_menu();
 bool omm_is_game_paused();
 bool omm_is_transition_active();
 bool omm_is_ending_cutscene();
 bool omm_is_ending_cake_screen();
-bool omm_sanity_check_graph_node(struct GraphNode *node);
-void omm_debug_start_counter();
-void omm_debug_end_counter();
 void omm_speedrun_split(s32 numStars);
 
 #if OMM_GAME_IS_SM74
 void omm_opt_sm74_change_mode(UNUSED void *opt, s32 arg);
 #define sm74_mode__omm_save                     ((omm_is_main_menu() ? (s32) sWarpDest.areaIdx : (s32) gCurrAreaIndex) - 1)
+#define sm74_mode__omm_level_script             sWarpDest.areaIdx
 #define sm74_mode__omm_opt_init_warp_to_level   sWarpDest.areaIdx
 #define sm74_mode__omm_stars_get_bits_total     sWarpDest.areaIdx
 #define sm74_mode__omm_level_get_name           sWarpDest.areaIdx
 #define sm74_mode__omm_level_get_act_name       sWarpDest.areaIdx
 #define sm74_mode__omm_render_pause_castle      gCurrAreaIndex
-#define sm74_mode__omm_render_dialog_entry      gCurrAreaIndex
+#define sm74_mode__omm_get_dialog_table         gCurrAreaIndex
 #endif
+
+//
+// Debug
+//
+
+#define OMM_COUNTER_FPS     0 // Count the elapsed time between 2 successive game updates. Used to compute the actual frame rate.
+#define OMM_COUNTER_FRM     1 // Count the elapsed time between gfx_start_frame() and gfx_end_frame().
+#define OMM_COUNTER_OMM     2 // Count the elapsed time spent by omm_update().
+#define OMM_COUNTER_LVL     3 // Count the elapsed time spent by the level script update.
+#define OMM_COUNTER_PRE     4 // Count the elapsed time spent by omm_pre_render().
+#define OMM_COUNTER_GEO     5 // Count the elapsed time spent by render_game().
+#define OMM_COUNTER_GFX     6 // Count the elapsed time spent by gfx_run_dl().
+#define OMM_COUNTER_RDR     7 // Count the elapsed time spent by the scene rendering.
+#define OMM_NUM_COUNTERS    8
+
+void omm_debug_start_counter(s32 counter);
+void omm_debug_end_counter(s32 counter);
 
 //
 // Player
@@ -43,7 +59,7 @@ void omm_opt_sm74_change_mode(UNUSED void *opt, s32 arg);
 bool omm_player_is_unlocked(s32 index);
 bool omm_player_is_selected(s32 index);
 void omm_player_select(s32 index);
-s32 omm_player_get_selected_index();
+s32  omm_player_get_selected_index();
 
 const char *omm_player_get_name(s32 index);
 u32 omm_player_get_color(s32 index);
@@ -100,29 +116,8 @@ u8 *omm_text_decapitalize(u8 *str64);
 u8 *omm_text_replace_char(u8 *str64, u8 from, u8 to);
 u8 *omm_text_replace_names(u8 *str64, bool inplace);
 s32 omm_text_length(const u8 *str64);
+struct DialogEntry **omm_get_dialog_table();
 struct DialogEntry *omm_get_dialog_entry(void **dialogTable, s16 dialogId);
-
-//
-// Render
-//
-
-#define OMM_RENDER_FONT_GENERIC 0
-#define OMM_RENDER_FONT_MENU 1
-#define OMM_RENDER_FONT_HUD 2
-
-s32  omm_render_get_string_width(s32 font, const u8 *str64);
-void omm_render_string(s32 font, const u8 *str64, s16 x, s16 y, u8 red, u8 green, u8 blue, u8 alpha, bool shadow);
-void omm_render_texrect(s16 x, s16 y, s16 w, s16 h, s32 fmt, s32 siz, s16 texw, s16 texh, u8 r, u8 g, u8 b, u8 a, const void *texp);
-void omm_render_glyph(s16 x, s16 y, s16 w, s16 h, u8 red, u8 green, u8 blue, u8 alpha, const void *texture, bool shadow);
-void omm_render_number(s32 number, s32 digits, s16 x, s16 y, s16 w, s16 h, s16 xStep, u8 alpha, bool makeZerosTransparent, bool shadow);
-void omm_render_create_dl_ortho_matrix();
-void omm_render_start_you_got_a_star(const char *title, const u8 *courseName, const u8 *starName);
-void omm_render_stop_you_got_a_star();
-void omm_render_file_select_screen(s8 selectedButtonId, u8 alpha);
-void omm_render_hud();
-s32  omm_render_pause();
-s32  omm_render_course_complete();
-void omm_render_dialog_entries();
 
 //
 // Camera
@@ -130,10 +125,9 @@ void omm_render_dialog_entries();
 
 void omm_camera_init();
 bool omm_camera_update(struct Camera *c, struct MarioState *m);
-void omm_camera_set_yaw(s16 yaw);
-s16 omm_camera_get_intended_yaw(struct MarioState *m);
-s32 omm_camera_get_relative_dist_mode();
 bool omm_camera_is_available(struct MarioState *m);
+s16  omm_camera_get_intended_yaw(struct MarioState *m);
+s32  omm_camera_get_relative_dist_mode();
 
 //
 // Audio
@@ -161,21 +155,19 @@ bool omm_sound_stop_character_sound_r96(const char *id, f32 *pos);
 // Level
 //
 
-s32 omm_level_get_count();
+s32  omm_level_get_count();
 s32 *omm_level_get_list();
-s32 omm_level_get_course(s32 level);
-const LevelScript *omm_level_get_script(s32 level);
-s32 omm_level_get_areas(s32 level);
-s32 omm_level_get_num_red_coins(s32 level, s32 area);
-u8 *omm_level_get_name(s32 level, bool decaps, bool num);
-u8 *omm_level_get_act_name(s32 level, s32 act, bool decaps, bool num);
-u64 omm_level_cmd_get(void *cmd, u64 offset);
-void omm_level_parse_script(const LevelScript *script, s32 (*func)(u8, void *));
+s32  omm_level_get_course(s32 level);
+s32  omm_level_get_areas(s32 level);
+s32  omm_level_get_num_red_coins(s32 level, s32 area);
+u8  *omm_level_get_name(s32 level, bool decaps, bool num);
+u8  *omm_level_get_act_name(s32 level, s32 act, bool decaps, bool num);
 s16 *omm_level_get_warp(s32 level, s32 area, u8 id);
 s16 *omm_level_get_entry_warp(s32 level, s32 area);
 s16 *omm_level_get_exit_warp(s32 level, s32 area);
 s16 *omm_level_get_death_warp(s32 level, s32 area);
 bool omm_level_can_warp(s32 level);
+const LevelScript *omm_level_get_script(s32 level);
 
 //
 // Warps
@@ -219,6 +211,9 @@ void *omm_update_warp(void *cmd, bool inited);
 
 extern u8 gOmmOptMenu[];
 extern u8 gOmmOptControls[];
+#if !OMM_GAME_IS_R96A
+extern u8 gOmmOptCheats[];
+#endif
 #if !OMM_CODE_DYNOS
 extern u8 gOmmOptWarpToLevel[];
 extern u8 gOmmOptReturnToMainMenu[];
@@ -244,6 +239,23 @@ DECLARE_KBINDS(gOmmControlsStickUp);
 DECLARE_KBINDS(gOmmControlsStickDown);
 DECLARE_KBINDS(gOmmControlsStickLeft);
 DECLARE_KBINDS(gOmmControlsStickRight);
+#if !OMM_GAME_IS_R96A
+DECLARE_TOGGLE(gOmmCheatEnable);
+DECLARE_TOGGLE(gOmmCheatMoonJump);
+DECLARE_TOGGLE(gOmmCheatGodMode);
+DECLARE_TOGGLE(gOmmCheatInvincible);
+DECLARE_TOGGLE(gOmmCheatSuperSpeed);
+DECLARE_TOGGLE(gOmmCheatSuperResponsive);
+DECLARE_TOGGLE(gOmmCheatNoFallDamage);
+DECLARE_TOGGLE(gOmmCheatWalkOnLava);
+DECLARE_TOGGLE(gOmmCheatWalkOnQuicksand);
+DECLARE_TOGGLE(gOmmCheatWalkOnWater);
+DECLARE_TOGGLE(gOmmCheatWalkOnGas);
+DECLARE_TOGGLE(gOmmCheatWalkOnSlope);
+DECLARE_TOGGLE(gOmmCheatWalkOnDeathBarrier);
+DECLARE_TOGGLE(gOmmCheatBljAnywhere);
+#endif
+DECLARE_CHOICE(gOmmFPS);
 DECLARE_CHOICE_SC(gOmmCharacter);
 DECLARE_CHOICE_SC(gOmmMovesetType);
 DECLARE_CHOICE_SC(gOmmCapType);
@@ -251,6 +263,8 @@ DECLARE_CHOICE_SC(gOmmStarsMode);
 DECLARE_CHOICE_SC(gOmmPowerUpsType);
 DECLARE_CHOICE_SC(gOmmCameraMode);
 DECLARE_CHOICE_SC(gOmmSparklyStarsMode);
+DECLARE_TOGGLE_SC(gOmmSparklyStarsHint);
+DECLARE_TOGGLE_SC(gOmmSparklyStarsAssist);
 DECLARE_TOGGLE(gOmmCheatUnlimitedCappyBounces);
 DECLARE_TOGGLE(gOmmCheatCappyStaysForever);
 DECLARE_TOGGLE(gOmmCheatHomingAttackGlobalRange);
@@ -258,6 +272,8 @@ DECLARE_TOGGLE(gOmmCheatMarioTeleportsToCappy);
 DECLARE_TOGGLE(gOmmCheatCappyCanCollectStars);
 DECLARE_TOGGLE(gOmmCheatPlayAsCappy);
 DECLARE_TOGGLE(gOmmCheatPeachEndlessVibeGauge);
+DECLARE_CHOICE(gOmmExtrasMarioColors);
+DECLARE_CHOICE(gOmmExtrasPeachColors);
 DECLARE_TOGGLE_SC(gOmmExtrasSMOAnimations);
 DECLARE_TOGGLE_SC(gOmmExtrasCappyAndTiara);
 DECLARE_TOGGLE_SC(gOmmExtrasColoredStars);
@@ -269,7 +285,6 @@ DECLARE_TOGGLE_SC(gOmmExtrasInvisibleMode);
 #if OMM_CODE_DEV
 DECLARE_TOGGLE_SC(gOmmExtrasRender96Peach);
 #endif
-DECLARE_TOGGLE_SC(gOmmExtrasSparklyStarsHint);
 DECLARE_TOGGLE_SC(gOmmExtrasCrystalStarsReward);
 DECLARE_TOGGLE_SC(gOmmExtrasNebulaStarsReward);
 #if OMM_CODE_DEBUG
@@ -288,11 +303,15 @@ DECLARE_CHOICE_SC(gOmmDebugGameSpeedFps);
 
 void omm_opt_return_to_main_menu(UNUSED void *opt, s32 arg);
 void omm_opt_reset_binds(u32 *binds);
+bool omm_mario_colors_read(const char **tokens);
+void omm_mario_colors_write(char **buffer);
+const char **omm_mario_colors_choices();
+s32 omm_mario_colors_count();
 
 #define omm_opt_select_available(option, zero, count, cond) \
 { static u32 s##option = (u32) (-1); \
 if (s##option == (u32) (-1)) { s##option = option; } \
-s32 d##option = omm_sign_0_s(option - s##option) * (omm_abs_s(option - s##option) > 1 ? -1 : +1); \
+s32 d##option = sign_0_s(option - s##option) * (abs_s(option - s##option) > 1 ? -1 : +1); \
 if (d##option != 0) { while (!(cond)) { option = (option + d##option + (count)) % (count); } } \
 else if (!(cond)) { option = (zero); } \
 s##option = option; }

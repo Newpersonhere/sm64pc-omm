@@ -2,65 +2,135 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
+#define DOUBLE_SIZE(s) max_s(8, s << 1)
+
+OMM_INLINE bool __omm_nop_eq(__OmmNoP x, __OmmNoP y) {
+    return x.as_u64 == y.as_u64;
+}
+
+OMM_INLINE void *__omm_realloc(void *p, s32 s, s32 c, s32 sot) {
+    void *q = calloc(s, sot);
+    if (OMM_LIKELY(p)) {
+        OMM_MEMCPY(q, p, c * sot);
+        OMM_MEMDEL(p);
+    }
+    return q;
+}
+
 //
-// OMM Array: Dynamically allocated array
+// OmmArray: a growing array with dynamic memory allocation.
+// DO NOT USE THE FUNCTIONS OR STRUCTURES STARTING WITH UNDERSCORES.
+// ALLOWED TYPES ARE ONLY NUMERIC AND POINTERS.
 //
 
-// 0x00: size (4 bytes)
-// 0x04: count (4 bytes)
-// 0x08: capacity (4 bytes)
-// 0x0C: start of data
-
-OmmArray __omm_array_new(s32 size) {
-    if (size > 0) {
-        OmmArray arr = OMM_MEMNEW(u8, (3 * sizeof(s32)) + (8 * size));
-        omm_array_size(arr) = size;
-        omm_array_count(arr) = 0;
-        omm_array_capacity(arr) = 8;
-        return arr;
-    }
-    return NULL;
-}
-
-void __omm_array_add(OmmArray *parr, const void *item) {
-    if (parr && *parr) {
-        if (omm_array_count(*parr) == omm_array_capacity(*parr)) {
-            s32 size = omm_array_size(*parr);
-            s32 count = omm_array_count(*parr);
-            s32 capacity = omm_array_capacity(*parr);
-            OmmArray arr = OMM_MEMNEW(u8, (3 * sizeof(s32)) + (capacity * 2 * size));
-            OMM_MEMCPY(arr, *parr, (3 * sizeof(s32)) + (count * size));
-            omm_array_capacity(arr) *= 2;
-            OMM_MEMDEL(*parr);
-            *parr = arr;
-        }
-        OMM_MEMCPY(omm_array_at(*parr, omm_array_count(*parr)), item, omm_array_size(*parr));
-        omm_array_count(*parr)++;
-    }
-}
-
-void __omm_array_remove(OmmArray arr, s32 index) {
-    if (arr) {
-        if (index == -1) {
-            omm_array_count(arr) = 0;
-        } else {
-            OMM_MEMMOV(omm_array_at(arr, index), omm_array_at(arr, index + 1), (omm_array_count(arr) - index - 1) * omm_array_size(arr));
-            omm_array_count(arr)--;
-        }
-    }
-}
-
-s32 __omm_array_find(const OmmArray arr, const void *item) {
-    if (arr) {
-        const u8 *cur = omm_array_at(arr, 0);
-        const u8 *end = omm_array_at(arr, omm_array_count(arr));
-        for (s32 i = 0; cur < end; ++i, cur += omm_array_size(arr)) {
-            if (OMM_MEMCMP(cur, item, omm_array_size(arr))) {
-                return i;
-            }
+s32 __omm_array_find(OmmArray *parr, __OmmNoP item) {
+    for (s32 i = 0; i != parr->c; ++i) {
+        if (__omm_nop_eq(parr->p[i], item)) {
+            return i;
         }
     }
     return -1;
+}
+
+void __omm_array_add(OmmArray *parr, __OmmNoP item) {
+    if (parr->c == parr->s) {
+        parr->s = DOUBLE_SIZE(parr->s);
+        parr->p = __omm_realloc(parr->p, parr->s, parr->c, sizeof(__OmmNoP));
+    }
+    parr->p[parr->c] = item;
+    parr->c++;
+}
+
+void __omm_array_remove(OmmArray *parr, s32 index) {
+    if (index == -1) {
+        parr->c = 0;
+    } else if (index < parr->c) {
+        OMM_MEMMOV(parr->p + index, parr->p + index + 1, sizeof(__OmmNoP) * (parr->c - index - 1));
+        parr->c--;
+    }
+}
+
+//
+// OmmMap: a growing array of key/value pairs with dynamic memory allocation.
+// DO NOT USE THE FUNCTIONS OR STRUCTURES STARTING WITH UNDERSCORES.
+// ALLOWED TYPES ARE ONLY NUMERIC AND POINTERS.
+//
+
+s32 __omm_map_find_key(OmmMap *pmap, __OmmNoP key) {
+    for (s32 i = 0; i != pmap->c; ++i) {
+        if (__omm_nop_eq(pmap->k[i], key)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+s32 __omm_map_find_val(OmmMap *pmap, __OmmNoP val) {
+    for (s32 i = 0; i != pmap->c; ++i) {
+        if (__omm_nop_eq(pmap->v[i], val)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void __omm_map_add(OmmMap *pmap, __OmmNoP key, __OmmNoP val) {
+    if (pmap->c == pmap->s) {
+        pmap->s = DOUBLE_SIZE(pmap->s);
+        pmap->k = __omm_realloc(pmap->k, pmap->s, pmap->c, sizeof(__OmmNoP));
+        pmap->v = __omm_realloc(pmap->v, pmap->s, pmap->c, sizeof(__OmmNoP));
+    }
+    pmap->k[pmap->c] = key;
+    pmap->v[pmap->c] = val;
+    pmap->c++;
+}
+
+void __omm_map_remove(OmmMap *pmap, s32 index) {
+    if (index == -1) {
+        pmap->c = 0;
+    } else if (index < pmap->c) {
+        OMM_MEMMOV(pmap->k + index, pmap->k + index + 1, sizeof(__OmmNoP) * (pmap->c - index - 1));
+        OMM_MEMMOV(pmap->v + index, pmap->v + index + 1, sizeof(__OmmNoP) * (pmap->c - index - 1));
+        pmap->c--;
+    }
+}
+
+//
+// OmmHMap: a sorted array of key/pointer pairs with dynamic memory allocation; its key is a u32 and its size is always a PoT.
+// DO NOT USE THE FUNCTIONS OR STRUCTURES STARTING WITH UNDERSCORES.
+// DO NOT USE THE KEY 0, AS IT IS USED AS AN EMPTY SLOT.
+// ZERO CHECKS ARE OMITTED FOR FASTER PROCESSING.
+//
+
+s32 __omm_hmap_find(OmmHMap *phmap, u32 key) {
+    if (OMM_LIKELY(phmap->s)) {
+        s32 i = 0, c = phmap->s;
+        const u32 *k = phmap->k;
+        while (c >>= 1) {
+            i += ((k[i + c] >= key) ? c : 0);
+        }
+        if (k[i] == key) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void __omm_hmap_insert(OmmHMap *phmap, u32 key, void *val) {
+    if (!phmap->k || phmap->k[phmap->s - 1]) {
+        phmap->s = DOUBLE_SIZE(phmap->s);
+        phmap->k = __omm_realloc(phmap->k, phmap->s, phmap->s >> 1, sizeof(u32));
+        phmap->v = __omm_realloc(phmap->v, phmap->s, phmap->s >> 1, sizeof(void *));
+    }
+    for (s32 i = 0; i != phmap->s; ++i) {
+        if (key > phmap->k[i]) {
+            OMM_MEMMOV(phmap->k + i + 1, phmap->k + i, sizeof(u32)    * (phmap->s - i - 1));
+            OMM_MEMMOV(phmap->v + i + 1, phmap->v + i, sizeof(void *) * (phmap->s - i - 1));
+            phmap->k[i] = key;
+            phmap->v[i] = val;
+            return;
+        }
+    }
 }
 
 //
@@ -103,7 +173,7 @@ static OmmMemoryObject *omm_memory_get_free_slot(OmmMemoryPool *omp) {
 }
 
 void *omm_memory_new(void *pool, s32 size, void *caller) {
-    void *ptr = NULL;
+    void *p = NULL;
     if (pool) {
         OmmMemoryPool *omp = (OmmMemoryPool *) pool;
         OmmMemoryObject *obj = omm_memory_get_free_slot(omp);
@@ -115,11 +185,11 @@ void *omm_memory_new(void *pool, s32 size, void *caller) {
             OMM_MEMSET(obj->data, 0, size);
         }
         obj->owner = caller;
-        ptr = obj->data;
+        p = obj->data;
     } else {
-        ptr = OMM_MEMNEW(u8, size);
+        p = OMM_MEMNEW(u8, size);
     }
-    return ptr;
+    return p;
 }
 
 static void omm_memory_init_pool(void **pool, s32 capacity) {

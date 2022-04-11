@@ -41,11 +41,6 @@ static bool omm_metal_water_common_stationary_step(struct MarioState* m, s32 ani
 
 static bool omm_metal_water_common_air_action_step(struct MarioState *m, u32 landAction, s32 animID) {
     omm_mario_update_air_without_turn(m);
-
-    if (m->action != ACT_OMM_METAL_WATER_LONG_JUMP) {
-        mario_set_forward_vel(m, omm_min_f(m->forwardVel, 16.f));
-    }
-
     switch (perform_air_step(m, 0)) {
         case AIR_STEP_NONE:
             obj_anim_play(m->marioObj, animID, 1.f);
@@ -182,25 +177,25 @@ static s32 omm_act_metal_water_walking(struct MarioState *m) {
 
     // Push / Side-step
     if (step == GROUND_STEP_HIT_WALL) {
-        mario_set_forward_vel(m, omm_min_f(m->forwardVel, OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED / 4.f));
+        mario_set_forward_vel(m, min_f(m->forwardVel, OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED / 4.f));
         if (m->wall == NULL) {
             obj_anim_play(m->marioObj, MARIO_ANIM_PUSHING, 1.f);
             omm_metal_water_play_step_sound(m, 6, 18);
         } else {
             s16 wallAngle = atan2s(m->wall->normal.z, m->wall->normal.x);
             s16 dWallAngle = wallAngle - m->faceAngle[1];
-            if (omm_abs_s(dWallAngle) >= 0x7200) {
+            if (abs_s(dWallAngle) >= 0x7200) {
                 obj_anim_play(m->marioObj, MARIO_ANIM_PUSHING, 1.f);
                 omm_metal_water_play_step_sound(m, 6, 18);
             } else {
-                f32 animAccel = 2.f * sqrtf(omm_sqr_f(m->pos[0] - pos[0]) + omm_sqr_f(m->pos[2] - pos[2]));
+                f32 animAccel = 2.f * sqrtf(sqr_f(m->pos[0] - pos[0]) + sqr_f(m->pos[2] - pos[2]));
                 obj_anim_play(m->marioObj, MARIO_ANIM_SIDESTEP_LEFT + (dWallAngle < 0), animAccel);
                 omm_metal_water_play_step_sound(m, 20, 20);
                 m->marioObj->oGfxAngle[1] = wallAngle + 0x8000;
             }
         }
     } else {
-        obj_anim_play(m->marioObj, MARIO_ANIM_WALKING, omm_max_f(0.1f, (m->forwardVel / 4.0f)));
+        obj_anim_play(m->marioObj, MARIO_ANIM_WALKING, max_f(0.1f, (m->forwardVel / 4.0f)));
         omm_metal_water_play_step_sound(m, 10, 49);
     }
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
@@ -211,7 +206,7 @@ static s32 omm_act_metal_water_start_crouching(struct MarioState *m) {
     action_a_pressed(1, ACT_OMM_METAL_WATER_BACKFLIP, 0, RETURN_CANCEL);
     action_off_floor(1, ACT_OMM_METAL_WATER_FREEFALL, 0, RETURN_CANCEL);
 
-    mario_set_forward_vel(m, omm_max_f(0.f, m->forwardVel - 2.f));
+    mario_set_forward_vel(m, max_f(0.f, m->forwardVel - 2.f));
     perform_ground_step(m);
     m->pos[1] = m->floorHeight;
     m->vel[1] = 0.f;
@@ -410,26 +405,36 @@ static s32 omm_act_metal_water_side_flip_land(struct MarioState *m) {
 }
 
 static s32 omm_act_metal_water_long_jump(struct MarioState *m) {
-    action_init((m->forwardVel *= 1.5f), 26.f, PARTICLE_MIST_CIRCLE, SOUND_ACTION_METAL_JUMP_WATER);
+#if !OMM_GAME_IS_R96A
+    if (OMM_CHEAT_BLJ_ANYWHERE_REQ && (m->controller->buttonPressed & A_BUTTON)) {
+        m->vel[1] = -50.f;
+    }
+#endif
+    action_init((m->forwardVel *= 1.5f), (OMM_CHEAT_BLJ_ANYWHERE_REQ ? -50.f : 26.f), PARTICLE_MIST_CIRCLE, SOUND_ACTION_METAL_JUMP_WATER);
     action_cappy(1, ACT_OMM_METAL_WATER_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
     action_b_pressed(1, ACT_OMM_METAL_WATER_JUMP_KICK, 0, RETURN_CANCEL);
-    action_air_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_METAL_WATER_SPIN_AIR, 0, RETURN_CANCEL);
+    action_air_spin(OMM_MOVESET_ODYSSEY && !OMM_CHEAT_BLJ_ANYWHERE_REQ, ACT_OMM_METAL_WATER_SPIN_AIR, 0, RETURN_CANCEL);
     action_condition(omm_metal_water_check_water_jump(m), ACT_WATER_JUMP, 0, RETURN_CANCEL);
     action_condition(omm_metal_water_common_air_action_step(m, ACT_OMM_METAL_WATER_LONG_JUMP_LAND, MARIO_ANIM_SLOW_LONGJUMP), 0, 0, RETURN_BREAK);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
 
 static s32 omm_act_metal_water_long_jump_land(struct MarioState *m) {
+#if !OMM_GAME_IS_R96A
+    if (OMM_CHEAT_BLJ_ANYWHERE_REQ) {
+        action_a_pressed(1, ACT_OMM_METAL_WATER_LONG_JUMP, 0, RETURN_CANCEL, m->vel[1] = -50.f;);
+    }
+#endif
     action_init(m->forwardVel, 0.f, PARTICLE_MIST_CIRCLE, SOUND_ACTION_METAL_LAND_WATER, omm_metal_water_set_next_jump(ACT_OMM_METAL_WATER_LONG_JUMP););
     action_cappy(1, ACT_OMM_METAL_WATER_CAPPY_THROW_GROUND, 0, RETURN_CANCEL);
     action_a_pressed(m->controller->buttonDown & Z_TRIG, gOmmData->mario->metalWater.jumpNext, 0, NO_RETURN);
     action_a_pressed(1, ACT_OMM_METAL_WATER_JUMP, 0, RETURN_CANCEL);
     action_b_pressed(1, ACT_OMM_METAL_WATER_PUNCHING, 0, RETURN_CANCEL);
     action_off_floor(1, ACT_OMM_METAL_WATER_FREEFALL, 0, RETURN_CANCEL);
-    action_moving(1, ACT_OMM_METAL_WATER_WALKING, 0, RETURN_CANCEL);
+    action_moving(!OMM_CHEAT_BLJ_ANYWHERE_REQ, ACT_OMM_METAL_WATER_WALKING, 0, RETURN_CANCEL);
 
     if (!(m->input & INPUT_NONZERO_ANALOG)) {
-        mario_set_forward_vel(m, omm_max_f(0.f, m->forwardVel - 2.f));
+        mario_set_forward_vel(m, max_f(0.f, m->forwardVel - 2.f));
     } else {
         mario_set_forward_vel(m, approach_f32(m->forwardVel, 0.f, 1.5f, 1.5f));
     }
@@ -476,9 +481,9 @@ static s16 omm_metal_water_wall_slide_get_jump_angle(struct MarioState *m) {
             dAngle = 0x8000 - dAngle;
         }
         if (dAngle < 0) {
-            dAngle = omm_min_s(dAngle, -0x8000 + OMM_MARIO_WALL_SLIDE_JUMP_ANGLE_MAX);
+            dAngle = min_s(dAngle, -0x8000 + OMM_MARIO_WALL_SLIDE_JUMP_ANGLE_MAX);
         } else {
-            dAngle = omm_max_s(dAngle, +0x8000 - OMM_MARIO_WALL_SLIDE_JUMP_ANGLE_MAX);
+            dAngle = max_s(dAngle, +0x8000 - OMM_MARIO_WALL_SLIDE_JUMP_ANGLE_MAX);
         }
     }
     return (0x8000 + wAngle - dAngle);
@@ -524,12 +529,12 @@ static s32 omm_act_metal_water_wall_kick_air(struct MarioState *m) {
 //
 
 static s32 omm_act_metal_water_punching(struct MarioState *m) {
-    action_init(omm_max_f(12.f, m->forwardVel), 0.f, 0, 0, omm_metal_water_set_next_jump(ACT_OMM_METAL_WATER_JUMP););
+    action_init(max_f(12.f, m->forwardVel), 0.f, 0, 0, omm_metal_water_set_next_jump(ACT_OMM_METAL_WATER_JUMP););
     action_cappy(1, ACT_OMM_METAL_WATER_CAPPY_THROW_GROUND, 0, RETURN_CANCEL);
     action_a_pressed(1, gOmmData->mario->metalWater.jumpNext, 0, RETURN_CANCEL);
     action_off_floor(1, ACT_OMM_METAL_WATER_FREEFALL, 0, RETURN_CANCEL);
 
-    mario_set_forward_vel(m, approach_f32(omm_clamp_f(m->forwardVel, -OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED, OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED), 0, 1.5f, 1.f));
+    mario_set_forward_vel(m, approach_f32(clamp_f(m->forwardVel, -OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED, OMM_MARIO_METAL_WATER_MAX_WALKING_SPEED), 0, 1.5f, 1.f));
     perform_ground_step(m);
     u32 action = omm_metal_water_update_punch_sequence(m);
     action_condition(action != 0, action, 0, RETURN_BREAK);
@@ -539,7 +544,7 @@ static s32 omm_act_metal_water_punching(struct MarioState *m) {
 
 static s32 omm_act_metal_water_jump_kick(struct MarioState *m) {
     bool cappyTwirl = (OMM_MOVESET_ODYSSEY && (omm_cappy_get_object() != NULL));
-    action_init(omm_min_f(m->forwardVel, 6.f), (cappyTwirl ? 26.f : 22.f), PARTICLE_MIST_CIRCLE, SOUND_ACTION_METAL_JUMP_WATER, m->actionArg = cappyTwirl;);
+    action_init(min_f(m->forwardVel, 6.f), (cappyTwirl ? 26.f : 22.f), PARTICLE_MIST_CIRCLE, SOUND_ACTION_METAL_JUMP_WATER, m->actionArg = cappyTwirl;);
     action_cappy(1, ACT_OMM_METAL_WATER_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
     action_z_pressed(1, ACT_OMM_METAL_WATER_GROUND_POUND, 0, RETURN_CANCEL);
     action_condition(omm_metal_water_check_water_jump(m), ACT_WATER_JUMP, 0, RETURN_CANCEL);
@@ -580,7 +585,7 @@ static s32 omm_act_metal_water_dive(struct MarioState *m) {
     omm_mario_update_air_without_turn(m);
     switch (perform_air_step(m, 0)) {
         case AIR_STEP_NONE:
-            m->faceAngle[0] = omm_max_s(m->faceAngle[0] - 0x200 * (m->vel[1] < 0.0f), -0x2AAA);
+            m->faceAngle[0] = max_s(m->faceAngle[0] - 0x200 * (m->vel[1] < 0.0f), -0x2AAA);
             m->marioObj->oGfxAngle[0] = -m->faceAngle[0];
             break;
 
@@ -593,7 +598,7 @@ static s32 omm_act_metal_water_dive(struct MarioState *m) {
         case AIR_STEP_HIT_WALL:
             mario_bonk_reflection(m, true);
             m->faceAngle[0] = 0;
-            m->vel[1] = omm_min_f(0, m->vel[1]);
+            m->vel[1] = min_f(0, m->vel[1]);
             m->particleFlags |= PARTICLE_VERTICAL_STAR;
             omm_mario_set_action(m, ACT_OMM_METAL_WATER_BACKWARD_AIR_KB, 0, 0);
             break;
@@ -606,7 +611,7 @@ static s32 omm_act_metal_water_ground_pound(struct MarioState *m) {
 
     if (m->actionState == 0) {
 
-        m->pos[1] = omm_min_f(m->pos[1] + omm_max_s(0, 20 - 2 * m->actionTimer), m->ceilHeight - 160.f);
+        m->pos[1] = min_f(m->pos[1] + max_s(0, 20 - 2 * m->actionTimer), m->ceilHeight - 160.f);
         vec3f_copy(m->marioObj->oGfxPos, m->pos);
         mario_set_forward_vel(m, 0.0f);
         obj_anim_play(m->marioObj, m->actionArg == 0 ? MARIO_ANIM_START_GROUND_POUND : MARIO_ANIM_TRIPLE_JUMP_GROUND_POUND, 1.f);
@@ -675,7 +680,7 @@ static s32 omm_act_metal_water_ground_pound_jump(struct MarioState *m) {
     obj_anim_play(m->marioObj, MARIO_ANIM_SINGLE_JUMP, 1.f);
     obj_anim_clamp_frame(m->marioObj, 0, 9); // Luigi's freaking flutter jump (again)
     s16 prevSpinYaw = gOmmData->mario->spin.yaw;
-    gOmmData->mario->spin.yaw += (0x80 * m->vel[1]) * (prevSpinYaw != 0) * (omm_mario_has_vanish_cap(m) ? 0.8f : 1.f) / omm_sqr_f(omm_player_get_selected_jump_multiplier());
+    gOmmData->mario->spin.yaw += (0x80 * m->vel[1]) * (prevSpinYaw != 0) * (omm_mario_has_vanish_cap(m) ? 0.8f : 1.f) / sqr_f(omm_player_get_selected_jump_multiplier());
     gOmmData->mario->spin.yaw *= ((u16) prevSpinYaw < (u16) gOmmData->mario->spin.yaw) * (m->vel[1] > 0.f);
     m->marioObj->oGfxAngle[1] = m->faceAngle[1] + gOmmData->mario->spin.yaw;
     m->particleFlags |= (m->vel[1] > 0.f ? PARTICLE_DUST : 0);
@@ -705,7 +710,7 @@ static s32 omm_act_metal_water_backward_air_kb(struct MarioState *m) {
 
         case AIR_STEP_HIT_WALL:
             mario_bonk_reflection(m, false);
-            m->vel[1] = omm_min_f(0, m->vel[1]);
+            m->vel[1] = min_f(0, m->vel[1]);
             mario_set_forward_vel(m, m->forwardVel);
             break;
     }
@@ -722,8 +727,8 @@ static s32 omm_act_metal_water_cappy_throw_ground(struct MarioState *m) {
     action_a_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_METAL_WATER_JUMP, 0, RETURN_CANCEL);
     action_b_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_METAL_WATER_PUNCHING, 0, RETURN_CANCEL);
     action_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_METAL_WATER_SPIN_GROUND, 0, RETURN_CANCEL);
-    f32 f = coss(omm_abs_s(m->faceAngle[1] - m->intendedYaw)) * m->controller->stickMag / 64.f;
-    mario_set_forward_vel(m, m->forwardVel * omm_clamp_f(f, 0.80f, 0.98f));
+    f32 f = coss(abs_s(m->faceAngle[1] - m->intendedYaw)) * m->controller->stickMag / 64.f;
+    mario_set_forward_vel(m, m->forwardVel * clamp_f(f, 0.80f, 0.98f));
 
     s32 step = perform_ground_step(m);
     action_condition(step == GROUND_STEP_LEFT_GROUND, ACT_OMM_METAL_WATER_FREEFALL, 0, RETURN_BREAK);
@@ -732,7 +737,7 @@ static s32 omm_act_metal_water_cappy_throw_ground(struct MarioState *m) {
 }
 
 static s32 omm_act_metal_water_cappy_throw_airborne(struct MarioState *m) {
-    action_init(omm_min_f(m->forwardVel, 4.f), 10.f, 0, 0);
+    action_init(min_f(m->forwardVel, 4.f), 10.f, 0, 0);
     action_cappy(1, ACT_OMM_METAL_WATER_CAPPY_THROW_AIRBORNE, 0, RETURN_CANCEL);
     action_z_pressed(1, ACT_OMM_METAL_WATER_GROUND_POUND, 0, RETURN_CANCEL);
     action_b_pressed(1, ACT_OMM_METAL_WATER_JUMP_KICK, 0, RETURN_CANCEL);
@@ -771,10 +776,10 @@ static s32 omm_act_metal_water_spin_ground(struct MarioState *m) {
     s32 step = perform_ground_step(m);
     action_condition(step == GROUND_STEP_LEFT_GROUND, ACT_OMM_METAL_WATER_SPIN_AIR, 0, RETURN_BREAK);
 
-    mario_set_forward_vel(m, omm_max_f(0, m->forwardVel - 0.8f));
+    mario_set_forward_vel(m, max_f(0, m->forwardVel - 0.8f));
     obj_anim_play(m->marioObj, MARIO_ANIM_TWIRL, 1.f);
     play_sound(SOUND_MOVING_TERRAIN_SLIDE + SOUND_TERRAIN_STONE, m->marioObj->oCameraToObject);
-    gOmmData->mario->spin.yaw += omm_min_s(0x238A, 0x200 * gOmmData->mario->spin.timer);
+    gOmmData->mario->spin.yaw += min_s(0x238A, 0x200 * gOmmData->mario->spin.timer);
     m->marioObj->oGfxAngle[1] = m->faceAngle[1] - gOmmData->mario->spin.yaw;
     m->marioBodyState->handState = MARIO_HAND_OPEN;
     m->particleFlags |= (PARTICLE_DUST | PARTICLE_PLUNGE_BUBBLE);
@@ -794,7 +799,7 @@ static s32 omm_act_metal_water_spin_air(struct MarioState *m) {
 
     obj_anim_play(m->marioObj, MARIO_ANIM_TWIRL, 1.f);
     s16 prevSpinYaw = gOmmData->mario->spin.yaw;
-    gOmmData->mario->spin.yaw += omm_min_s(0x4139, 0x300 * gOmmData->mario->spin.timer);
+    gOmmData->mario->spin.yaw += min_s(0x4139, 0x300 * gOmmData->mario->spin.timer);
     if (gOmmData->mario->spin.yaw < prevSpinYaw) play_sound(SOUND_ACTION_SPIN, m->marioObj->oCameraToObject);
     m->marioObj->oGfxAngle[1] = m->faceAngle[1] - gOmmData->mario->spin.yaw;
     m->marioBodyState->handState = MARIO_HAND_OPEN;
@@ -815,7 +820,7 @@ static s32 omm_act_metal_water_spin_jump(struct MarioState *m) {
 
     obj_anim_play(m->marioObj, MARIO_ANIM_TWIRL, 1.f);
     s16 prevSpinYaw = gOmmData->mario->spin.yaw;
-    gOmmData->mario->spin.yaw += omm_min_s(0x44CD, 0x300 * m->vel[1]);
+    gOmmData->mario->spin.yaw += min_s(0x44CD, 0x300 * m->vel[1]);
     if (gOmmData->mario->spin.yaw < prevSpinYaw) play_sound(SOUND_ACTION_SPIN, m->marioObj->oCameraToObject);
     m->marioObj->oGfxAngle[1] = m->faceAngle[1] - gOmmData->mario->spin.yaw;
     m->marioBodyState->handState = MARIO_HAND_OPEN;

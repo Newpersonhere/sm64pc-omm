@@ -48,18 +48,12 @@ static s32 sOmmStarsTargetLevelNum;
 static s32 sOmmStarsTargetAreaIndex;
 static s32 sOmmStarsCurrAreaIndex;
 static s32 omm_stars_preprocess_level_cmd(u8 type, void *cmd) {
-
-    // AREA
-    if (type == 0x1F) {
-        sOmmStarsCurrAreaIndex = (s32) ((u8) omm_level_cmd_get(cmd, 2));
-
+    if (type == LEVEL_CMD_AREA) {
+        sOmmStarsCurrAreaIndex = level_cmd_get(cmd, u8, 2);
     } else if (sOmmStarsCurrAreaIndex == sOmmStarsTargetAreaIndex) {
-    
-        // OBJECT
-        // OBJECT_WITH_ACTS
-        if (type == 0x24) {
-            const BehaviorScript *behavior = (const BehaviorScript *) omm_level_cmd_get(cmd, 20);
-            u32 behaviorArg = (u32) omm_level_cmd_get(cmd, 16);
+        if (type == LEVEL_CMD_OBJECT_WITH_ACTS) {
+            const BehaviorScript *behavior = level_cmd_get(cmd, const BehaviorScript *, 20);
+            u32 behaviorArg = level_cmd_get(cmd, u32, 16);
 
             // Common objects
             if ((behavior == bhvStar) ||
@@ -154,11 +148,8 @@ static s32 omm_stars_preprocess_level_cmd(u8 type, void *cmd) {
                 omm_stars_add_data(sOmmStarsTargetLevelNum, sOmmStarsTargetAreaIndex, 3, bhvMips, 0);
                 omm_stars_add_data(sOmmStarsTargetLevelNum, sOmmStarsTargetAreaIndex, 4, bhvMips, 0);
             }
-        }
-
-        // MACRO_OBJECTS
-        else if (type == 0x39) {
-            MacroObject *data = (MacroObject *) omm_level_cmd_get(cmd, 4);
+        } else if (type == LEVEL_CMD_MACRO_OBJECTS) {
+            MacroObject *data = level_cmd_get(cmd, MacroObject *, 4);
             for (; *data != MACRO_OBJECT_END(); data += 5) {
                 s32 presetId = (s32) ((data[0] & 0x1FF) - 0x1F);
                 s32 starIndex = -1;
@@ -180,8 +171,7 @@ static s32 omm_stars_preprocess_level_cmd(u8 type, void *cmd) {
             }
         }
     }
-
-    return OMM_LEVEL_SCRIPT_CONTINUE;
+    return LEVEL_SCRIPT_CONTINUE;
 }
 
 static void omm_stars_load_data(s32 level, s32 area) {
@@ -192,7 +182,7 @@ static void omm_stars_load_data(s32 level, s32 area) {
         sOmmStarsTargetLevelNum = level;
         sOmmStarsTargetAreaIndex = area;
         sOmmStarsCurrAreaIndex = 0;
-        omm_level_parse_script(omm_level_get_script(level), omm_stars_preprocess_level_cmd);
+        level_script_preprocess(omm_level_get_script(level), omm_stars_preprocess_level_cmd);
 
         // 100 Coins Star
         if (COURSE_IS_MAIN_COURSE(omm_level_get_course(level))) {
@@ -230,7 +220,7 @@ static u32 omm_stars_get_color_per_course(s32 course) {
             OMM_TEXTURE_STAR_BODY_15, OMM_TEXTURE_STAR_BODY_16, OMM_TEXTURE_STAR_BODY_17,
         };
         for (s32 i = 0; i != 18; ++i) {
-            OMM_STRING(filename, 256, "%s/%s/%s.png", OMM_EXE_FOLDER, OMM_GFX_FOLDER, sOmmStarsTextures[i] + sizeof(OMM_GFX) - 1);
+            OMM_STRING(filename, 256, "%s/%s/%s.png", OMM_EXE_FOLDER, OMM_GFX_FOLDER, sOmmStarsTextures[i]);
             s32 w, h;
             u8 *p = stbi_load(filename, &w, &h, NULL, 4);
             if (p) {
@@ -247,7 +237,7 @@ static u32 omm_stars_get_color_per_course(s32 course) {
             }
         }
     }
-    return sOmmStarsColors[((course < COURSE_COUNT) ? omm_clamp_s(course, 0, 16) : 17)];
+    return sOmmStarsColors[((course < COURSE_COUNT) ? clamp_s(course, 0, 16) : 17)];
 }
 
 //
@@ -289,16 +279,19 @@ bool omm_stars_is_collected(s32 index) {
 }
 
 // All stars of a level are declared collected if
-// - It's not a Bowser level
+// - It's not a Bowser or a Castle level
 // and
 // - It's a Bowser fight
 // or
 // - Every star bit is 1 and there is an exit warp
 bool omm_stars_all_collected(s32 level) {
-    return (level != LEVEL_BITDW) &&
-           (level != LEVEL_BITFS) &&
-           (level != LEVEL_BITS ) && (
-#if OMM_GAME_IS_SMSR            
+    return (level != LEVEL_BITDW  ) &&
+           (level != LEVEL_BITFS  ) &&
+           (level != LEVEL_BITS   ) && 
+           (level != LEVEL_GROUNDS) && 
+           (level != LEVEL_CASTLE ) && 
+           (level != LEVEL_COURT  ) && (
+#if OMM_GAME_IS_SMSR
            (level == LEVEL_ENDING) ||
 #endif
            (level == LEVEL_BOWSER_1) ||

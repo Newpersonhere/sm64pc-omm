@@ -26,7 +26,7 @@ static void omm_bhv_explosion_update() {
     obj_set_params(o, 0, 0, 0, 0, true);
     obj_reset_hitbox(o, 360, 480, 0, 0, 0, 120);
     obj_scale(o, 1.f + (o->oTimer / 3.f));
-    o->oOpacity = omm_max_s(0, 0xFF - (0x1C * o->oTimer));
+    o->oOpacity = max_s(0, 0xFF - (0x1C * o->oTimer));
     o->oAnimState++;
     omm_obj_process_interactions(o, OBJ_INT_PRESET_EXPLOSION);
 }

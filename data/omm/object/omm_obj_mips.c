@@ -97,7 +97,7 @@ static s32 omm_bhv_mips_get_target_waypoint(struct Object *o) {
         s32 index = sOmmMipsWaypointConnections[nearestWaypoint][i];
         if (index != -1) {
             Vec3f dirMipsToPoint = { sOmmMipsWaypointPositions[index][0] - o->oPosX, 0, sOmmMipsWaypointPositions[index][2] - o->oPosZ };
-            vec3f_norm(dirMipsToPoint);
+            vec3f_normalize(dirMipsToPoint);
             Vec3f currMipsPos = {
                 o->oPosX,
                 o->oPosY,
@@ -140,7 +140,7 @@ static s32 omm_bhv_mips_get_target_waypoint(struct Object *o) {
     f32 maxDeltaDist = -1e10f;
     s32 waypoint = -1;
     for (s32 i = 0; i != 4; ++i) {
-        f32 deltaDist = omm_min_f(marioDeltaDists[i], cappyDeltaDists[i]);
+        f32 deltaDist = min_f(marioDeltaDists[i], cappyDeltaDists[i]);
         if (deltaDist > maxDeltaDist) {
             waypoint = sOmmMipsWaypointConnections[nearestWaypoint][i];
             maxDeltaDist = deltaDist;
@@ -174,12 +174,12 @@ static void omm_bhv_mips_play_step_sound(struct Object *o) {
 
 static void omm_bhv_mips_step(struct Object *o, f32 fVel, bool dropToFloor) {
     obj_set_forward_vel(o, o->oMoveAngleYaw, 1.f, fVel);
-    obj_update_pos_and_vel(o, true, false, false, obj_is_on_ground(o), NULL);
+    perform_object_step(o, OBJ_STEP_UPDATE_HOME | OBJ_STEP_CHECK_ON_GROUND);
     if (dropToFloor) {
         obj_drop_to_floor(o);
         o->oVelY = 0.f;
     } else {
-        o->oVelY = !obj_is_on_ground(o) * omm_max_f(o->oVelY - o->oGravity, -75.f);
+        o->oVelY = !obj_is_on_ground(o) * max_f(o->oVelY - o->oGravity, -75.f);
     }
 }
 

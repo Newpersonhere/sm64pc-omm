@@ -6,7 +6,7 @@
 // Gfx
 //
 
-const Gfx NULL_dl[] = {
+const Gfx null[] = {
     gsSPEndDisplayList()
 };
 

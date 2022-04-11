@@ -15,7 +15,7 @@ static const Gfx omm_perry_charge_gfx[] = {
     gsSPClearGeometryMode(G_LIGHTING | G_CULL_BOTH),
     gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, SHADE, 0),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON),
-    gsSPDisplayList(NULL_dl),
+    gsSPDisplayList(null),
     gsSPTexture(0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF),
     gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPSetGeometryMode(G_LIGHTING | G_CULL_BACK),
@@ -40,7 +40,7 @@ typedef struct {
 const GeoLayout omm_geo_perry_charge[] = {
     GEO_NODE_START(),
     GEO_OPEN_NODE(),
-        GEO_ASM(0, omm_geo_link_geo_data),
+        GEO_ASM(0, geo_link_geo_data),
         GEO_DISPLAY_LIST(LAYER_TRANSPARENT, NULL),
     GEO_CLOSE_NODE(),
     GEO_END(),
@@ -74,7 +74,7 @@ static void omm_bhv_perry_charge_draw_billboard(Vtx **vtx, Gfx **tri, Vec3f pos0
     vec2f_to_3d_plane((*vtx)[2].v.ob, (*vtx)[2].v.ob, pos3d, camE1, gVec3fOne, camE2, gVec3fOne);
     vec2f_to_3d_plane((*vtx)[3].v.ob, (*vtx)[3].v.ob, pos3d, camE1, gVec3fOne, camE2, gVec3fOne);
     vec3f_copy(vz, camN);
-    vec3f_norm(vz);
+    vec3f_normalize(vz);
     vec3f_mul(vz, camOffset);
     vec3f_add((*vtx)[0].v.ob, vz);
     vec3f_add((*vtx)[1].v.ob, vz);
@@ -97,9 +97,13 @@ static void omm_bhv_perry_charge_draw_billboard(Vtx **vtx, Gfx **tri, Vec3f pos0
 
 static void omm_bhv_perry_charge_update() {
     struct Object *o = gCurrentObject;
-    struct Object *p = obj_get_first_with_behavior(omm_bhv_perry);
+    struct Object *p = omm_peach_get_perry_object();
     struct MarioState *m = gMarioState;
     OmmPerryChargeGeoData *data = NULL;
+    if (!p || !OMM_PLAYER_IS_PEACH) {
+        obj_mark_for_deletion(o);
+        return;
+    }
 
     // Compute Perry values
     Vec3f pos0 = { p->oPosX, p->oPosY, p->oPosZ };
@@ -117,7 +121,7 @@ static void omm_bhv_perry_charge_update() {
     }
 
     // Update position
-    data = omm_geo_get_geo_data(o, sizeof(OmmPerryChargeGeoData), omm_perry_charge_gfx, sizeof(omm_perry_charge_gfx));
+    data = geo_get_geo_data(o, sizeof(OmmPerryChargeGeoData), omm_perry_charge_gfx, sizeof(omm_perry_charge_gfx));
     OMM_MEMMOV(data->pos + OMM_PERRY_CHARGE_NUM_POINTS_PER_FRAME, data->pos, sizeof(Vec3f) * OMM_PERRY_CHARGE_NUM_POINTS_PER_FRAME * (OMM_PERRY_CHARGE_NUM_FRAMES - 1));
     vec3f_copy(data->pos[0], pos0);
     Vtx *vtx = data->vtx;
@@ -126,7 +130,7 @@ static void omm_bhv_perry_charge_update() {
     // Compute interpolated points
     for (s32 i = 1; i < OMM_PERRY_CHARGE_NUM_POINTS_PER_FRAME; ++i) {
         f32 t = (f32) i / (f32) OMM_PERRY_CHARGE_NUM_POINTS_PER_FRAME;
-        vec3f_interpolate(
+        vec3f_interpolate3(
             data->pos[i], t,
             data->pos[0], 0.f,
             data->pos[OMM_PERRY_CHARGE_NUM_POINTS_PER_FRAME], 1.f,
@@ -135,7 +139,7 @@ static void omm_bhv_perry_charge_update() {
     }
 
     // Update timers
-    o->oPerryChargeHandTimer += omm_sign_0_s(gOmmPerryCharge - o->oPerryChargeHandTimer);
+    o->oPerryChargeHandTimer += sign_0_s(gOmmPerryCharge - o->oPerryChargeHandTimer);
     if (gOmmPerryCharge > 0) {
         o->oPerryChargeSwordTimer = gOmmPerryCharge;
     } else if (o->oPerryChargeSwordTimer >= OMM_PERRY_CHARGE_FULL) {
@@ -146,30 +150,30 @@ static void omm_bhv_perry_charge_update() {
     
     // Sword glow
     Vec3f posSwordGlow = {
-        omm_lerp_f(0.5f, pos0[0], pos1[0]),
-        omm_lerp_f(0.5f, pos0[1], pos1[1]),
-        omm_lerp_f(0.5f, pos0[2], pos1[2]),
+        lerp_f(0.5f, pos0[0], pos1[0]),
+        lerp_f(0.5f, pos0[1], pos1[1]),
+        lerp_f(0.5f, pos0[2], pos1[2]),
     };
     gDPLoadTextureBlock(tri++, OMM_TEXTURE_EFFECT_PERRY_CHARGE_GLOW, G_IM_FMT_RGBA, G_IM_SIZ_32b, 128, 128, 0, 0, 0, 0, 0, 0, 0);
     if (o->oPerryChargeSwordTimer >= OMM_PERRY_CHARGE_FULL) {
-        f32 t = omm_invlerp_0_1_f(o->oPerryChargeSwordTimer, OMM_PERRY_CHARGE_FULL, OMM_PERRY_CHARGE_END);
+        f32 t = invlerp_0_1_f(o->oPerryChargeSwordTimer, OMM_PERRY_CHARGE_FULL, OMM_PERRY_CHARGE_END);
         omm_bhv_perry_charge_draw_billboard(&vtx, &tri, pos0, posSwordGlow, 0.f, 0, 4.f * t * scale[0], 1.f - t);
     } else if (o->oPerryChargeSwordTimer >= OMM_PERRY_CHARGE_START) {
-        f32 t = omm_invlerp_0_1_f(o->oPerryChargeSwordTimer, OMM_PERRY_CHARGE_FULL, OMM_PERRY_CHARGE_START);
+        f32 t = invlerp_0_1_f(o->oPerryChargeSwordTimer, OMM_PERRY_CHARGE_FULL, OMM_PERRY_CHARGE_START);
         omm_bhv_perry_charge_draw_billboard(&vtx, &tri, pos0, posSwordGlow, 0.f, 0, 3.f * t * scale[0], 1.f - t);
     }
     
     // Sword sparkles
     gDPLoadTextureBlock(tri++, OMM_TEXTURE_EFFECT_PERRY_CHARGE_SPARKLE, G_IM_FMT_RGBA, G_IM_SIZ_32b, 128, 128, 0, 0, 0, 0, 0, 0, 0);
     for (s32 i = OMM_PERRY_CHARGE_NUM_FRAMES; i != 0; --i) {
-        f32 k = omm_invlerp_0_1_f(i, OMM_PERRY_CHARGE_NUM_FRAMES, 1);
+        f32 k = invlerp_0_1_f(i, OMM_PERRY_CHARGE_NUM_FRAMES, 1);
         s32 j = o->oPerryChargeSwordTimer - ((i - 1) * 2);
         if (j >= OMM_PERRY_CHARGE_START && j < OMM_PERRY_CHARGE_FULL) {
-            f32 t = omm_invlerp_0_1_f(j, OMM_PERRY_CHARGE_START, OMM_PERRY_CHARGE_FULL);
+            f32 t = invlerp_0_1_f(j, OMM_PERRY_CHARGE_START, OMM_PERRY_CHARGE_FULL);
             Vec3f posSwordSparkle = {
-                omm_lerp_f(omm_lerp_f(t, 0.1f, 1.0f), pos0[0], pos1[0]),
-                omm_lerp_f(omm_lerp_f(t, 0.1f, 1.0f), pos0[1], pos1[1]),
-                omm_lerp_f(omm_lerp_f(t, 0.1f, 1.0f), pos0[2], pos1[2]),
+                lerp_f(lerp_f(t, 0.1f, 1.0f), pos0[0], pos1[0]),
+                lerp_f(lerp_f(t, 0.1f, 1.0f), pos0[1], pos1[1]),
+                lerp_f(lerp_f(t, 0.1f, 1.0f), pos0[2], pos1[2]),
             };
             omm_bhv_perry_charge_draw_billboard(&vtx, &tri, pos0, posSwordSparkle, scale[2] * 20.f, random_u16(), 1.f * k * scale[0], i == 1 ? 0.8f : 0.5f);
         }
@@ -177,10 +181,10 @@ static void omm_bhv_perry_charge_update() {
 
     // Hand sparkles
     gDPLoadTextureBlock(tri++, OMM_TEXTURE_EFFECT_PERRY_CHARGE_SPARKLE, G_IM_FMT_RGBA,G_IM_SIZ_32b, 128, 128, 0, 0, 0, 0, 0, 0, 0);
-    s32 numSparkles = omm_clamp_s(o->oPerryChargeHandTimer - OMM_PERRY_CHARGE_FULL, 0, OMM_PERRY_CHARGE_NUM_FRAMES) * 4;
-    f32 t0 = omm_invlerp_0_1_f(o->oPerryChargeHandTimer, OMM_PERRY_CHARGE_FULL, OMM_PERRY_CHARGE_END);
+    s32 numSparkles = clamp_s(o->oPerryChargeHandTimer - OMM_PERRY_CHARGE_FULL, 0, OMM_PERRY_CHARGE_NUM_FRAMES) * 4;
+    f32 t0 = invlerp_0_1_f(o->oPerryChargeHandTimer, OMM_PERRY_CHARGE_FULL, OMM_PERRY_CHARGE_END);
     for (s32 i = numSparkles - 1; i >= 0; --i) {
-        f32 t = omm_invlerp_0_1_f(i, numSparkles, 0);
+        f32 t = invlerp_0_1_f(i, numSparkles, 0);
         f32 s = t0 * t * (i == 0 ? 0.8f : 0.5f);
         f32 a = t0 * t * (i == 0 ? 0.8f : 0.5f);
         Vec3f posHandSparkle = {

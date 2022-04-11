@@ -2,6 +2,18 @@
 #include "data/omm/omm_includes.h"
 #undef OMM_ALL_HEADERS
 
+#if OMM_GAME_IS_R96A
+#define speed_modifier(...)     cheats_speed_modifier(__VA_ARGS__)
+#define jump_modifier(...)      cheats_jump_modifier(__VA_ARGS__)
+#define swim_modifier(...)      cheats_swim_modifier(__VA_ARGS__)
+#define walk_on_quicksand(...)  cheats_walk_on_hazards(__VA_ARGS__)
+#else
+#define speed_modifier(...)     (OMM_CHEAT_SUPER_SPEED ? 3 : 1)
+#define jump_modifier(...)      (OMM_CHEAT_SUPER_SPEED ? 3 : 1)
+#define swim_modifier(...)      (OMM_CHEAT_SUPER_SPEED ? 3 : 1)
+#define walk_on_quicksand(...)  (OMM_CHEAT_WALK_ON_QUICKSAND)
+#endif
+
 // Enhanced Mario step system
 // Enabled by setting Moveset to Odyssey
 // Adds several fixes and increases accuracy:
@@ -14,62 +26,120 @@
 // - Fixes underwater up/downwarps
 // - Fixes whirlpool attractive strength
 
-static void omm_clamp_mario_pos(struct MarioState *m) {
-    m->pos[0] = omm_clamp_f(m->pos[0], -OMM_COLLISION_LEVEL_BOUNDARY, +OMM_COLLISION_LEVEL_BOUNDARY);
-    m->pos[1] = omm_min_f(m->pos[1], +20000.f);
-    m->pos[2] = omm_clamp_f(m->pos[2], -OMM_COLLISION_LEVEL_BOUNDARY, +OMM_COLLISION_LEVEL_BOUNDARY);
+//
+// Generalized steps
+// Each generalized step is mapped to a specific step,
+// depending on the performed step (ground, air, hang, water)
+//
+
+#define STEP_NONE               0
+#define STEP_HIT_WALL           1
+#define STEP_HIT_LAVA_WALL      2
+#define STEP_HIT_FLOOR          3
+#define STEP_LEFT_FLOOR         4
+#define STEP_HIT_CEIL           5
+#define STEP_LEFT_CEIL          6
+#define STEP_SQUISH             7
+#define STEP_OUT_OF_BOUNDS      8
+#define STEP_GRABBED_LEDGE      9
+#define STEP_GRABBED_CEIL       10
+
+#define GROUND_STEP             0
+#define AIR_STEP                1
+#define HANG_STEP               2
+#define WATER_STEP              3
+
+static const s32 sStepResult[][4] = {
+/* STEP_NONE          */ { GROUND_STEP_NONE,        AIR_STEP_NONE,            HANG_STEP_NONE,      WATER_STEP_NONE        },
+/* STEP_HIT_WALL      */ { GROUND_STEP_HIT_WALL,    AIR_STEP_HIT_WALL,        HANG_STEP_HIT_WALL,  WATER_STEP_HIT_WALL    },
+/* STEP_HIT_LAVA_WALL */ { GROUND_STEP_HIT_WALL,    AIR_STEP_HIT_LAVA_WALL,   HANG_STEP_HIT_WALL,  WATER_STEP_HIT_WALL    },
+/* STEP_HIT_FLOOR     */ { GROUND_STEP_NONE,        AIR_STEP_LANDED,          HANG_STEP_NONE,      WATER_STEP_HIT_FLOOR   },
+/* STEP_LEFT_FLOOR    */ { GROUND_STEP_LEFT_GROUND, AIR_STEP_NONE,            HANG_STEP_NONE,      WATER_STEP_NONE        },
+/* STEP_HIT_CEIL      */ { GROUND_STEP_HIT_WALL,    AIR_STEP_HIT_WALL,        HANG_STEP_HIT_WALL,  WATER_STEP_HIT_CEILING },
+/* STEP_LEFT_CEIL     */ { GROUND_STEP_NONE,        AIR_STEP_NONE,            HANG_STEP_LEFT_CEIL, WATER_STEP_NONE        },
+/* STEP_SQUISH        */ { GROUND_STEP_HIT_WALL,    AIR_STEP_HIT_WALL,        HANG_STEP_HIT_WALL,  WATER_STEP_HIT_WALL    },
+/* STEP_OUT_OF_BOUNDS */ { GROUND_STEP_HIT_WALL,    AIR_STEP_HIT_WALL,        HANG_STEP_HIT_WALL,  WATER_STEP_HIT_WALL    },
+/* STEP_GRABBED_LEDGE */ { GROUND_STEP_NONE,        AIR_STEP_GRABBED_LEDGE,   HANG_STEP_NONE,      WATER_STEP_NONE        },
+/* STEP_GRABBED_CEIL  */ { GROUND_STEP_NONE,        AIR_STEP_GRABBED_CEILING, HANG_STEP_NONE,      WATER_STEP_NONE        },
+};
+
+OMM_INLINE void clamp_mario_pos(struct MarioState *m) {
+    m->pos[0] = clamp_f(m->pos[0], -LEVEL_BOUNDS, +LEVEL_BOUNDS);
+    m->pos[1] =   min_f(m->pos[1], +20000.f);
+    m->pos[2] = clamp_f(m->pos[2], -LEVEL_BOUNDS, +LEVEL_BOUNDS);
 }
 
 //
 // Improved Vanish cap
-// Mario can teleport through thin walls
-// Mario must end above floor that is not the death barrier
+// Mario can teleport through walls
+// Max distance is proportional to Mario's forward vel
 //
 
-static s32 omm_vanish_cap_go_through_wall(struct MarioState *m, s32 stepResultOnSuccess, s32 stepResultOnFailure, Vec3f pos, Vec3f vel, f32 offset, f32 radius) {
-    if (omm_mario_has_vanish_cap(m)) {
-        f32 vx = vel[0];
-        f32 vz = vel[2];
-        f32 vn = sqrtf(omm_sqr_f(vx) + omm_sqr_f(vz));
-        if (vn > 0.f) {
-            vx /= vn;
-            vz /= vn;
-            f32 dStart = ((2.f * vn) / OMM_STEP_NUM_SUB_STEPS);
-            f32 dEnd = (120.f + 2 * radius);
-            f32 dStep = radius / 50.f;
-            for (f32 d = dStart; d <= dEnd; d += dStep) {
-                Vec3f targetPos = { pos[0] + vx * d, pos[1], pos[2] + vz * d };
+static bool omm_mario_check_vanish_cap_step(struct MarioState *m, Vec3f target, s32 stepResult, f32 yOffset, f32 radius) {
+    if (stepResult == STEP_HIT_WALL && omm_mario_has_vanish_cap(m) && m->forwardVel != 0.f) {
 
-                // Walls
-                if (resolve_and_return_wall_collisions(targetPos, offset, radius)) {
-                    continue;
-                }
+        // Max distance
+        f32 maxDist = 5.f * max_f(m->controller->stickMag / 2.f, abs_f(m->forwardVel));
 
-                // Floor
-                struct Surface *floor = NULL;
-                f32 floorY = find_floor(targetPos[0], targetPos[1], targetPos[2], &floor);
-                if (!floor || floor->type == SURFACE_DEATH_PLANE) {
-                    continue;
-                }
+        // Target direction
+        Vec3f dir;
+        vec3f_copy(dir, m->vel);
+        vec3f_mul(dir, maxDist / m->forwardVel);
 
-                // Ceiling
-                struct Surface *ceil = NULL;
-                f32 ceilY = find_ceil(targetPos[0], targetPos[1], targetPos[2], &ceil);
-                if (ceil && targetPos[1] <= ceilY && targetPos[1] + 160.f > ceilY) {
-                    continue;
-                }
-
-                // OK
-                m->pos[0] = targetPos[0];
-                m->pos[1] = omm_max_f(targetPos[1], floorY);
-                m->pos[2] = targetPos[2];
-                m->wall   = NULL;
-                play_sound(SOUND_ACTION_TELEPORT, m->marioObj->oCameraToObject);
-                return stepResultOnSuccess;
-            }
+        // Target pos
+        vec3f_sum(target, m->pos, dir);
+        vec3f_mul(dir, -1.f);
+        target[1] += yOffset;
+        
+        // Do a raycast from the target to Mario's current pos (after the wall collision)
+        RayCollisionData hits;
+        if (find_collisions_on_ray(target, dir, &hits, 1.f, RAYCAST_FLAG_WALLS)) {
+            vec3f_copy(dir, (f32 *) &hits.hits[0].surf->normal);
+            vec3f_mul(dir, radius * 0.8f);
+            vec3f_copy(target, hits.hits[0].pos);
+            vec3f_add(target, dir);
+            target[1] -= yOffset;
+            play_sound(SOUND_ACTION_TELEPORT, m->marioObj->oCameraToObject);
+            m->wall = NULL;
+            return true;
         }
     }
-    return stepResultOnFailure;
+    return false;
+}
+
+static bool omm_object_check_move_through_walls(struct Object *o, Vec3f target) {
+    if (o->oWall && o->oForwardVel != 0.f) {
+        f32 radius = o->oWallHitboxRadius;
+        f32 height = o->hitboxHeight;
+        f32 offset = o->hitboxDownOffset;
+
+        // Max distance
+        f32 maxDist = 5.f * max_f(gPlayer1Controller->stickMag / 2.f, abs_f(o->oForwardVel));
+
+        // Target direction
+        Vec3f dir;
+        vec3f_copy(dir, &o->oVelX);
+        vec3f_mul(dir, maxDist / o->oForwardVel);
+
+        // Target pos
+        vec3f_sum(target, &o->oPosX, dir);
+        vec3f_mul(dir, -1.f);
+        target[1] += (height - offset) / 2.f;
+        
+        // Do a raycast from the target to the object's current pos (after the wall collision)
+        RayCollisionData hits;
+        if (find_collisions_on_ray(target, dir, &hits, 1.f, RAYCAST_FLAG_WALLS)) {
+            vec3f_copy(dir, (f32 *) &hits.hits[0].surf->normal);
+            vec3f_mul(dir, radius * 0.8f);
+            vec3f_copy(target, hits.hits[0].pos);
+            vec3f_add(target, dir);
+            target[1] -= (height - offset) / 2.f;
+            play_sound(SOUND_ACTION_TELEPORT, o->oCameraToObject);
+            o->oWall = NULL;
+            return true;
+        }
+    }
+    return false;
 }
 
 //
@@ -84,13 +154,14 @@ s32 stationary_ground_step(struct MarioState *m) {
         }
     }
 
+    // Update gfx and return step result
     m->pos[1] = m->floorHeight;
     m->vel[1] = 0.f;
-    omm_clamp_mario_pos(m);
+    clamp_mario_pos(m);
     gOmmData->mario->state.peakHeight = m->pos[1];
     vec3f_copy(m->marioObj->oGfxPos, m->pos);
     vec3s_set(m->marioObj->oGfxAngle, 0, m->faceAngle[1], 0);
-    return GROUND_STEP_NONE;
+    return sStepResult[STEP_NONE][GROUND_STEP];
 }
 
 void stop_and_set_height_to_floor(struct MarioState *m) {
@@ -132,12 +203,8 @@ static s32 omm_mario_perform_ground_sub_step(struct MarioState *m, Vec3f nextPos
     f32 ceilUpper = (OMM_STEP_FIX_EXPOSED_CEILINGS ? (ceilLower + 240.f) : +20000.f);
 
     // Out of bounds
-    if (floor == NULL) {
-        if (OMM_STEP_FIX_OUT_OF_BOUNDS_BONK) {
-            return omm_vanish_cap_go_through_wall(m, GROUND_STEP_NONE, GROUND_STEP_NONE, nextPos, m->vel, 60.f, 50.f);
-        } else {
-            return omm_vanish_cap_go_through_wall(m, GROUND_STEP_NONE, GROUND_STEP_HIT_WALL_STOP_QSTEPS, nextPos, m->vel, 60.f, 50.f);
-        }
+    if (!floor) {
+        return (OMM_STEP_FIX_OUT_OF_BOUNDS_BONK ? STEP_NONE : STEP_OUT_OF_BOUNDS);
     }
 
     // Shell ride
@@ -163,67 +230,88 @@ static s32 omm_mario_perform_ground_sub_step(struct MarioState *m, Vec3f nextPos
 
         // Hit ceil
         if (nextPos[1] >= ceilLower && nextPos[1] < ceilUpper) {
-            if (OMM_STEP_FIX_CEILINGS_BONK) {
-                return omm_vanish_cap_go_through_wall(m, GROUND_STEP_NONE, GROUND_STEP_NONE, nextPos, m->vel, 60.f, 50.f);
-            } else {
-                return omm_vanish_cap_go_through_wall(m, GROUND_STEP_NONE, GROUND_STEP_HIT_WALL_STOP_QSTEPS, nextPos, m->vel, 60.f, 50.f);
-            }
+            return (OMM_STEP_FIX_CEILINGS_BONK ? STEP_NONE : STEP_HIT_CEIL);
         }
 
         vec3f_copy(m->pos, nextPos);
         m->floor = floor;
         m->floorHeight = floorHeight;
-        return GROUND_STEP_LEFT_GROUND;
+        return STEP_LEFT_FLOOR;
     }
 
     // Squish
     if (floorHeight >= ceilLower && floorHeight < ceilUpper) {
-        return GROUND_STEP_HIT_WALL_STOP_QSTEPS;
+        return STEP_SQUISH;
     }
 
     // On ground
     vec3f_set(m->pos, nextPos[0], floorHeight, nextPos[2]);
     m->floor = floor;
     m->floorHeight = floorHeight;
-    if (wall != NULL) {
+    if (wall) {
         s16 wallDYaw = atan2s(wall->normal.z, wall->normal.x) - m->faceAngle[1];
         if ((wallDYaw >= +0x2AAA && wallDYaw <= +0x5555) ||
             (wallDYaw <= -0x2AAA && wallDYaw >= -0x5555)) {
-            return GROUND_STEP_NONE;
+            return STEP_NONE;
+        }
+
+        // Lava wall
+        if (wall->type == SURFACE_BURNING) {
+            return STEP_HIT_LAVA_WALL;
         }
 
         // Push/Side-step
-        return omm_vanish_cap_go_through_wall(m, GROUND_STEP_NONE, GROUND_STEP_HIT_WALL_CONTINUE_QSTEPS, nextPos, m->vel, 60.f, 50.f);
+        return STEP_HIT_WALL;
     }
-    return GROUND_STEP_NONE;
+    return STEP_NONE;
 }
 
 s32 perform_ground_step(struct MarioState *m) {
-    s32 stepResult;
-#if OMM_GAME_IS_R96A
-    s32 subSteps = OMM_STEP_NUM_SUB_STEPS * cheats_speed_modifier(m);
-#else
-    s32 subSteps = OMM_STEP_NUM_SUB_STEPS;
-#endif
+
+    // Init steps
+    s32 stepResult = STEP_NONE;
+    f32 speedMul = omm_player_get_selected_ground_speed_multiplier();
+    s32 numSteps = OMM_STEP_NUM_SUB_STEPS;
+    s32 subSteps = numSteps * speed_modifier(m);
+
+    // Perform steps
     for (s32 i = 0; i != subSteps; ++i) {
         Vec3f intendedPos;
-        intendedPos[0] = m->pos[0] + (m->floor->normal.y * m->vel[0] * omm_player_get_selected_ground_speed_multiplier()) / OMM_STEP_NUM_SUB_STEPS;
+        intendedPos[0] = m->pos[0] + (m->vel[0] * m->floor->normal.y * speedMul) / numSteps;
         intendedPos[1] = m->pos[1];
-        intendedPos[2] = m->pos[2] + (m->floor->normal.y * m->vel[2] * omm_player_get_selected_ground_speed_multiplier()) / OMM_STEP_NUM_SUB_STEPS;
+        intendedPos[2] = m->pos[2] + (m->vel[2] * m->floor->normal.y * speedMul) / numSteps;
         stepResult     = omm_mario_perform_ground_sub_step(m, intendedPos);
-        if (stepResult == GROUND_STEP_LEFT_GROUND ||
-            stepResult == GROUND_STEP_HIT_WALL_STOP_QSTEPS) {
+        if (stepResult == STEP_OUT_OF_BOUNDS ||
+            stepResult == STEP_HIT_LAVA_WALL ||
+            stepResult == STEP_LEFT_FLOOR ||
+            stepResult == STEP_HIT_CEIL ||
+            stepResult == STEP_SQUISH) {
             break;
         }
     }
 
+    // Turn lava walls into regular walls with "Walk on Lava" cheat
+    if (OMM_CHEAT_WALK_ON_LAVA && stepResult == STEP_HIT_LAVA_WALL) {
+        stepResult = STEP_HIT_WALL;
+    }
+
+    // Vanish cap extra step
+    Vec3f target;
+    if (omm_mario_check_vanish_cap_step(m, target, stepResult, 60.f, 50.f)) {
+        stepResult = omm_mario_perform_ground_sub_step(m, target);
+        if (stepResult == STEP_HIT_WALL) {
+            stepResult = STEP_NONE;
+        }
+    }
+
+    // Update gfx and return step result
     m->vel[1] = 0.f;
-    omm_clamp_mario_pos(m);
+    clamp_mario_pos(m);
     gOmmData->mario->state.peakHeight = m->pos[1];
     m->terrainSoundAddend = mario_get_terrain_sound_addend(m);
     vec3f_copy(m->marioObj->oGfxPos, m->pos);
     vec3s_set(m->marioObj->oGfxAngle, 0, m->faceAngle[1], 0);
-    return (stepResult == GROUND_STEP_HIT_WALL_CONTINUE_QSTEPS ? GROUND_STEP_HIT_WALL : stepResult);
+    return sStepResult[stepResult][GROUND_STEP];
 }
 
 u32 mario_update_moving_sand(struct MarioState *m) {
@@ -234,7 +322,7 @@ u32 mario_update_moving_sand(struct MarioState *m) {
             floorType == SURFACE_SHALLOW_MOVING_QUICKSAND ||
             floorType == SURFACE_INSTANT_MOVING_QUICKSAND) {
             s16 pushAngle = (m->floor->force << 8) & 0xFFFF;
-            f32 pushSpeed = omm_clamp_f(12.f - 4.f * (m->floor->force >> 8), 0.f, 12.f);
+            f32 pushSpeed = clamp_f(12.f - 4.f * (m->floor->force >> 8), 0.f, 12.f);
             m->vel[0] += pushSpeed * sins(pushAngle);
             m->vel[2] += pushSpeed * coss(pushAngle);
             return 1;
@@ -244,28 +332,24 @@ u32 mario_update_moving_sand(struct MarioState *m) {
 }
 
 u32 mario_update_quicksand(struct MarioState *m, f32 sinkingSpeed) {
-    if (!omm_mario_has_metal_cap(m) &&
-#if OMM_GAME_IS_R96A
-        !cheats_walk_on_hazards(m) &&
-#endif
-        !(m->action & ACT_FLAG_RIDING_SHELL)) {
+    if (!omm_mario_has_metal_cap(m) && !walk_on_quicksand(m) && !(m->action & ACT_FLAG_RIDING_SHELL)) {
         switch (m->floor->type) {
             case SURFACE_SHALLOW_QUICKSAND: {
-                m->quicksandDepth = omm_clamp_f(m->quicksandDepth + sinkingSpeed, 1.1f, 10.f);
+                m->quicksandDepth = clamp_f(m->quicksandDepth + sinkingSpeed, 1.1f, 10.f);
             } return 0;
 
             case SURFACE_SHALLOW_MOVING_QUICKSAND: {
-                m->quicksandDepth = omm_clamp_f(m->quicksandDepth + sinkingSpeed, 1.1f, 25.f);
+                m->quicksandDepth = clamp_f(m->quicksandDepth + sinkingSpeed, 1.1f, 25.f);
             } return 0;
 
             case SURFACE_QUICKSAND:
             case SURFACE_MOVING_QUICKSAND: {
-                m->quicksandDepth = omm_clamp_f(m->quicksandDepth + sinkingSpeed, 1.1f, 60.f);
+                m->quicksandDepth = clamp_f(m->quicksandDepth + sinkingSpeed, 1.1f, 60.f);
             } return 0;
 
             case SURFACE_DEEP_QUICKSAND:
             case SURFACE_DEEP_MOVING_QUICKSAND: {
-                m->quicksandDepth = omm_clamp_f(m->quicksandDepth + sinkingSpeed, 1.1f, 160.f);
+                m->quicksandDepth = clamp_f(m->quicksandDepth + sinkingSpeed, 1.1f, 160.f);
                 if (m->quicksandDepth == 160.f) {
                     update_mario_sound_and_camera(m);
                     return drop_and_set_mario_action(m, ACT_QUICKSAND_DEATH, 0);
@@ -275,13 +359,13 @@ u32 mario_update_quicksand(struct MarioState *m, f32 sinkingSpeed) {
             case SURFACE_INSTANT_QUICKSAND:
             case SURFACE_INSTANT_MOVING_QUICKSAND: {
                 if (OMM_LIKELY(OMM_MOVESET_ODYSSEY)) {
-                    m->quicksandDepth = omm_clamp_f(m->quicksandDepth + 2.f * sinkingSpeed, 1.1f, 160.f);
+                    m->quicksandDepth = clamp_f(m->quicksandDepth + 2.f * sinkingSpeed, 1.1f, 160.f);
                     if (m->quicksandDepth == 160.f) {
                         update_mario_sound_and_camera(m);
                         return drop_and_set_mario_action(m, ACT_QUICKSAND_DEATH, 0);
                     }
                     if (!OMM_CHEAT_GOD_MODE && !m->invincTimer) {
-                        if ((m->health - OMM_HEALTH_PER_SEGMENT) <= OMM_HEALTH_DEAD) {
+                        if ((m->health - OMM_HEALTH_ODYSSEY_PER_SEGMENT) <= OMM_HEALTH_ODYSSEY_DEAD) {
                             update_mario_sound_and_camera(m);
                             return drop_and_set_mario_action(m, ACT_QUICKSAND_DEATH, 0);
                         } else {
@@ -306,15 +390,13 @@ u32 mario_update_windy_ground(struct MarioState *m) {
         if (m->floor->type == SURFACE_HORIZONTAL_WIND) {
             f32 pushSpeed = 3.2f + (gGlobalTimer % 4);
             s16 pushAngle = (m->floor->force << 8) & 0xFFFF;
-
             if (m->action & ACT_FLAG_MOVING) {
                 s16 pushDYaw = m->faceAngle[1] - pushAngle;
-                pushSpeed = -omm_abs_f(m->forwardVel) * coss(pushDYaw) / 2.f;
+                pushSpeed = -abs_f(m->forwardVel) * coss(pushDYaw) / 2.f;
                 if (pushDYaw > -0x4000 && pushDYaw < 0x4000) {
                     pushSpeed *= -1.f;
                 }
             }
-
             m->vel[0] += pushSpeed * sins(pushAngle);
             m->vel[2] += pushSpeed * coss(pushAngle);
             return 1;
@@ -358,12 +440,12 @@ static bool omm_mario_check_ledge_grab(struct MarioState *m, struct Surface *wal
     ledgePos[0] = nextPos[0] - wall->normal.x * 60.f;
     ledgePos[2] = nextPos[2] - wall->normal.z * 60.f;
     ledgePos[1] = find_floor(ledgePos[0], nextPos[1] + (OMM_STEP_FIX_LEDGE_GRABS ? 80 : 160), ledgePos[2], &ledgeFloor);
-    if (ledgeFloor == NULL || ledgePos[1] - nextPos[1] <= 80.f) {
+    if (!ledgeFloor || ledgePos[1] - nextPos[1] <= 80.f) {
         return false;
     }
 
     // Make sure to not climb the ledge if it results in a soft bonk the next frame
-    if (OMM_MOVESET_ODYSSEY) {
+    if (OMM_STEP_FIX_LEDGE_GRABS) {
 
         // Floor is too steep (> 25 deg)
         if (ledgeFloor->normal.y < coss(0x11C7)) {
@@ -376,7 +458,7 @@ static bool omm_mario_check_ledge_grab(struct MarioState *m, struct Surface *wal
         }
 
         // Stick held in the opposite direction
-        if ((m->input & INPUT_NONZERO_ANALOG) && omm_abs_s((s16) (m->intendedYaw - m->faceAngle[1])) > 0x4000) {
+        if ((m->input & INPUT_NONZERO_ANALOG) && abs_s((s16) (m->intendedYaw - m->faceAngle[1])) > 0x4000) {
             return false;
         }
 
@@ -416,17 +498,13 @@ static s32 omm_mario_perform_air_sub_step(struct MarioState *m, Vec3f intendedPo
     f32 ceilUpper = (OMM_STEP_FIX_EXPOSED_CEILINGS ? (ceilLower + 240.f) : +20000.f);
 
     // Out of bounds
-    if (floor == NULL) {
+    if (!floor) {
         if (nextPos[1] <= m->floorHeight) {
             m->pos[1] = m->floorHeight;
-            return omm_vanish_cap_go_through_wall(m, AIR_STEP_NONE, AIR_STEP_LANDED, nextPos, m->vel, 30.f, 50.f);
+            return STEP_HIT_FLOOR;
         } else {
             m->pos[1] = nextPos[1];
-            if (OMM_STEP_FIX_OUT_OF_BOUNDS_BONK) {
-                return omm_vanish_cap_go_through_wall(m, AIR_STEP_NONE, AIR_STEP_NONE, nextPos, m->vel, 30.f, 50.f);
-            } else {
-                return omm_vanish_cap_go_through_wall(m, AIR_STEP_NONE, AIR_STEP_HIT_WALL, nextPos, m->vel, 30.f, 50.f);
-            }
+            return (OMM_STEP_FIX_OUT_OF_BOUNDS_BONK ? STEP_NONE : STEP_OUT_OF_BOUNDS);
         }
     }
 
@@ -449,7 +527,7 @@ static s32 omm_mario_perform_air_sub_step(struct MarioState *m, Vec3f intendedPo
             m->floorHeight = floorHeight;
         }
         m->pos[1] = floorHeight;
-        return AIR_STEP_LANDED;
+        return STEP_HIT_FLOOR;
     }
 
     // Hit ceiling
@@ -460,25 +538,21 @@ static s32 omm_mario_perform_air_sub_step(struct MarioState *m, Vec3f intendedPo
             m->vel[1] = 0.f;
 
             // Ceiling hang
-            if ((stepArg & AIR_STEP_CHECK_HANG) && (ceil != NULL) && (ceil->type == SURFACE_HANGABLE)) {
-                return AIR_STEP_GRABBED_CEILING;
+            if ((stepArg & AIR_STEP_CHECK_HANG) && ceil && ceil->type == SURFACE_HANGABLE) {
+                return STEP_GRABBED_CEIL;
             }
-            return AIR_STEP_NONE;
+            return STEP_NONE;
         }
 
         // Landed?
         if (nextPos[1] <= m->floorHeight) {
             m->pos[1] = m->floorHeight;
-            return AIR_STEP_LANDED;
+            return STEP_HIT_FLOOR;
         }
 
         // Hit ceiling from a side
         m->pos[1] = nextPos[1];
-        if (OMM_STEP_FIX_CEILINGS_BONK) {
-            return omm_vanish_cap_go_through_wall(m, AIR_STEP_NONE, AIR_STEP_NONE, nextPos, m->vel, 30.f, 50.f);
-        } else {
-            return omm_vanish_cap_go_through_wall(m, AIR_STEP_NONE, AIR_STEP_HIT_WALL, nextPos, m->vel, 30.f, 50.f);
-        }
+        return (OMM_STEP_FIX_CEILINGS_BONK ? STEP_NONE : STEP_HIT_CEIL);
     }
 
     // Update Mario's pos
@@ -487,23 +561,23 @@ static s32 omm_mario_perform_air_sub_step(struct MarioState *m, Vec3f intendedPo
     m->floorHeight = floorHeight;
 
     // Hit lower wall, try to ledge grab
-    if ((stepArg & AIR_STEP_CHECK_LEDGE_GRAB) && (upperWall == NULL) && (lowerWall != NULL)) {
+    if ((stepArg & AIR_STEP_CHECK_LEDGE_GRAB) && !upperWall && lowerWall) {
 
         // Ledge grab
         if (omm_mario_check_ledge_grab(m, lowerWall, intendedPos, nextPos)) {
-            return AIR_STEP_GRABBED_LEDGE;
+            return STEP_GRABBED_LEDGE;
         }
-        return AIR_STEP_NONE;
+        return STEP_NONE;
     }
 
     // Hit any wall
-    struct Surface *refWall = (upperWall != NULL ? upperWall : lowerWall);
-    if (refWall != NULL) {
+    struct Surface *refWall = (upperWall ? upperWall : lowerWall);
+    if (refWall) {
 
         // Lava wall
         if (refWall->type == SURFACE_BURNING) {
             *wall = refWall;
-            return AIR_STEP_HIT_LAVA_WALL;
+            return STEP_HIT_LAVA_WALL;
         }
 
         // Solid wall
@@ -511,10 +585,10 @@ static s32 omm_mario_perform_air_sub_step(struct MarioState *m, Vec3f intendedPo
         if (wallDYaw < -0x6000 || wallDYaw > 0x6000) {
             *wall = refWall;
             m->flags |= MARIO_UNKNOWN_30;
-            return omm_vanish_cap_go_through_wall(m, AIR_STEP_NONE, AIR_STEP_HIT_WALL, nextPos, m->vel, 30.f, 50.f);
+            return STEP_HIT_WALL;
         }
     }
-    return AIR_STEP_NONE;
+    return STEP_NONE;
 }
 
 static void omm_mario_apply_gravity(struct MarioState *m) {
@@ -553,7 +627,7 @@ static void omm_mario_apply_gravity(struct MarioState *m) {
     // Peach air attack
     else if (m->action == ACT_OMM_PEACH_ATTACK_AIR) {
         static const f32 sActOmmPeachAttackAirDecV[] = { 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 4 };
-        decV = sActOmmPeachAttackAirDecV[omm_min_s(m->actionTimer, OMM_ARRAY_SIZE(sActOmmPeachAttackAirDecV) - 1)];
+        decV = sActOmmPeachAttackAirDecV[min_s(m->actionTimer, OMM_ARRAY_SIZE(sActOmmPeachAttackAirDecV) - 1)];
     }
 
     // Wall-slide
@@ -576,7 +650,7 @@ static void omm_mario_apply_gravity(struct MarioState *m) {
 
     // Midair spin
     else if (m->action == ACT_OMM_MIDAIR_SPIN) {
-        decV = omm_clamp_f((gOmmData->mario->midairSpin.counter - 1) * 0.8f, 0.01f, 4.f);
+        decV = clamp_f((gOmmData->mario->midairSpin.counter - 1) * 0.8f, 0.01f, 4.f);
         maxV = 60.f;
     }
 
@@ -593,7 +667,7 @@ static void omm_mario_apply_gravity(struct MarioState *m) {
 
     // Twirl
     else if (m->action == ACT_TWIRLING && m->vel[1] < 0.f) {
-        f32 heaviness = 1024.f / omm_max_f(1024.f, m->angleVel[1]);
+        f32 heaviness = 1024.f / max_f(1024.f, m->angleVel[1]);
         decV = 4.f * heaviness;
         maxV = 75.f * heaviness;
     }
@@ -646,25 +720,15 @@ static void omm_mario_apply_gravity(struct MarioState *m) {
     }
 
     // Apply gravity
-    m->vel[1] = omm_max_f(-maxV, m->vel[1] - decV);
+    m->vel[1] = max_f(-maxV, m->vel[1] - decV);
 }
 
 static void omm_mario_apply_vertical_wind(struct MarioState *m) {
-    if (m->floor->type == SURFACE_VERTICAL_WIND) {
-        if (m->action != ACT_GROUND_POUND &&
-            m->action != ACT_OMM_SPIN_POUND &&
-            m->action != ACT_OMM_WATER_GROUND_POUND &&
-            m->action != ACT_OMM_METAL_WATER_GROUND_POUND &&
-            m->action != ACT_OMM_METAL_WATER_SPIN_POUND) {
-            f32 offsetY = m->pos[1] - -1500.f;
-            if (-3000.f < offsetY && offsetY < 2000.f) {
-                f32 maxVelY = 10000.f / (omm_max_f(0.f, offsetY) + 200.f);
-                if (m->vel[1] < maxVelY) {
-                    if ((m->vel[1] += maxVelY / 8.f) > maxVelY) {
-                        m->vel[1] = maxVelY;
-                    }
-                }
-            }
+    if (m->floor->type == SURFACE_VERTICAL_WIND && !omm_mario_is_ground_pounding(m)) {
+        f32 offsetY = m->pos[1] - -1500.f;
+        if (-3000.f < offsetY && offsetY < 2000.f) {
+            f32 maxVelY = 10000.f / (max_f(0.f, offsetY) + 200.f);
+            m->vel[1] = min_f(m->vel[1] + (maxVelY / 8.f), maxVelY);
         }
     }
 }
@@ -674,58 +738,70 @@ s32 perform_air_step(struct MarioState *m, u32 stepArg) {
         stepArg |= AIR_STEP_CHECK_HANG;
     }
 
+    // Init steps
+    s32 stepResult = STEP_NONE;
+    f32 speedMul = omm_player_get_selected_air_speed_multiplier();
+    s32 numSteps = OMM_STEP_NUM_SUB_STEPS;
+    s32 hStepMul = speed_modifier(m);
+    s32 yStepMul = (m->vel[1] > 0.f ? jump_modifier(m) : 1);
+    s32 subSteps = numSteps * hStepMul * yStepMul;
+
+    // Perform steps
     m->wall = NULL;
+    struct Surface *wall = NULL;
     f32 expectedY = (m->pos[1] + m->vel[1]);
-    s32 stepResult = AIR_STEP_NONE;
-#if OMM_GAME_IS_R96A
-    s32 hSteps = cheats_speed_modifier(m);
-    s32 ySteps = (m->vel[1] > 0.f ? cheats_jump_modifier(m) : 1);
-#else
-    s32 hSteps = 1;
-    s32 ySteps = 1;
-#endif
-    s32 subSteps = OMM_STEP_NUM_SUB_STEPS * hSteps * ySteps;
     for (s32 i = 0; i != subSteps; ++i) {
         Vec3f intendedPos;
-        intendedPos[0] = m->pos[0] + (m->vel[0] * omm_player_get_selected_air_speed_multiplier()) / (OMM_STEP_NUM_SUB_STEPS * ySteps);
-        intendedPos[1] = m->pos[1] + (m->vel[1]                                                 ) / (OMM_STEP_NUM_SUB_STEPS * hSteps);
-        intendedPos[2] = m->pos[2] + (m->vel[2] * omm_player_get_selected_air_speed_multiplier()) / (OMM_STEP_NUM_SUB_STEPS * ySteps);
-
-        struct Surface *wall;
+        intendedPos[0] = m->pos[0] + (m->vel[0] * speedMul) / (numSteps * yStepMul);
+        intendedPos[1] = m->pos[1] + (m->vel[1]           ) / (numSteps * hStepMul);
+        intendedPos[2] = m->pos[2] + (m->vel[2] * speedMul) / (numSteps * yStepMul);
         s32 subStepResult = omm_mario_perform_air_sub_step(m, intendedPos, expectedY, stepArg, &wall);
-
-        if (wall != NULL) {
+        if (wall) {
             m->wall = wall;
         }
-
-        if (subStepResult != AIR_STEP_NONE) {
+        if (subStepResult != STEP_NONE) {
             stepResult = subStepResult;
         }
-
-        if (subStepResult == AIR_STEP_LANDED ||
-            subStepResult == AIR_STEP_GRABBED_LEDGE ||
-            subStepResult == AIR_STEP_GRABBED_CEILING ||
-            subStepResult == AIR_STEP_HIT_LAVA_WALL) {
+        if (subStepResult == STEP_HIT_FLOOR ||
+            subStepResult == STEP_HIT_LAVA_WALL ||
+            subStepResult == STEP_GRABBED_LEDGE ||
+            subStepResult == STEP_GRABBED_CEIL) {
             break;
         }
     }
 
-    if (stepResult == AIR_STEP_HIT_WALL && OMM_MOVESET_ODYSSEY && omm_mario_is_ground_pounding(m)) {
-        stepResult = AIR_STEP_NONE;
+    // Don't bonk into walls if ground pounding
+    if (stepResult == STEP_HIT_WALL && OMM_MOVESET_ODYSSEY && omm_mario_is_ground_pounding(m)) {
+        stepResult = STEP_NONE;
     }
 
-    omm_clamp_mario_pos(m);
+    // Turn lava walls into regular walls with "Walk on Lava" cheat
+    if (OMM_CHEAT_WALK_ON_LAVA && stepResult == STEP_HIT_LAVA_WALL) {
+        stepResult = STEP_HIT_WALL;
+    }
+
+    // Vanish cap extra step
+    Vec3f target;
+    if (omm_mario_check_vanish_cap_step(m, target, stepResult, 30.f, 50.f)) {
+        stepResult = omm_mario_perform_air_sub_step(m, target, expectedY, stepArg, &m->wall);
+        if (stepResult == STEP_HIT_WALL) {
+            stepResult = STEP_NONE;
+        }
+    }
+
+    // Update gfx and return step result
+    clamp_mario_pos(m);
     if (m->vel[1] >= 0.f) gOmmData->mario->state.peakHeight = m->pos[1];
     m->terrainSoundAddend = mario_get_terrain_sound_addend(m);
     omm_mario_apply_gravity(m);
     omm_mario_apply_vertical_wind(m);
     vec3f_copy(m->marioObj->oGfxPos, m->pos);
     vec3s_set(m->marioObj->oGfxAngle, 0, m->faceAngle[1], 0);
-    return stepResult;
+    return sStepResult[stepResult][AIR_STEP];
 }
 
 void mario_bonk_reflection(struct MarioState *m, u32 negateSpeed) {
-    if (m->wall != NULL) {
+    if (m->wall) {
         s16 wallAngle = atan2s(m->wall->normal.z, m->wall->normal.x);
         m->faceAngle[1] = wallAngle - (s16) (m->faceAngle[1] - wallAngle);
         play_sound((m->flags & MARIO_METAL_CAP) ? SOUND_ACTION_METAL_BONK : SOUND_ACTION_BONK, m->marioObj->oCameraToObject);
@@ -760,31 +836,27 @@ static s32 omm_mario_perform_hang_sub_step(struct MarioState *m, Vec3f nextPos) 
     f32 ceilUpper = (OMM_STEP_FIX_EXPOSED_CEILINGS ? (ceilLower + 240.f) : +20000.f);
     
     // Out of bounds
-    if (floor == NULL) {
-        if (OMM_STEP_FIX_OUT_OF_BOUNDS_BONK) {
-            return omm_vanish_cap_go_through_wall(m, HANG_STEP_NONE, HANG_STEP_NONE, nextPos, m->vel, 50.f, 50.f);
-        } else {
-            return omm_vanish_cap_go_through_wall(m, HANG_STEP_NONE, HANG_STEP_HIT_WALL, nextPos, m->vel, 50.f, 50.f);
-        }
+    if (!floor) {
+        return (OMM_STEP_FIX_OUT_OF_BOUNDS_BONK ? STEP_NONE : STEP_OUT_OF_BOUNDS);
     }
 
     // Left hangable ceil
-    if (ceil == NULL || ceil->type != SURFACE_HANGABLE) {
-        return HANG_STEP_LEFT_CEIL;
+    if (!ceil || ceil->type != SURFACE_HANGABLE) {
+        return STEP_LEFT_CEIL;
     }
     
     // Squish
     if (floorHeight >= ceilLower && floorHeight < ceilUpper) {
-        return HANG_STEP_HIT_WALL;
+        return STEP_SQUISH;
     }
 
     // Not the same ceiling
     f32 ceilOffset = ceilLower - nextPos[1];
     if (ceilOffset < -30.f) {
-        return HANG_STEP_HIT_WALL;
+        return STEP_HIT_WALL;
     }
     if (ceilOffset > 30.f) {
-        return HANG_STEP_LEFT_CEIL;
+        return STEP_LEFT_CEIL;
     }
 
     // Still on ceiling
@@ -794,34 +866,47 @@ static s32 omm_mario_perform_hang_sub_step(struct MarioState *m, Vec3f nextPos) 
     m->ceil = ceil;
     m->floorHeight = floorHeight;
     m->ceilHeight = ceilLower + 160.f;
-    return HANG_STEP_NONE;
+    return STEP_NONE;
 }
 
 s32 perform_hang_step(struct MarioState *m) {
-    s32 stepResult;
-#if OMM_GAME_IS_R96A
-    s32 subSteps = OMM_STEP_NUM_SUB_STEPS * cheats_speed_modifier(m);
-#else
-    s32 subSteps = OMM_STEP_NUM_SUB_STEPS;
-#endif
+
+    // Init steps
+    s32 stepResult = STEP_NONE;
+    f32 speedMul = omm_player_get_selected_air_speed_multiplier();
+    s32 numSteps = OMM_STEP_NUM_SUB_STEPS;
+    s32 subSteps = numSteps * speed_modifier(m);
+
+    // Perform steps
     for (s32 i = 0; i != subSteps; ++i) {
         Vec3f intendedPos;
-        intendedPos[0] = m->pos[0] - (m->ceil->normal.y * m->vel[0] * omm_player_get_selected_air_speed_multiplier()) / OMM_STEP_NUM_SUB_STEPS;
+        intendedPos[0] = m->pos[0] - (m->vel[0] * m->ceil->normal.y * speedMul) / numSteps;
         intendedPos[1] = m->pos[1];
-        intendedPos[2] = m->pos[2] - (m->ceil->normal.y * m->vel[2] * omm_player_get_selected_air_speed_multiplier()) / OMM_STEP_NUM_SUB_STEPS;
+        intendedPos[2] = m->pos[2] - (m->vel[2] * m->ceil->normal.y * speedMul) / numSteps;
         stepResult     = omm_mario_perform_hang_sub_step(m, intendedPos);
-        if (stepResult == HANG_STEP_HIT_WALL) {
+        if (stepResult == STEP_HIT_WALL ||
+            stepResult == STEP_LEFT_CEIL) {
             break;
         }
     }
+
+    // Vanish cap extra step
+    Vec3f target;
+    if (omm_mario_check_vanish_cap_step(m, target, stepResult, 50.f, 50.f)) {
+        stepResult = omm_mario_perform_hang_sub_step(m, target);
+        if (stepResult == STEP_HIT_WALL) {
+            stepResult = STEP_NONE;
+        }
+    }
     
+    // Update gfx and return step result
     m->vel[1] = 0.f;
-    omm_clamp_mario_pos(m);
+    clamp_mario_pos(m);
     m->slideYaw = m->faceAngle[1];
     gOmmData->mario->state.peakHeight = m->pos[1];
     vec3f_copy(m->marioObj->oGfxPos, m->pos);
     vec3s_set(m->marioObj->oGfxAngle, 0, m->faceAngle[1], 0);
-    return stepResult;
+    return sStepResult[stepResult][HANG_STEP];
 }
 
 //
@@ -864,8 +949,8 @@ static s32 omm_mario_perform_water_sub_step(struct MarioState *m, Vec3f nextPos)
     f32 ceilUpper = (OMM_STEP_FIX_EXPOSED_CEILINGS ? (ceilLower + 240.f) : +20000.f);
 
     // Out of bounds
-    if (floor == NULL) {
-        return omm_vanish_cap_go_through_wall(m, WATER_STEP_NONE, WATER_STEP_CANCELLED, nextPos, m->vel, 10.f, 110.f);
+    if (!floor) {
+        return STEP_OUT_OF_BOUNDS;
     }
     m->wall = wall;
 
@@ -878,52 +963,48 @@ static s32 omm_mario_perform_water_sub_step(struct MarioState *m, Vec3f nextPos)
             m->floor = floor;
             m->floorHeight = floorHeight;
             if (wall) {
-                return omm_vanish_cap_go_through_wall(m, WATER_STEP_NONE, WATER_STEP_HIT_WALL, nextPos, m->vel, 10.f, 110.f);
+                return STEP_HIT_WALL;
             }
-            return WATER_STEP_NONE;
+            return STEP_NONE;
         }
 
         // Hit ceiling
         m->floor = floor;
         m->floorHeight = floorHeight;
         if (OMM_STEP_FIX_WATER_WARPS) {
-            f32 intendedDist = sqrt(omm_sqr_f(nextPos[0] - m->pos[0]) + omm_sqr_f(nextPos[1] - m->pos[1]) + omm_sqr_f(nextPos[2] - m->pos[2]));
-            f32 displaceDist = sqrt(omm_sqr_f(nextPos[0] - m->pos[0]) + omm_sqr_f(ceilLower  - m->pos[1]) + omm_sqr_f(nextPos[2] - m->pos[2]));
+            f32 intendedDist = sqrt(sqr_f(nextPos[0] - m->pos[0]) + sqr_f(nextPos[1] - m->pos[1]) + sqr_f(nextPos[2] - m->pos[2]));
+            f32 displaceDist = sqrt(sqr_f(nextPos[0] - m->pos[0]) + sqr_f(ceilLower  - m->pos[1]) + sqr_f(nextPos[2] - m->pos[2]));
             if (displaceDist > 0) {
-                m->pos[0] += (nextPos[0] - m->pos[0]) * omm_min_f(1.f, intendedDist / displaceDist);
-                m->pos[1] += (ceilLower  - m->pos[1]) * omm_min_f(1.f, intendedDist / displaceDist);
-                m->pos[2] += (nextPos[2] - m->pos[2]) * omm_min_f(1.f, intendedDist / displaceDist);
+                m->pos[0] += (nextPos[0] - m->pos[0]) * min_f(1.f, intendedDist / displaceDist);
+                m->pos[1] += (ceilLower  - m->pos[1]) * min_f(1.f, intendedDist / displaceDist);
+                m->pos[2] += (nextPos[2] - m->pos[2]) * min_f(1.f, intendedDist / displaceDist);
             }
         } else {
             vec3f_set(m->pos, nextPos[0], ceilLower, nextPos[2]);
         }
-        if (OMM_STEP_FIX_CEILINGS_BONK) {
-            return omm_vanish_cap_go_through_wall(m, WATER_STEP_NONE, WATER_STEP_NONE, nextPos, m->vel, 10.f, 110.f);
-        } else {
-            return omm_vanish_cap_go_through_wall(m, WATER_STEP_NONE, WATER_STEP_HIT_CEILING, nextPos, m->vel, 10.f, 110.f);
-        }
+        return (OMM_STEP_FIX_CEILINGS_BONK ? STEP_NONE : STEP_HIT_CEIL);
     }
 
     // Can't fit
     if (floorHeight >= ceilLower && floorHeight < ceilUpper) {
-        return WATER_STEP_CANCELLED;
+        return STEP_SQUISH;
     }
 
     // Hit floor
     m->floor = floor;
     m->floorHeight = floorHeight;
     if (OMM_STEP_FIX_WATER_WARPS) {
-        f32 intendedDist = sqrt(omm_sqr_f(nextPos[0] - m->pos[0]) + omm_sqr_f(nextPos[1]  - m->pos[1]) + omm_sqr_f(nextPos[2] - m->pos[2]));
-        f32 displaceDist = sqrt(omm_sqr_f(nextPos[0] - m->pos[0]) + omm_sqr_f(floorHeight - m->pos[1]) + omm_sqr_f(nextPos[2] - m->pos[2]));
+        f32 intendedDist = sqrt(sqr_f(nextPos[0] - m->pos[0]) + sqr_f(nextPos[1]  - m->pos[1]) + sqr_f(nextPos[2] - m->pos[2]));
+        f32 displaceDist = sqrt(sqr_f(nextPos[0] - m->pos[0]) + sqr_f(floorHeight - m->pos[1]) + sqr_f(nextPos[2] - m->pos[2]));
         if (displaceDist > 0) {
-            m->pos[0] += (nextPos[0]  - m->pos[0]) * omm_min_f(1.f, intendedDist / displaceDist);
-            m->pos[1] += (floorHeight - m->pos[1]) * omm_min_f(1.f, intendedDist / displaceDist);
-            m->pos[2] += (nextPos[2]  - m->pos[2]) * omm_min_f(1.f, intendedDist / displaceDist);
+            m->pos[0] += (nextPos[0]  - m->pos[0]) * min_f(1.f, intendedDist / displaceDist);
+            m->pos[1] += (floorHeight - m->pos[1]) * min_f(1.f, intendedDist / displaceDist);
+            m->pos[2] += (nextPos[2]  - m->pos[2]) * min_f(1.f, intendedDist / displaceDist);
         }
     } else {
         vec3f_set(m->pos, nextPos[0], floorHeight, nextPos[2]);
     }
-    return WATER_STEP_HIT_FLOOR;
+    return STEP_HIT_FLOOR;
 }
 
 static void omm_mario_apply_water_current(struct MarioState *m, Vec3f waterVel) {
@@ -932,7 +1013,7 @@ static void omm_mario_apply_water_current(struct MarioState *m, Vec3f waterVel) 
     static const s16 sWaterCurrentSpeeds[] = { 28, 12, 8, 4 };
     if (m->floor->type == SURFACE_FLOWING_WATER) {
         s16 currentAngle = m->floor->force << 8;
-        f32 currentSpeed = sWaterCurrentSpeeds[omm_min_s(3, (u8) (m->floor->force >> 8))];
+        f32 currentSpeed = sWaterCurrentSpeeds[min_s(3, (u8) (m->floor->force >> 8))];
         waterVel[0] += currentSpeed * sins(currentAngle);
         waterVel[2] += currentSpeed * coss(currentAngle);
     }
@@ -940,7 +1021,7 @@ static void omm_mario_apply_water_current(struct MarioState *m, Vec3f waterVel) 
     // Whirlpools
     for (s32 i = 0; i < 2; i++) {
         struct Whirlpool *whirlpool = gCurrentArea->whirlpools[i];
-        if (whirlpool != NULL) {
+        if (whirlpool) {
             f32 dx = whirlpool->pos[0] - m->pos[0];
             f32 dy = whirlpool->pos[1] - m->pos[1];
             f32 dz = whirlpool->pos[2] - m->pos[2];
@@ -948,7 +1029,7 @@ static void omm_mario_apply_water_current(struct MarioState *m, Vec3f waterVel) 
             f32 distance = sqrtf(lateralDist * lateralDist + dy * dy);
             s16 pitchToWhirlpool = atan2s(lateralDist, dy);
             s16 yawToWhirlpool = atan2s(dz, dx) - (s16) (0x2000 * 1000.f / (distance + 1000.f));
-            f32 whirlpoolStrength = whirlpool->strength * (OMM_STEP_FIX_WHIRLPOOLS * whirlpool->strength > 0.f ? 0.5f : 1.f) * (1.f - (omm_min_f(distance, 2000.f) / 2000.f));
+            f32 whirlpoolStrength = whirlpool->strength * (OMM_STEP_FIX_WHIRLPOOLS * whirlpool->strength > 0.f ? 0.5f : 1.f) * (1.f - (min_f(distance, 2000.f) / 2000.f));
             waterVel[0] += whirlpoolStrength * coss(pitchToWhirlpool) * sins(yawToWhirlpool);
             waterVel[1] += whirlpoolStrength * sins(pitchToWhirlpool);
             waterVel[2] += whirlpoolStrength * coss(pitchToWhirlpool) * coss(yawToWhirlpool);
@@ -958,36 +1039,172 @@ static void omm_mario_apply_water_current(struct MarioState *m, Vec3f waterVel) 
 
 s32 perform_water_step(struct MarioState *m) {
     Vec3f waterVel;
-    waterVel[0] = m->vel[0];
-    waterVel[1] = m->vel[1];
-    waterVel[2] = m->vel[2];
+    vec3f_copy(waterVel, m->vel);
     if (m->action & ACT_FLAG_SWIMMING) {
         omm_mario_apply_water_current(m, waterVel);
     }
 
-    s32 stepResult;
-#if OMM_GAME_IS_R96A
-    s32 subSteps = OMM_STEP_NUM_SUB_STEPS_WATER * cheats_swim_modifier(m);
-#else
-    s32 subSteps = OMM_STEP_NUM_SUB_STEPS_WATER;
-#endif
+    // Init steps
+    s32 stepResult = STEP_NONE;
+    s32 numSteps = OMM_STEP_NUM_SUB_STEPS_WATER;
+    s32 subSteps = numSteps * swim_modifier(m);
+
+    // Perform steps
     for (s32 i = 0; i != subSteps; ++i) {
         Vec3f intendedPos;
-        intendedPos[0] = m->pos[0] + (waterVel[0] / OMM_STEP_NUM_SUB_STEPS_WATER);
-        intendedPos[1] = m->pos[1] + (waterVel[1] / OMM_STEP_NUM_SUB_STEPS_WATER);
-        intendedPos[2] = m->pos[2] + (waterVel[2] / OMM_STEP_NUM_SUB_STEPS_WATER);
+        intendedPos[0] = m->pos[0] + (waterVel[0] / numSteps);
+        intendedPos[1] = m->pos[1] + (waterVel[1] / numSteps);
+        intendedPos[2] = m->pos[2] + (waterVel[2] / numSteps);
         if (intendedPos[1] >= m->waterLevel - 80) {
             intendedPos[1] = m->waterLevel - 80;
             m->vel[1] = 0.f;
         }
-
         stepResult = omm_mario_perform_water_sub_step(m, intendedPos);
     }
 
-    omm_clamp_mario_pos(m);
+    // Vanish cap extra step
+    Vec3f target;
+    if (omm_mario_check_vanish_cap_step(m, target, stepResult, 10.f, 110.f)) {
+        stepResult = omm_mario_perform_hang_sub_step(m, target);
+        if (stepResult == STEP_HIT_WALL) {
+            stepResult = STEP_NONE;
+        }
+    }
+
+    // Update gfx and return step result
+    clamp_mario_pos(m);
     vec3f_copy(m->marioObj->oGfxPos, m->pos);
     vec3s_set(m->marioObj->oGfxAngle, -m->faceAngle[0], m->faceAngle[1], m->faceAngle[2]);
-    return stepResult;
+    return sStepResult[stepResult][WATER_STEP];
+}
+
+//
+// Object step
+//
+
+static s32 perform_object_sub_step(struct Object *o, bool onGround, bool stickyFeet) {
+    f32 radius = o->oWallHitboxRadius;
+    f32 height = o->hitboxHeight;
+    f32 offset = o->hitboxDownOffset;
+
+    // Wall collisions
+    s32 nSteps = max_s(1, height / 50.f);
+    f32 yDelta = height / nSteps;
+    for (s32 i = 0; i != nSteps; ++i) {
+        struct Surface *wall = resolve_and_return_wall_collisions(&o->oPosX, 30.f + i * yDelta - offset, radius);
+        if (wall) {
+            o->oWall = wall;
+        }
+    }
+    
+    // Floor collision
+    struct Surface *floor = NULL;
+    f32 floorHeight = find_floor(o->oPosX, o->oPosY - offset, o->oPosZ, &floor) + offset;
+    if (floor) {
+        o->oFloor = floor;
+        o->oFloorHeight = floorHeight;
+    } else {
+        o->oVelX = 0;
+        o->oVelZ = 0;
+        return STEP_OUT_OF_BOUNDS;
+    }
+
+    // Drop object to floor if low enough
+    // If the floor is too steep (> ~50 deg), it acts as a wall and push the object out of it
+    if (o->oPosY < floorHeight + (onGround ? 40.f : 1.f)) {
+        o->oPosY = floorHeight;
+        if (!stickyFeet &&
+            floor->normal.y < 0.6f &&
+            floor->type != SURFACE_SWITCH &&
+            floor->type != SURFACE_NOT_SLIPPERY &&
+            floor->type != SURFACE_HARD_NOT_SLIPPERY)
+        {
+            o->oPosX += floor->normal.x * o->oWallHitboxRadius;
+            o->oPosZ += floor->normal.z * o->oWallHitboxRadius;
+            o->oFloorHeight = (floorHeight -= (1.f - floor->normal.y) * o->oWallHitboxRadius);
+        } else {
+            o->oVelY = max_f(o->oVelY, 0.f);
+        }
+    }
+    
+    // Ceiling collision
+    // Treat floor + ceiling collision as OOB to cancel out step
+    struct Surface *ceil = NULL;
+    f32 ceilHeight = find_ceil(o->oPosX, o->oPosY, o->oPosZ, &ceil);
+    f32 diffHeight = height - offset;
+    if (ceil && o->oPosY < ceilHeight && ceilHeight < o->oPosY + diffHeight) {
+        if (ceilHeight - floorHeight > diffHeight) {
+            o->oPosY = ceilHeight - diffHeight;
+            o->oVelY = min_f(o->oVelY, 0.f);
+            o->oCeil = ceil;
+        } else {
+            return STEP_OUT_OF_BOUNDS;
+        }
+    }
+    return STEP_NONE;
+}
+
+s32 perform_object_step(struct Object *o, u32 flags) {
+    bool isCapture = (o == gOmmCapture);
+    bool onGround = (flags & OBJ_STEP_CHECK_ON_GROUND) && obj_is_on_ground(o);
+    o->oFloor = NULL;
+    o->oCeil = NULL;
+    o->oWall = NULL;
+
+    // Init steps
+    s32 stepResult = STEP_NONE;
+    f32 speedMul = (isCapture ? (onGround ? POBJ_GROUND_SPEED_MULTIPLIER : POBJ_AIR_SPEED_MULTIPLIER) : 1.f);
+    s32 numSteps = (isCapture ? OMM_STEP_NUM_SUB_STEPS_CAPTURE : OMM_STEP_NUM_SUB_STEPS_OBJECT);
+    s32 hStepMul = (isCapture ? speed_modifier(gMarioState) : 1);
+    s32 yStepMul = (isCapture && o->oVelY > 0.f ? jump_modifier(gMarioState) : 1);
+    s32 subSteps = numSteps * hStepMul * yStepMul;
+    
+    // Perform steps
+    for (s32 i = 0; i != subSteps; ++i) {
+        Vec3f pos; vec3f_copy(pos, &o->oPosX);
+        o->oPosX += (o->oVelX * speedMul) / (numSteps * yStepMul);
+        o->oPosY += (o->oVelY           ) / (numSteps * hStepMul);
+        o->oPosZ += (o->oVelZ * speedMul) / (numSteps * yStepMul);
+        stepResult = perform_object_sub_step(o, onGround, flags & OBJ_STEP_STICKY_FEET);
+        if (stepResult == STEP_OUT_OF_BOUNDS) {
+            vec3f_copy(&o->oPosX, pos);
+        } else if (flags & OBJ_STEP_CHECK_ON_GROUND) {
+            onGround = (obj_is_on_ground(o) && o->oVelY <= 0.f);
+        }
+    }
+    o->oForwardVel = sqrtf(sqr_f(o->oVelX) + sqr_f(o->oVelZ));
+
+    // Squish test
+    if (isCapture) {
+        f32 floorHeight = find_floor(o->oPosX, o->oPosY - o->hitboxDownOffset, o->oPosZ, NULL) + o->hitboxDownOffset;
+        f32 ceilHeight = find_ceil(o->oPosX, o->oPosY, o->oPosZ, NULL);
+        f32 diffHeight = o->hitboxHeight - o->hitboxDownOffset;
+        if (floorHeight < ceilHeight && ceilHeight < floorHeight + diffHeight &&
+            o->oPosY    < ceilHeight && ceilHeight < o->oPosY    + diffHeight) {
+            gOmmData->object->state.squishTimer++;
+        } else {
+            gOmmData->object->state.squishTimer = 0;
+        }
+    }
+
+    // Vanish cap extra step
+    Vec3f pos, target;
+    if ((flags & OBJ_STEP_MOVE_THROUGH_WALLS) && omm_object_check_move_through_walls(o, target)) {
+        vec3f_copy(pos, &o->oPosX);
+        vec3f_copy(&o->oPosX, target);
+        stepResult = perform_object_sub_step(o, onGround, flags & OBJ_STEP_STICKY_FEET);
+        if (stepResult == STEP_OUT_OF_BOUNDS) {
+            vec3f_copy(&o->oPosX, pos);
+        } else if (flags & OBJ_STEP_CHECK_ON_GROUND) {
+            onGround = (obj_is_on_ground(o) && o->oVelY <= 0.f);
+        }
+    }
+
+    // Update home and forward vel
+    if (flags & OBJ_STEP_UPDATE_HOME) {
+        vec3f_copy(&o->oHomeX, &o->oPosX);
+    }
+    return 0;
 }
 
 //
@@ -997,17 +1214,17 @@ s32 perform_water_step(struct MarioState *m) {
 void transfer_bully_speed(struct BullyCollisionData *obj1, struct BullyCollisionData *obj2) {
     f32 rx = obj2->posX - obj1->posX;
     f32 rz = obj2->posZ - obj1->posZ;
-    f32 projectedV1 = (rx * obj1->velX + rz * obj1->velZ) / (rx * rx + rz * rz);
-    f32 projectedV2 = (-rx * obj2->velX - rz * obj2->velZ) / (rx * rx + rz * rz);
-    obj2->velX += obj2->conversionRatio * projectedV1 * rx - projectedV2 * -rx;
-    obj2->velZ += obj2->conversionRatio * projectedV1 * rz - projectedV2 * -rz;
-    obj1->velX += -projectedV1 * rx + obj1->conversionRatio * projectedV2 * -rx;
-    obj1->velZ += -projectedV1 * rz + obj1->conversionRatio * projectedV2 * -rz;
+    f32 v1 = (+rx * obj1->velX + rz * obj1->velZ) / (rx * rx + rz * rz);
+    f32 v2 = (-rx * obj2->velX - rz * obj2->velZ) / (rx * rx + rz * rz);
+    obj2->velX += (obj2->conversionRatio * v1 * +rx) - (v2 * -rx);
+    obj2->velZ += (obj2->conversionRatio * v1 * +rz) - (v2 * -rz);
+    obj1->velX += (obj1->conversionRatio * v2 * -rx) - (v1 * +rx);
+    obj1->velZ += (obj1->conversionRatio * v2 * -rz) - (v1 * +rz);
 }
 
 BAD_RETURN(s32) init_bully_collision_data(struct BullyCollisionData *data, f32 posX, f32 posZ, f32 forwardVel, s16 yaw, f32 conversionRatio, f32 radius) {
     yaw += 0x8000 * (forwardVel < 0.f);
-    forwardVel = omm_abs_f(forwardVel);
+    forwardVel = abs_f(forwardVel);
     data->radius = radius;
     data->conversionRatio = conversionRatio;
     data->posX = posX;

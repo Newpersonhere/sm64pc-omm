@@ -88,13 +88,13 @@ s32 cappy_bobomb_update(struct Object *o) {
                 o->oVelY = 1.6f * omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER;
             }
         } else {
-            gOmmData->object->state.actionTimer = omm_max_s(0, gOmmData->object->state.actionTimer - 1);
+            gOmmData->object->state.actionTimer = max_s(0, gOmmData->object->state.actionTimer - 1);
         }
     }
     POBJ_STOP_IF_UNPOSSESSED;
 
     // Movement
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     o->oHomeX = gOmmData->object->state.initialPos[0];
     o->oHomeY = gOmmData->object->state.initialPos[1];
     o->oHomeZ = gOmmData->object->state.initialPos[2];
@@ -124,10 +124,10 @@ s32 cappy_bobomb_update(struct Object *o) {
 
     // Gfx
     obj_update_gfx(o);
-    obj_anim_play(o, 0, (o->oVelY <= 0.f) * omm_max_f(1.f, o->oForwardVel * (2.f / (omm_capture_get_walk_speed(o)))));
+    obj_anim_play(o, 0, (o->oVelY <= 0.f) * max_f(1.f, o->oForwardVel * (2.f / (omm_capture_get_walk_speed(o)))));
     obj_random_blink(o, &o->oBobombBlinkTimer);
     if (obj_is_on_ground(o)) {
-        obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, omm_capture_get_walk_speed(o) * 11.f, o->oForwardVel, SOUND_OBJ_BOBOMB_WALK, OBJ_STEP_PARTICLE_NONE);
+        obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, omm_capture_get_walk_speed(o) * 11.f, o->oForwardVel, SOUND_OBJ_BOBOMB_WALK, OBJ_PARTICLE_NONE);
     }
 
     // Cappy values

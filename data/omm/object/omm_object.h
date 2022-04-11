@@ -9,7 +9,6 @@
 // Flags
 //
 
-#define GRAPH_RENDER_ALWAYS         (1 << 7)  // 0x0080
 #define ACTIVE_FLAG_DORMANT         (1 << 11) // 0x0800
 #define ACTIVE_FLAG_KNOCKED_BACK    (1 << 12) // 0x1000
 #define ACTIVE_FLAG_RED_COIN_STAR   (1 << 13) // 0x2000
@@ -43,6 +42,8 @@ struct Object *obj_get_nearest_with_behavior(struct Object *o, const BehaviorScr
 struct Object *obj_get_nearest_with_behavior_and_radius(struct Object *o, const BehaviorScript *behavior, f32 distMax);
 s32            obj_get_list_index(struct Object *o);
 s32            obj_get_count_with_behavior(const BehaviorScript *behavior);
+s32            obj_get_count_with_behavior_and_field_s32(const BehaviorScript *behavior, s32 fieldIndex, s32 value);
+s32            obj_get_count_with_behavior_and_field_f32(const BehaviorScript *behavior, s32 fieldIndex, f32 value);
 void           obj_deactivate_all_with_behavior(const BehaviorScript *behavior);
 void           obj_unload_all_with_behavior(const BehaviorScript *behavior);
 
@@ -57,6 +58,7 @@ bool obj_has_graph_node(struct Object *o, struct GraphNode *node);
 bool obj_is_surface(struct Object *o);
 bool obj_is_on_ground(struct Object *o);
 bool obj_is_underwater(struct Object *o, f32 waterLevel);
+s32  obj_get_room(struct Object *o);
 s32  obj_get_object1_angle_yaw_to_object2(struct Object *o1, struct Object *o2);
 bool obj_is_object1_facing_object2(struct Object *o1, struct Object *o2, s16 angleRange);
 bool obj_is_object2_hit_from_above(struct Object *o1, struct Object *o2);
@@ -70,7 +72,7 @@ void obj_set_forward_vel(struct Object *o, s16 yaw, f32 mag, f32 velMax);
 void obj_set_forward_and_y_vel(struct Object *o, f32 forwardVel, f32 yVel);
 void obj_set_angle_vel(struct Object *o, s16 pitch, s16 yaw, s16 roll);
 void obj_set_scale(struct Object *o, f32 x, f32 y, f32 z);
-void obj_update_pos_and_vel(struct Object *o, bool updateHome, bool moveThroughWalls, bool stickyFeet, bool onGround, s32 *squishTimer);
+void obj_safe_step(struct Object *o, s32 update);
 void obj_update_blink_state(struct Object *o, s32 *timer, s16 base, s16 range, s16 length);
 void obj_random_blink(struct Object *o, s32 *timer);
 void obj_make_step_sound_and_particle(struct Object *o, f32 *dist, f32 distMin, f32 distInc, s32 soundBits, u32 particles);
@@ -105,11 +107,13 @@ bool obj_dialog_update();
 bool obj_cutscene_start(u8 cutsceneId, struct Object *o);
 bool obj_cutscene_update();
 struct Waypoint *obj_path_get_nearest_waypoint(struct Object *o, struct Waypoint *list, f32 radiusMax);
+struct Object *obj_get_red_coin_star();
 
 //
 // Animation
 //
 
+void obj_anim_sync_frame_counters(struct AnimInfoStruct *animInfo);
 s32  obj_anim_get_id(struct Object *o);
 f32  obj_anim_get_frame(struct Object *o);
 void obj_anim_play(struct Object *o, s32 animID, f32 animAccel);
@@ -139,6 +143,7 @@ bool omm_obj_is_weak(struct Object *o);
 bool omm_obj_is_strong(struct Object *o);
 bool omm_obj_is_destructible(struct Object *o);
 bool omm_obj_is_breakable(struct Object *o);
+bool omm_obj_is_boss(struct Object *o);
 bool omm_obj_is_invulnerable(struct Object *o);
 bool omm_obj_is_grabbable(struct Object *o);
 bool omm_obj_is_goomba(struct Object *o);
@@ -169,14 +174,14 @@ bool omm_obj_throw(struct Object *o, f32 forwardVel, f32 yVel);
 // Object behaviors
 //
 
-const BehaviorScript **omm_obj_get_coin_behaviors();
-const BehaviorScript **omm_obj_get_star_or_key_behaviors();
-const BehaviorScript **omm_obj_get_star_model_behaviors();
-const BehaviorScript **omm_obj_get_cap_behaviors();
-const BehaviorScript **omm_obj_get_goomba_behaviors();
-const BehaviorScript **omm_obj_get_player_behaviors();
-const BehaviorScript **omm_obj_get_bowser_behaviors();
-const BehaviorScript **omm_obj_get_holdable_behaviors();
+OmmArray omm_obj_get_coin_behaviors();
+OmmArray omm_obj_get_star_or_key_behaviors();
+OmmArray omm_obj_get_star_model_behaviors();
+OmmArray omm_obj_get_cap_behaviors();
+OmmArray omm_obj_get_goomba_behaviors();
+OmmArray omm_obj_get_player_behaviors();
+OmmArray omm_obj_get_bowser_behaviors();
+OmmArray omm_obj_get_holdable_behaviors();
 
 //
 // Spawners
@@ -204,12 +209,13 @@ struct Object *omm_spawn_shockwave_whomp(struct Object *o, f32 x, f32 y, f32 z);
 struct Object *omm_spawn_shockwave_spindrift(struct Object *o);
 struct Object *omm_spawn_shockwave_fire(struct Object *o, f32 radius, f32 width, f32 height, f32 speed, f32 distMax, const void *textureWave, const void *textureFire);
 struct Object *omm_spawn_rising_lava(struct Object *o, f32 x, f32 y, f32 z, f32 yMin, f32 yMax, f32 yVel, f32 radius, f32 rotVel, s32 shakeEnv);
+struct Object *omm_spawn_star_ring(struct Object *o, f32 x, f32 y, f32 z, bool vertical, s32 yaw);
 struct Object *omm_spawn_bitfs_pillar(struct Object *o, f32 x, f32 y, f32 z);
 struct Object *omm_spawn_bowser_mine(struct Object *o, f32 x, f32 y, f32 z, s16 yaw);
 struct Object *omm_spawn_bowser_flame(struct Object *o, f32 x, f32 y, f32 z, s32 duration);
 struct Object *omm_spawn_bowser_fireball(struct Object *o, f32 x, f32 y, f32 z, f32 forwardVel, f32 maxDistance, s16 angle);
 struct Object *omm_spawn_bowser_fireball_flame(struct Object *o, s32 duration);
-struct Object *omm_spawn_flaming_bobomb(struct Object *o, f32 x, f32 y, f32 z, s32 index, f32 maxHeight);
+struct Object *omm_spawn_flaming_bobomb(struct Object *o, f32 x, f32 y, f32 z, s32 index, s32 count, f32 maxRadius, f32 maxHeight);
 struct Object *omm_spawn_flaming_bobomb_explosion(struct Object *o);
 struct Object *omm_spawn_sparkly_star(struct Object *o, s32 mode, f32 x, f32 y, f32 z, bool isCondStar);
 struct Object *omm_spawn_sparkly_star_hint(struct Object *o, s32 mode, f32 x, f32 y, f32 z, s16 yaw, s32 dialogId);
@@ -234,54 +240,13 @@ struct Object *omm_spawn_peach_vibe_calm_sparkle(struct Object *o);
 struct Object *omm_spawn_problem(struct Object *o);
 
 //
-// Math
-//
-
-void vec3f_norm(Vec3f v);
-void vec3f_set_mag(Vec3f v, f32 mag);
-f32  vec3f_dist(Vec3f v1, Vec3f v2);
-f32  vec3f_hdist(Vec3f v1, Vec3f v2);
-void vec3f_mult(Vec3f dest, Vec3f v1, Vec3f v2);
-void vec3f_to_polar_coords(Vec3f v, f32 *dist, s16 *pitch, s16 *yaw);
-void vec3f_get_nullspace(Vec3f destAxisN, Vec3f destAxisE1, Vec3f destAxisE2, Vec3f n);
-void vec3f_project_point(Vec3f dest, Vec3f v, Vec3f o, Vec3f n);
-void vec3f_project_vector(Vec3f dest, Vec3f v, Vec3f n);
-void vec3f_to_2d_plane(Vec2f dest2d, f32 *dist2d, Vec3f src3d, Vec3f o, Vec3f n, Vec3f e1, Vec3f e2);
-void vec2f_and_dist_to_3d(Vec3f dest3d, Vec2f src2d, f32 dist2d, Vec3f o, Vec3f n, Vec3f e1, Vec3f e2);
-void vec2f_to_3d_plane(Vec3f dest, Vec2f src, Vec3f o, Vec3f e1, Vec3f e1Scale, Vec3f e2, Vec3f e2Scale);
-void vec3f_rotate_zxy(Vec3f dest, Vec3f v, s16 pitch, s16 yaw, s16 roll);
-void vec3f_rotate_around_n(Vec3f dest, Vec3f v, Vec3f n, s16 r);
-void vec3f_transform(Vec3f dest, Vec3f v, Vec3f translation, Vec3s rotation, Vec3f scale);
-void vec3f_interpolate(Vec3f dest, f32 t, Vec3f p0, f32 t0, Vec3f p1, f32 t1, Vec3f p2, f32 t2);
-bool vec3f_is_inside_cylinder(Vec3f v, Vec3f pos, f32 radius, f32 height, f32 downOffset);
-void vec2f_get_projected_point_on_line(Vec2f dest, Vec2f p, Vec2f a, Vec2f b);
-bool mtxf_invert(Mat4 dest, Mat4 m);
-
-//
-// Geo
-//
-
-struct GraphNode *omm_geo_get_graph_node(const GeoLayout *geoLayout, bool keepInMemory);
-void *omm_geo_get_geo_data(struct Object *o, s32 size, const Gfx *gfxSrc, s32 gfxSize);
-Gfx *omm_geo_link_geo_data(s32 callContext, struct GraphNode *node, UNUSED void *context);
-f32 *omm_geo_get_marios_forearm_pos(bool isLeft);
-f32 *omm_geo_get_marios_hand_pos(bool isLeft);
-f32 *omm_geo_get_marios_head_pos();
-f32 *omm_geo_get_marios_head_up();
-f32 *omm_geo_get_marios_head_forward();
-f32 *omm_geo_get_marios_head_right();
-f32 *omm_geo_get_marios_root_pos();
-f32  omm_geo_get_marios_height();
-void omm_geo_fix_marios_anim_translation_y(struct Object *o, struct GraphNodeAnimatedPart *node, f32 *translationY);
-void omm_geo_preprocess_object_graph_node(struct Object *o);
-
-//
 // World
 //
 
 void omm_world_update(struct MarioState *m);
 bool omm_world_is_frozen();
 bool omm_world_is_flooded();
+bool omm_world_is_vanished();
 
 //
 // Stars
@@ -293,6 +258,6 @@ u32 omm_stars_get_color(s32 level);
 bool omm_stars_is_collected(s32 index);
 bool omm_stars_all_collected(s32 level);
 void omm_stars_set_bits(u8 bits);
-#define OMM_ALL_STARS (omm_stars_all_collected(gCurrLevelNum) && !omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_EXTREME))
+#define OMM_ALL_STARS (omm_stars_all_collected(gCurrLevelNum) && !OMM_SSM_IS_LUNATIC)
 
 #endif // OMM_OBJECT_H

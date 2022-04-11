@@ -55,7 +55,7 @@ s32 cappy_friendly_blargg_update(struct Object *o) {
 
     // Movement
     Vec3f previousPos = { o->oPosX, o->oPosY, o->oPosZ };
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     if (!obj_is_on_ground(o) || o->oFloor->type != SURFACE_BURNING) {
         vec3f_copy(&o->oPosX, previousPos);
         obj_drop_to_floor(o);
@@ -70,11 +70,7 @@ s32 cappy_friendly_blargg_update(struct Object *o) {
 
     // Gfx
     obj_update_gfx(o);
-    obj_make_step_sound_and_particle(o,
-        &gOmmData->object->state.walkDistance, 0.f, 0.f,
-        SOUND_MOVING_RIDING_SHELL_LAVA,
-        OBJ_STEP_PARTICLE_FLAME
-    );
+    obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, 0.f, 0.f, SOUND_MOVING_RIDING_SHELL_LAVA, OBJ_PARTICLE_FLAME);
     
     // Cappy values
     gOmmData->object->cappy.offset[0] = -3.f;

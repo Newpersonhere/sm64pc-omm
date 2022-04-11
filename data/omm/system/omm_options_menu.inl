@@ -1,5 +1,11 @@
 // File included from options_menu.c
 
+#ifdef VSCODE
+#define OMM_ALL_HEADERS
+#include "data/omm/omm_includes.h"
+#undef OMM_ALL_HEADERS
+#endif
+
 static s32 sNumOpts = 0;
 
 void omm_opt_init_main_menu() {
@@ -30,6 +36,48 @@ void omm_opt_init_main_menu() {
     // Other options
     for (s32 i = 0; i != menuMain.numOpts; ++i) {
 
+        // Display sub-menu
+        if (menuMain.opts[i].type == OPT_SUBMENU && menuMain.opts[i].nextMenu == &menuVideo) {
+            struct SubMenu *subMenu = menuMain.opts[i].nextMenu;
+            struct Option *newOpts = OMM_MEMNEW(struct Option, subMenu->numOpts + 1);
+            OMM_MEMCPY(newOpts + 1, subMenu->opts, sizeof(struct Option) * subMenu->numOpts);
+            newOpts->type = OPT_CHOICE;
+            newOpts->choices = OMM_MEMNEW(u8 *, 12);
+            newOpts->numChoices = 12;
+            newOpts->uval = &gOmmFPS;
+#if OMM_GAME_IS_R96A
+            newOpts->label = (const u8 *) OMM_TEXT_OPT_FPS;
+            newOpts->choices[0] = (const u8 *) OMM_TEXT_OPT_FPS_30;
+            newOpts->choices[1] = (const u8 *) OMM_TEXT_OPT_FPS_60;
+            newOpts->choices[2] = (const u8 *) OMM_TEXT_OPT_FPS_90;
+            newOpts->choices[3] = (const u8 *) OMM_TEXT_OPT_FPS_120;
+            newOpts->choices[4] = (const u8 *) OMM_TEXT_OPT_FPS_150;
+            newOpts->choices[5] = (const u8 *) OMM_TEXT_OPT_FPS_180;
+            newOpts->choices[6] = (const u8 *) OMM_TEXT_OPT_FPS_210;
+            newOpts->choices[7] = (const u8 *) OMM_TEXT_OPT_FPS_240;
+            newOpts->choices[8] = (const u8 *) OMM_TEXT_OPT_FPS_270;
+            newOpts->choices[9] = (const u8 *) OMM_TEXT_OPT_FPS_300;
+            newOpts->choices[10] = (const u8 *) OMM_TEXT_OPT_FPS_330;
+            newOpts->choices[11] = (const u8 *) OMM_TEXT_OPT_FPS_360;
+#else
+            newOpts->label = omm_text_convert(OMM_TEXT_OPT_FPS, true);
+            newOpts->choices[0] = omm_text_convert(OMM_TEXT_OPT_FPS_30, true);
+            newOpts->choices[1] = omm_text_convert(OMM_TEXT_OPT_FPS_60, true);
+            newOpts->choices[2] = omm_text_convert(OMM_TEXT_OPT_FPS_90, true);
+            newOpts->choices[3] = omm_text_convert(OMM_TEXT_OPT_FPS_120, true);
+            newOpts->choices[4] = omm_text_convert(OMM_TEXT_OPT_FPS_150, true);
+            newOpts->choices[5] = omm_text_convert(OMM_TEXT_OPT_FPS_180, true);
+            newOpts->choices[6] = omm_text_convert(OMM_TEXT_OPT_FPS_210, true);
+            newOpts->choices[7] = omm_text_convert(OMM_TEXT_OPT_FPS_240, true);
+            newOpts->choices[8] = omm_text_convert(OMM_TEXT_OPT_FPS_270, true);
+            newOpts->choices[9] = omm_text_convert(OMM_TEXT_OPT_FPS_300, true);
+            newOpts->choices[10] = omm_text_convert(OMM_TEXT_OPT_FPS_330, true);
+            newOpts->choices[11] = omm_text_convert(OMM_TEXT_OPT_FPS_360, true);
+#endif
+            subMenu->opts = newOpts;
+            subMenu->numOpts++;
+        }
+
         // Custom Controls sub-menu
         if (menuMain.opts[i].type == OPT_SUBMENU && menuMain.opts[i].nextMenu == &menuControls) {
             head->type = OPT_SUBMENU;
@@ -38,6 +86,17 @@ void omm_opt_init_main_menu() {
             head++;
             continue;
         }
+
+#if !OMM_GAME_IS_R96A
+        // Custom Cheats sub-menu
+        if (menuMain.opts[i].type == OPT_SUBMENU && menuMain.opts[i].nextMenu == &menuCheats) {
+            head->type = OPT_SUBMENU;
+            head->label = gOmmOptCheats;
+            head->nextMenu = (struct SubMenu *) (gOmmOptCheats + 0x100);
+            head++;
+            continue;
+        }
+#endif
 
 #if OMM_GAME_IS_SM74
         // Change SM74 mode button
@@ -95,8 +154,8 @@ OMM_ROUTINE_UPDATE(omm_opt_update_num_options) {
 #define OMM_OPT_COLOR_SELECT_BOX            0x00FFFF20
 #define OMM_OPT_COLOR_ENABLED               0x20E020FF
 #define OMM_OPT_COLOR_DISABLED              0xFF2020FF
-#define OMM_OPT_OFFSET_FROM_LEFT_EDGE       (20.f * omm_sqr_f(GFX_DIMENSIONS_ASPECT_RATIO))
-#define OMM_OPT_OFFSET_FROM_RIGHT_EDGE      (20.f * omm_sqr_f(GFX_DIMENSIONS_ASPECT_RATIO))
+#define OMM_OPT_OFFSET_FROM_LEFT_EDGE       (20.f * sqr_f(GFX_DIMENSIONS_ASPECT_RATIO))
+#define OMM_OPT_OFFSET_FROM_RIGHT_EDGE      (20.f * sqr_f(GFX_DIMENSIONS_ASPECT_RATIO))
 #define OMM_OPT_SCROLL_BAR_SIZE             ((s32) (40.f * GFX_DIMENSIONS_ASPECT_RATIO))
 
 static const char *omm_opt_int_to_string(const char *fmt, s32 x) {
@@ -117,8 +176,8 @@ static void omm_opt_print_string(const void *p, bool convert, s32 x, s32 y, u32 
     omm_text_replace_char(str64, 0xE1, 0x9F);
     omm_text_replace_char(str64, 0xE3, 0x9F);
     if (color & 0xFF) {
-        x = (alignLeft ? GFX_DIMENSIONS_FROM_LEFT_EDGE(x) : GFX_DIMENSIONS_FROM_RIGHT_EDGE(x + omm_render_get_string_width(OMM_RENDER_FONT_MENU, str64)));
-        omm_render_string(OMM_RENDER_FONT_MENU, str64, x, y, ((color >> 24) & 0xFF), ((color >> 16) & 0xFF), ((color >> 8) & 0xFF), ((color >> 0) & 0xFF), true);
+        x = (alignLeft ? GFX_DIMENSIONS_FROM_LEFT_EDGE(x) : GFX_DIMENSIONS_FROM_RIGHT_EDGE(x + omm_render_get_string_width(str64)));
+        omm_render_string(x, y, ((color >> 24) & 0xFF), ((color >> 16) & 0xFF), ((color >> 8) & 0xFF), ((color >> 0) & 0xFF), str64, true);
     }
 }
 
@@ -143,8 +202,8 @@ static struct Option **omm_opt_get_current_options(struct SubMenu *subMenu) {
         s32 j = (i + 1 - OMM_OPT_COUNT);
         sOptionList[i] = OMM_OPT_REL(j);
         if (sOptionList[i] != NULL) {
-            start = omm_min_s(start, i);
-            end = omm_max_s(end, i);
+            start = min_s(start, i);
+            end = max_s(end, i);
         }
     }
     if ((end - start) < OMM_OPT_COUNT) {
@@ -230,7 +289,7 @@ static void omm_opt_draw_menu(struct SubMenu *subMenu) {
     if (subMenu) {
         
         // Colorful title
-        omm_render_string(OMM_RENDER_FONT_HUD, subMenu->label, (SCREEN_WIDTH - omm_render_get_string_width(OMM_RENDER_FONT_HUD, subMenu->label)) / 2, OMM_OPT_TITLE_Y, 0xFF, 0xFF, 0xFF, 0xFF, false);
+        omm_render_string_hud((SCREEN_WIDTH - omm_render_get_string_width_hud(subMenu->label)) / 2, OMM_OPT_TITLE_Y, 0xFF, 0xFF, 0xFF, 0xFF, subMenu->label, false);
 
         // Display options
         struct Option *currOpt = &subMenu->opts[subMenu->select];
@@ -244,7 +303,7 @@ static void omm_opt_draw_menu(struct SubMenu *subMenu) {
             s32 h0 = (OMM_OPT_COUNT * OMM_OPT_OFFSET_Y);
             s32 y0 = OMM_OPT_Y + ((3 * OMM_OPT_OFFSET_Y) / 4) - h0;
             s32 h = (s32) (h0 * sqrtf(1.f / (subMenu->numOpts - OMM_OPT_LAST)));
-            s32 y = y0 + ((h0 - h) * (1.f - omm_clamp_0_1_f((f32) (subMenu->select - OMM_OPT_HALF_DOWN) / (f32) (subMenu->numOpts - OMM_OPT_LAST))));
+            s32 y = y0 + ((h0 - h) * (1.f - clamp_0_1_f((f32) (subMenu->select - OMM_OPT_HALF_DOWN) / (f32) (subMenu->numOpts - OMM_OPT_LAST))));
             omm_opt_print_box(OMM_OPT_OFFSET_FROM_RIGHT_EDGE - 16, y0 - 1, 6, h0 + 2, OMM_OPT_COLOR_DARK_GRAY, 0);
             omm_opt_print_box(OMM_OPT_OFFSET_FROM_RIGHT_EDGE - 15, y, 4, h, OMM_OPT_COLOR_WHITE, 0);
         }

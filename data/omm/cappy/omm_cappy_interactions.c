@@ -95,7 +95,7 @@ void omm_cappy_try_to_target_next_coin(struct Object *cappy) {
             f32 dx = target->oPosX - cappy->oPosX;
             f32 dy = target->oPosY - cappy->oPosY;
             f32 dz = target->oPosZ - cappy->oPosZ;
-            f32 dv = omm_max_f(0.1f, sqrtf(omm_sqr_f(dx) + omm_sqr_f(dy) + omm_sqr_f(dz)));
+            f32 dv = max_f(0.1f, sqrtf(sqr_f(dx) + sqr_f(dy) + sqr_f(dz)));
             cappy->oVelX = CAPPY_HOMING_ATTACK_VEL * (dx / dv);
             cappy->oVelY = CAPPY_HOMING_ATTACK_VEL * (dy / dv);
             cappy->oVelZ = CAPPY_HOMING_ATTACK_VEL * (dz / dv);
@@ -132,11 +132,14 @@ void omm_cappy_process_interactions(struct Object *cappy, struct MarioState *m) 
                 .hitboxDownOffset = 0.f
             };
             if (obj_detect_hitbox_overlap(cappy, &sMarioHitbox, OBJ_OVERLAP_FLAG_HITBOX, OBJ_OVERLAP_FLAG_HITBOX)) {
-                
-                // Cappy bounce
-                if ((m->action & ACT_FLAG_AIR) || ((m->floor->type == SURFACE_BURNING) && !omm_mario_has_metal_cap(m))) {
+                if ((m->action & ACT_FLAG_AIR) || (!OMM_CHEAT_WALK_ON_LAVA && (m->floor->type == SURFACE_BURNING) && !omm_mario_has_metal_cap(m))) {
                     gOmmData->mario->cappy.bounced = !OMM_CHEAT_UNLIMITED_CAPPY_BOUNCES;
-                    omm_mario_set_action(m, (m->action & ACT_FLAG_METAL_WATER) ? ACT_OMM_METAL_WATER_CAPPY_BOUNCE : ACT_OMM_CAPPY_BOUNCE, 0, 0);
+                    if (m->controller->buttonPressed & A_BUTTON) {
+                        omm_mario_set_action(m, (m->action & ACT_FLAG_METAL_WATER) ? ACT_OMM_METAL_WATER_TRIPLE_JUMP : ACT_OMM_GROUND_CAPPY_BOUNCE, 1, 0);
+                        m->particleFlags |= PARTICLE_SPARKLES; // Frame perfect boys get sparkles
+                    } else {
+                        omm_mario_set_action(m, (m->action & ACT_FLAG_METAL_WATER) ? ACT_OMM_METAL_WATER_CAPPY_BOUNCE : ACT_OMM_CAPPY_BOUNCE, 0, 0);
+                    }
                 } else {
                     omm_mario_set_action(m, (m->action & ACT_FLAG_METAL_WATER) ? ACT_OMM_METAL_WATER_TRIPLE_JUMP : ACT_OMM_GROUND_CAPPY_BOUNCE, 1, 0);
                 }

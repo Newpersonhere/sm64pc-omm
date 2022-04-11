@@ -214,40 +214,40 @@ OMM_DIALOG_SPARKLY_STAR_NAMES, 0, 1, 95, 200,
 "TOTALLY CLASSIC?\n"
 "HERE WE GO AGAIN\n"
 
-"NEBULA STAR BOB\n"
-"NEBULA STAR WF\n"
-"NEBULA STAR JRB\n"
-"NEBULA STAR CCM\n"
-"NEBULA STAR BBH\n"
-"NEBULA STAR HMC\n"
-"NEBULA STAR LLL\n"
-"NEBULA STAR SSL\n"
-"NEBULA STAR DDD\n"
-"NEBULA STAR SL\n"
-"NEBULA STAR WDW\n"
-"NEBULA STAR TTM\n"
-"NEBULA STAR THI\n"
-"NEBULA STAR TTC\n"
-"NEBULA STAR RR\n"
-"NEBULA STAR BITDW\n"
-"NEBULA STAR BITFS\n"
-"NEBULA STAR BITS\n"
-"NEBULA STAR TOTWC\n"
-"NEBULA STAR VCUTM\n"
-"NEBULA STAR COTMC\n"
+"TRUE CHAMPIONS RACE\n"
+"SMMS - Green Woods\n"
+"HARDER, DEEPER, COLDER\n"
+"SM64 - Cool, Cool Mountain\n"
+"SMSR - Cloudrail Station\n"
+"74EE - Infernopit Cave\n"
+"SMSR - Koopa Canyon\n"
+"74EE - Overgrown Oasis\n"
+"SMSR - Mad Musical Mess\n"
+"74EE - Dried-out Dead Desert\n"
+"74EE - Cliff of Pain\n"
+"SM64 - Tall, Tall Mountain\n"
+"SMSR - Bob-omb Battle Factory\n"
+"SMSR - Starlight Runway\n"
+"74EE - Crudelo Sphere\n"
+"THE INVISIBLE STAR\n"
+"SMSR - Bowser's Rainbow Rumble\n"
+"74EE - Ztar Zanctuary\n"
+"SMSR - Windy Wing Cap Well\n"
+"SMMS - Sweet Sweet Rush\n"
+"74EE - Toxic Terrace\n"
 "THE ULTIMATE SLIDE\n"
-"NEBULA STAR WMOTR\n"
-"NEBULA STAR SA\n"
+"SMSR - Mushroom Mountain Town\n"
+"74EE - Old Supply Slide\n"
 "SOARING STAR\n"
-"NEBULA STAR INSIDE\n"
-"NEBULA STAR BASEMENT\n"
-"NEBULA STAR UPSTAIRS\n"
-"NEBULA STAR COURTYARD\n"
-"NEBULA STAR FINAL BOSS\n"
+"74EE - Lake of the Lords\n"
+"SMSR - Star Road (the place)\n"
+"SMSR - Zero Life Area\n"
+"74EE - Triarc Bridge\n"
+"SM64 - Final Boss\n"
 },
 
 {
-OMM_DIALOG_SPARKLY_STAR_1, 0, OMM_DIALOG_SPARKLY_MULTI(3, 3, 0),
+OMM_DIALOG_SPARKLY_STAR_1, 0, OMM_DIALOG_SPARKLY_MULTI(3, 3, 3),
 "I'll give you a useful tip.\n"
 "You should take a look at\n"
 "your star counter.\n"
@@ -306,7 +306,41 @@ OMM_DIALOG_SPARKLY_MULTI_END
 "up now or get better."
 OMM_DIALOG_SPARKLY_MULTI_END
 
-""
+"For years Koopa the Quick\n"
+"was misunderstood.\n"
+"\n"
+
+"He knows he can't win\n"
+"against people that keep\n"
+"jumping and rolling around.\n"
+
+"But nobody listens to him,\n"
+"everyone keeps mashing\n"
+"the A button.\n"
+
+"So, here's the actual\n"
+"challenge, intended by\n"
+"Koopa the Quick himself.\n"
+
+"How about a race to the\n"
+"mountaintop, while you\n"
+"collect every single star?\n"
+
+"Of course, no cheating\n"
+"allowed.\n"
+"\n"
+
+"You can't collect anything\n"
+"or talk to King Bob-omb\n"
+"before the race starts.\n"
+
+"And you can't end the\n"
+"race before collecting\n"
+"all stars.\n"
+
+"This is a race for the\n"
+"true champions, like\n"
+"Koopa the Quick."
 OMM_DIALOG_SPARKLY_MULTI_END
 },
 
@@ -395,7 +429,7 @@ OMM_DIALOG_SPARKLY_MULTI_END
 },
 
 {
-OMM_DIALOG_SPARKLY_STAR_3, 0, OMM_DIALOG_SPARKLY_MULTI(4, 3, 0),
+OMM_DIALOG_SPARKLY_STAR_3, 0, OMM_DIALOG_SPARKLY_MULTI(4, 3, 3),
 "Welcome to the depths\n"
 "of Jolly Roger Bay.\n"
 "You can no longer return\n"
@@ -420,7 +454,28 @@ OMM_DIALOG_SPARKLY_MULTI_END
 "bring the light back."
 OMM_DIALOG_SPARKLY_MULTI_END
 
-""
+"You keep going deeper.\n"
+"Welcome to the lowest\n"
+"point known to mankind.\n"
+
+"Surprisingly, you can\n"
+"clearly see around you.\n"
+"\n"
+
+"But there is something\n"
+"worse than a pitch black\n"
+"darkness.\n"
+
+"Look. You're the only\n"
+"living being. Because\n"
+"of that deadly cold.\n"
+
+"Fortunately, the Calm\n"
+"Vibe prevents Peach from\n"
+"being frozen to death.\n"
+
+"But let it run out, and\n"
+"you won't survive long..."
 OMM_DIALOG_SPARKLY_MULTI_END
 },
 
@@ -694,7 +749,7 @@ OMM_DIALOG_SPARKLY_MULTI_END
 },
 
 {
-OMM_DIALOG_SPARKLY_STAR_16, 0, OMM_DIALOG_SPARKLY_MULTI(3, 3, 0),
+OMM_DIALOG_SPARKLY_STAR_16, 0, OMM_DIALOG_SPARKLY_MULTI(3, 3, 4),
 "You are now a Goomba.\n"
 "Until you've got all 8 red\n"
 "coins, follow these rules:\n"
@@ -725,7 +780,25 @@ OMM_DIALOG_SPARKLY_MULTI_END
 "grab a coin as Mario.)"
 OMM_DIALOG_SPARKLY_MULTI_END
 
-""
+"In a parallel universe,\n"
+"there is a version of\n"
+"BITS where everything\n"
+"is invisible.\n"
+
+"In that universe lies\n"
+"a great power. This is\n"
+"the power of a Nebula\n"
+"Star.\n"
+
+"To be able to summon it,\n"
+"one must go through all\n"
+"30 Star rings under\n"
+"3 minutes.\n"
+
+"A true champion doesn't\n"
+"need to see the floor\n"
+"he's on to move forward.\n"
+"Be that champion."
 OMM_DIALOG_SPARKLY_MULTI_END
 },
 

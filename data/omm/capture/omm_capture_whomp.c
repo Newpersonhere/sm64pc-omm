@@ -89,7 +89,7 @@ s32 cappy_whomp_update(struct Object *o) {
     POBJ_SET_IMMUNE_TO_FIRE * bodySlam;
 
     // Movement
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     pobj_decelerate(o, 0.80f, 0.95f);
     pobj_apply_gravity(o, 1.f);
     pobj_handle_special_floors(o);
@@ -112,7 +112,7 @@ s32 cappy_whomp_update(struct Object *o) {
     // Body slam
     else if (gOmmData->object->state.actionState == CAPPY_WHOMP_ACTION_ATTACK) {
         omm_mario_lock(gMarioState, -1);
-        o->oFaceAnglePitch = omm_min_s(o->oFaceAnglePitch + 0x400, 0x4000);
+        o->oFaceAnglePitch = min_s(o->oFaceAnglePitch + 0x400, 0x4000);
         if (o->oFaceAnglePitch == 0x4000) {
             gOmmData->object->state.actionState = CAPPY_WHOMP_ACTION_FALLING;
         }
@@ -144,7 +144,7 @@ s32 cappy_whomp_update(struct Object *o) {
     // Getting up
     else if (gOmmData->object->state.actionState == CAPPY_WHOMP_ACTION_END_ATTACK) {
         omm_mario_lock(gMarioState, -1);
-        o->oFaceAnglePitch = omm_max_s(o->oFaceAnglePitch - 0x200, 0);
+        o->oFaceAnglePitch = max_s(o->oFaceAnglePitch - 0x200, 0);
         if (o->oFaceAnglePitch == 0 && omm_mario_unlock(gMarioState)) {
             gOmmData->object->state.actionState = CAPPY_WHOMP_ACTION_DEFAULT;
         }
@@ -152,9 +152,9 @@ s32 cappy_whomp_update(struct Object *o) {
 
     // Default
     else {
-        obj_anim_play(o, 0, (o->oVelY <= 0.f) * omm_max_f(1.f, o->oForwardVel * 3.f / (omm_capture_get_walk_speed(o))));
+        obj_anim_play(o, 0, (o->oVelY <= 0.f) * max_f(1.f, o->oForwardVel * 3.f / (omm_capture_get_walk_speed(o))));
         if (obj_is_on_ground(o)) {
-            obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, omm_capture_get_walk_speed(o) * 9.f, o->oForwardVel, SOUND_OBJ_POUNDING1, OBJ_STEP_PARTICLE_NONE);
+            obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, omm_capture_get_walk_speed(o) * 9.f, o->oForwardVel, SOUND_OBJ_POUNDING1, OBJ_PARTICLE_NONE);
         }
     }
 

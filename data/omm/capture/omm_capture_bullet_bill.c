@@ -75,15 +75,15 @@ s32 cappy_bullet_bill_update(struct Object *o) {
         
         // Starts inflating after 8 seconds
         else if (gOmmData->object->state.actionTimer >= 240) {
-            f32 t = omm_invlerp_0_1_s(gOmmData->object->state.actionTimer, 240, 300);
-            f32 s = omm_relerp_0_1_f(sins(0x10000 / (1.f - t)), -1.f, +1.f, 0.75f, 1.25f);
+            f32 t = invlerp_0_1_s(gOmmData->object->state.actionTimer, 240, 300);
+            f32 s = relerp_0_1_f(sins(0x10000 / (1.f - t)), -1.f, +1.f, 0.75f, 1.25f);
             obj_scale(o, gOmmData->object->bullet_bill.scale * s);
         }
     }
     POBJ_STOP_IF_UNPOSSESSED;
 
     // Movement
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     pobj_handle_special_floors(o);
     POBJ_STOP_IF_UNPOSSESSED;
 
@@ -102,7 +102,7 @@ s32 cappy_bullet_bill_update(struct Object *o) {
 
     // Gfx
     obj_update_gfx(o);
-    obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, 0.f, 0.f, -1, (POBJ_B_BUTTON_DOWN ? OBJ_STEP_PARTICLE_FIRE : OBJ_STEP_PARTICLE_SMOKE));
+    obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, 0.f, 0.f, -1, (POBJ_B_BUTTON_DOWN ? OBJ_PARTICLE_FIRE : OBJ_PARTICLE_SMOKE));
 
     // Cappy values
     gOmmData->object->cappy.offset[1] = 200.f;

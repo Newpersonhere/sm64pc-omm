@@ -27,7 +27,7 @@ static const Gfx omm_peach_vibe_gloom_tear_gfx[] = {
     gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE, 0, 0, 0, SHADE),
     gsSPLight(&omm_peach_vibe_gloom_tear_light.l, 1),
     gsSPLight(&omm_peach_vibe_gloom_tear_light.a, 2),
-    gsSPDisplayList(NULL_dl),
+    gsSPDisplayList(null),
     gsSPEndDisplayList(),
 };
 
@@ -56,7 +56,7 @@ typedef struct {
 const GeoLayout omm_geo_peach_vibe_gloom_tear[] = {
     GEO_NODE_START(),
     GEO_OPEN_NODE(),
-        GEO_ASM(0, omm_geo_link_geo_data),
+        GEO_ASM(0, geo_link_geo_data),
         GEO_DISPLAY_LIST(LAYER_TRANSPARENT, NULL),
     GEO_CLOSE_NODE(),
     GEO_END(),
@@ -68,7 +68,7 @@ const GeoLayout omm_geo_peach_vibe_gloom_tear[] = {
 
 static void omm_bhv_peach_vibe_gloom_tear_update() {
     struct Object *o = gCurrentObject;
-    OmmPeachVibeGloomTearGeoData *data = omm_geo_get_geo_data(o, sizeof(OmmPeachVibeGloomTearGeoData), omm_peach_vibe_gloom_tear_gfx, sizeof(omm_peach_vibe_gloom_tear_gfx));
+    OmmPeachVibeGloomTearGeoData *data = geo_get_geo_data(o, sizeof(OmmPeachVibeGloomTearGeoData), omm_peach_vibe_gloom_tear_gfx, sizeof(omm_peach_vibe_gloom_tear_gfx));
     Vec3f mp; vec3f_copy(mp, gMarioState->pos);
     Vec3f dp; vec3f_dif(dp, mp, gOmmData->mario->state.previous.pos);
 
@@ -83,7 +83,7 @@ static void omm_bhv_peach_vibe_gloom_tear_update() {
                 pt->pos[0] += pt->vel[0] - dp[0] / 1.5f;
                 pt->pos[1] += pt->vel[1] - dp[1];
                 pt->pos[2] += pt->vel[2] - dp[2] / 1.5f;
-                pt->vel[1] = omm_max_f(pt->vel[1] - 3.f, -75.f);
+                pt->vel[1] = max_f(pt->vel[1] - 3.f, -75.f);
 
                 // Process floor and ceiling
                 struct Surface *f = NULL;
@@ -126,7 +126,7 @@ static void omm_bhv_peach_vibe_gloom_tear_update() {
                 coldata.x = mp[0] + pt->pos[0];
                 coldata.y = mp[1] + pt->pos[1];
                 coldata.z = mp[2] + pt->pos[2];
-                coldata.radius = OMM_PEACH_VIBE_GLOOM_TEAR_RADIUS * omm_invlerp_0_1_f(pt->timer, 0, OMM_PEACH_VIBE_GLOOM_TEAR_NUM_FRAMES_SIZE_GROW);
+                coldata.radius = OMM_PEACH_VIBE_GLOOM_TEAR_RADIUS * invlerp_0_1_f(pt->timer, 0, OMM_PEACH_VIBE_GLOOM_TEAR_NUM_FRAMES_SIZE_GROW);
                 coldata.offsetY = 0.f;
                 if (find_wall_collisions(&coldata)) {
                     pt->pos[0] = coldata.x - mp[0];
@@ -139,10 +139,10 @@ static void omm_bhv_peach_vibe_gloom_tear_update() {
 
     // If Gloom is active, add new point, and spawn a small tear
     if (omm_peach_vibe_is_gloom()) {
-        f32 *p = omm_geo_get_marios_head_pos();
-        f32 *u = omm_geo_get_marios_head_up();
-        f32 *f = omm_geo_get_marios_head_forward();
-        f32 *r = omm_geo_get_marios_head_right();
+        f32 *p = geo_get_marios_head_pos();
+        f32 *u = geo_get_marios_head_up();
+        f32 *f = geo_get_marios_head_forward();
+        f32 *r = geo_get_marios_head_right();
         f32 du = 11.f * gMarioObject->oScaleY;
         f32 df = 14.f * gMarioObject->oScaleX;
         f32 dr = 10.f * gMarioObject->oScaleX;
@@ -217,9 +217,9 @@ static void omm_bhv_peach_vibe_gloom_tear_update() {
                 // Pre-compute some data
                 struct { bool active; Vec3f pos; Vec3f dir; f32 rad; } tpts[3], *prev, *curr, *next;
                 for (s32 di = -1; di <= +1; ++di) {
-                    Tpt *ptPrev = &data->pts[side][omm_clamp_s(i + di - 1, 0, OMM_PEACH_VIBE_GLOOM_TEAR_MAX_POINTS - 1)];
-                    Tpt *ptCurr = &data->pts[side][omm_clamp_s(i + di + 0, 0, OMM_PEACH_VIBE_GLOOM_TEAR_MAX_POINTS - 1)];
-                    Tpt *ptNext = &data->pts[side][omm_clamp_s(i + di + 1, 0, OMM_PEACH_VIBE_GLOOM_TEAR_MAX_POINTS - 1)];
+                    Tpt *ptPrev = &data->pts[side][clamp_s(i + di - 1, 0, OMM_PEACH_VIBE_GLOOM_TEAR_MAX_POINTS - 1)];
+                    Tpt *ptCurr = &data->pts[side][clamp_s(i + di + 0, 0, OMM_PEACH_VIBE_GLOOM_TEAR_MAX_POINTS - 1)];
+                    Tpt *ptNext = &data->pts[side][clamp_s(i + di + 1, 0, OMM_PEACH_VIBE_GLOOM_TEAR_MAX_POINTS - 1)];
 
                     // Active
                     tpts[1 + di].active = ptCurr->active;
@@ -236,8 +236,8 @@ static void omm_bhv_peach_vibe_gloom_tear_update() {
 
                     // Radius
                     tpts[1 + di].rad = ptPrev->active *
-                        omm_invlerp_0_1_f(ptCurr->timer, 0, OMM_PEACH_VIBE_GLOOM_TEAR_NUM_FRAMES_SIZE_GROW) *
-                        omm_relerp_f(sins((gGlobalTimer - ptCurr->timer) * 0x2000), -1.f, +1.f, 0.8f, 1.2f);
+                        invlerp_0_1_f(ptCurr->timer, 0, OMM_PEACH_VIBE_GLOOM_TEAR_NUM_FRAMES_SIZE_GROW) *
+                        relerp_f(sins((gGlobalTimer - ptCurr->timer) * 0x2000), -1.f, +1.f, 0.8f, 1.2f);
                 }
                 prev = &tpts[0];
                 curr = &tpts[1];
@@ -251,21 +251,21 @@ static void omm_bhv_peach_vibe_gloom_tear_update() {
                     f32 t2 = (f32) (j + 1) / (f32) nInterpolated;
 
                     // Position
-                    Vec3f pos0; vec3f_interpolate(pos0, t0, prev->pos, -1.f, curr->pos, 0.f, next->pos, 1.f);
-                    Vec3f pos1; vec3f_interpolate(pos1, t1, prev->pos, -1.f, curr->pos, 0.f, next->pos, 1.f);
-                    Vec3f pos2; vec3f_interpolate(pos2, t2, prev->pos, -1.f, curr->pos, 0.f, next->pos, 1.f);
+                    Vec3f pos0; vec3f_interpolate3(pos0, t0, prev->pos, -1.f, curr->pos, 0.f, next->pos, 1.f);
+                    Vec3f pos1; vec3f_interpolate3(pos1, t1, prev->pos, -1.f, curr->pos, 0.f, next->pos, 1.f);
+                    Vec3f pos2; vec3f_interpolate3(pos2, t2, prev->pos, -1.f, curr->pos, 0.f, next->pos, 1.f);
 
                     // Direction
                     Vec3f dir = {
-                        omm_lerp_f(t1, curr->dir[0], next->dir[0]),
-                        omm_lerp_f(t1, curr->dir[1], next->dir[1]),
-                        omm_lerp_f(t1, curr->dir[2], next->dir[2])
+                        lerp_f(t1, curr->dir[0], next->dir[0]),
+                        lerp_f(t1, curr->dir[1], next->dir[1]),
+                        lerp_f(t1, curr->dir[2], next->dir[2])
                     };
                     s16 pitch, yaw;
                     vec3f_to_polar_coords(dir, NULL, &pitch, &yaw);
 
                     // Radius
-                    f32 radius = omm_lerp_f(t1, curr->rad, next->rad) * OMM_PEACH_VIBE_GLOOM_TEAR_RADIUS;
+                    f32 radius = lerp_f(t1, curr->rad, next->rad) * OMM_PEACH_VIBE_GLOOM_TEAR_RADIUS;
 
                     // Triangles
                     if (next->active) {
@@ -293,7 +293,7 @@ static void omm_bhv_peach_vibe_gloom_tear_update() {
                         vtx->n.n[0]  = (s8) (dv[0] * 127.f / radius);
                         vtx->n.n[1]  = (s8) (dv[1] * 127.f / radius);
                         vtx->n.n[2]  = (s8) (dv[2] * 127.f / radius);
-                        vtx->n.a     = OMM_PEACH_VIBE_GLOOM_TEAR_OPACITY * omm_relerp_0_1_f(i, OMM_PEACH_VIBE_GLOOM_TEAR_OPACITY_MAX_POINT, OMM_PEACH_VIBE_GLOOM_TEAR_OPACITY_ZERO_POINT, 1.f, 0.f);
+                        vtx->n.a     = OMM_PEACH_VIBE_GLOOM_TEAR_OPACITY * relerp_0_1_f(i, OMM_PEACH_VIBE_GLOOM_TEAR_OPACITY_MAX_POINT, OMM_PEACH_VIBE_GLOOM_TEAR_OPACITY_ZERO_POINT, 1.f, 0.f);
                         vtx++;
                     }
                 }

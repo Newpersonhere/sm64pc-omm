@@ -40,6 +40,7 @@ static void omm_data_reset_mario_fields() {
     gOmmData->mario->peach.joySpinYaw = 0;
     gOmmData->mario->peach.perryCharge = 0;
     gOmmData->mario->peach.perryBlast = false;
+    gOmmData->mario->peach.perry = NULL;
 
     // Wall-slide moves data
     gOmmData->mario->wallSlide.jumped = false;
@@ -61,6 +62,7 @@ static void omm_data_reset_mario_fields() {
 
     // Cappy data
     gOmmData->mario->cappy.bounced = false;
+    gOmmData->mario->cappy.cappy = NULL;
 
     // Capture data
     gOmmData->mario->capture.data = NULL;
@@ -100,7 +102,7 @@ static void omm_data_reset_object_fields() {
     gOmmData->object->state.actionTimer = 0;
     gOmmData->object->state.squishTimer = 0;
     gOmmData->object->state.bullyTimer = 0;
-    gOmmData->object->state.interactTimer = 0;
+    gOmmData->object->state.invincTimer = 0;
     gOmmData->object->state.walkDistance = 0.f;
     gOmmData->object->state.initialPos[0] = 0.f;
     gOmmData->object->state.initialPos[1] = 0.f;
@@ -133,7 +135,11 @@ static void omm_data_update_mario_fields() {
     gOmmData->mario->state.previous.angle[2] = gMarioState->faceAngle[2];
 
     // Peach-only data
-    if (!OMM_PLAYER_IS_PEACH) {
+    if (OMM_PLAYER_IS_PEACH) {
+        if (!omm_peach_get_perry_object()) {
+            gOmmData->mario->peach.perry = NULL;
+        }
+    } else {
         gOmmData->mario->peach.floated = false;
         gOmmData->mario->peach.floatTimer = 0;
         gOmmData->mario->peach.vibeType = OMM_PEACH_VIBE_TYPE_NONE;
@@ -142,6 +148,12 @@ static void omm_data_update_mario_fields() {
         gOmmData->mario->peach.joySpinYaw = 0;
         gOmmData->mario->peach.perryCharge = 0;
         gOmmData->mario->peach.perryBlast = false;
+        gOmmData->mario->peach.perry = NULL;
+    }
+
+    // Cappy data
+    if (!omm_cappy_get_object()) {
+        gOmmData->mario->cappy.cappy = NULL;
     }
 
     // Capture data
@@ -150,6 +162,12 @@ static void omm_data_update_mario_fields() {
         gOmmData->mario->capture.obj = NULL;
         if (!(gMarioState->action & ACT_FLAG_AIR)) {
             gOmmData->mario->capture.prev = NULL;
+        } else if (gOmmData->mario->capture.prev) {
+            struct Object *o = gOmmData->mario->capture.prev;
+            o->oFloorHeight = find_floor(o->oPosX, o->oPosY, o->oPosZ, &o->oFloor);
+            if (obj_is_on_ground(o)) {
+                gOmmData->mario->capture.prev = NULL;
+            }
         }
     }
 }

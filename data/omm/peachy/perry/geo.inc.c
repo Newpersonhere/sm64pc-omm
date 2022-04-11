@@ -1,3 +1,7 @@
+#ifdef VSCODE
+#include "model.inc.c"
+#endif
+
 const GeoLayout omm_geo_perry[] = {
     GEO_NODE_START(),
     GEO_OPEN_NODE(),

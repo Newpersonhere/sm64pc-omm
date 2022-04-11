@@ -164,7 +164,12 @@ static void omm_text_replace_mario_by_wario(u8 *str64) {
 }
 
 u8 *omm_text_replace_names(u8 *str64, bool inplace) {
-    if (!inplace) {
+    static OmmMap sMarioStrings = omm_map_zero;
+    if (inplace) {
+        if (omm_map_find_key(sMarioStrings, ptr, str64) == -1) {
+            omm_map_add(sMarioStrings, ptr, str64, ptr, OMM_MEMDUP(str64, omm_text_length(str64) + 1));
+        }
+    } else {
         u8 *temp = (u8 *) omm_memory_new(gOmmMemoryPoolStrings, omm_text_length(str64) + 1, NULL);
         OMM_MEMCPY(temp, str64, omm_text_length(str64) + 1);
         str64 = temp;
@@ -173,6 +178,13 @@ u8 *omm_text_replace_names(u8 *str64, bool inplace) {
         case OMM_PLAYER_PEACH: omm_text_replace_mario_by_peach(str64); break;
         case OMM_PLAYER_LUIGI: omm_text_replace_mario_by_luigi(str64); break;
         case OMM_PLAYER_WARIO: omm_text_replace_mario_by_wario(str64); break;
+        case OMM_PLAYER_MARIO: if (inplace) {
+            s32 i = omm_map_find_key(sMarioStrings, ptr, str64);
+            if (i != -1) {
+                u8 *strMario = omm_map_get_val(sMarioStrings, ptr, i);
+                OMM_MEMCPY(str64, strMario, omm_text_length(strMario) + 1);
+            }
+        } break;
     }
     return str64;
 }
@@ -194,27 +206,23 @@ _Static_assert(OMM_ARRAY_SIZE(sOmmDialogEntriesRaw) == OMM_DIALOG_COUNT, "Missin
 typedef struct {
     s32 id;
     bool isMulti;
-    struct DialogEntry *dialog[OMM_SPARKLY_MODE_COUNT - 1];
+    struct DialogEntry *dialog[OMM_SSM_COUNT - 1];
 } OmmDialogEntry;
-static OmmArray sOmmDialogEntries = NULL;
+static OmmArray *sOmmDialogEntries = NULL;
 
 OMM_ROUTINE_UPDATE(omm_load_dialog_entries) {
 #if OMM_GAME_IS_R96A
-    static OmmArray sLanguageEntries = NULL;
-    static OmmArray sOmmDialogEntriesPerLanguage = NULL;
-    omm_array_init(sLanguageEntries, struct LanguageEntry *);
-    omm_array_init(sOmmDialogEntriesPerLanguage, OmmArray);
+    static OmmMap sOmmDialogEntriesPerLanguage = omm_map_zero;
 
     // Update sOmmDialogEntries to the corresponding language
     // If the language exists, assign the corresponding dialog entries to the global var
     // Otherwise, create a new entry, and return to load the entries next frame
     struct LanguageEntry *language = get_language();
-    s32 languageIndex = omm_array_find(sLanguageEntries, language);
+    s32 languageIndex = omm_map_find_key(sOmmDialogEntriesPerLanguage, ptr, language);
     if (languageIndex != -1) {
-        sOmmDialogEntries = omm_array_get(sOmmDialogEntriesPerLanguage, OmmArray, languageIndex);
+        sOmmDialogEntries = omm_map_get_val(sOmmDialogEntriesPerLanguage, ptr, languageIndex);
     } else {
-        omm_array_add_inplace(sLanguageEntries, struct LanguageEntry *, language);
-        omm_array_add_inplace(sOmmDialogEntriesPerLanguage, OmmArray, NULL);
+        omm_map_add(sOmmDialogEntriesPerLanguage, ptr, language, ptr, NULL);
         return;
     }
 
@@ -224,7 +232,7 @@ OMM_ROUTINE_UPDATE(omm_load_dialog_entries) {
     }
 #endif
     if (!sOmmDialogEntries) {
-        sOmmDialogEntries = omm_array_new(OmmDialogEntry *);
+        sOmmDialogEntries = OMM_MEMNEW(OmmArray, 1);
         for (s32 i = 0; i != OMM_DIALOG_COUNT; ++i) {
             OmmDialogEntry *entry = OMM_MEMNEW(OmmDialogEntry, 1);
 #if OMM_GAME_IS_R96A
@@ -254,7 +262,7 @@ OMM_ROUTINE_UPDATE(omm_load_dialog_entries) {
                 u8 *strPtr = (u8 *) entry->dialog[0]->str;
 
                 // Create a dialog entry for each mode if not empty (linesPerBox > 0)
-                for (s32 j = 0, k = 1; j != OMM_SPARKLY_MODE_COUNT - 1; ++j, k *= 10) {
+                for (s32 j = 0, k = 1; j != OMM_SSM_COUNT - 1; ++j, k *= 10) {
                     s32 linesPerBox = ((allLinesPerBox / k) % 10);
                     if (linesPerBox > 0) {
                         entry->dialog[j] = OMM_MEMNEW(struct DialogEntry, 1);
@@ -272,35 +280,48 @@ OMM_ROUTINE_UPDATE(omm_load_dialog_entries) {
                 for (s32 j = 1; *strPtr != 0xFF; ++strPtr) {
                     if (*strPtr == 0xE4) { // '+' symbol
                         *strPtr = 0xFF;
-                        if (j < OMM_SPARKLY_MODE_COUNT - 1 && entry->dialog[j]) {
+                        if (j < OMM_SSM_COUNT - 1 && entry->dialog[j]) {
                             entry->dialog[j++]->str = strPtr + 2; // +2, because the '+' is followed by a '\n'
                         }
                     }
                 }
             }
             
-            omm_array_add(sOmmDialogEntries, entry);
+            omm_array_add(*sOmmDialogEntries, ptr, entry);
         }
 #if OMM_GAME_IS_R96A
-        omm_array_set(sOmmDialogEntriesPerLanguage, sOmmDialogEntries, languageIndex);
+        omm_map_set_val(sOmmDialogEntriesPerLanguage, ptr, sOmmDialogEntries, languageIndex);
 #endif
     }
 }
 
 static void omm_play_dialog_sound(struct DialogEntry *dialog) {
-    if (dialog && dialog->unused > 1 && gDialogAngle == 90.f) {
+    if (dialog && dialog->unused > 1 && gDialogBoxAngle == 90.f) {
         play_sound(dialog->unused, gGlobalSoundArgs);
     }
+}
+
+struct DialogEntry **omm_get_dialog_table() {
+#if OMM_GAME_IS_SM74
+    return (struct DialogEntry **) (sm74_mode__omm_get_dialog_table == 2 ? seg2_dialog_table_EE : seg2_dialog_table);
+#elif OMM_GAME_IS_R96A
+    return (struct DialogEntry **) dialogPool;
+#else
+    return (struct DialogEntry **) seg2_dialog_table;
+#endif
 }
 
 struct DialogEntry *omm_get_dialog_entry(void **dialogTable, s16 dialogId) {
 
     // OMM dialog entry
-    omm_array_for_each(sOmmDialogEntries, OmmDialogEntry *, entry) {
-        if ((*entry)->id == dialogId) {
-            struct DialogEntry *dialog = (*entry)->dialog[(*entry)->isMulti ? (omm_sparkly_get_current_mode() - 1) : 0];
-            omm_play_dialog_sound(dialog);
-            return dialog;
+    if (OMM_LIKELY(sOmmDialogEntries)) {
+        omm_array_for_each(*sOmmDialogEntries, p) {
+            OmmDialogEntry *entry = (OmmDialogEntry *) p->as_ptr;
+            if (entry->id == dialogId) {
+                struct DialogEntry *dialog = entry->dialog[entry->isMulti ? (gOmmSSM - 1) : 0];
+                omm_play_dialog_sound(dialog);
+                return dialog;
+            }
         }
     }
     
@@ -328,23 +349,31 @@ static s16 omm_get_bowser_dialog(bool isIntro, s16 defaultDialog) {
     return defaultDialog;
 }
 
-OMM_ROUTINE_GFX(omm_update_dialogs) {
+OMM_ROUTINE_PRE_RENDER(omm_update_dialogs) {
+    static s16 sDialogID = -1;
     
-    // Dialog box
-    switch (gDialogID) {
-
-        // OMM Bowser dialogs
-        case DIALOG_067: gDialogID = omm_get_bowser_dialog(true, DIALOG_067); break;
-        case DIALOG_092: gDialogID = omm_get_bowser_dialog(true, DIALOG_092); break;
-        case DIALOG_093: gDialogID = omm_get_bowser_dialog(true, DIALOG_093); break;
-        case DIALOG_121: gDialogID = omm_get_bowser_dialog(false, DIALOG_121); break;
-        case DIALOG_163: gDialogID = omm_get_bowser_dialog(false, DIALOG_163); break;
+    // Dialog entry
+    // Retrieve it, replace names and set it to a valid slot
+    if (sDialogID != gDialogID) {
+        if (gDialogID != -1) {
+            switch (gDialogID) {
+                case DIALOG_067: gDialogID = omm_get_bowser_dialog(true, DIALOG_067); break;
+                case DIALOG_092: gDialogID = omm_get_bowser_dialog(true, DIALOG_092); break;
+                case DIALOG_093: gDialogID = omm_get_bowser_dialog(true, DIALOG_093); break;
+                case DIALOG_121: gDialogID = omm_get_bowser_dialog(false, DIALOG_121); break;
+                case DIALOG_163: gDialogID = omm_get_bowser_dialog(false, DIALOG_163); break;
+            }
+            struct DialogEntry *entry = omm_get_dialog_entry((void **) omm_get_dialog_table(), gDialogID);
+            omm_text_replace_names((u8 *) entry->str, true);
+            gDialogID = min_s(gDialogID, DIALOG_COUNT);
+            omm_get_dialog_table()[gDialogID] = entry;
+        }
+        sDialogID = gDialogID;
     }
 
     // Ending cutscene dialog
+    // Replace 'Mario' and 'Cappy' by the selected character name and cap name
     if (gCutsceneMsgIndex != -1) {
-
-        // Replace 'Mario' and 'Cappy' by the selected character name and cap name
         omm_text_replace_names(gEndCutsceneStringsEn[gCutsceneMsgIndex], true);
     }
 }
@@ -409,7 +438,6 @@ OMM_AT_STARTUP static void omm_r96a_generate_json() {
         // Strings
         fprintf(f, "  \"strings\": {\n");
         static const char *sOmmStrings[][2] = {
-#undef OMM_TEXT_
 #define OMM_TEXT_(id, str) { "OMM_TEXT_" #id, str },
 #include "data/omm/omm_defines_texts.inl"
 #undef OMM_TEXT_

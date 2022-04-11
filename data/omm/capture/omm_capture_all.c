@@ -23,69 +23,70 @@ typedef struct {
     f32 hitboxHeight;
     f32 hitboxDownOffset;
     f32 wallHitboxRadius;
+    bool referenceObject; // if true, reference the object as previous capture after leaving it
 } OmmCaptureData;
 
 #define ID(id) cappy_##id##_init, cappy_##id##_update, cappy_##id##_end, cappy_##id##_get_top
 const OmmCaptureData sOmmCaptureData[] = {
-    /*                                                           walk,   run,  dash,  jump,   fall,   grav,   rad,   hgt,  down,  wall */
-    { bhvGoomba,                    ID(goomba),                  14.f,  28.f,  28.f,  20.f,  -40.f, -2.65f,  50.f,  65.f,   0.f,  30.f },
+    /*                                                           walk,   run,  dash,  jump,   fall,   grav,   rad,   hgt,  down,  wall  ref */
+    { bhvGoomba,                    ID(goomba),                  14.f,  28.f,  28.f,  20.f,  -40.f, -2.65f,  50.f,  65.f,   0.f,  30.f, true },
 #if OMM_GAME_IS_SMMS
-    { bhvgoombone,                  ID(goomba),                  14.f,  28.f,  28.f,  20.f,  -40.f, -2.65f,  50.f,  65.f,   0.f,  30.f },
+    { bhvgoombone,                  ID(goomba),                  14.f,  28.f,  28.f,  20.f,  -40.f, -2.65f,  50.f,  65.f,   0.f,  30.f, true },
 #endif
 #if OMM_GAME_IS_SMSR
-    { bhvCustomSMSRShyGuy,          ID(goomba),                  14.f,  28.f,  28.f,  20.f,  -40.f, -2.65f,  50.f,  65.f,   0.f,  30.f },
+    { bhvCustomSMSRShyGuy,          ID(goomba),                  14.f,  28.f,  28.f,  20.f,  -40.f, -2.65f,  50.f,  65.f,   0.f,  30.f, true },
 #endif
-    { bhvKoopa,                     ID(koopa),                   18.f,  27.f,  36.f,  25.f,  -48.f, -2.65f,  60.f,  40.f,   0.f,  40.f },
-    { bhvKoopaShell,                ID(koopa_shell),             40.f,  60.f,  60.f,  42.f,  -75.f, -4.00f,  90.f, 100.f,   0.f,  60.f },
-    { bhvBobomb,                    ID(bobomb),                  24.f,  24.f,  24.f,  32.f,  -60.f, -4.00f,  60.f, 100.f,   0.f,  40.f },
-    { bhvBobombBuddyOpensCannon,    ID(bobomb_buddy),             0.f,   0.f,   0.f,   0.f,    0.f,  0.00f,  60.f, 100.f,   0.f,  40.f },
-    { bhvChainChomp,                ID(chain_chomp),             16.f,  16.f,  64.f,  24.f,  -36.f, -2.00f, 100.f, 160.f,   0.f,  80.f },
-    { omm_bhv_chain_chomp_free,     ID(chain_chomp),             16.f,  16.f,  64.f,  24.f,  -36.f, -2.00f, 100.f, 160.f,   0.f,  80.f },
+    { bhvKoopa,                     ID(koopa),                   18.f,  27.f,  36.f,  25.f,  -48.f, -2.65f,  60.f,  40.f,   0.f,  40.f, true },
+    { bhvKoopaShell,                ID(koopa_shell),             40.f,  60.f,  60.f,  42.f,  -75.f, -4.00f,  90.f, 100.f,   0.f,  60.f, true },
+    { bhvBobomb,                    ID(bobomb),                  24.f,  24.f,  24.f,  32.f,  -60.f, -4.00f,  60.f, 100.f,   0.f,  40.f, true },
+    { bhvBobombBuddyOpensCannon,    ID(bobomb_buddy),             0.f,   0.f,   0.f,   0.f,    0.f,  0.00f,  60.f, 100.f,   0.f,  40.f, false },
+    { bhvChainChomp,                ID(chain_chomp),             16.f,  16.f,  64.f,  24.f,  -36.f, -2.00f, 100.f, 160.f,   0.f,  80.f, true },
+    { omm_bhv_chain_chomp_free,     ID(chain_chomp),             16.f,  16.f,  64.f,  24.f,  -36.f, -2.00f, 100.f, 160.f,   0.f,  80.f, true },
 
-    { bhvBulletBill,                ID(bullet_bill),            100.f, 100.f, 200.f,   0.f,    0.f,  0.00f, 200.f, 400.f, 200.f, 200.f },
-    { bhvHoot,                      ID(hoot),                    24.f,  24.f,  20.f,  20.f,  -16.f, -2.00f,  60.f, 100.f,   0.f,  40.f },
-    { bhvSmallWhomp,                ID(whomp),                   16.f,  16.f,  16.f,  28.f,  -80.f, -4.00f, 100.f, 400.f,   0.f, 150.f },
+    { bhvBulletBill,                ID(bullet_bill),            100.f, 100.f, 200.f,   0.f,    0.f,  0.00f, 200.f, 400.f, 200.f, 200.f, true },
+    { bhvHoot,                      ID(hoot),                    24.f,  24.f,  20.f,  20.f,  -16.f, -2.00f,  60.f, 100.f,   0.f,  40.f, true },
+    { bhvSmallWhomp,                ID(whomp),                   16.f,  16.f,  16.f,  28.f,  -80.f, -4.00f, 100.f, 400.f,   0.f, 150.f, true },
 
-    { bhvPenguinBaby,               ID(penguin_small),           16.f,  16.f,  48.f,  25.f,  -60.f, -3.60f,  40.f,  60.f,   0.f,  30.f },
-    { bhvSmallPenguin,              ID(penguin_small),           16.f,  16.f,  48.f,  25.f,  -60.f, -3.60f,  40.f,  60.f,   0.f,  30.f },
-    { bhvUnused20E0,                ID(penguin_small),           16.f,  16.f,  48.f,  25.f,  -60.f, -3.60f,  40.f,  60.f,   0.f,  30.f },
-    { bhvSpindrift,                 ID(spindrift),               24.f,  24.f,  24.f,  36.f,  -60.f, -4.00f,  80.f, 160.f,   0.f,  40.f },
-    { bhvMrBlizzard,                ID(mr_blizzard),             20.f,  20.f,  20.f,  50.f,  -75.f, -4.00f,  80.f, 200.f,   0.f,  60.f },
-    { bhvSnowmansBottom,            ID(snowmans_body),           80.f,  80.f,  80.f,   0.f,  -90.f, -6.00f, 200.f, 400.f,   0.f, 200.f },
+    { bhvPenguinBaby,               ID(penguin_small),           16.f,  16.f,  48.f,  25.f,  -60.f, -3.60f,  40.f,  60.f,   0.f,  30.f, true },
+    { bhvSmallPenguin,              ID(penguin_small),           16.f,  16.f,  48.f,  25.f,  -60.f, -3.60f,  40.f,  60.f,   0.f,  30.f, true },
+    { bhvUnused20E0,                ID(penguin_small),           16.f,  16.f,  48.f,  25.f,  -60.f, -3.60f,  40.f,  60.f,   0.f,  30.f, true },
+    { bhvSpindrift,                 ID(spindrift),               24.f,  24.f,  24.f,  36.f,  -60.f, -4.00f,  80.f, 160.f,   0.f,  40.f, true },
+    { bhvMrBlizzard,                ID(mr_blizzard),             20.f,  20.f,  20.f,  50.f,  -75.f, -4.00f,  80.f, 200.f,   0.f,  60.f, true },
+    { bhvSnowmansBottom,            ID(snowmans_body),           80.f,  80.f,  80.f,   0.f,  -90.f, -6.00f, 200.f, 400.f,   0.f, 200.f, true },
 
-    { bhvBoo,                       ID(boo),                     24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f },
-    { bhvGhostHuntBoo,              ID(boo),                     24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f },
-    { bhvMerryGoRoundBoo,           ID(boo),                     24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f },
-    { bhvBooWithCage,               ID(boo),                     24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f },
-    { bhvScuttlebug,                ID(scuttlebug),              20.f,  40.f,  40.f,  30.f,  -60.f, -4.00f,  80.f,  90.f,   0.f,  60.f },
-    { bhvMadPiano,                  ID(mad_piano),               20.f,  20.f,  20.f,  14.f,  -80.f, -2.00f, 200.f, 150.f,   0.f, 200.f },
-    { bhvJumpingBox,                ID(crazy_box),               64.f,  64.f,  64.f, 120.f, -150.f, -8.00f, 150.f, 200.f,   0.f, 120.f },
-    { bhvMrI,                       ID(mr_i),                    28.f,  28.f,  28.f,  28.f,  -40.f, -2.00f,  90.f, 180.f,   0.f,  65.f },
+    { bhvBoo,                       ID(boo),                     24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f, true },
+    { bhvGhostHuntBoo,              ID(boo),                     24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f, true },
+    { bhvMerryGoRoundBoo,           ID(boo),                     24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f, true },
+    { bhvBooWithCage,               ID(boo),                     24.f,  48.f,  48.f,  20.f,  -20.f, -2.00f,  80.f,  80.f,   0.f,  60.f, true },
+    { bhvScuttlebug,                ID(scuttlebug),              20.f,  40.f,  40.f,  30.f,  -60.f, -4.00f,  80.f,  90.f,   0.f,  60.f, true },
+    { bhvMadPiano,                  ID(mad_piano),               20.f,  20.f,  20.f,  14.f,  -80.f, -2.00f, 200.f, 150.f,   0.f, 200.f, true },
+    { bhvJumpingBox,                ID(crazy_box),               72.f,  72.f,  72.f, 120.f, -150.f, -8.00f, 150.f, 200.f,   0.f, 120.f, false },
+    { bhvMrI,                       ID(mr_i),                    28.f,  28.f,  28.f,  28.f,  -40.f, -2.00f,  90.f, 180.f,   0.f,  65.f, true },
     
-    { bhvSwoop,                     ID(swoop),                   20.f,  40.f,  40.f,  20.f,  -20.f, -2.00f,  50.f,  60.f,   0.f,  30.f },
-    { bhvSnufit,                    ID(snufit),                  25.f,  25.f,  25.f,  36.f,  -60.f, -3.00f,  60.f, 100.f,   0.f,  35.f },
-    { bhvMontyMole,                 ID(monty_mole),              15.f,  15.f,  15.f,   0.f,    0.f,  0.00f,  50.f,  50.f,   0.f,  30.f },
+    { bhvSwoop,                     ID(swoop),                   20.f,  40.f,  40.f,  20.f,  -20.f, -2.00f,  50.f,  60.f,   0.f,  30.f, true },
+    { bhvSnufit,                    ID(snufit),                  25.f,  25.f,  25.f,  36.f,  -60.f, -3.00f,  60.f, 100.f,   0.f,  35.f, true },
+    { bhvMontyMole,                 ID(monty_mole),              15.f,  15.f,  15.f,   0.f,    0.f,  0.00f,  50.f,  50.f,   0.f,  30.f, true },
     
-    { bhvSmallBully,                ID(bully),                   28.f,  28.f,  56.f,  36.f,  -75.f, -4.00f,  75.f, 120.f,   0.f,  50.f },
-    { bhvSmallChillBully,           ID(bully),                   28.f,  28.f,  56.f,  36.f,  -75.f, -4.00f,  75.f, 120.f,   0.f,  50.f },
+    { bhvSmallBully,                ID(bully),                   28.f,  28.f,  56.f,  36.f,  -75.f, -4.00f,  75.f, 120.f,   0.f,  50.f, true },
+    { bhvSmallChillBully,           ID(bully),                   28.f,  28.f,  56.f,  36.f,  -75.f, -4.00f,  75.f, 120.f,   0.f,  50.f, true },
 #if OMM_GAME_IS_R96A
-    { bhvBlargg,                    ID(blargg),                  15.f,  15.f,  15.f,   0.f,    0.f,  0.00f, 120.f, 100.f,   0.f,  70.f },
-    { bhvFriendlyBlargg,            ID(friendly_blargg),         20.f,  30.f,  30.f,   0.f,    0.f,  0.00f,  60.f,  50.f,   0.f,  35.f },
-    { bhvMotos,                     ID(motos),                    8.f,   8.f,   8.f,  10.f,  -75.f, -1.50f,  50.f, 110.f,   0.f,  30.f },
+    { bhvBlargg,                    ID(blargg),                  15.f,  15.f,  15.f,   0.f,    0.f,  0.00f, 120.f, 100.f,   0.f,  70.f, true },
+    { bhvFriendlyBlargg,            ID(friendly_blargg),         20.f,  30.f,  30.f,   0.f,    0.f,  0.00f,  60.f,  50.f,   0.f,  35.f, true },
+    { bhvMotos,                     ID(motos),                    8.f,   8.f,   8.f,  10.f,  -75.f, -1.50f,  50.f, 110.f,   0.f,  30.f, true },
 #endif
     
-    { bhvToadMessage,               ID(toad),                    16.f,  32.f,  32.f,  25.f,  -60.f, -3.60f,  60.f, 100.f,   0.f,  30.f },
+    { bhvToadMessage,               ID(toad),                    16.f,  32.f,  32.f,  25.f,  -60.f, -3.60f,  60.f, 100.f,   0.f,  30.f, false },
 
-    { omm_bhv_flaming_bobomb,       ID(flaming_bobomb),          24.f,  24.f,  24.f,  30.f,  -60.f, -3.60f,  50.f,  90.f,   0.f,  40.f },
+    { omm_bhv_flaming_bobomb,       ID(flaming_bobomb),          24.f,  24.f,  24.f,  30.f,  -60.f, -3.60f,  50.f,  90.f,   0.f,  40.f, false },
     
-    /*                                                                                               scale,   fwd,   top,              */
-    { bhvBobombBuddy,               ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  1.20f,   0.f,  94.f,   0.f,   0.f },
+    /*                                                                                               scale,   fwd,   top,               ref */
+    { bhvBobombBuddy,               ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  1.20f,   0.f,  94.f,   0.f,   0.f, false },
 #if OMM_GAME_IS_SMSR
-    { bhvYoshi,                     ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  1.00f,  60.f, 200.f,   0.f,   0.f },
-    { bhvCustomSMSRPeachMessage,    ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  0.60f, -10.f, 180.f,   0.f,   0.f },
-    { bhvCustomSMSRYoshiMessage,    ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  1.00f,  60.f, 200.f,   0.f,   0.f },
-    { bhvCustomSMSRStaticMessage,   ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  1.25f,   8.f,  50.f,   0.f,   0.f },
-    { bhvCustomSMSRMipsMessage,     ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  0.50f, -12.f,  65.f,   0.f,   0.f },
+    { bhvYoshi,                     ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  1.00f,  60.f, 200.f,   0.f,   0.f, false },
+    { bhvCustomSMSRPeachMessage,    ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  0.60f, -10.f, 180.f,   0.f,   0.f, false },
+    { bhvCustomSMSRYoshiMessage,    ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  1.00f,  60.f, 200.f,   0.f,   0.f, false },
+    { bhvCustomSMSRStaticMessage,   ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  1.25f,   8.f,  50.f,   0.f,   0.f, false },
+    { bhvCustomSMSRMipsMessage,     ID(npc_message),              0.f,   0.f,   0.f,   0.f,    0.f,  0.50f, -12.f,  65.f,   0.f,   0.f, false },
 #endif
 };
 static const s32 sOmmCaptureDataCount = sizeof(sOmmCaptureData) / sizeof(sOmmCaptureData[0]);
@@ -184,6 +185,12 @@ f32 omm_capture_get_wall_hitbox_radius(struct Object *o) {
     return data->wallHitboxRadius * (o != NULL ? o->oScaleX : 1.f);
 }
 
+bool omm_capture_should_reference_object(struct Object *o) {
+    const OmmCaptureData *data = (const OmmCaptureData *) gOmmData->mario->capture.data;
+    if (!data || !o) return false;
+    return data->referenceObject;
+}
+
 void omm_capture_set_camera_behind_mario() {
     gOmmData->object->state.camBehindMario = true;
     if (gMarioState->area->camera->mode != CAMERA_MODE_BEHIND_MARIO) {
@@ -219,11 +226,11 @@ void pobj_move(struct Object *o, bool run, bool dash, bool stop) {
         f32 minVel = maxVel / 8.f;
         f32 tgtVel = maxVel * magVel;
         if (tgtVel >= o->oForwardVel) {
-            o->oForwardVel += ((maxVel / 8.f) * (1.f - (omm_max_f(0.f, o->oForwardVel) / tgtVel)));
+            o->oForwardVel += ((maxVel / 8.f) * (1.f - (max_f(0.f, o->oForwardVel) / tgtVel)));
         } else {
             gOmmData->mario->capture.stickMag = 0.f;
         }
-        s32 handling = omm_lerp_f(omm_sqr_f(1.f - omm_invlerp_0_1_f(o->oForwardVel, minVel, maxVel)), 0x1000, 0x4000) * magVel;
+        s32 handling = (OMM_CHEAT_SUPER_RESPONSIVE ? 0x8000 : (lerp_f(sqr_f(1.f - invlerp_0_1_f(o->oForwardVel, minVel, maxVel)), 0x1000, 0x4000) * magVel));
         s32 faceYaw = gOmmData->mario->capture.stickYaw - approach_s32((s16) (gOmmData->mario->capture.stickYaw - o->oFaceAngleYaw), 0, handling, handling);
         obj_set_forward_vel(o, faceYaw, 1.f, o->oForwardVel);
         o->oFaceAngleYaw = faceYaw;
@@ -235,8 +242,8 @@ void pobj_move_3d(struct Object *o, bool run, bool dash) {
     s32 facePitch = (s32) (gOmmData->mario->capture.stickY * 0x3000) - approach_s32((s16) ((s32) (gOmmData->mario->capture.stickY * 0x3000) - o->oFaceAnglePitch), 0, 0x300, 0x300);
     s32 faceYaw = o->oFaceAngleYaw - (s32) (gOmmData->mario->capture.stickX * 0x200);
     f32 maxVel = (dash ? omm_capture_get_dash_speed(o) : (run ? omm_capture_get_run_speed(o) : omm_capture_get_walk_speed(o)));
-    f32 xyzVel = sqrtf(omm_sqr_f(o->oVelX) + omm_sqr_f(o->oVelY) + omm_sqr_f(o->oVelZ));
-    xyzVel += ((maxVel / 8.f) * (1.f - (omm_max_f(0.f, xyzVel) / maxVel)));
+    f32 xyzVel = sqrtf(sqr_f(o->oVelX) + sqr_f(o->oVelY) + sqr_f(o->oVelZ));
+    xyzVel += ((maxVel / 8.f) * (1.f - (max_f(0.f, xyzVel) / maxVel)));
     o->oVelX = xyzVel * +coss(facePitch) * sins(faceYaw);
     o->oVelY = xyzVel * -sins(facePitch);
     o->oVelZ = xyzVel * +coss(facePitch) * coss(faceYaw);
@@ -252,12 +259,12 @@ s32 pobj_jump(struct Object *o, f32 hopDiv, s32 numMaxJumps) {
     if (hopDiv != 0.f) {
         if (obj_is_on_ground(o)) {
             if (POBJ_A_BUTTON_DOWN) {
-                o->oVelY = omm_max_f(o->oVelY, omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER);
+                o->oVelY = max_f(o->oVelY, omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER);
                 o->oFloor = NULL;
                 return POBJ_RESULT_HOP_LARGE;
             }
             if (o->oForwardVel > (omm_capture_get_walk_speed(o) / 8.f)) {
-                o->oVelY = omm_max_f(o->oVelY, omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER / hopDiv);
+                o->oVelY = max_f(o->oVelY, omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER / hopDiv);
                 o->oFloor = NULL;
                 return POBJ_RESULT_HOP_SMALL;
             }
@@ -270,14 +277,14 @@ s32 pobj_jump(struct Object *o, f32 hopDiv, s32 numMaxJumps) {
             if (sJumps < numMaxJumps && (obj_is_on_ground(o) || numMaxJumps > 1)) {
                 sJumps++;
                 sFrames = 0;
-                o->oVelY = omm_max_f(o->oVelY, omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER);
+                o->oVelY = max_f(o->oVelY, omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER);
                 o->oFloor = NULL;
                 return POBJ_RESULT_JUMP_START;
             }
         }
         if (POBJ_A_BUTTON_DOWN) {
             if (++sFrames < 6) {
-                o->oVelY = omm_max_f(o->oVelY, omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER);
+                o->oVelY = max_f(o->oVelY, omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER);
                 o->oFloor = NULL;
                 return POBJ_RESULT_JUMP_HOLD;
             }
@@ -346,14 +353,14 @@ void pobj_handle_special_floors(struct Object *o) {
     // Walk/Slide on water
     if (o->oPosY <= waterLevel && POBJ_IS_ABLE_TO_MOVE_ON_WATER) {
         o->oPosY = waterLevel;
-        o->oVelY = omm_max_f(o->oVelY, 0.f);
+        o->oVelY = max_f(o->oVelY, 0.f);
         o->oFloorHeight = waterLevel;
         o->oFloorType = OBJ_FLOOR_TYPE_WATER;
     }
 
     // Underwater
     if (obj_is_underwater(o, waterLevel) && !POBJ_IS_UNDER_WATER) {
-        o->oPosY = waterLevel + omm_max_f(((o->hitboxHeight / 2) - o->hitboxDownOffset), 60.f);
+        o->oPosY = waterLevel + max_f(((o->hitboxHeight / 2) - o->hitboxDownOffset), 60.f);
         omm_mario_unpossess_object(gMarioState, OMM_MARIO_UNPOSSESS_ACT_JUMP_OUT, false, 6);
         obj_destroy(o);
         return;
@@ -378,7 +385,7 @@ void pobj_handle_special_floors(struct Object *o) {
             break;
 
         case SURFACE_BURNING:
-            if (o->oDistToFloor <= 10.f && !POBJ_IS_IMMUNE_TO_LAVA) {
+            if (o->oDistToFloor <= 10.f && !OMM_CHEAT_WALK_ON_LAVA && !POBJ_IS_IMMUNE_TO_LAVA) {
                 omm_mario_unpossess_object(gMarioState, OMM_MARIO_UNPOSSESS_ACT_JUMP_OUT, false, 6);
                 obj_destroy(o);
             } else if (isOnGround) {
@@ -407,7 +414,7 @@ static bool pobj_push_out_of_object_hitbox() {
         // Push
         f32 dx = sPObj->oPosX - sObj->oPosX;
         f32 dz = sPObj->oPosZ - sObj->oPosZ;
-        f32 d = sqrtf(omm_sqr_f(dx) + omm_sqr_f(dz));
+        f32 d = sqrtf(sqr_f(dx) + sqr_f(dz));
         if (d == 0.f) {
             // This is unlikely, but we must
             // prevent a div/0 error
@@ -436,7 +443,7 @@ static bool pobj_push_out_of_object_hurtbox() {
         // Push
         f32 dx = sPObj->oPosX - sObj->oPosX;
         f32 dz = sPObj->oPosZ - sObj->oPosZ;
-        f32 d = sqrtf(omm_sqr_f(dx) + omm_sqr_f(dz));
+        f32 d = sqrtf(sqr_f(dx) + sqr_f(dz));
         if (d == 0.f) {
             // This is unlikely, but we must
             // prevent a div/0 error
@@ -488,7 +495,7 @@ static bool pobj_mario_take_damage_and_unpossess() {
         sObj->oInteractStatus = INT_STATUS_INTERACTED | INT_STATUS_ATTACKED_MARIO;
         gMarioState->hurtCounter += 4 * sObj->oDamageOrCoinValue;
         gMarioState->interactObj = sObj;
-        set_camera_shake_from_hit(SHAKE_SMALL_DAMAGE + omm_min_s(sObj->oDamageOrCoinValue / 2, 2));
+        set_camera_shake_from_hit(SHAKE_SMALL_DAMAGE + min_s(sObj->oDamageOrCoinValue / 2, 2));
         omm_mario_unpossess_object(gMarioState, OMM_MARIO_UNPOSSESS_ACT_KNOCKED_BACK, obj_is_object2_pushing_object1_backwards(sPObj, sObj, true), 15);
         return true;
     }

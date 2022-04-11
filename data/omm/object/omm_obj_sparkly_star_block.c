@@ -175,7 +175,7 @@ static void omm_bhv_sparkly_star_block_update() {
     }
 
     // Unloads the Block if the corresponding Sparkly Stars mode is enabled
-    if (o->oAction == 0 && omm_sparkly_is_mode_selected(o->oSparklyStarMode)) {
+    if (o->oAction == 0 && omm_ssd_is_selected(o->oSparklyStarMode)) {
         obj_mark_for_deletion(o);
     }
 }
@@ -212,7 +212,7 @@ const BehaviorScript omm_bhv_sparkly_star_3_block[] = {
 //
 
 struct Object *omm_spawn_sparkly_star_block(struct Object *o, s32 mode, f32 x, f32 y, f32 z) {
-    struct Object *block = obj_spawn_from_geo(o, OMM_SPARKLY_STAR_BLOCK_GEO[mode], OMM_SPARKLY_STAR_BLOCK_BHV[mode]);
+    struct Object *block = obj_spawn_from_geo(o, OMM_SSX_BLOCK_GEO[mode], OMM_SSX_BLOCK_BHV[mode]);
     obj_set_always_rendered(block, true);
     obj_set_pos(block, x, y, z);
     obj_set_angle(block, 0, 0, 0);

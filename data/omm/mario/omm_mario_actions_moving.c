@@ -13,7 +13,7 @@ static void omm_common_ground_knockback_action(struct MarioState *m, s32 animID,
     play_sound_if_no_flag(m, m->actionArg > 0 ? SOUND_MARIO_ATTACKED : SOUND_MARIO_OOOF2, MARIO_MARIO_SOUND_PLAYED);
 
     // Step
-    mario_set_forward_vel(m, omm_clamp_f(m->forwardVel * 0.9f, -32.f, 32.f));
+    mario_set_forward_vel(m, clamp_f(m->forwardVel * 0.9f, -32.f, 32.f));
     if (perform_ground_step(m) == GROUND_STEP_LEFT_GROUND) {
         omm_mario_set_action(m, m->forwardVel >= 0.f ? ACT_FORWARD_AIR_KB : ACT_BACKWARD_AIR_KB, m->actionArg, 0);
     } else if (obj_anim_is_at_end(m->marioObj)) {
@@ -27,7 +27,7 @@ static void omm_common_ground_knockback_action(struct MarioState *m, s32 animID,
 }
 
 static void anim_and_audio_for_walk(struct MarioState *m) {
-    f32 walkingSpeed = omm_max_3_f(4.f, m->forwardVel, m->intendedMag);
+    f32 walkingSpeed = max_3_f(4.f, m->forwardVel, m->intendedMag);
     struct {
         bool condToTipToe;
         bool condToWalk;
@@ -114,7 +114,7 @@ static void anim_and_audio_for_walk(struct MarioState *m) {
             s16 targetPitch = walkAnimAndAudio[index].tiltBody * -((find_floor_slope(m, 0) * m->forwardVel) / 40.f);
             m->marioObj->oMarioWalkingPitch = (s16) approach_s32(m->marioObj->oMarioWalkingPitch, targetPitch, 0x800, 0x800);
             m->marioObj->oGfxAngle[0] = m->marioObj->oMarioWalkingPitch;
-            obj_anim_play(m->marioObj, walkAnimAndAudio[index].animID, omm_max_f(walkingSpeed * walkAnimAndAudio[index].animAccel, 0.1f));
+            obj_anim_play(m->marioObj, walkAnimAndAudio[index].animID, max_f(walkingSpeed * walkAnimAndAudio[index].animAccel, 0.1f));
             play_step_sound(m, walkAnimAndAudio[index].soundStep1, walkAnimAndAudio[index].soundStep2);
             break;
         }
@@ -149,7 +149,7 @@ static s32 omm_act_walking(struct MarioState *m) {
     switch (perform_ground_step(m)) {
         case GROUND_STEP_NONE: {
             if (omm_peach_vibe_is_gloom()) {
-                obj_anim_play(m->marioObj, MARIO_ANIM_RUNNING, omm_max_f(1.f, omm_abs_f(m->forwardVel / 2.f)));
+                obj_anim_play(m->marioObj, MARIO_ANIM_RUNNING, max_f(1.f, abs_f(m->forwardVel / 2.f)));
                 play_step_sound(m, 9, 45);
             } else {
                 anim_and_audio_for_walk(m);
@@ -265,7 +265,12 @@ static s32 omm_act_quicksand_jump_land(struct MarioState *m) {
 }
 
 static s32 omm_act_long_jump_land(struct MarioState *m) {
-    action_condition(omm_mario_is_roll_landing(m), ACT_OMM_ROLL, 0, RETURN_CANCEL);
+#if !OMM_GAME_IS_R96A
+    if (OMM_CHEAT_BLJ_ANYWHERE_REQ) {
+        action_a_pressed(1, ACT_LONG_JUMP, 0, RETURN_CANCEL, m->vel[1] = -50.f;);
+    }
+#endif
+    action_condition(!OMM_CHEAT_BLJ_ANYWHERE_REQ && omm_mario_is_roll_landing(m), ACT_OMM_ROLL, 0, RETURN_CANCEL);
     action_cappy(1, ACT_OMM_CAPPY_THROW_GROUND, 0, RETURN_CANCEL);
     return OMM_MARIO_ACTION_RESULT_CONTINUE;
 }
@@ -284,7 +289,7 @@ static s32 omm_act_burning_ground(struct MarioState *m) {
 }
 
 static s32 omm_act_hard_backward_ground_kb(struct MarioState *m) {
-    if (OMM_MOVESET_CLASSIC || m->health <= OMM_HEALTH_DEAD) {
+    if (OMM_MOVESET_CLASSIC || m->health <= OMM_HEALTH_ODYSSEY_DEAD) {
         return OMM_MARIO_ACTION_RESULT_CONTINUE;
     }
 
@@ -300,7 +305,7 @@ static s32 omm_act_hard_backward_ground_kb(struct MarioState *m) {
 }
 
 static s32 omm_act_hard_forward_ground_kb(struct MarioState *m) {
-    if (OMM_MOVESET_CLASSIC || m->health <= OMM_HEALTH_DEAD) {
+    if (OMM_MOVESET_CLASSIC || m->health <= OMM_HEALTH_ODYSSEY_DEAD) {
         return OMM_MARIO_ACTION_RESULT_CONTINUE;
     }
 
@@ -309,7 +314,7 @@ static s32 omm_act_hard_forward_ground_kb(struct MarioState *m) {
 }
 
 static s32 omm_act_backward_ground_kb(struct MarioState *m) {
-    if (OMM_MOVESET_CLASSIC || m->health <= OMM_HEALTH_DEAD) {
+    if (OMM_MOVESET_CLASSIC || m->health <= OMM_HEALTH_ODYSSEY_DEAD) {
         return OMM_MARIO_ACTION_RESULT_CONTINUE;
     }
 
@@ -318,7 +323,7 @@ static s32 omm_act_backward_ground_kb(struct MarioState *m) {
 }
 
 static s32 omm_act_forward_ground_kb(struct MarioState *m) {
-    if (OMM_MOVESET_CLASSIC || m->health <= OMM_HEALTH_DEAD) {
+    if (OMM_MOVESET_CLASSIC || m->health <= OMM_HEALTH_ODYSSEY_DEAD) {
         return OMM_MARIO_ACTION_RESULT_CONTINUE;
     }
 
@@ -327,7 +332,7 @@ static s32 omm_act_forward_ground_kb(struct MarioState *m) {
 }
 
 static s32 omm_act_soft_backward_ground_kb(struct MarioState *m) {
-    if (OMM_MOVESET_CLASSIC || m->health <= OMM_HEALTH_DEAD) {
+    if (OMM_MOVESET_CLASSIC || m->health <= OMM_HEALTH_ODYSSEY_DEAD) {
         return OMM_MARIO_ACTION_RESULT_CONTINUE;
     }
 
@@ -336,7 +341,7 @@ static s32 omm_act_soft_backward_ground_kb(struct MarioState *m) {
 }
 
 static s32 omm_act_soft_forward_ground_kb(struct MarioState *m) {
-    if (OMM_MOVESET_CLASSIC || m->health <= OMM_HEALTH_DEAD) {
+    if (OMM_MOVESET_CLASSIC || m->health <= OMM_HEALTH_ODYSSEY_DEAD) {
         return OMM_MARIO_ACTION_RESULT_CONTINUE;
     }
 
@@ -345,7 +350,7 @@ static s32 omm_act_soft_forward_ground_kb(struct MarioState *m) {
 }
 
 static s32 omm_act_ground_bonk(struct MarioState *m) {
-    if (OMM_MOVESET_CLASSIC || m->health <= OMM_HEALTH_DEAD) {
+    if (OMM_MOVESET_CLASSIC || m->health <= OMM_HEALTH_ODYSSEY_DEAD) {
         return OMM_MARIO_ACTION_RESULT_CONTINUE;
     }
 
@@ -374,7 +379,7 @@ static s32 omm_act_wario_charge(struct MarioState *m) {
 
 static s32 omm_act_roll(struct MarioState *m) {
     bool superRoll = (m->prevAction == ACT_GROUND_POUND_LAND) || (m->prevAction == ACT_OMM_SPIN_POUND_LAND) || ((m->prevAction == ACT_OMM_ROLL) && (m->forwardVel >= 45.f));
-    action_init(omm_max_f(m->forwardVel, superRoll ? 75.f : 60.f), 0, superRoll ? PARTICLE_HORIZONTAL_STAR : PARTICLE_MIST_CIRCLE, 0, m->faceAngle[0] *= (m->prevAction == ACT_OMM_ROLL););
+    action_init(max_f(m->forwardVel, superRoll ? 75.f : 60.f), 0, superRoll ? PARTICLE_HORIZONTAL_STAR : PARTICLE_MIST_CIRCLE, 0, m->faceAngle[0] *= (m->prevAction == ACT_OMM_ROLL););
     action_cappy(m->actionTimer >= 6, ACT_OMM_CAPPY_THROW_GROUND, 0, RETURN_CANCEL);
     action_a_pressed(OMM_MOVESET_ODYSSEY, ACT_LONG_JUMP, 0, RETURN_CANCEL);
     action_b_pressed(OMM_MOVESET_ODYSSEY && m->actionTimer >= 6, ACT_OMM_ROLL, 0, RETURN_CANCEL);
@@ -388,17 +393,18 @@ static s32 omm_act_roll(struct MarioState *m) {
         // Mario slowly decelerates on flat ground
         // Decelerates even slower if Z is held
         f32 decelMult = ((m->controller->buttonDown & Z_TRIG) ? 0.25f : 1.00f);
-        mario_set_forward_vel(m, omm_max_f(0, m->forwardVel - OMM_MARIO_ROLL_DECEL * decelMult));
-        m->faceAngle[1] = m->intendedYaw - approach_s32((s16) (m->intendedYaw - m->faceAngle[1]), 0, OMM_MARIO_ROLL_YAW_VEL, OMM_MARIO_ROLL_YAW_VEL);
+        mario_set_forward_vel(m, max_f(0, m->forwardVel - OMM_MARIO_ROLL_DECEL * decelMult));
+        s32 handling = (OMM_CHEAT_SUPER_RESPONSIVE ? 0x8000 : OMM_MARIO_ROLL_YAW_VEL);
+        m->faceAngle[1] = m->intendedYaw - approach_s32((s16) (m->intendedYaw - m->faceAngle[1]), 0, handling, handling);
 
     } else {
 
         // Mario accelerates instead of decelerate if he's facing away the slope
         // Decelerates (only) even slower if Z is held
         f32 sign = ((sins(m->faceAngle[1]) * m->floor->normal.x + coss(m->faceAngle[1]) * m->floor->normal.z > 0.f) ? +1.f : -1.f);
-        f32 t = omm_clamp_0_1_f(1.f - m->floor->normal.y);
+        f32 t = clamp_0_1_f(1.f - m->floor->normal.y);
         f32 decelMult = ((m->controller->buttonDown & Z_TRIG) && (sign < 0) ? 0.25f : 1.00f);
-        mario_set_forward_vel(m, omm_clamp_f(m->forwardVel + sign * OMM_MARIO_ROLL_DECEL * decelMult * (1.f + 2.f * t), 0.f, OMM_MARIO_ROLL_MAX_SPEED));
+        mario_set_forward_vel(m, clamp_f(m->forwardVel + sign * OMM_MARIO_ROLL_DECEL * decelMult * (1.f + 2.f * t), 0.f, OMM_MARIO_ROLL_MAX_SPEED));
 
         // Progressively turn Mario in the direction of the slope...
         if (m->floor->normal.z != 0 || m->floor->normal.x != 0) {
@@ -409,8 +415,9 @@ static s32 omm_act_roll(struct MarioState *m) {
 
         // ...but this rotation can be partially canceled with the control stick
         if (m->input & INPUT_NONZERO_ANALOG) {
-            f32 handling = 1.f + 0.25f * (m->forwardVel / OMM_MARIO_ROLL_MAX_SPEED);
-            m->faceAngle[1] = m->intendedYaw - approach_s32((s16) (m->intendedYaw - m->faceAngle[1]), 0, handling * OMM_MARIO_ROLL_YAW_VEL, handling * OMM_MARIO_ROLL_YAW_VEL);
+            f32 yawVelMult = 1.f + 0.25f * (m->forwardVel / OMM_MARIO_ROLL_MAX_SPEED);
+            s32 handling = (OMM_CHEAT_SUPER_RESPONSIVE ? 0x8000 : (yawVelMult * OMM_MARIO_ROLL_YAW_VEL));
+            m->faceAngle[1] = m->intendedYaw - approach_s32((s16) (m->intendedYaw - m->faceAngle[1]), 0, handling, handling);
         }
     }
 
@@ -446,12 +453,12 @@ static s32 omm_act_roll(struct MarioState *m) {
 
 static s32 omm_act_cappy_throw_ground(struct MarioState *m) {
     action_cappy(1, ACT_OMM_CAPPY_THROW_GROUND, 0, RETURN_CANCEL);
-    action_za_pressed(OMM_MOVESET_ODYSSEY, ACT_LONG_JUMP, 0, RETURN_CANCEL);
+    action_za_pressed(OMM_MOVESET_ODYSSEY && m->forwardVel > 8.f, ACT_LONG_JUMP, 0, RETURN_CANCEL);
     action_zb_pressed(OMM_MOVESET_ODYSSEY, ACT_OMM_ROLL, 0, RETURN_CANCEL);
     action_a_pressed(OMM_MOVESET_ODYSSEY, ACT_JUMP, 0, RETURN_CANCEL);
     action_spin(OMM_MOVESET_ODYSSEY, ACT_OMM_SPIN_GROUND, 0, RETURN_CANCEL);
-    f32 f = coss(omm_abs_s(m->faceAngle[1] - m->intendedYaw)) * m->controller->stickMag / 64.f;
-    mario_set_forward_vel(m, m->forwardVel * omm_clamp_f(f, 0.80f, 0.98f));
+    f32 f = coss(abs_s(m->faceAngle[1] - m->intendedYaw)) * m->controller->stickMag / 64.f;
+    mario_set_forward_vel(m, m->forwardVel * clamp_f(f, 0.80f, 0.98f));
     s32 step = perform_ground_step(m);
     action_condition(step == GROUND_STEP_LEFT_GROUND, ACT_FREEFALL, 0, RETURN_BREAK);
     action_condition(step == GROUND_STEP_HIT_WALL, ACT_IDLE, 0, RETURN_BREAK);

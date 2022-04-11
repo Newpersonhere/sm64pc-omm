@@ -238,6 +238,7 @@ void save_file_load_all() {
                         READ_KBINDS(gOmmControlsStickDown, token.args);
                         READ_KBINDS(gOmmControlsStickLeft, token.args);
                         READ_KBINDS(gOmmControlsStickRight, token.args);
+                        READ_CHOICE(gOmmFPS, token.args);
                         READ_CHOICE_SC(gOmmCharacter, token.args);
                         READ_CHOICE_SC(gOmmMovesetType, token.args);
                         READ_CHOICE_SC(gOmmCapType, token.args);
@@ -245,6 +246,10 @@ void save_file_load_all() {
                         READ_CHOICE_SC(gOmmPowerUpsType, token.args);
                         READ_CHOICE_SC(gOmmCameraMode, token.args);
                         READ_CHOICE_SC(gOmmSparklyStarsMode, token.args);
+                        READ_TOGGLE_SC(gOmmSparklyStarsAssist, token.args);
+                        READ_TOGGLE_SC(gOmmSparklyStarsHint, token.args);
+                        READ_CHOICE(gOmmExtrasMarioColors, token.args);
+                        READ_CHOICE(gOmmExtrasPeachColors, token.args);
                         READ_TOGGLE_SC(gOmmExtrasSMOAnimations, token.args);
                         READ_TOGGLE_SC(gOmmExtrasCappyAndTiara, token.args);
                         READ_TOGGLE_SC(gOmmExtrasColoredStars, token.args);
@@ -256,7 +261,6 @@ void save_file_load_all() {
 #if OMM_CODE_DEV
                         READ_TOGGLE_SC(gOmmExtrasRender96Peach, token.args);
 #endif
-                        READ_TOGGLE_SC(gOmmExtrasSparklyStarsHint, token.args);
                         READ_TOGGLE_SC(gOmmExtrasCrystalStarsReward, token.args);
                         READ_TOGGLE_SC(gOmmExtrasNebulaStarsReward, token.args);
 #if OMM_CODE_DEBUG
@@ -274,7 +278,12 @@ void save_file_load_all() {
 #endif
                 
                         // Sparkly Stars data
-                        if (omm_sparkly_read_save(OMM_ARRAY_OF(const char*) { token.args[0], token.args[1] })) {
+                        if (omm_ssd_read(OMM_ARRAY_OF(const char*) { token.args[0], token.args[1] })) {
+                            continue;
+                        }
+
+                        // Mario colors
+                        if (omm_mario_colors_read(OMM_ARRAY_OF(const char*) { token.args[0], token.args[1] })) {
                             continue;
                         }
 
@@ -483,7 +492,10 @@ static void save_file_write() {
     }
 
     // Sparkly Stars data
-    omm_sparkly_write_save(&head);
+    omm_ssd_write(&head);
+
+    // Mario colors
+    omm_mario_colors_write(&head);
         
     // Settings data
     write(OMM_SETTINGS_FLAG "\n");
@@ -507,6 +519,7 @@ static void save_file_write() {
     WRITE_KBINDS(gOmmControlsStickDown);
     WRITE_KBINDS(gOmmControlsStickLeft);
     WRITE_KBINDS(gOmmControlsStickRight);
+    WRITE_CHOICE(gOmmFPS);
     WRITE_CHOICE_SC(gOmmCharacter);
     WRITE_CHOICE_SC(gOmmMovesetType);
     WRITE_CHOICE_SC(gOmmCapType);
@@ -514,6 +527,10 @@ static void save_file_write() {
     WRITE_CHOICE_SC(gOmmPowerUpsType);
     WRITE_CHOICE_SC(gOmmCameraMode);
     WRITE_CHOICE_SC(gOmmSparklyStarsMode);
+    WRITE_TOGGLE_SC(gOmmSparklyStarsAssist);
+    WRITE_TOGGLE_SC(gOmmSparklyStarsHint);
+    WRITE_CHOICE(gOmmExtrasMarioColors);
+    WRITE_CHOICE(gOmmExtrasPeachColors);
     WRITE_TOGGLE_SC(gOmmExtrasSMOAnimations);
     WRITE_TOGGLE_SC(gOmmExtrasCappyAndTiara);
     WRITE_TOGGLE_SC(gOmmExtrasColoredStars);
@@ -525,7 +542,6 @@ static void save_file_write() {
 #if OMM_CODE_DEV
     WRITE_TOGGLE_SC(gOmmExtrasRender96Peach);
 #endif
-    WRITE_TOGGLE_SC(gOmmExtrasSparklyStarsHint);
     WRITE_TOGGLE_SC(gOmmExtrasCrystalStarsReward);
     WRITE_TOGGLE_SC(gOmmExtrasNebulaStarsReward);
 #if OMM_CODE_DEBUG
@@ -658,7 +674,7 @@ u32 save_file_get_max_coin_score(s32 courseIndex) {
             }
         }
     }
-    return (maxScoreFileNum << 16) + omm_max_s(maxCoinScore, 0);
+    return (maxScoreFileNum << 16) + max_s(maxCoinScore, 0);
 }
 
 s32 save_file_get_cap_pos(UNUSED Vec3s capPos) {
@@ -885,6 +901,6 @@ void omm_set_complete_save_file(s32 fileIndex) {
     // Unlock Peach
     // That's the "unlock Peach" cheat code that only works with OMM save files :)
     if (!omm_player_is_unlocked(OMM_PLAYER_PEACH)) {
-        omm_sparkly_read_save(OMM_ARRAY_OF(const char *) { "sparkly_stars", "XgU2yLgIIM1ihxJ8tC5qV35jzIrc5FoEXqezDLDUhBVCVF12sKsYkuPPgtoGfHk4UhwmwOF1d73inOZA" });
+        omm_ssd_read(OMM_ARRAY_OF(const char *) { "sparkly_stars", "XgU2yLgIIM1ihxJ8tC5qV35jzIrc5FoEXqezDLDUhBVCVF12sKsYkuPPgtoGfHk4UhwmwOF1d73inOZA" });
     }
 }

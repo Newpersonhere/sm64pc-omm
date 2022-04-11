@@ -10,7 +10,7 @@ static const u32 sOmmGrabActions[][2] = {
     { ACT_OMM_PEACH_ATTACK_GROUND, 3 }
 };
 
-inline static bool is_grab_action(struct MarioState *m) {
+OMM_INLINE bool is_grab_action(struct MarioState *m) {
     for (s32 i = 0; i != OMM_ARRAY_SIZE(sOmmGrabActions); ++i) {
         if (m->action == sOmmGrabActions[i][0] && m->actionArg <= sOmmGrabActions[i][1]) {
             return true;

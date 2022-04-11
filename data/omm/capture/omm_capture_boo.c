@@ -117,9 +117,9 @@ static void cappy_boo_update_opacity_and_scale(struct Object *o) {
 
     // Opacity
     if (o->oOpacity < o->oBooTargetOpacity) {
-        o->oOpacity = omm_min_s(o->oOpacity + 20, o->oBooTargetOpacity);
+        o->oOpacity = min_s(o->oOpacity + 20, o->oBooTargetOpacity);
     } else {
-        o->oOpacity = omm_max_s(o->oOpacity - 20, o->oBooTargetOpacity);
+        o->oOpacity = max_s(o->oOpacity - 20, o->oBooTargetOpacity);
     }
 
     // Scale
@@ -167,11 +167,11 @@ s32 cappy_boo_update(struct Object *o) {
 
     // States
     gOmmData->object->state.actionState = (gOmmData->object->state.actionTimer / 15) != 0;
-    gOmmData->object->state.actionTimer = omm_max_s(0, gOmmData->object->state.actionTimer - 1);
+    gOmmData->object->state.actionTimer = max_s(0, gOmmData->object->state.actionTimer - 1);
     o->oBooTargetOpacity = 255 - (200 * gOmmData->object->state.actionState);
 
     // Movement
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     pobj_decelerate(o, 0.80f, 0.95f);
     pobj_apply_gravity(o, 1.f);
     pobj_handle_special_floors(o);
@@ -188,7 +188,7 @@ s32 cappy_boo_update(struct Object *o) {
     if (o->oDistToFloor < 50.f) {
         gOmmData->object->boo.gfxOffsetY = (50.f - (o->oDistToFloor));
     } else {
-        gOmmData->object->boo.gfxOffsetY = omm_max_f(0.f, gOmmData->object->boo.gfxOffsetY - 2.f);
+        gOmmData->object->boo.gfxOffsetY = max_f(0.f, gOmmData->object->boo.gfxOffsetY - 2.f);
     }
     o->oGfxPos[1] += gOmmData->object->boo.gfxOffsetY;
 

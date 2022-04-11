@@ -52,7 +52,7 @@ s32 cappy_penguin_small_update(struct Object *o) {
 
         // Walk
         if (gOmmData->mario->capture.stickMag > 0) {
-            s32 incdec = 0x1000 * omm_max_f(0.f, (1.0f - omm_max_f(0, o->oForwardVel - omm_capture_get_walk_speed(o)) / 90.f));
+            s32 incdec = 0x1000 * max_f(0.f, (1.0f - max_f(0, o->oForwardVel - omm_capture_get_walk_speed(o)) / 90.f));
             s32 faceYaw = gOmmData->mario->capture.stickYaw - approach_s32((s16) (gOmmData->mario->capture.stickYaw - o->oFaceAngleYaw), 0, incdec, incdec);
             obj_set_forward_vel(o, faceYaw, gOmmData->mario->capture.stickMag, gOmmData->object->state.actionState == 1 ? o->oForwardVel : omm_capture_get_walk_speed(o));
             o->oFaceAngleYaw = faceYaw;
@@ -76,8 +76,8 @@ s32 cappy_penguin_small_update(struct Object *o) {
 
         // Dive
         if (POBJ_B_BUTTON_PRESSED && (obj_is_on_ground(o) || gOmmData->object->state.actionState != 1)) {
-            obj_set_forward_vel(o, o->oFaceAngleYaw, 1.f, omm_clamp_f(o->oForwardVel * 1.5f, omm_capture_get_walk_speed(o), omm_capture_get_dash_speed(o) * maxSpeedMult));
-            o->oVelY = omm_max_f(o->oVelY, omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER / 2.f);
+            obj_set_forward_vel(o, o->oFaceAngleYaw, 1.f, clamp_f(o->oForwardVel * 1.5f, omm_capture_get_walk_speed(o), omm_capture_get_dash_speed(o) * maxSpeedMult));
+            o->oVelY = max_f(o->oVelY, omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER / 2.f);
             o->oFloor = NULL;
             gOmmData->object->state.actionState = 1;
             omm_mario_lock(gMarioState, 15);
@@ -86,12 +86,12 @@ s32 cappy_penguin_small_update(struct Object *o) {
 
         // Slide
         if (POBJ_B_BUTTON_DOWN && obj_is_on_ground(o) && gOmmData->object->state.actionState == 1) {
-            obj_set_forward_vel(o, o->oFaceAngleYaw, 1.f, omm_clamp_f(o->oForwardVel * 1.05f, omm_capture_get_walk_speed(o), omm_capture_get_dash_speed(o) * maxSpeedMult));
+            obj_set_forward_vel(o, o->oFaceAngleYaw, 1.f, clamp_f(o->oForwardVel * 1.05f, omm_capture_get_walk_speed(o), omm_capture_get_dash_speed(o) * maxSpeedMult));
         }
     }
 
     // Movement
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     pobj_decelerate(o, (gOmmData->object->state.actionState == 1) ? 0.99f : 0.80f, (gOmmData->object->state.actionState == 1) ? 0.99f : 0.95f);
     pobj_apply_gravity(o, 1.f);
     pobj_handle_special_floors(o);
@@ -124,7 +124,7 @@ s32 cappy_penguin_small_update(struct Object *o) {
     }
 
     );
-    gOmmData->object->state.actionTimer = omm_max_s(0, gOmmData->object->state.actionTimer - 1);
+    gOmmData->object->state.actionTimer = max_s(0, gOmmData->object->state.actionTimer - 1);
     POBJ_STOP_IF_UNPOSSESSED;
 
     // Gfx
@@ -134,7 +134,7 @@ s32 cappy_penguin_small_update(struct Object *o) {
     // Walk
     if (gOmmData->object->state.actionState == 0) {
         if (obj_is_on_ground(o)) {
-            obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, omm_capture_get_walk_speed(o) * 9.f, o->oForwardVel, SOUND_OBJ_BABY_PENGUIN_WALK, OBJ_STEP_PARTICLE_NONE);
+            obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, omm_capture_get_walk_speed(o) * 9.f, o->oForwardVel, SOUND_OBJ_BABY_PENGUIN_WALK, OBJ_PARTICLE_NONE);
         }
         gOmmData->object->cappy.offset[1] = 68.f;
         gOmmData->object->cappy.offset[2] = 12.f;
@@ -144,7 +144,7 @@ s32 cappy_penguin_small_update(struct Object *o) {
     // Slide
     else if (gOmmData->object->state.actionState == 1) {
         if (obj_is_on_ground(o)) {
-            obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, 0.f, 0.f, SOUND_MOVING_TERRAIN_SLIDE + gMarioState->terrainSoundAddend, OBJ_STEP_PARTICLE_MIST);
+            obj_make_step_sound_and_particle(o, &gOmmData->object->state.walkDistance, 0.f, 0.f, SOUND_MOVING_TERRAIN_SLIDE + gMarioState->terrainSoundAddend, OBJ_PARTICLE_MIST);
         }
         gOmmData->object->cappy.offset[1] = 30.f;
         gOmmData->object->cappy.offset[2] = 50.f;

@@ -13,18 +13,19 @@
 #define BHV_TYPE_STRONG             (1 << 8) // Vulnerable to strong attacks (snowballs, beams)
 #define BHV_TYPE_DESTRUCTIBLE       (1 << 9) // Vulnerable to destructible attacks (explosions)
 #define BHV_TYPE_BREAKABLE          (1 << 10) // Fragile/Breakable
-#define BHV_TYPE_INVULNERABLE       (1 << 11) // Invulnerable enemies
-#define BHV_TYPE_GRABBABLE          (1 << 12) // Grabbable
-#define BHV_TYPE_KNOCKABLE_0        (1 << 13) // Knockback 0
-#define BHV_TYPE_KNOCKABLE_1        (1 << 14) // Knockback 1
-#define BHV_TYPE_GOOMBA             (1 << 15) // Goomba-like behavior
-#define BHV_TYPE_BULLY              (1 << 16) // Bully-type
-#define BHV_TYPE_FLAME              (1 << 17) // Flame-type objects
-#define BHV_TYPE_NO_CAPPY           (1 << 18) // Intangible to Cappy
-#define BHV_TYPE_KICKABLE_BOARD     (1 << 19) // Kickable board
-#define BHV_TYPE_WF_STAR_WALL       (1 << 20) // Whomp Fortress Star inside wall
-#define BHV_TYPE_EXCLAMATION_BOX    (1 << 21) // Yellow exclamation box
-#define BHV_TYPE_UNAGIS_TAIL        (1 << 22) // Unagi's tail
+#define BHV_TYPE_BOSS               (1 << 11) // Boss flag, affected by OBJ_INT_ATTACK_ONE_HIT
+#define BHV_TYPE_INVULNERABLE       (1 << 12) // Invulnerable enemies
+#define BHV_TYPE_GRABBABLE          (1 << 13) // Grabbable
+#define BHV_TYPE_KNOCKABLE_0        (1 << 14) // Knockback 0
+#define BHV_TYPE_KNOCKABLE_1        (1 << 15) // Knockback 1
+#define BHV_TYPE_GOOMBA             (1 << 16) // Goomba-like behavior
+#define BHV_TYPE_BULLY              (1 << 17) // Bully-type
+#define BHV_TYPE_FLAME              (1 << 18) // Flame-type objects
+#define BHV_TYPE_NO_CAPPY           (1 << 19) // Intangible to Cappy
+#define BHV_TYPE_KICKABLE_BOARD     (1 << 20) // Kickable board
+#define BHV_TYPE_WF_STAR_WALL       (1 << 21) // Whomp Fortress Star inside wall
+#define BHV_TYPE_EXCLAMATION_BOX    (1 << 22) // Yellow exclamation box
+#define BHV_TYPE_UNAGIS_TAIL        (1 << 23) // Unagi's tail
 #define BHV_TYPE_COLLECTIBLE        (BHV_TYPE_COIN | BHV_TYPE_WATER_RING | BHV_TYPE_MUSHROOM_1UP | BHV_TYPE_STAR_OR_KEY | BHV_TYPE_CAP | BHV_TYPE_SECRET)
 #define BHV_TYPE_KNOCKABLE          (BHV_TYPE_KNOCKABLE_0 | BHV_TYPE_KNOCKABLE_1)
 
@@ -34,7 +35,7 @@
 
 typedef struct {
     const BehaviorScript *behavior;
-    s32 types;
+    u32 types;
 } OmmBehavior;
 
 static const OmmBehavior sOmmBehaviorList[] = {
@@ -55,7 +56,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvAnotherElavator, 0 },
     { bhvAnotherTiltingPlatform, 0 },
     { bhvArrowLift, 0 },
-    { bhvBalconyBigBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
+    { bhvBalconyBigBoo, BHV_TYPE_WEAK | BHV_TYPE_BOSS | BHV_TYPE_KNOCKABLE_1 },
     { bhvBbhTiltingTrapPlatform, 0 },
     { bhvBbhTumblingBridge, 0 },
     { bhvBeginningLakitu, 0 },
@@ -72,9 +73,9 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvBetaTrampolineTop, 0 },
     { bhvBigBoulder, BHV_TYPE_DESTRUCTIBLE },
     { bhvBigBoulderGenerator, 0 },
-    { bhvBigBully, BHV_TYPE_BULLY },
-    { bhvBigBullyWithMinions, BHV_TYPE_BULLY },
-    { bhvBigChillBully, BHV_TYPE_BULLY },
+    { bhvBigBully, BHV_TYPE_BOSS | BHV_TYPE_BULLY },
+    { bhvBigBullyWithMinions, BHV_TYPE_BOSS | BHV_TYPE_BULLY },
+    { bhvBigChillBully, BHV_TYPE_BOSS | BHV_TYPE_BULLY },
     { bhvBigSnowmanWhole, BHV_TYPE_INVULNERABLE },
     { bhvBird, 0 },
     { bhvBirdsSoundLoop, 0 },
@@ -109,7 +110,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvBouncingFireballFlame, BHV_TYPE_FLAME },
     { bhvBowlingBall, BHV_TYPE_DESTRUCTIBLE },
     { bhvBowser, BHV_TYPE_INVULNERABLE },
-    { bhvBowserBodyAnchor, BHV_TYPE_INVULNERABLE },
+    { bhvBowserBodyAnchor, BHV_TYPE_BOSS | BHV_TYPE_INVULNERABLE },
     { bhvBowserBomb, 0 },
     { bhvBowserBombExplosion, 0 },
     { bhvBowserBombSmoke, 0 },
@@ -198,7 +199,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvExitPodiumWarp, 0 },
     { bhvExplosion, 0 },
     { bhvEyerokBoss, 0 },
-    { bhvEyerokHand, BHV_TYPE_DESTRUCTIBLE },
+    { bhvEyerokHand, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_BOSS },
     { bhvFadingWarp, 0 },
     { bhvFallingBowserPlatform, 0 },
     { bhvFallingPillar, 0 },
@@ -228,7 +229,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvFlyingBookend, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
     { bhvFlyingWarp, 0 },
     { bhvFreeBowlingBall, BHV_TYPE_DESTRUCTIBLE },
-    { bhvGhostHuntBigBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
+    { bhvGhostHuntBigBoo, BHV_TYPE_WEAK | BHV_TYPE_BOSS | BHV_TYPE_KNOCKABLE_1 },
     { bhvGhostHuntBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
     { bhvGiantPole, 0 },
     { bhvGoldenCoinSparkles, 0 },
@@ -277,7 +278,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvJrbSlidingBox, BHV_TYPE_DESTRUCTIBLE },
     { bhvJumpingBox, BHV_TYPE_BREAKABLE | BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_GRABBABLE },
     { bhvKickableBoard, BHV_TYPE_KICKABLE_BOARD },
-    { bhvKingBobomb, BHV_TYPE_GRABBABLE },
+    { bhvKingBobomb, BHV_TYPE_GRABBABLE | BHV_TYPE_BOSS },
     { bhvKlepto, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
     { bhvKoopa, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_0 },
     { bhvKoopaFlag, 0 },
@@ -317,7 +318,7 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvMenuButton, 0 },
     { bhvMenuButtonManager, 0 },
     { bhvMerryGoRound, 0 },
-    { bhvMerryGoRoundBigBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
+    { bhvMerryGoRoundBigBoo, BHV_TYPE_WEAK | BHV_TYPE_BOSS | BHV_TYPE_KNOCKABLE_1 },
     { bhvMerryGoRoundBoo, BHV_TYPE_WEAK | BHV_TYPE_KNOCKABLE_1 },
     { bhvMerryGoRoundBooManager, 0 },
     { bhvMeshElevator, 0 },
@@ -554,9 +555,9 @@ static const OmmBehavior sOmmBehaviorList[] = {
     { bhvWhitePuffExplosion, 0 },
     { bhvWhitePuffSmoke, 0 },
     { bhvWhitePuffSmoke2, 0 },
-    { bhvWhompKingBoss, BHV_TYPE_DESTRUCTIBLE },
+    { bhvWhompKingBoss, BHV_TYPE_DESTRUCTIBLE | BHV_TYPE_BOSS },
     { bhvWigglerBody, 0 },
-    { bhvWigglerHead, BHV_TYPE_WEAK },
+    { bhvWigglerHead, BHV_TYPE_WEAK | BHV_TYPE_BOSS },
     { bhvWind, 0 },
     { bhvWingCap, BHV_TYPE_CAP },
     { bhvWoodenPost, 0 },
@@ -709,21 +710,21 @@ static const OmmBehavior sOmmBehaviorList[] = {
 };
 
 static u32 omm_obj_get_behavior_types(struct Object *o) {
-    static OmmArray sOmmBehaviorScripts = NULL;
-    static OmmArray sOmmBehaviorTypes = NULL;
-    if (OMM_UNLIKELY(!sOmmBehaviorScripts)) {
-        sOmmBehaviorScripts = omm_array_new(const BehaviorScript *);
-        sOmmBehaviorTypes = omm_array_new(s32);
+    static OmmHMap sOmmBhvTypes = omm_hmap_zero;
+
+    // Load everything at once
+    if (OMM_UNLIKELY(!sOmmBhvTypes.k)) {
         for (s32 i = 0; i != OMM_ARRAY_SIZE(sOmmBehaviorList); ++i) {
             if (sOmmBehaviorList[i].types) {
-                omm_array_add(sOmmBehaviorScripts, sOmmBehaviorList[i].behavior);
-                omm_array_add(sOmmBehaviorTypes, sOmmBehaviorList[i].types);
+                omm_hmap_insert(sOmmBhvTypes, (uintptr_t) sOmmBehaviorList[i].behavior, &sOmmBehaviorList[i].types);
             }
         }
     }
-    if (o->oBehaviorRef != (u32) (uintptr_t) o->behavior) {
-        s32 i = omm_array_find(sOmmBehaviorScripts, o->behavior);
-        o->oBehaviorTypes = (i != -1 ? omm_array_get(sOmmBehaviorTypes, s32, i) : 0);
+    
+    // Set the behavior types once and update only if the behavior changes
+    if (OMM_UNLIKELY(o->oBehaviorRef != (u32) (uintptr_t) o->behavior)) {
+        s32 i = omm_hmap_find(sOmmBhvTypes, (uintptr_t) o->behavior);
+        o->oBehaviorTypes = (i != -1 ? *omm_hmap_get(sOmmBhvTypes, s32 *, i) : 0);
         o->oBehaviorRef = (u32) (uintptr_t) o->behavior;
     }
     return o->oBehaviorTypes;
@@ -806,6 +807,10 @@ bool omm_obj_is_breakable(struct Object *o) {
     return (omm_obj_get_behavior_types(o) & BHV_TYPE_BREAKABLE) != 0;
 }
 
+bool omm_obj_is_boss(struct Object *o) {
+    return (omm_obj_get_behavior_types(o) & BHV_TYPE_BOSS) != 0;
+}
+
 bool omm_obj_is_invulnerable(struct Object *o) {
     return (omm_obj_get_behavior_types(o) & BHV_TYPE_INVULNERABLE) != 0;
 }
@@ -855,82 +860,80 @@ bool omm_obj_is_collectible(struct Object *o) {
 //
 
 static void omm_obj_init_behaviors_array(OmmArray *arr, s32 type) {
-    if (OMM_UNLIKELY(!*arr)) {
-        *arr = omm_array_new(const BehaviorScript *);
+    if (OMM_UNLIKELY(!arr->p)) {
         for (s32 i = 0; i != OMM_ARRAY_SIZE(sOmmBehaviorList); ++i) {
             if (sOmmBehaviorList[i].types & type) {
-                omm_array_add(*arr, sOmmBehaviorList[i].behavior);
+                omm_array_add(*arr, ptr, sOmmBehaviorList[i].behavior);
             }
         }
-        omm_array_add_inplace(*arr, const BehaviorScript *, NULL);
     }
 }
 
-const BehaviorScript **omm_obj_get_coin_behaviors() {
-    static OmmArray sOmmCoinBehaviors = NULL;
+OmmArray omm_obj_get_coin_behaviors() {
+    static OmmArray sOmmCoinBehaviors = omm_array_zero;
     omm_obj_init_behaviors_array(&sOmmCoinBehaviors, BHV_TYPE_COIN);
-    return (const BehaviorScript **) omm_array_data(sOmmCoinBehaviors);
+    return sOmmCoinBehaviors;
 }
 
-const BehaviorScript **omm_obj_get_star_or_key_behaviors() {
-    static OmmArray sOmmStarOrKeyBehaviors = NULL;
+OmmArray omm_obj_get_star_or_key_behaviors() {
+    static OmmArray sOmmStarOrKeyBehaviors = omm_array_zero;
     omm_obj_init_behaviors_array(&sOmmStarOrKeyBehaviors, BHV_TYPE_STAR_OR_KEY);
-    return (const BehaviorScript **) omm_array_data(sOmmStarOrKeyBehaviors);
+    return sOmmStarOrKeyBehaviors;
 }
 
-const BehaviorScript **omm_obj_get_star_model_behaviors() {
-    static OmmArray sOmmStarModelBehaviors = NULL;
+OmmArray omm_obj_get_star_model_behaviors() {
+    static OmmArray sOmmStarModelBehaviors = omm_array_zero;
     omm_obj_init_behaviors_array(&sOmmStarModelBehaviors, BHV_TYPE_STAR_MODEL);
-    return (const BehaviorScript **) omm_array_data(sOmmStarModelBehaviors);
+    return sOmmStarModelBehaviors;
 }
 
-const BehaviorScript **omm_obj_get_cap_behaviors() {
-    static OmmArray sOmmCapBehaviors = NULL;
+OmmArray omm_obj_get_cap_behaviors() {
+    static OmmArray sOmmCapBehaviors = omm_array_zero;
     omm_obj_init_behaviors_array(&sOmmCapBehaviors, BHV_TYPE_CAP);
-    return (const BehaviorScript **) omm_array_data(sOmmCapBehaviors);
+    return sOmmCapBehaviors;
 }
 
-const BehaviorScript **omm_obj_get_goomba_behaviors() {
-    static OmmArray sOmmGoombaBehaviors = NULL;
+OmmArray omm_obj_get_goomba_behaviors() {
+    static OmmArray sOmmGoombaBehaviors = omm_array_zero;
     omm_obj_init_behaviors_array(&sOmmGoombaBehaviors, BHV_TYPE_GOOMBA);
-    return (const BehaviorScript **) omm_array_data(sOmmGoombaBehaviors);
+    return sOmmGoombaBehaviors;
 }
 
-const BehaviorScript **omm_obj_get_player_behaviors() {
-    static const BehaviorScript *sOmmPlayerBehaviors[] = {
-        omm_bhv_cappy,
-        omm_bhv_possessed_object_cap,
-        omm_bhv_wing_glow_left_hand,
-        omm_bhv_wing_glow_right_hand,
-        omm_bhv_wing_trail,
-        omm_bhv_vanish_mist,
-        omm_bhv_metal_sparkle,
-        omm_bhv_perry,
-        omm_bhv_perry_trail,
-        omm_bhv_perry_charge,
-        omm_bhv_peach_vibe_joy_tornado,
-        omm_bhv_peach_vibe_joy_sparkle,
-        omm_bhv_peach_vibe_rage_aura,
-        omm_bhv_peach_vibe_gloom_aura,
-        omm_bhv_peach_vibe_gloom_tear,
-        omm_bhv_peach_vibe_gloom_tear_small,
-        omm_bhv_peach_vibe_calm_aura,
-        omm_bhv_peach_vibe_calm_sparkle,
-        omm_bhv_sparkly_star_sparkle_mario,
-        NULL
-    };
+OmmArray omm_obj_get_player_behaviors() {
+    static OmmArray sOmmPlayerBehaviors = omm_array_zero;
+    if (OMM_UNLIKELY(!sOmmPlayerBehaviors.p)) {
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_cappy);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_possessed_object_cap);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_wing_glow_left_hand);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_wing_glow_right_hand);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_wing_trail);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_vanish_mist);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_metal_sparkle);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_perry);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_perry_trail);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_perry_charge);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_peach_vibe_joy_tornado);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_peach_vibe_joy_sparkle);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_peach_vibe_rage_aura);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_peach_vibe_gloom_aura);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_peach_vibe_gloom_tear);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_peach_vibe_gloom_tear_small);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_peach_vibe_calm_aura);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_peach_vibe_calm_sparkle);
+        omm_array_add(sOmmPlayerBehaviors, ptr, omm_bhv_sparkly_star_sparkle_mario);
+    }
     return sOmmPlayerBehaviors;
 }
 
-const BehaviorScript **omm_obj_get_bowser_behaviors() {
-    static const BehaviorScript* sOmmBowserBehaviors[] = {
-        bhvBowser,
-        bhvBowserBodyAnchor,
-        bhvBowserTailAnchor,
-        bhvBowserFlameSpawn,
-        bhvBowserBomb,
-        NULL
-    };
+OmmArray omm_obj_get_bowser_behaviors() {
+    static OmmArray sOmmBowserBehaviors = omm_array_zero;
+    if (OMM_UNLIKELY(!sOmmBowserBehaviors.p)) {
+        omm_array_add(sOmmBowserBehaviors, ptr, bhvBowser);
+        omm_array_add(sOmmBowserBehaviors, ptr, bhvBowserBodyAnchor);
+        omm_array_add(sOmmBowserBehaviors, ptr, bhvBowserTailAnchor);
+        omm_array_add(sOmmBowserBehaviors, ptr, bhvBowserFlameSpawn);
+        omm_array_add(sOmmBowserBehaviors, ptr, bhvBowserBomb);
+    }
     return sOmmBowserBehaviors;
 }
 
@@ -1040,7 +1043,7 @@ OMM_ROUTINE_LEVEL_ENTRY(omm_obj_init_perry_attacks) {
     OMM_MEMSET(sPerryAttacks, 0, sizeof(sPerryAttacks));
 }
 
-OMM_ROUTINE_GFX(omm_obj_update_perry_attacks) {
+OMM_ROUTINE_PRE_RENDER(omm_obj_update_perry_attacks) {
     if (OMM_LIKELY(gMarioObject)) {
 
         // Check objects attacked by Perry
@@ -1050,7 +1053,7 @@ OMM_ROUTINE_GFX(omm_obj_update_perry_attacks) {
                 if (patk->obj->behavior == patk->bhv) {
                     if (!patk->obj->activeFlags || patk->obj->oAction == patk->act) {
                         patk->pos[0] = patk->obj->oPosX;
-                        patk->pos[1] = patk->obj->oPosY + omm_max_f(0.f, patk->obj->hitboxHeight - patk->obj->hitboxDownOffset);
+                        patk->pos[1] = patk->obj->oPosY + max_f(0.f, patk->obj->hitboxHeight - patk->obj->hitboxDownOffset);
                         patk->pos[2] = patk->obj->oPosZ;
                         patk->obj = NULL;
                     }
@@ -1121,10 +1124,39 @@ bool omm_obj_check_interaction(struct Object *o, struct MarioState *m, bool igno
     return !(o->oInteractStatus & INT_STATUS_INTERACTED) &&     // Not interacted
             (o->oIntangibleTimer == 0 || ignoreTangibility) &&  // Not intangible
             (o->activeFlags != ACTIVE_FLAG_DEACTIVATED) &&      // Not unloading/unloaded
-            (o != gOmmData->mario->capture.obj) &&              // Not a capture
+            (o != gOmmCapture) &&                               // Not a capture
             (o != m->usedObj || !omm_mario_is_picking_up(m)) && // Not used or not picking up
             (o != m->heldObj) &&                                // Not held
             (o != m->riddenObj);                                // Not ridden
+}
+
+static void omm_obj_interact_attract_coin(struct Object *o, struct Object *target, u32 interactionFlags, bool strong) {
+    f32 oCenterY = o->oPosY + o->hitboxHeight / 2.f - o->hitboxDownOffset;
+    f32 dx = target->oPosX - o->oPosX;
+    f32 dy = target->oPosY - oCenterY;
+    f32 dz = target->oPosZ - o->oPosZ;
+    f32 distX = max_f(0.f, abs_f(dx) - o->hitboxRadius);
+    f32 distY = max_f(0.f, abs_f(dy) - o->hitboxHeight / 2.f);
+    f32 distZ = max_f(0.f, abs_f(dz) - o->hitboxRadius);
+    f32 distToObj = sqrtf(distX * distX + distY * distY + distZ * distZ);
+    f32 distPullMax = OBJ_INT_ATTRACT_COINS_RANGE_GET(interactionFlags);
+    if (distToObj < distPullMax) {
+        f32 velPullMax = max_f(50.f, abs_f(o->oForwardVel) * 1.25f);
+        f32 velPull = velPullMax * (strong ? 1.f : relerp_0_1_f(distToObj, 0.f, distPullMax, 1.f, 0.f));
+        Vec3f dv = { dx, dy, dz };
+        vec3f_normalize(dv);
+        vec3f_mul(dv, velPull);
+        Vec4f vel = { target->oVelX, target->oVelY, target->oVelZ, target->oForwardVel };
+        target->oVelX = -dv[0];
+        target->oVelY = -dv[1];
+        target->oVelZ = -dv[2];
+        target->oWallHitboxRadius = target->hitboxRadius / 2.f;
+        perform_object_step(target, 0);
+        target->oVelX = vel[0];
+        target->oVelY = vel[1];
+        target->oVelZ = vel[2];
+        target->oForwardVel = vel[3];
+    }
 }
 
 static void omm_obj_interact_heal_mario(struct Object *target, u32 interactionFlags) {
@@ -1215,7 +1247,6 @@ static bool omm_obj_interact_defeat_in_one_hit(struct Object *o, struct Object *
         return false;
     }
 
-    // Not a Boss
     return false;
 }
 
@@ -1243,7 +1274,7 @@ CAPPY_ONLY_CODE(
 
             // Defeat enemies in one hit
             if (interactionFlags & OBJ_INT_ATTACK_ONE_HIT) {
-                if (omm_obj_interact_defeat_in_one_hit(o, target)) {
+                if (omm_obj_is_boss(target) && omm_obj_interact_defeat_in_one_hit(o, target)) {
                     omm_obj_handle_perry_attack(target, interactionFlags);
                     sStopAndReturn = true;
                     return true;
@@ -1300,218 +1331,228 @@ bool omm_obj_process_one_object_interaction(struct Object *o, struct Object *tar
     bool interacted = false;
 
     // Target must not be the same as current object
-    // Target must be tangible to Cappy if current object is Cappy
     // Target must be valid for interaction
-    // Target hitbox must overlap with current object hitbox
-    if (target != o && (!isCappy || !omm_obj_is_intangible_to_cappy(target)) &&
-        omm_obj_check_interaction(target, m, false) &&
-        obj_detect_hitbox_overlap(o, target, OBJ_OVERLAP_FLAG_HITBOX, OBJ_OVERLAP_FLAG_HITBOX_HURTBOX_MAX)) {
+    if (target != o && omm_obj_check_interaction(target, m, false)) {
 
-CAPPY_ONLY_CODE(
-        // Capture
-        if (omm_cappy_is_mario_available(m, true) && omm_mario_possess_object(m, target, true)) {
-            omm_cappy_unload();
-            sStopAndReturn = true;
-            return true;
+        // Attract coins
+        if (omm_obj_is_coin(target)) {
+            if (interactionFlags & OBJ_INT_ATTRACT_COINS_STRONG) {
+                omm_obj_interact_attract_coin(o, target, interactionFlags, true);
+            } else if (interactionFlags & OBJ_INT_ATTRACT_COINS_WEAK) {
+                omm_obj_interact_attract_coin(o, target, interactionFlags, false);
+            }
         }
-);
-        // Interactible
-        if (omm_obj_is_interactible(target)) {
-            interacted = true;
 
-            // Defeat enemies in one hit
-            if (interactionFlags & OBJ_INT_ATTACK_ONE_HIT) {
-                if (omm_obj_interact_defeat_in_one_hit(o, target)) {
-                    omm_obj_handle_perry_attack(target, interactionFlags);
-                    sStopAndReturn = true;
-                    return true;
-                }
-            }
+        // Target must be tangible to Cappy if current object is Cappy
+        // Target hitbox must overlap with current object hitbox
+        if ((!isCappy || !omm_obj_is_intangible_to_cappy(target)) && obj_detect_hitbox_overlap(o, target, OBJ_OVERLAP_FLAG_HITBOX, OBJ_OVERLAP_FLAG_HITBOX_HURTBOX_MAX)) {
 
-            // Triggers
-            if (interactionFlags & OBJ_INT_COLLECT_TRIGGERS) {
-                    
-                // Water rings
-                if (omm_obj_is_water_ring(target)) {
-                    target->oInteractStatus = INT_STATUS_INTERACTED;
-                    m->healCounter += 4 * target->oDamageOrCoinValue;
-                }
-
-                // Mushrooms 1up
-                if (omm_obj_is_mushroom_1up(target)) {
-                    target->oPosX = m->pos[0];
-                    target->oPosY = m->pos[1] + 60.f;
-                    target->oPosZ = m->pos[2];
-                }
-
-                // Secrets
-                if (omm_obj_is_secret(target)) {
-                    target->oPosX = m->pos[0];
-                    target->oPosY = m->pos[1] + 60.f;
-                    target->oPosZ = m->pos[2];
-                }
-            }
-
-            // Coins
-            if (interactionFlags & OBJ_INT_COLLECT_COINS) {
-                if (omm_obj_is_coin(target)) {
-                    omm_mario_interact_coin(m, target);
 CAPPY_ONLY_CODE(
-                    omm_cappy_try_to_target_next_coin(o);
-);
-                }
+            // Capture
+            if (omm_cappy_is_mario_available(m, true) && omm_mario_possess_object(m, target, true)) {
+                omm_cappy_unload();
+                sStopAndReturn = true;
+                return true;
             }
-
-            // Stars/Keys
-            if (interactionFlags & OBJ_INT_COLLECT_STARS) {
-                if (omm_obj_is_star_or_key(target)) {
-                    omm_mario_interact_star_or_key(m, target);
-CAPPY_ONLY_CODE(
-                    omm_cappy_return_to_mario(o);
 );
-                }
-            }
+            // Interactible
+            if (omm_obj_is_interactible(target)) {
+                interacted = true;
 
-            // Caps
-            if (interactionFlags & OBJ_INT_COLLECT_CAPS) {
-                if (omm_obj_is_cap(target)) {
-                    if (!omm_mario_interact_cap(m, target)) {
-                        interact_cap(m, INTERACT_CAP, target);
+                // Defeat enemies in one hit
+                if (interactionFlags & OBJ_INT_ATTACK_ONE_HIT) {
+                    if (omm_obj_is_boss(target) && omm_obj_interact_defeat_in_one_hit(o, target)) {
+                        omm_obj_handle_perry_attack(target, interactionFlags);
+                        sStopAndReturn = true;
+                        return true;
                     }
                 }
-            }
 
-CAPPY_ONLY_CODE(
-            // Unagi's tail
-            if (omm_obj_is_unagis_tail(target)) {
-                if (target->parentObj->oAnimState != 0) {
-                    target->parentObj->oAnimState = 0;
-                    target->oBehParams = target->parentObj->oBehParams;
-                    obj_spawn_star(target, target->oPosX, target->oPosY, target->oPosZ, 6833.f, -3654.f, 2230.f, (target->oBehParams >> 24) & 0x1F, false);
-                    omm_cappy_return_to_mario(o);
-                    sStopAndReturn = true;
-                    return true;
+                // Triggers
+                if (interactionFlags & OBJ_INT_COLLECT_TRIGGERS) {
+                        
+                    // Water rings
+                    if (omm_obj_is_water_ring(target)) {
+                        target->oInteractStatus = INT_STATUS_INTERACTED;
+                        m->healCounter += 4 * target->oDamageOrCoinValue;
+                    }
+
+                    // Mushrooms 1up
+                    if (omm_obj_is_mushroom_1up(target)) {
+                        target->oPosX = m->pos[0];
+                        target->oPosY = m->pos[1] + 60.f;
+                        target->oPosZ = m->pos[2];
+                    }
+
+                    // Secrets
+                    if (omm_obj_is_secret(target)) {
+                        target->oPosX = m->pos[0];
+                        target->oPosY = m->pos[1] + 60.f;
+                        target->oPosZ = m->pos[2];
+                    }
                 }
-            }
-);
 
-            // Grabbable
-            if (interactionFlags & OBJ_INT_GRAB_OBJECTS) {
-                if (omm_obj_is_grabbable(target)) {
-                    omm_obj_handle_perry_attack(target, interactionFlags);
-                    if (!isCappy || (omm_cappy_is_mario_available(m, false) && !(m->action & (ACT_FLAG_AIR | ACT_FLAG_SWIMMING | ACT_FLAG_METAL_WATER)))) {
-                        if (omm_mario_check_grab(m, target, true)) {
-                            vec3f_set(m->vel, 0, 0, 0);
+                // Coins
+                if (interactionFlags & OBJ_INT_COLLECT_COINS) {
+                    if (omm_obj_is_coin(target)) {
+                        omm_mario_interact_coin(m, target);
 CAPPY_ONLY_CODE(
-                            omm_cappy_return_to_mario(o);
+                        omm_cappy_try_to_target_next_coin(o);
 );
-                            sStopAndReturn = true;
-                            return true;
+                    }
+                }
+
+                // Stars/Keys
+                if (interactionFlags & OBJ_INT_COLLECT_STARS) {
+                    if (omm_obj_is_star_or_key(target)) {
+                        omm_mario_interact_star_or_key(m, target);
+CAPPY_ONLY_CODE(
+                        omm_cappy_return_to_mario(o);
+);
+                    }
+                }
+
+                // Caps
+                if (interactionFlags & OBJ_INT_COLLECT_CAPS) {
+                    if (omm_obj_is_cap(target)) {
+                        if (!omm_mario_interact_cap(m, target)) {
+                            interact_cap(m, INTERACT_CAP, target);
                         }
                     }
                 }
-            }
 
-            // Weak
-            if (interactionFlags & OBJ_INT_ATTACK_WEAK) {
-                if (omm_obj_is_weak(target)) {
-                    omm_obj_handle_perry_attack(target, interactionFlags);
-                    if (interactionFlags & OBJ_INT_ATTACK_KNOCKBACK) {
-                        switch (omm_obj_get_behavior_types(target) & BHV_TYPE_KNOCKABLE) {
-                            case BHV_TYPE_KNOCKABLE_0: obj_set_knockback(target, o, 0, 20.f, 30.f); break;
-                            case BHV_TYPE_KNOCKABLE_1: obj_set_knockback(target, o, 1, 30.f, 0.f); break;
+CAPPY_ONLY_CODE(
+                // Unagi's tail
+                if (omm_obj_is_unagis_tail(target)) {
+                    if (target->parentObj->oAnimState != 0) {
+                        target->parentObj->oAnimState = 0;
+                        target->oBehParams = target->parentObj->oBehParams;
+                        obj_spawn_star(target, target->oPosX, target->oPosY, target->oPosZ, 6833.f, -3654.f, 2230.f, (target->oBehParams >> 24) & 0x1F, false);
+                        omm_cappy_return_to_mario(o);
+                        sStopAndReturn = true;
+                        return true;
+                    }
+                }
+);
+
+                // Grabbable
+                if (interactionFlags & OBJ_INT_GRAB_OBJECTS) {
+                    if (omm_obj_is_grabbable(target)) {
+                        omm_obj_handle_perry_attack(target, interactionFlags);
+                        if (!isCappy || (omm_cappy_is_mario_available(m, false) && !(m->action & (ACT_FLAG_AIR | ACT_FLAG_SWIMMING | ACT_FLAG_METAL_WATER)))) {
+                            if (omm_mario_check_grab(m, target, true)) {
+                                vec3f_set(m->vel, 0, 0, 0);
+CAPPY_ONLY_CODE(
+                                omm_cappy_return_to_mario(o);
+);
+                                sStopAndReturn = true;
+                                return true;
+                            }
                         }
-                    } else {
-                        if ((interactionFlags & OBJ_INT_ATTACK_STRONG) && (
-                            (omm_obj_is_goomba(target) && (target->oGoombaSize & 1)) ||
-                            (target->behavior == bhvWigglerHead))) {
-                            target->oInteractStatus = (ATTACK_GROUND_POUND_OR_TWIRL | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED);
+                    }
+                }
+
+                // Weak
+                if (interactionFlags & OBJ_INT_ATTACK_WEAK) {
+                    if (omm_obj_is_weak(target)) {
+                        omm_obj_handle_perry_attack(target, interactionFlags);
+                        if (interactionFlags & OBJ_INT_ATTACK_KNOCKBACK) {
+                            switch (omm_obj_get_behavior_types(target) & BHV_TYPE_KNOCKABLE) {
+                                case BHV_TYPE_KNOCKABLE_0: obj_set_knockback(target, o, 0, 20.f, 30.f); break;
+                                case BHV_TYPE_KNOCKABLE_1: obj_set_knockback(target, o, 1, 30.f, 0.f); break;
+                            }
+                        } else {
+                            if ((interactionFlags & OBJ_INT_ATTACK_STRONG) && (
+                                (omm_obj_is_goomba(target) && (target->oGoombaSize & 1)) ||
+                                (target->behavior == bhvWigglerHead))) {
+                                target->oInteractStatus = (ATTACK_GROUND_POUND_OR_TWIRL | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED);
+                            } else {
+                                target->oInteractStatus = (ATTACK_KICK_OR_TRIP | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED);
+                            }
+                        }
+                        omm_obj_interact_heal_mario(target, interactionFlags);
+CAPPY_ONLY_CODE(
+                        omm_cappy_bounce_back(o);
+);
+                    }
+                }
+
+                // Strong
+                if (interactionFlags & OBJ_INT_ATTACK_STRONG) {
+                    if (omm_obj_is_strong(target)) {
+                        omm_obj_handle_perry_attack(target, interactionFlags);
+                        if (interactionFlags & OBJ_INT_ATTACK_KNOCKBACK) {
+                            switch (omm_obj_get_behavior_types(target) & BHV_TYPE_KNOCKABLE) {
+                                case BHV_TYPE_KNOCKABLE_0: obj_set_knockback(target, o, 0, 20.f, 30.f); break;
+                                case BHV_TYPE_KNOCKABLE_1: obj_set_knockback(target, o, 1, 30.f, 0.f); break;
+                            }
+                        } else {
+                            target->oInteractStatus = INT_STATUS_INTERACTED;
+                            obj_destroy(target);
+                        }
+                        omm_obj_interact_heal_mario(target, interactionFlags);
+CAPPY_ONLY_CODE(
+                        omm_cappy_bounce_back(o);
+);
+                    }
+                }
+
+                // Destructible
+                if (interactionFlags & OBJ_INT_ATTACK_DESTRUCTIBLE) {
+                    if (omm_obj_is_destructible(target)) {
+                        omm_obj_handle_perry_attack(target, interactionFlags);
+                        omm_obj_interact_heal_mario(target, interactionFlags);
+                        target->oInteractStatus = INT_STATUS_INTERACTED;
+                        obj_destroy(target);
+CAPPY_ONLY_CODE(
+                        omm_cappy_bounce_back(o);
+);
+                    }
+                }
+
+                // Breakable
+                if (interactionFlags & OBJ_INT_ATTACK_BREAKABLE) {
+                    if (omm_obj_is_breakable(target)) {
+                        omm_obj_handle_perry_attack(target, interactionFlags);
+                        if (omm_obj_is_destructible(target)) {
+                            target->oInteractStatus = INT_STATUS_INTERACTED;
+                            obj_destroy(target);
                         } else {
                             target->oInteractStatus = (ATTACK_KICK_OR_TRIP | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED);
+                            set_camera_shake_from_hit(SHAKE_ATTACK);
                         }
+                        omm_obj_interact_heal_mario(target, interactionFlags);
+CAPPY_ONLY_CODE(
+                        omm_cappy_bounce_back(o);
+);
                     }
-                    omm_obj_interact_heal_mario(target, interactionFlags);
-CAPPY_ONLY_CODE(
-                    omm_cappy_bounce_back(o);
-);
                 }
-            }
 
-            // Strong
-            if (interactionFlags & OBJ_INT_ATTACK_STRONG) {
-                if (omm_obj_is_strong(target)) {
-                    omm_obj_handle_perry_attack(target, interactionFlags);
-                    if (interactionFlags & OBJ_INT_ATTACK_KNOCKBACK) {
-                        switch (omm_obj_get_behavior_types(target) & BHV_TYPE_KNOCKABLE) {
-                            case BHV_TYPE_KNOCKABLE_0: obj_set_knockback(target, o, 0, 20.f, 30.f); break;
-                            case BHV_TYPE_KNOCKABLE_1: obj_set_knockback(target, o, 1, 30.f, 0.f); break;
-                        }
-                    } else {
-                        target->oInteractStatus = INT_STATUS_INTERACTED;
-                        obj_destroy(target);
-                    }
-                    omm_obj_interact_heal_mario(target, interactionFlags);
-CAPPY_ONLY_CODE(
-                    omm_cappy_bounce_back(o);
-);
-                }
-            }
-
-            // Destructible
-            if (interactionFlags & OBJ_INT_ATTACK_DESTRUCTIBLE) {
-                if (omm_obj_is_destructible(target)) {
-                    omm_obj_handle_perry_attack(target, interactionFlags);
-                    omm_obj_interact_heal_mario(target, interactionFlags);
-                    target->oInteractStatus = INT_STATUS_INTERACTED;
-                    obj_destroy(target);
-CAPPY_ONLY_CODE(
-                    omm_cappy_bounce_back(o);
-);
-                }
-            }
-
-            // Breakable
-            if (interactionFlags & OBJ_INT_ATTACK_BREAKABLE) {
-                if (omm_obj_is_breakable(target)) {
-                    omm_obj_handle_perry_attack(target, interactionFlags);
-                    if (omm_obj_is_destructible(target)) {
-                        target->oInteractStatus = INT_STATUS_INTERACTED;
-                        obj_destroy(target);
-                    } else {
+                // Bullies
+                if (interactionFlags & (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG)) {
+                    if (omm_obj_is_bully(target)) {
+                        omm_obj_handle_perry_attack(target, interactionFlags);
+                        omm_obj_interact_heal_mario(target, interactionFlags);
+                        target->oForwardVel = ((interactionFlags & OBJ_INT_ATTACK_STRONG) != 0 ? 4800.f : 3600.f) / target->hitboxRadius;
+                        target->oMoveAngleYaw = obj_get_object1_angle_yaw_to_object2((o->parentObj != NULL) ? o->parentObj : o, target);
+                        target->oFaceAngleYaw = target->oMoveAngleYaw + 0x8000;
                         target->oInteractStatus = (ATTACK_KICK_OR_TRIP | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED);
-                        set_camera_shake_from_hit(SHAKE_ATTACK);
+                        target->oInteractStatus |= (interactionFlags & (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG)) << 24; // Attack type
+                        play_sound(SOUND_OBJ_BULLY_METAL, target->oCameraToObject);
+CAPPY_ONLY_CODE(
+                        omm_cappy_bounce_back(o);
+);
                     }
-                    omm_obj_interact_heal_mario(target, interactionFlags);
-CAPPY_ONLY_CODE(
-                    omm_cappy_bounce_back(o);
-);
                 }
-            }
 
-            // Bullies
-            if (interactionFlags & (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG)) {
-                if (omm_obj_is_bully(target)) {
-                    omm_obj_handle_perry_attack(target, interactionFlags);
-                    omm_obj_interact_heal_mario(target, interactionFlags);
-                    target->oForwardVel = ((interactionFlags & OBJ_INT_ATTACK_STRONG) != 0 ? 4800.f : 3600.f) / target->hitboxRadius;
-                    target->oMoveAngleYaw = obj_get_object1_angle_yaw_to_object2((o->parentObj != NULL) ? o->parentObj : o, target);
-                    target->oFaceAngleYaw = target->oMoveAngleYaw + 0x8000;
-                    target->oInteractStatus = (ATTACK_KICK_OR_TRIP | INT_STATUS_INTERACTED | INT_STATUS_WAS_ATTACKED);
-                    target->oInteractStatus |= (interactionFlags & (OBJ_INT_ATTACK_WEAK | OBJ_INT_ATTACK_STRONG)) << 24; // Attack type
-                    play_sound(SOUND_OBJ_BULLY_METAL, target->oCameraToObject);
-CAPPY_ONLY_CODE(
-                    omm_cappy_bounce_back(o);
-);
-                }
-            }
-
-            // Flames
-            if (interactionFlags & OBJ_INT_ATTACK_FLAMES) {
-                if (omm_obj_is_flame(target)) {
-                    omm_obj_handle_perry_attack(target, interactionFlags);
-                    omm_obj_interact_heal_mario(target, interactionFlags);
-                    obj_spawn_white_puff(target, SOUND_GENERAL_FLAME_OUT);
-                    obj_mark_for_deletion(target);
+                // Flames
+                if (interactionFlags & OBJ_INT_ATTACK_FLAMES) {
+                    if (omm_obj_is_flame(target)) {
+                        omm_obj_handle_perry_attack(target, interactionFlags);
+                        omm_obj_interact_heal_mario(target, interactionFlags);
+                        obj_spawn_white_puff(target, SOUND_GENERAL_FLAME_OUT);
+                        obj_mark_for_deletion(target);
+                    }
                 }
             }
         }
@@ -1527,8 +1568,8 @@ struct Object *omm_obj_process_interactions(struct Object *o, u32 interactionFla
 
     // Surfaces
     if (isCappy || (interactionFlags & OBJ_INT_PRESET_ATTACK_SURFACE)) {
-        s32 rn = (isCappy ? 1 : omm_min_s(1 + ((o->hitboxRadius - 1.f) / (OMM_COLLISION_CELL_SIZE >> 1)), 16));
-        s32 yn = (isCappy ? 1 : omm_min_s(1 + ((o->hitboxHeight - 1.f) / (OMM_COLLISION_CELL_SIZE >> 4)), 16));
+        s32 rn = (isCappy ? 1 : min_s(1 + ((o->hitboxRadius - 1.f) / (CELL_SIZE >> 1)), 16));
+        s32 yn = (isCappy ? 1 : min_s(1 + ((o->hitboxHeight - 1.f) / (CELL_SIZE >> 4)), 16));
         f32 dr = o->hitboxRadius / rn;
         f32 dy = o->hitboxHeight / yn;
         for (s32 yi = 0; yi <= yn; ++yi) {

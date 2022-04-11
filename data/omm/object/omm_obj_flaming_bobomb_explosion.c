@@ -26,7 +26,7 @@ static void omm_bhv_flaming_bobomb_explosion_update(void) {
     obj_scale(o, scale);
     obj_set_params(o, 0, 0, 0, 0, false);
     obj_reset_hitbox(o, 0, 0, 0, 0, 0, 0);
-    o->oOpacity = omm_max_s(0, 0xFF - (0x18 * o->oTimer));
+    o->oOpacity = max_s(0, 0xFF - (0x18 * o->oTimer));
     o->oAnimState++;
 }
 

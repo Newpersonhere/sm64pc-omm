@@ -75,7 +75,7 @@ s32 cappy_mr_blizzard_update(struct Object *o) {
                 obj_spawn_particles(o, 8, MODEL_WHITE_PARTICLE, 0, 8, 4, 15, 8, -3, 0.4f, 0.3f);
             } break;
             case POBJ_RESULT_HOP_LARGE: {
-                o->oVelY = omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER * (omm_sparkly_is_mode_selected(OMM_SPARKLY_MODE_NORMAL) && gCurrLevelNum == LEVEL_SL ? 1.25f : 1.f);
+                o->oVelY = omm_capture_get_jump_velocity(o) * POBJ_JUMP_MULTIPLIER * (OMM_SSM_IS_NORMAL && gCurrLevelNum == LEVEL_SL ? 1.25f : 1.f);
                 obj_play_sound(o, SOUND_OBJ_SNOW_SAND1);
                 obj_play_sound(o, SOUND_OBJ_MR_BLIZZARD_ALERT);
                 obj_spawn_particles(o, 8, MODEL_WHITE_PARTICLE, 0, 8, 4, 15, 8, -3, 0.4f, 0.3f);
@@ -87,7 +87,7 @@ s32 cappy_mr_blizzard_update(struct Object *o) {
             if (!o->oMrBlizzardHeldObj) {
                 o->oMrBlizzardHeldObj = omm_spawn_snowball(o);
             }
-            f32 scale = 1.f + omm_min_f(gOmmData->object->state.actionTimer, 30) * 0.05f;
+            f32 scale = 1.f + min_f(gOmmData->object->state.actionTimer, 30) * 0.05f;
             o->oMrBlizzardHeldObj->oScaleX = scale;
             o->oMrBlizzardHeldObj->oScaleY = scale;
             o->oMrBlizzardHeldObj->oScaleZ = scale;
@@ -105,7 +105,7 @@ s32 cappy_mr_blizzard_update(struct Object *o) {
     }
 
     // Movement
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     pobj_decelerate(o, 0.80f, 0.95f);
     pobj_apply_gravity(o, 1.f);
     pobj_handle_special_floors(o);

@@ -25,7 +25,8 @@ static void cappy_flaming_bobomb_explode(struct Object *o, bool deleteObj) {
 //
 
 bool cappy_flaming_bobomb_init(struct Object* o) {
-    if (o->oAction != 3) {
+    if (o->oAction != 1 &&
+        o->oAction != 3) {
         return false;
     }
 
@@ -79,13 +80,13 @@ s32 cappy_flaming_bobomb_update(struct Object *o) {
                 cappy_flaming_bobomb_explode(o, false);
             }
         } else {
-            gOmmData->object->state.actionTimer = omm_max_s(0, gOmmData->object->state.actionTimer - 1);
+            gOmmData->object->state.actionTimer = max_s(0, gOmmData->object->state.actionTimer - 1);
         }
     }
     POBJ_STOP_IF_UNPOSSESSED;
 
     // Movement
-    obj_update_pos_and_vel(o, true, POBJ_IS_ABLE_TO_MOVE_THROUGH_WALLS, POBJ_IS_ABLE_TO_MOVE_ON_SLOPES, obj_is_on_ground(o), &gOmmData->object->state.squishTimer);
+    perform_object_step(o, POBJ_STEP_FLAGS);
     pobj_decelerate(o, 0.80f, 0.95f);
     pobj_apply_gravity(o, 1.f);
     pobj_handle_special_floors(o);
@@ -125,7 +126,7 @@ s32 cappy_flaming_bobomb_update(struct Object *o) {
     o->oMoveAngleRoll = 0;
     o->oGraphYOffset = 0;
     obj_update_gfx(o);
-    obj_anim_play(o, 0, (o->oVelY <= 0.f) * omm_max_f(1.f, o->oForwardVel * (2.f / (omm_capture_get_walk_speed(o)))));
+    obj_anim_play(o, 0, (o->oVelY <= 0.f) * max_f(1.f, o->oForwardVel * (2.f / (omm_capture_get_walk_speed(o)))));
     obj_random_blink(o, &o->oBobombBlinkTimer);
     if (gOmmData->object->flaming_bobomb.interactedTimer & 1) {
         o->oNodeFlags |= GRAPH_RENDER_INVISIBLE;
@@ -163,6 +164,6 @@ s32 cappy_flaming_bobomb_update(struct Object *o) {
     gOmmData->object->cappy.scale     = 1.2f;
 
     // OK
-    gOmmData->object->flaming_bobomb.interactedTimer = omm_max_s(0, gOmmData->object->flaming_bobomb.interactedTimer - 1);
+    gOmmData->object->flaming_bobomb.interactedTimer = max_s(0, gOmmData->object->flaming_bobomb.interactedTimer - 1);
     POBJ_RETURN_OK;
 }

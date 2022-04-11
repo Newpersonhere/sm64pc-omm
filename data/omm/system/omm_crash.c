@@ -86,7 +86,6 @@ static void omm_crash_handler_produce_one_frame() {
     gSPPopMatrix(gDisplayListHead++, G_MTX_MODELVIEW);
 
     // Print background
-    static const char *sCrashTex = OMM_GFX "omm_crash.bin";
     s32 w = SCREEN_HEIGHT / 2;
     s32 x = GFX_DIMENSIONS_FROM_RIGHT_EDGE(24 + w);
     s32 y = 12;
@@ -99,7 +98,7 @@ static void omm_crash_handler_produce_one_frame() {
     gDPSetTextureFilter(gDisplayListHead++, G_TF_POINT);
     gSPTexture(gDisplayListHead++, 0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON);
     gDPPipeSync(gDisplayListHead++);
-    gDPLoadTextureBlock(gDisplayListHead++, sCrashTex, G_IM_FMT_RGBA, G_IM_SIZ_16b, 16, 16, 0, G_TX_CLAMP, G_TX_CLAMP, 0, 0, 0, 0);
+    gDPLoadTextureBlock(gDisplayListHead++, (const void *) "omm_crash", G_IM_FMT_RGBA, G_IM_SIZ_16b, 16, 16, 0, G_TX_CLAMP, G_TX_CLAMP, 0, 0, 0, 0);
     gSPTextureRectangle(gDisplayListHead++, (x) << 2, (SCREEN_HEIGHT - w - y) << 2, (x + w) << 2, (SCREEN_HEIGHT - y) << 2, G_TX_RENDERTILE, 0, 0, (0x4000 / w), (0x4000 / w));
     gDPPipeSync(gDisplayListHead++);
     gDPSetTexturePersp(gDisplayListHead++, G_TP_PERSP);
@@ -325,7 +324,7 @@ static LONG omm_crash_handler(EXCEPTION_POINTERS *ExceptionInfo) {
         s32 device = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
         if (device) {
             SDL_PauseAudioDevice(device, 0);
-            OMM_STRING(filename, 256, "%s/%s/omm_crash.bin", OMM_EXE_FOLDER, OMM_GFX_FOLDER);
+            OMM_STRING(filename, 256, "%s/%s/omm_crash.png", OMM_EXE_FOLDER, OMM_GFX_FOLDER);
             FILE *f = fopen(filename, "rb");
             if (f) {
                 u8 data[0x60000];

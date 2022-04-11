@@ -730,6 +730,9 @@ ifeq ($(EXTERNAL_DATA),1)
 BASEPACK_PATH := $(BUILD_DIR)/$(BASEDIR)/$(BASEPACK)
 BASEPACK_LST := $(BUILD_DIR)/basepack.lst
 
+# generate the base.zip only if it doesn't exist
+ifneq ($(or $(and $(wildcard $(BASEPACK_PATH)),1),0),1)
+
 # depend on resources as well
 all: $(BASEPACK_PATH)
 
@@ -752,6 +755,8 @@ $(BASEPACK_LST): $(EXE)
 # prepares the resource ZIP with base data
 $(BASEPACK_PATH): $(BASEPACK_LST)
 	@$(PYTHON) $(TOOLS_DIR)/mkzip.py $(BASEPACK_LST) $(BASEPACK_PATH)
+
+endif
 
 endif
 

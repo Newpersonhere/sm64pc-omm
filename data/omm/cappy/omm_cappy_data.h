@@ -55,7 +55,7 @@ enum OmmCappyBehavior {
 #define CAPPY_BHV_FLYING_CALL_BACK_START        (16)
 #define CAPPY_HOMING_ATTACK_ORIGIN              (cappy->oCappyBehavior == OMM_CAPPY_BHV_FLYING ? m->marioObj : cappy)
 #define CAPPY_HOMING_ATTACK_VEL                 (80.f)
-#define CAPPY_HOMING_ATTACK_DURATION            (OMM_CHEAT_HOMING_ATTACK_GLOBAL_RANGE ? (CAPPY_LIFETIME - 20) : (cappy->oCappyBehavior == OMM_CAPPY_BHV_FLYING ? 5 : 4)) // Performs better with CSF cheat
+#define CAPPY_HOMING_ATTACK_DURATION            (OMM_CHEAT_HOMING_ATTACK_GLOBAL_RANGE ? (CAPPY_LIFETIME - 20) : (cappy->oCappyBehavior == OMM_CAPPY_BHV_FLYING ? 6 : 5)) // Performs better with CSF cheat
 #define CAPPY_PLAY_AS_H_VEL                     (60.f)
 #define CAPPY_PLAY_AS_V_VEL                     (45.f)
 
