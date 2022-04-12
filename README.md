@@ -126,23 +126,127 @@ If you want more customization or simply build the game the usual way, you can d
 
 ## Q&A
 
-- **The builder says `ERROR: The file 'baserom.us.z64' is missing.`, but it is here!**
+**--- The builder says `ERROR: The file 'baserom.us.z64' is missing.`, but it is here! ---**
 
 Your file is actually named `baserom.us.z64.z64`. It happened because Windows hides file extensions by default, and adds its extension back after renaming a file.<br>To prevent this, in Windows Explorer, click on the **View** tab and check **File name extensions**. Then remove the extra `.z64` from your file name.
 
-- **The builder is spitting out errors like `gcc: No such file or directory`. What does it mean?**
+**--- The builder is spitting out errors like `gcc: No such file or directory`. What does it mean? ---**
 
 You're missing dependencies. You need the following ones to properly build the game: `MSYS2` (Windows only), `git`, `make`, `gcc`, `glew`, `SDL2` and `python3`.<br>Go to this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Windows) (Windows) or this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Linux) (Linux) and make sure to follow the **Install dependencies** part.
 
-- **The game is built successfully, but the only thing I get when launching it is a black screen with the game over sound...**
+**--- The game is built successfully, but the only thing I get when launching it is a black screen with the game over sound... ---**
 
 You probably built the game with a renderer not supported by your computer.<br>Delete your build and try again with the flag `DIRECT_X` to change the SDL/OpenGL API by the DirectX one.
 
-- **Where did my executable go? Do I have to always use the `run` command to play the game?**
+**--- Where did my executable go? Do I have to always use the `run` command to play the game? ---**
 
 Once built, the game executable is located in the `build/us_pc` directory of the version you choose.<br>You don't need to use the `run` command every time, you can simply double-click on `sm64.us.f3dex2e.exe` like any other executable to start the game.<br>If you want to copy or move it, make sure to copy/move the entire `build/us_pc` directory, not only the executable file.
 
-- **How do I update *OMM Builder*/*Odyssey Mario's Moveset*?**
+**--- Where is the save file located? How do I open/edit it? ---**
+
+Windows: `%appdata%\sm64ex\omm_save_file.txt`<br>Linux: `~/.local/share/sm64ex/omm_save_file.txt`<br>MacOS: `~/Library/Application Support/sm64ex/omm_save_file.txt`<br><br>The save file is a plain text file, so any text editor can open it. It is divided in multiple sections:
+- `[xxxx:yy]`: The main game save data. `xxxx` is the version name, `yy` is the save slot.
+  - Flags: 0 = locked and 1 = unlocked.
+  - Courses: the first 7 numbers are the stars (1 = collected, 0 = not), the next number is the cannon (1 = open, 0 = closed) and the last number is the coin score.
+- `[sparkly_stars]`: The Sparkly Stars save data. It cannot be edited directly.
+- `[mario_colors]`, `[peach_colors]`: The custom palettes for playable characters.
+  - Each `mario_custom` (`peach_custom`) entry consists of 6 (7) pairs of RGB values in hexadecimal form.
+  - The first value of a pair is the ambient color, the second is the diffuse color.
+  - For Mario, the colors are in the following order: *Cap*, *Hair*, *Skin*, *Gloves*, *Overalls*, *Shoes*.
+  - For Peach, the colors are in the following order: *Skin*, *Hair*, *Dress (light tone)*, *Dress (dark tone)*, *Gloves*, *Earrings*, *Shoes*.
+- `[settings]`: The saved options. It includes controls, shortcuts and extras.
+
+**--- What is the options menu? ---**
+
+A PC port exclusivity, the options menu allows the player to configure their game without relying on code modifications, patches or external tools.<br>The options menu can be accessed by pausing the game, then pressing <kbd>RSHIFT</kbd> (keyboard) or <kbd>**R**</kbd> (controller).
+- `Odyssey Mario's Moveset`:
+  - `Character`: Mario, Peach (if unlocked), Luigi or Wario (Render96 only).
+  - `Moveset`: Classic, Odyssey (3-Health), Odyssey (6-Health).
+  - `Cap`: Classic, Cappy (no Capture), Cappy (with Captures).
+  - `Stars`: Classic, Non-Stop.
+  - `Power-ups`: Classic, Improved.
+  - `Camera`: Classic, 8-Dir, 16-Dir.
+  - `Sparkly Stars`:
+    - `Mode`: Disabled, Normal, Hard.
+    - `Assist`: If enabled, help the player in various ways.
+    - `Show Hint at Level Entry`: If enabled, show the hint sign when entering a level if there's one.
+  - `Cheats`:
+    - `Unlimited Cappy Bounces`: Mario can bounce infinitely on Cappy.
+    - `Cappy Stays Forever`: Cappy no longer returns to Mario after some time.
+    - `Homing Attack Global Range`: Extend Cappy's homing attack range to the whole level.
+    - `Mario Teleports to Cappy`: Press **(X)** again after throwing Cappy to teleport Mario to him.
+    - `Cappy Can Collect Stars`: Cappy can interact and give stars and keys to Mario.
+    - `Play As Cappy`: Throw Cappy to control him. Hold **(A)** to go up, **(B)** to go down and press **(X)** to return to Mario.
+    - `Peach Endless Vibe Gauge`: Peach only. Vibes no longer depletes the Vibe gauge.
+  - `Extras`:
+    - `Mario Colors`: Select a color palette for Mario. The last 4 are customizable.
+    - `Peach Colors`: Select a color palette for Peach. The last 4 are customizable.
+    - `SMO Animations`: If enabled, replace some of the vanilla animations with animations from *Super Mario Odyssey*.
+    - `Cappy and Tiara`: If enabled, replace Mario's cap by Cappy and Peach's crown by Tiara.
+    - `Colored Stars`: If enabled, give each level stars a specific color, like moons in *Super Mario Odyssey*.
+    - `Vanishing HUD`: If enabled, make the HUD progressively vanish when Mario is moving.
+    - `Reveal Secrets`: If enabled, make the secrets visible.
+    - `Red Coins Radar`: If enabled, locate and show the direction of the nearest red coin.
+    - `Show Star Number`: If enabled, show for each star its number.
+    - `Invisible Mode`: If enabled, make Mario, Cappy, Peach, Tiara and their effects invisible.
+  - `Shortcuts`: Allow the player to bind up to three keys/buttons for a bunch of options.
+- `Game` (Render96 only):
+  - `Current Language`: Set the current language.<br>**Only English is naturally supported by OMM.** To support more languages, you must provide the language files `*.omm.json` yourself.
+  - `Precache Textures`: Cache all textures when starting the game to avoid in-game freezes due to texture loading.
+  - `Disable Billboards`: Don't force objects to face the camera. Must be enabled if the *Render96 Model Pack* is installed.
+- `Camera`:
+  - `Free Camera`/`Puppycam 2`: A modern game camera designed to be more comfortable.
+  - `Analogue Camera`: Turn on or off the analogue camera.
+  - `Mouse Look`: Allow the player to move the camera with their mouse.
+  - `Invert X Axis`: Invert the horizontal rotation of the camera.
+  - `Invert Y Axis`: Invert the vertical rotation of the camera.
+  - `Camera X Sensitivity`: Control the horizontal movement speed of the camera.
+  - `Camera Y Sensitivity`: Control the vertical movement speed of the camera.
+  - `Camera Deceleration`: Control the movement deceleration of the camera.
+- `Controls`:
+  - Binds: Allow the player to bind up to three keys/buttons for each N64 button.
+  - `Stick Deadzone`: The left-stick deadzone.
+  - `Reset Controls`: Reset the controls back to default.
+- `Display`:
+  - `FPS`: Set the framerate to a value from 30 to 360. Does not affect game updates, they still run 30 times per second.
+  - `Fullscreen`: Enable fullscreen mode.
+  - `Vertical Sync`: Synchronize the framerate with the monitor's refresh rate. Enable it if you're experiencing tearing.
+  - `Texture Filtering`: Set to nearest neighbor for blocky effects, or linear for smooth but blurry effects.
+  - `Draw Distance`: Control the rendering distance of objects. Reduce it if you're experiencing slowdowns.
+  - `HUD`: Show or hide the HUD.
+- `Sound`:
+  - `Master Volume`: The general volume setting.
+  - `Music Volume`: The volume of background music.
+  - `SFX Volume`: The volume of sound effects.
+  - `ENV Volume`: The volume of environment sounds (birds chirping, water flowing, etc...).
+- `Cheats`: A list of built-in modifications that gives Mario super-human powers, such as Moon-jumping, Infinite health, the ability to BLJ anywhere and much more.
+
+**--- What are the default keyboard/controller controls? ---**
+
+| | Keyboard (qwerty) | Keyboard (azerty) | XBox One Controller | Switch Pro Controller |
+|:-:|:-:|:-:|:-:|:-:|
+| A Button | <kbd>L</kbd> | <kbd>L</kbd> | <kbd>**A**</kbd> | <kbd>**A**</kbd> |
+| B Button | <kbd>,</kbd> | <kbd>;</kbd> | <kbd>**B**</kbd> | <kbd>**B**</kbd> |
+| X Button | <kbd>K</kbd> | <kbd>K</kbd> | <kbd>**X**</kbd> | <kbd>**X**</kbd> |
+| Y Button | <kbd>M</kbd> | <kbd>,</kbd> | <kbd>**Y**</kbd> | <kbd>**Y**</kbd> |
+| Start Button | <kbd>SPACE</kbd> | <kbd>SPACE</kbd> | <kbd>**Start**</kbd> | <kbd>**+**</kbd> |
+| L Trigger | <kbd>LSHIFT</kbd> | <kbd>LSHIFT</kbd> | <kbd>**LB**</kbd> | <kbd>**L**</kbd> |
+| R Trigger | <kbd>RSHIFT</kbd> | <kbd>RSHIFT</kbd> | <kbd>**RB**</kbd> | <kbd>**R**</kbd> |
+| Z Trigger | <kbd>O</kbd> | <kbd>O</kbd> | <kbd>**RT**</kbd> | <kbd>**ZR**</kbd> |
+| C-Up | <kbd>&uarr;</kbd> | <kbd>&uarr;</kbd> | <kbd>**RS-Up**</kbd> | <kbd>**RS-Up**</kbd> |
+| C-Down | <kbd>&darr;</kbd> | <kbd>&darr;</kbd> | <kbd>**RS-Down**</kbd> | <kbd>**RS-Down**</kbd> |
+| C-Left | <kbd>&larr;</kbd> | <kbd>&larr;</kbd> | <kbd>**RS-Left**</kbd> | <kbd>**RS-Left**</kbd> |
+| C-Right | <kbd>&rarr;</kbd> | <kbd>&rarr;</kbd> | <kbd>**RS-Right**</kbd> | <kbd>**RS-Right**</kbd> |
+| D-Up | <kbd>-</kbd> | <kbd>)</kbd> | <kbd>**D-Up**</kbd> | <kbd>**D-Up**</kbd> |
+| D-Down | <kbd>{</kbd> | <kbd>^</kbd> | <kbd>**D-Down**</kbd> | <kbd>**D-Down**</kbd> |
+| D-Left | <kbd>P</kbd> | <kbd>P</kbd> | <kbd>**D-Left**</kbd> | <kbd>**D-Left**</kbd> |
+| D-Right | <kbd>}</kbd> | <kbd>$</kbd> | <kbd>**D-Right**</kbd> | <kbd>**D-Right**</kbd> |
+| Stick Up | <kbd>W</kbd> | <kbd>Z</kbd> | <kbd>**LS-Up**</kbd> | <kbd>**LS-Up**</kbd> |
+| Stick Down | <kbd>S</kbd> | <kbd>S</kbd> | <kbd>**LS-Down**</kbd> | <kbd>**LS-Down**</kbd> |
+| Stick Left | <kbd>A</kbd> | <kbd>Q</kbd> | <kbd>**LS-Left**</kbd> | <kbd>**LS-Left**</kbd> |
+| Stick Right | <kbd>D</kbd> | <kbd>D</kbd> | <kbd>**LS-Right**</kbd> | <kbd>**LS-Right**</kbd> |
+
+**--- How do I update *OMM Builder*/*Odyssey Mario's Moveset*? ---**
 
 If it detects a new version, the builder will ask you if you want to update it when you launch it.<br>As for the *Odyssey Mario's Moveset* mod, the files are automatically updated when running a Build command.
 
@@ -175,8 +279,11 @@ To install it and make it work, follow these steps:
 ## Odyssey Mario's Moveset content
 
 - [Patch file](https://raw.githubusercontent.com/PeachyPeachSM64/sm64pc-omm/master/patch/omm.patch)
+- [Coop LUA mod: OMM Moves](https://github.com/PeachyPeachSM64/sm64pc-omm/raw/master/coop/omm-moves.zip)
+- [Coop LUA mod: OMM Cappy](https://github.com/PeachyPeachSM64/sm64pc-omm/raw/master/coop/omm-cappy.zip)
 - [In-depth guide](https://docs.google.com/document/d/1IlhCxYGulxrnbvqbSuBMC1JgtBIEwoCcK3l-urVUADk/edit) (by **Cancel the Eat**)
 - [Sparkly Stars guide](https://www.youtube.com/watch?v=xWHKPV-cbqI&list=PLFZ-DGZKGuUo3KuXfGoaP55RYiDXgxE8N) (by **Cancel the Eat**)
+- [Pink Gold Stars guide](https://www.youtube.com/watch?v=sPhx7hDPLKs) (by **FastMario**)
 - [Speedrun leaderboard](https://www.speedrun.com/omm) (by **JokerFactor**, **SwaGh**, **Mr.Needlemouse**)
 
 ---
@@ -296,15 +403,17 @@ To install it and make it work, follow these steps:
 
 ### OMM ex-coop:
 - OMM is now available as two lua mods for ex-coop:
-  - `OMM Moves` **(v1.0.0)**:
+  - `OMM (Moves)` **(v1.0.0)**:
     - Includes the wall slide, ground pound jump, underwater ground pound and jump, water dash, ground and air rolls, ground, air and midair spins.
     - Better ground and air handling, more action cancels.
     - Removes fall damage, game over, gives Mario short invulnerability after a burn and collecting a star restores health.
-  - `OMM Cappy` **(v1.0.0)**:
+  - `OMM (Cappy)` **(v1.0.0)**:
     - Throw Cappy with (X), hold a D-pad button to do a directional throw.
     - Press a D-pad button after any throw to perform a homing attack.
     - Cappy can collect coins, 1-up mushrooms, secrets and interact with almost every object.
     - Collide with Cappy to bounce, or throw Cappy to other players to make them bounce or pop their bubble.
+- To play with the mods, simply extract the `.zip` archives into your `sm64ex-coop-unstable/build/us_pc/mods/` directory. Then enable `OMM (Moves)` or/and `OMM (Cappy)` before hosting.
+- Important note: **Do not use `OMM (Moves)` or `OMM (Cappy)` with `Shell Rush` or `Grand Theft Mario` if your coop version is not at least `unstable 24`.**
 
 ## Version 7.0.9 (01/02/2022)
 

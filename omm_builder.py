@@ -209,8 +209,8 @@ if __name__ == "__main__":
     }
     BUILD_SPEEDS = {
         "slow"   : { "name": "Slow",    "jobs": "" },
-        "fast"   : { "name": "Fast",    "jobs": " -j4" },
-        "faster" : { "name": "Faster",  "jobs": " -j8" },
+        "fast"   : { "name": "Fast",    "jobs": " -j6" },
+        "faster" : { "name": "Faster",  "jobs": " -j12" },
         "fastest": { "name": "Fastest", "jobs": " -j" },
         "run"    : {},
         "clear"  : {},
