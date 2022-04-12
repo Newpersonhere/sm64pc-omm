@@ -126,23 +126,23 @@ If you want more customization or simply build the game the usual way, you can d
 
 ## Q&A
 
-**--- The builder says `ERROR: The file 'baserom.us.z64' is missing.`, but it is here! ---**
+### The builder says `ERROR: The file 'baserom.us.z64' is missing.`, but it is here!
 
 Your file is actually named `baserom.us.z64.z64`. It happened because Windows hides file extensions by default, and adds its extension back after renaming a file.<br>To prevent this, in Windows Explorer, click on the **View** tab and check **File name extensions**. Then remove the extra `.z64` from your file name.
 
-**--- The builder is spitting out errors like `gcc: No such file or directory`. What does it mean? ---**
+### The builder is spitting out errors like `gcc: No such file or directory`. What does it mean?
 
 You're missing dependencies. You need the following ones to properly build the game: `MSYS2` (Windows only), `git`, `make`, `gcc`, `glew`, `SDL2` and `python3`.<br>Go to this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Windows) (Windows) or this [page](https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Linux) (Linux) and make sure to follow the **Install dependencies** part.
 
-**--- The game is built successfully, but the only thing I get when launching it is a black screen with the game over sound... ---**
+### The game is built successfully, but the only thing I get when launching it is a black screen with the game over sound...
 
 You probably built the game with a renderer not supported by your computer.<br>Delete your build and try again with the flag `DIRECT_X` to change the SDL/OpenGL API by the DirectX one.
 
-**--- Where did my executable go? Do I have to always use the `run` command to play the game? ---**
+### Where did my executable go? Do I have to always use the `run` command to play the game?
 
 Once built, the game executable is located in the `build/us_pc` directory of the version you choose.<br>You don't need to use the `run` command every time, you can simply double-click on `sm64.us.f3dex2e.exe` like any other executable to start the game.<br>If you want to copy or move it, make sure to copy/move the entire `build/us_pc` directory, not only the executable file.
 
-**--- Where is the save file located? How do I open/edit it? ---**
+### Where is the save file located? How do I open/edit it?
 
 Windows: `%appdata%\sm64ex\omm_save_file.txt`<br>Linux: `~/.local/share/sm64ex/omm_save_file.txt`<br>MacOS: `~/Library/Application Support/sm64ex/omm_save_file.txt`<br><br>The save file is a plain text file, so any text editor can open it. It is divided in multiple sections:
 - `[xxxx:yy]`: The main game save data. `xxxx` is the version name, `yy` is the save slot.
@@ -156,7 +156,7 @@ Windows: `%appdata%\sm64ex\omm_save_file.txt`<br>Linux: `~/.local/share/sm64ex/o
   - For Peach, the colors are in the following order: *Skin*, *Hair*, *Dress (light tone)*, *Dress (dark tone)*, *Gloves*, *Earrings*, *Shoes*.
 - `[settings]`: The saved options. It includes controls, shortcuts and extras.
 
-**--- What is the options menu? ---**
+### What is the options menu?
 
 A PC port exclusivity, the options menu allows the player to configure their game without relying on code modifications, patches or external tools.<br>The options menu can be accessed by pausing the game, then pressing <kbd>RSHIFT</kbd> (keyboard) or <kbd>**R**</kbd> (controller).
 - `Odyssey Mario's Moveset`:
@@ -221,7 +221,7 @@ A PC port exclusivity, the options menu allows the player to configure their gam
   - `ENV Volume`: The volume of environment sounds (birds chirping, water flowing, etc...).
 - `Cheats`: A list of built-in modifications that gives Mario super-human powers, such as Moon-jumping, Infinite health, the ability to BLJ anywhere and much more.
 
-**--- What are the default keyboard/controller controls? ---**
+### What are the default keyboard/controller controls?
 
 | | Keyboard (qwerty) | Keyboard (azerty) | XBox One Controller | Switch Pro Controller |
 |:-:|:-:|:-:|:-:|:-:|
@@ -246,7 +246,7 @@ A PC port exclusivity, the options menu allows the player to configure their gam
 | Stick Left | <kbd>A</kbd> | <kbd>Q</kbd> | <kbd>**LS-Left**</kbd> | <kbd>**LS-Left**</kbd> |
 | Stick Right | <kbd>D</kbd> | <kbd>D</kbd> | <kbd>**LS-Right**</kbd> | <kbd>**LS-Right**</kbd> |
 
-**--- How do I update *OMM Builder*/*Odyssey Mario's Moveset*? ---**
+### How do I update *OMM Builder*/*Odyssey Mario's Moveset*?
 
 If it detects a new version, the builder will ask you if you want to update it when you launch it.<br>As for the *Odyssey Mario's Moveset* mod, the files are automatically updated when running a Build command.
 
