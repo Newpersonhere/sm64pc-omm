@@ -315,6 +315,7 @@ To install it and make it work, follow these steps:
 - Fixed a bug where cold water couldn't damage Mario when both Classic moveset and 1 HP mode were enabled.
 - Fixed a bug where collecting coins underwater could kill Mario when both Classic moveset and 1 HP mode were enabled.
 - Fixed a bug where collecting Castle stars could warp Mario back to the Castle grounds.
+- Fixed a crash that could happen when starting a new game with Peach.
 - Sparkly Stars:
   - Fixed a bug where Mario could capture Toads through walls with a well-placed Cappy throw.
   - Fixed a bug where Mario could go behind the TTC clock with a well-placed Cappy bounce.
