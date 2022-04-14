@@ -193,7 +193,6 @@ if __name__ == "__main__":
     if any([x in sys.argv for x in ["-u", "xalo", "sm74", "smsr"]]):
         print("---- Refresh 14+ patches ----")
         do_undef_code("bettercamera.c", "s32 ray_surface_intersect", "static s32 puppycam_check_volume_bounds")
-        do_patch_file("Makefile", "DEF_INC_CFLAGS :=", "$(foreach i,$(INCLUDE_DIRS),-I $(i)) $(C_DEFINES)", " $(GRUCODE_CFLAGS)", +1)
         do_undef_code("mario.c", "#ifdef BETTER_WALL_COLLISION", "s32 mario_facing_downhill", 1)
         do_patch_file("gd_memory.c", "#ifndef USE_SYSTEM_MALLOC", "#ifndef USE_SYSTEM_MALLOC", "#undef USE_SYSTEM_MALLOC\n", -1)
         do_patch_file("audio/seqplayer.c", "sequence_channel_process_script(struct SequenceChannel *seqChannel)", "case 0x00: // chan_testlayerfinished", "\n                        if (loBits >= LAYERS_MAX) break;", +1)

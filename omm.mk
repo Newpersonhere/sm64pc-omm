@@ -30,12 +30,11 @@ INC_DIRS := \
 # -------
 
 OMM_VERSION_NUMBER := 7.1.0
-OMM_VERSION_REVISION := 2
+OMM_VERSION_REVISION := 3
 OMM_DEVELOPER := PeachyPeach
 OMM_FLAGS := -p
 VERSION_CFLAGS += -DOMM_VERSION="$(OMM_VERSION_NUMBER)"
 VERSION_CFLAGS += -DOMM_DEVELOPER="$(OMM_DEVELOPER)"
-GRUCODE_CFLAGS += $(INC_DIRS) # Can't use VERSION_CFLAGS for these
 DEFINES += OMM_VERSION="$(OMM_VERSION_NUMBER)"
 DEFINES += OMM_DEVELOPER="$(OMM_DEVELOPER)"
 
@@ -209,10 +208,12 @@ OMM_PATCHES := $(or $(OMM_PATCHES),None)
 # ---------------
 
 ifeq ($(OMM_BUILDER),1)
-CC := $(CROSS)gcc -w
-CXX := $(CROSS)g++ -w
+CC := $(CROSS)gcc -w $(INC_DIRS)
+CXX := $(CROSS)g++ -w $(INC_DIRS)
 else
 OMM_PATCH := $(shell python3 omm_patcher.py $(OMM_FLAGS))
+CC := $(CROSS)gcc $(INC_DIRS)
+CXX := $(CROSS)g++ $(INC_DIRS)
 endif
 
 # ---------

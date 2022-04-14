@@ -1561,19 +1561,16 @@ void geo_preprocess_object_graph_node(struct Object *o) {
             s32 i = omm_map_find_key(sMarioHeightMap, ptr, o->oGraphNode);
             if (i == -1) {
 
-                // Back-up animation data
-                struct AnimInfoStruct marioAnimStruct;
-                struct Animation marioAnim;
-                OMM_MEMCPY(&marioAnimStruct, &o->oAnimInfo, sizeof(struct AnimInfoStruct));
-                OMM_MEMCPY(&marioAnim, gMarioState->mMarioAnimations->mMarioTargetAnim, sizeof(struct Animation));
-
                 // Preprocess with A-pose animation
+                // Back-up the current animation and restore it after processing
+                // Setting gMarioCurrAnimAddr to NULL forces the game to reload the DMA table
+                struct AnimInfoStruct animInfo;
+                OMM_MEMCPY(&animInfo, &o->oAnimInfo, sizeof(struct AnimInfoStruct));
+                gMarioCurrAnimAddr = NULL;
                 obj_anim_play(gMarioObject, MARIO_ANIM_A_POSE, 1.f);
                 __geo_preprocess_object_graph_node(o);
-
-                // Restore animation data and compute height
-                OMM_MEMCPY(&o->oAnimInfo, &marioAnimStruct, sizeof(struct AnimInfoStruct));
-                OMM_MEMCPY(gMarioState->mMarioAnimations->mMarioTargetAnim, &marioAnim, sizeof(struct Animation));
+                gMarioCurrAnimAddr = NULL;
+                OMM_MEMCPY(&o->oAnimInfo, &animInfo, sizeof(struct AnimInfoStruct));
 
                 // Compute and insert height for the object's graph node
                 f32 marioHeight = 35.f + (sMarioHeadPos[1] - gMarioState->pos[1]);

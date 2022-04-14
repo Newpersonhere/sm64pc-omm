@@ -139,8 +139,9 @@ typedef struct { unsigned int ts; void *v; } ptr_ts;
 
 // Mario animation
 #define MarioAnimationsStruct                   DEF(struct MarioAnimation, struct MarioAnimation, struct MarioAnimation, struct DmaHandlerList, struct DmaHandlerList, struct DmaHandlerList)
-#define mMarioAnimations                        DEF(animation, animation, animation, animList, animList, animList)
-#define mMarioTargetAnim                        DEF(targetAnim, targetAnim, targetAnim, bufTarget, bufTarget, bufTarget)
+#define gMarioAnimations                        gMarioState->DEF(animation, animation, animation, animList, animList, animList)
+#define gMarioCurrAnimAddr                      gMarioAnimations->DEF(currentAnimAddr, currentAnimAddr, currentAnimAddr, currentAddr, currentAddr, currentAddr)
+#define gMarioTargetAnim                        gMarioAnimations->DEF(targetAnim, targetAnim, targetAnim, bufTarget, bufTarget, bufTarget)
 #define gMarioAnimsData                         DEF(D_80339D10, D_80339D10, Data_MarioAnims, gMarioAnimsBuf, gMarioAnimsBuf, gMarioAnimsBuf)
 
 // Audio

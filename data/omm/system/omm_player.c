@@ -290,7 +290,7 @@ OMM_ROUTINE_PRE_RENDER(omm_player_update_gfx) {
         gLoadedGraphNodes[pp->mcap.id]  = geo_layout_to_graph_node(NULL, pp->mcap.geo);
         gLoadedGraphNodes[pp->wmcap.id] = geo_layout_to_graph_node(NULL, pp->wmcap.geo);
         gMarioObject->oGraphNode        = geo_layout_to_graph_node(NULL, pp->body.geo);
-        gMarioState->mMarioAnimations   = (MarioAnimationsStruct *) pp->anims;
+        gMarioAnimations                = (MarioAnimationsStruct *) pp->anims;
 #if OMM_GAME_IS_R96A
         Cheats.ChaosPlayAs = 0;
         Cheats.PlayAs = 0;
