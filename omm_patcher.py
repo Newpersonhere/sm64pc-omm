@@ -181,6 +181,7 @@ if __name__ == "__main__":
     # Other patches
     do_patch_file("audio/external.c", "play_sound(s32 soundBits, f32 *pos)", "{", "\n    OMM_RETURN_IF_TRUE(omm_sound_play_character_sound_n64(soundBits, pos),,);", +1)
     do_patch_file("audio/external.c", "stop_background_music(u16 seqId)", "foundIndex = sBackgroundMusicQueueSize;", "\n    stop_background_music_fix_boss_music();", +1)
+    do_patch_file("audio/seqplayer.c", "sequence_channel_process_script(struct SequenceChannel *seqChannel)", "case 0x00: // chan_testlayerfinished", "\n                        if (loBits >= LAYERS_MAX) break;", +1)
     do_patch_file("fs_packtype_dir.c", "fs_walk_result_t pack_dir_walk", "return fs_sys_walk(path, packdir_walkfn, &walkdata, recur)", " ? FS_WALK_SUCCESS : FS_WALK_INTERRUPTED", +1)
     do_patch_file("gfx_dxgi.cpp", "static struct {", "} dxgi;", "\n#include \"data/omm/engine/gfx_dxgi.inl\"", +1)
     do_patch_file("text/define_text.inc.c", "", "", "#define const\n", +1)
@@ -195,7 +196,6 @@ if __name__ == "__main__":
         do_undef_code("bettercamera.c", "s32 ray_surface_intersect", "static s32 puppycam_check_volume_bounds")
         do_undef_code("mario.c", "#ifdef BETTER_WALL_COLLISION", "s32 mario_facing_downhill", 1)
         do_patch_file("gd_memory.c", "#ifndef USE_SYSTEM_MALLOC", "#ifndef USE_SYSTEM_MALLOC", "#undef USE_SYSTEM_MALLOC\n", -1)
-        do_patch_file("audio/seqplayer.c", "sequence_channel_process_script(struct SequenceChannel *seqChannel)", "case 0x00: // chan_testlayerfinished", "\n                        if (loBits >= LAYERS_MAX) break;", +1)
     
     # Render96 patches
     if any([x in sys.argv for x in ["-u", "r96a"]]):
