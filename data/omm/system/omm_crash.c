@@ -417,10 +417,12 @@ static LONG omm_crash_handler(EXCEPTION_POINTERS *ExceptionInfo) {
 
     // Main loop
     while (true) {
-#if defined(WAPI_SDL1) || defined(WAPI_SDL2)
+#if defined(WAPI_SDL2)
         gfx_sdl.main_loop(omm_crash_handler_produce_one_frame);
 #elif defined(WAPI_DXGI)
         gfx_dxgi.main_loop(omm_crash_handler_produce_one_frame);
+#else
+        break;
 #endif
     }
     exit(0);

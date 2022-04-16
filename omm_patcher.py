@@ -143,6 +143,9 @@ if __name__ == "__main__":
     do_delete_file("surface_collision.h")
     do_delete_file("surface_load.c")
     do_delete_file("surface_load.h")
+    do_delete_file("gfx_sdl.c")
+    do_delete_file("gfx_sdl1.c")
+    do_delete_file("gfx_sdl2.c")
     
     # Code deletion
     do_undef_code("ingame_menu.c", "void render_dialog_box_type", "void change_and_flash_dialog_text_color_lines")
@@ -187,7 +190,7 @@ if __name__ == "__main__":
     do_patch_file("text/define_text.inc.c", "", "", "#define const\n", +1)
 
     # SM64 patches
-    if any([x in sys.argv for x in ["-u", "smex", "saex", "r96a", "xalo"]]):
+    if any([x in sys.argv for x in ["-u", "smex", "r96a", "xalo"]]):
         print("---- SM64 patches ----")
 
     # Refresh 14+ patches (ex-alo based repositories)
@@ -202,11 +205,6 @@ if __name__ == "__main__":
         print("---- Render96 patches ----")
         do_delete_file("r96_character_swap.c")
         do_patch_file("r96_audio.c", "const char *r96_get_intended_level_music()", "if (gCurrLevelNum == LEVEL_CASTLE_GROUNDS) {", "\n        OMM_RETURN_IF_TRUE(omm_ssd_is_bowser_4(), R96_LEVEL_BOWSER_3,);", +1)
-    
-    # Saturn patches
-    if any([x in sys.argv for x in ["-u", "saex"]]):
-        print("---- Saturn patches ----")
-        do_patch_file("saturn_colors.cpp", "void load_cc_directory()", "fs::directory_iterator(", "string(omm_exe_path()) + \"/\" + ", +1)
     
     # DynOS patches
     if any([x in sys.argv for x in ["-u", "dynos"]]):

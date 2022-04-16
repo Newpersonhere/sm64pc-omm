@@ -13,6 +13,8 @@
 #define GFX_OPEN_GL 1
 #elif defined(RAPI_D3D11) || defined(RAPI_D3D12)
 #define GFX_OPEN_GL 0
+#else
+#error "Unknown Render API"
 #endif
 
 #if !OMM_GAME_IS_R96A && !OMM_GAME_IS_SMMS && !QOL_FEATURE_KING_BOBOMB_BLINK
@@ -1206,41 +1208,7 @@ static void __gfx_end_frame() {
 
 s32 gNumInterpolatedFrames;
 
-#if defined(WAPI_SDL1)
-
-static void gfx_sdl1_swap_buffers_begin() {
-    static f64 prev = 0;
-    f64 curr = SDL_GetPerformanceCounter();
-    f64 freq = SDL_GetPerformanceFrequency();
-    f64 rate = freq / (30.0 * gNumInterpolatedFrames);
-    f64 diff = curr - prev;
-    if (diff < rate) {
-        usleep((1000000.0 * (rate - diff)) / freq);
-        prev += rate;
-    } else {
-        prev = curr;
-    }
-    SDL_GL_SwapBuffers();
-}
-
-#elif defined(WAPI_SDL2)
-
-static void gfx_sdl2_swap_buffers_end() {
-    static f64 prev = 0;
-    f64 curr = SDL_GetPerformanceCounter();
-    f64 freq = SDL_GetPerformanceFrequency();
-    f64 rate = freq / (30.0 * gNumInterpolatedFrames);
-    f64 diff = curr - prev;
-    if (diff < rate) {
-        usleep((1000000.0 * (rate - diff)) / freq);
-        prev += rate;
-    } else {
-        prev = curr;
-    }
-}
-
-#elif defined(WAPI_DXGI)
-
+#if defined(WAPI_DXGI)
 static void gfx_dxgi_handle_events() {
     static s32 sNumInterpolatedFrames = 0;
     extern u64 *frame_timestamp;
@@ -1249,7 +1217,6 @@ static void gfx_dxgi_handle_events() {
     }
     sNumInterpolatedFrames = gNumInterpolatedFrames;
 }
-
 #endif
 
 static void gfx_init_frame_interpolation() {
@@ -1309,11 +1276,7 @@ void gfx_init(struct GfxWindowManagerAPI *wapi, struct GfxRenderingAPI *rapi, co
     sGfxRapi = rapi;
     sGfxWapi->init(window_title);
     sGfxRapi->init();
-#if defined(WAPI_SDL1)
-    sGfxWapi->swap_buffers_begin = gfx_sdl1_swap_buffers_begin;
-#elif defined(WAPI_SDL2)
-    sGfxWapi->swap_buffers_end = gfx_sdl2_swap_buffers_end;
-#elif defined(WAPI_DXGI)
+#if defined(WAPI_DXGI)
     sGfxWapi->handle_events = gfx_dxgi_handle_events;
 #endif
     sRDP->envColors[0] = sRDP->envColor;
