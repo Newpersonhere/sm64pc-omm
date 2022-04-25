@@ -1,4 +1,3 @@
-from gettext import find
 import os
 import sys
 import stat
