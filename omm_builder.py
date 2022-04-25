@@ -1,3 +1,4 @@
+from gettext import find
 import os
 import sys
 import stat
@@ -561,7 +562,7 @@ if __name__ == "__main__":
             break
 
         # It's becoming self-aware...
-        print("Compilation failed. Trying to understand the cause...")
+        print("\nCompilation failed. Trying to understand the cause...")
         if not os.path.isfile(DIRECTORIES["root"] + "logs.txt"):
             raise_error("Cannot read logs: Missing file 'logs.txt'.", False)
 
@@ -572,10 +573,18 @@ if __name__ == "__main__":
         retry = False
         for line in data:
 
+            # Check dependencies
+            if (line.find("make: No such file or directory") != -1 or
+                line.find("git: No such file or directory") != -1 or
+                line.find("gcc: No such file or directory") != -1 or
+                line.find("cc: No such file or directory") != -1 or
+                line.find("CalledProcessError") != -1):
+                raise_error("Missing dependencies. To fix this problem, please do the following:\n- For Windows users, make sure you're using MINGW32 or MINGW64, not MSYS.\n- Install or re-install the dependencies by running sm64pcBuilder2 on Windows or follow the instructions on https://github.com/sm64pc/sm64ex/wiki/Compiling-on-Linux for other systems.", False)
+
             # Check texture error
             if line[line.find("fatal error"):line.find("No such file or directory")].find("rgba16.inc.c") != -1:
                 print("Result: Some assets were not generated in time.")
-                print("Running make again... Remaining tries: " + str(makeNumTries - 1 - tries))
+                print("Running make again... Remaining tries: " + str(makeNumTries - 1 - tries) + "\n")
                 retry = True
                 break
 
