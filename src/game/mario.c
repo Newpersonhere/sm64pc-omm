@@ -723,7 +723,7 @@ s16 find_floor_slope(struct MarioState *m, s16 yawOffset) {
     f32 x = sins(m->faceAngle[1] + yawOffset) * 5.0f;
     f32 z = coss(m->faceAngle[1] + yawOffset) * 5.0f;
 
-#ifdef QOL_FEATURE_FAST_FLOOR_ALIGN
+#if QOL_FEATURE_FAST_FLOOR_ALIGN
 #define get_surface_height_at_location(xPos, zPos, surf) (-((xPos) * (surf)->normal.x + (surf)->normal.z * (zPos) + (surf)->originOffset) / (surf)->normal.y)
     if (ABS(m->forwardVel) > 10) { // FAST_FLOOR_ALIGN = 10
         forwardFloorY  = get_surface_height_at_location((m->pos[0] + x), (m->pos[2] + z), floor);
@@ -1560,7 +1560,7 @@ void update_mario_health(struct MarioState *m) {
         // Play a noise to alert the player when Mario is close to drowning.
 
         if (((m->action & ACT_GROUP_MASK) == ACT_GROUP_SUBMERGED) && (m->health < 0x300)
-#ifdef QOL_FIX_DROWING_SOUND_METAL
+#if QOL_FIX_DROWING_SOUND_METAL
         && !(m->flags & (MARIO_METAL_CAP))
 #endif
         ) {

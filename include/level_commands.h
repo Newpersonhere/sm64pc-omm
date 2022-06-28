@@ -241,7 +241,7 @@ enum LevelCommandsIDList
     CMD_BBH(LVL_SCRIPT_CMD_19, 0x04, sethead)
 #else
 #define LOAD_MARIO_HEAD(sethead) \
-    CMD_BBH(LVL_SCRIPT_CMD_19, 0x04, NULL)
+    CMD_BBH(LVL_SCRIPT_CMD_19, 0x04, 0)
 #endif
 
 #ifdef NO_SEGMENTED_MEMORY
