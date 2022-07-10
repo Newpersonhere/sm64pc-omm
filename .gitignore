@@ -3,10 +3,11 @@
 .vscode/
 omm.*/
 repos/
+repos/*
 moonshine/
-custom/dynos/audio/*/
-custom/dynos/packs/*/
-custom/res/*/
+moonshine/*
+custom/
+custom/*
 *.patch
 *.z64
 *.version
@@ -16,3 +17,4 @@ custom/res/*/
 *.wav
 !coop/*
 !patch/omm.patch
+!patch/omm.patch.bin
