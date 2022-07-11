@@ -1,6 +1,6 @@
 diff --git a/Makefile b/Makefile
 index 3c7898a..faf7a08 100644
---- a/Makefile
++++ a/Makefile
 +++ b/Makefile
 @@ -1,1 +1,22 @@
 +OMM_META_INIT := \
